@@ -141,20 +141,23 @@ public class Spot
 					continue;
 				
 				final float[] v = new float[ 3 ];
-				final float[] p = new float[ 3 ];
 				
 				derivative.gradientAt( cursor, v );
 				//randomAccess.setPosition( cursor );
 				//Gradient3d.computeDerivativeVector3d( randomAccess, v );
 				
 				//norm( v );
-				
-				p[ 0 ] = x + 0.5f;
-				p[ 1 ] = y + 0.5f;
-				p[ 2 ] = z + 0.5f;
-								
+												
 				if ( length( v ) != 0 )
+				{
+					final float[] p = new float[ 3 ];
+					
+					p[ 0 ] = x + 0.5f;
+					p[ 1 ] = y + 0.5f;
+					p[ 2 ] = z + 0.5f;
+					
 					spot.candidates.add( new PointFunctionMatch( new OrientedPoint( p, v, 1 ) ) );
+				}
 			}
 			
 			spots.add( spot );

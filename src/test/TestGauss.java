@@ -2,9 +2,26 @@ package test;
 
 import ij.ImageJ;
 
-import java.awt.Cursor;
 import java.util.ArrayList;
 import java.util.Random;
+
+import net.imglib2.Cursor;
+import net.imglib2.FinalInterval;
+import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.legacy.scalespace.DifferenceOfGaussian;
+import net.imglib2.algorithm.legacy.scalespace.DifferenceOfGaussianPeak;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.outofbounds.OutOfBoundsMirrorFactory;
+import net.imglib2.outofbounds.OutOfBoundsMirrorFactory.Boundary;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
+import net.imglib2.view.Views;
 
 import fit.OrientedPoint;
 import fit.PointFunctionMatch;
@@ -15,25 +32,6 @@ import gradient.GradientDescent;
 
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
-import mpicbg.imglib.algorithm.fft.FourierConvolution;
-import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian;
-import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
-import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
-import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
-import mpicbg.imglib.container.ContainerFactory;
-import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
-import mpicbg.imglib.type.numeric.real.DoubleType;
-import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.imglib.util.Util;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
@@ -42,11 +40,12 @@ import mpicbg.models.PointMatch;
 public class TestGauss 
 {
 	
-	public static ArrayList< DifferenceOfGaussianPeak< FloatType > > findLocalMaxima( final Image< FloatType > image )
+	public static ArrayList< DifferenceOfGaussianPeak< FloatType > > findLocalMaxima( final Img< FloatType > image )
 	{
-		DifferenceOfGaussianReal1< FloatType > dog = new DifferenceOfGaussianReal1<FloatType>( 
-				image, new OutOfBoundsStrategyMirrorFactory<FloatType>(), 0.7, 1.2, 0.1f, 1 );
-		dog.setKeepDoGImage( true );
+		DifferenceOfGaussian< FloatType > dog = new DifferenceOfGaussian<FloatType>( 
+				image, image.factory(), new OutOfBoundsMirrorFactory<FloatType, RandomAccessibleInterval<FloatType>>( Boundary.SINGLE ), 0.7, 1.2, 0.1f, 1 );
+		
+		dog.setKeepDoGImg( true );
 		dog.process();
 		final ArrayList< DifferenceOfGaussianPeak< FloatType > > peaks = dog.getPeaks();
 		
@@ -66,7 +65,7 @@ public class TestGauss
 	
 	public static void main( String[] args ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
-		final Image< FloatType > image = new ImageFactory< FloatType >( new FloatType(), new ArrayContainerFactory() ).createImage( new int[]{ 256, 256, 256 } );
+		final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 256, 256, 256 }, new FloatType() );
 		final ArrayList< double[] > points = new ArrayList<double[]>();
 		final Random rnd = new Random( 534545 );
 		final double[] sigma = new double[]{ 2, 2, 2 };
@@ -79,9 +78,8 @@ public class TestGauss
 			points.add( location );
 		}
 		*/
-		
-		addGaussian( image, new double[]{ 10.6, 10, 10 }, new double[]{ 2, 2, 2 } );
-		
+
+		//addGaussian( image, new double[]{ 10.6, 10, 10 }, new double[]{ 2, 2, 2 } );
 		addGaussian( image, new double[]{ 100.3, 100.1, 100.8 }, new double[]{ 2, 2, 2 } );
 		addGaussian( image, new double[]{ 102.8, 104.0, 100.8 }, new double[]{ 2, 2, 2 } );
 		
@@ -151,12 +149,11 @@ public class TestGauss
 		System.out.println( "found correct " + foundCorrect + " with avg error of " + avgDist );
 
 		
-		final Image< FloatType > draw = image.createNewImage();
+		final Img< FloatType > draw = image.factory().create( image, image.firstElement() );
 		Spot.drawRANSACArea( spots, draw );
-		draw.getDisplay().setMinMax();
-		ImageJFunctions.copyToImagePlus( draw ).show();
+		ImageJFunctions.show( draw );
 		
-		final Image< FloatType > detected = image.createNewImage();
+		final Img< FloatType > detected = image.factory().create( image, image.firstElement() );
 		for ( final Spot spot : spots )
 		{
 			if ( spot.inliers.size() == 0 )
@@ -165,8 +162,7 @@ public class TestGauss
 			final double[] location = new double[]{ spot.center.getXc(), spot.center.getYc(), spot.center.getZc() };
 			addGaussian( detected, location, sigma );			
 		}
-		detected.getDisplay().setMinMax();
-		ImageJFunctions.copyToImagePlus( detected ).show();
+		ImageJFunctions.show( detected );
 	}
 	
 	/**
@@ -175,7 +171,7 @@ public class TestGauss
 	 * @param amount - how many times sigma
 	 * @return the signal-to-noise ratio (measured)
 	 */
-	public static double addGaussianNoise( final Image< FloatType > img, final Random rnd, final float sigma, boolean onlyPositive )
+	public static double addGaussianNoise( final Img< FloatType > img, final Random rnd, final float sigma, boolean onlyPositive )
 	{
 		for ( final FloatType f : img )
 		{
@@ -201,36 +197,42 @@ public class TestGauss
 		return Math.sqrt( sum );
 	}
 
-	final public static void addGaussian( final Image< FloatType > image, final double[] location, final double[] sigma )
+	final public static void addGaussian( final Img< FloatType > image, final double[] location, final double[] sigma )
 	{
-		final int numDimensions = image.getNumDimensions();
+		final int numDimensions = image.numDimensions();
 		final int[] size = new int[ numDimensions ];
-		final int[] offset = new int[ numDimensions ];
+		
+		final long[] min = new long[ numDimensions ];
+		final long[] max = new long[ numDimensions ];
+		
 		final double[] two_sq_sigma = new double[ numDimensions ];
 		
 		for ( int d = 0; d < numDimensions; ++d )
 		{
 			size[ d ] = Util.getSuggestedKernelDiameter( sigma[ d ] ) * 2;
-			offset[ d ] = (int)Math.round( location[ d ] ) - size[ d ]/2;
+			min[ d ] = (int)Math.round( location[ d ] ) - size[ d ]/2;
+			max[ d ] = min[ d ] + size[ d ] - 1;
 			two_sq_sigma[ d ] = 2 * sigma[ d ] * sigma[ d ];
 		}
 
-		final LocalizableByDimCursor< FloatType > randomAccess = image.createLocalizableByDimCursor( new OutOfBoundsStrategyValueFactory<FloatType>() );
-		final RegionOfInterestCursor< FloatType > roi = new RegionOfInterestCursor<FloatType>( randomAccess, offset, size );
+		final RandomAccessible< FloatType > infinite = Views.extendZero( image );
+		final RandomAccessibleInterval< FloatType > interval = Views.interval( infinite, min, max );
+		final IterableInterval< FloatType > iterable = Views.iterable( interval );
+		final Cursor< FloatType > cursor = iterable.localizingCursor();
 		
-		while ( roi.hasNext() )
+		while ( cursor.hasNext() )
 		{
-			roi.fwd();
+			cursor.fwd();
 			
 			double value = 1;
 			
 			for ( int d = 0; d < numDimensions; ++d )
 			{
-				final double x = location[ d ] - randomAccess.getPosition( d );
+				final double x = location[ d ] - cursor.getIntPosition( d );
 				value *= Math.exp( -(x * x) / two_sq_sigma[ d ] );
 			}
 			
-			roi.getType().set( roi.getType().get() + (float)value );
+			cursor.get().set( cursor.get().get() + (float)value );
 		}
 	}
 

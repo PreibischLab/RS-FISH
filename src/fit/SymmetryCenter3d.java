@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
 
-import mpicbg.imglib.util.Util;
+import net.imglib2.util.Util;
+
+
 import mpicbg.models.NoninvertibleModelException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;

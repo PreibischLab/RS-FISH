@@ -5,18 +5,18 @@ import gradient.Gradient3d;
 import java.util.ArrayList;
 import java.util.Random;
 
-import net.imglib2.util.Util;
-
-import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
-import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
+import net.imglib2.Cursor;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
+import net.imglib2.algorithm.legacy.scalespace.DifferenceOfGaussianPeak;
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
+import net.imglib2.view.Views;
 
 public class Spot 
 {
@@ -89,42 +89,49 @@ public class Spot
 	}
 
 
-	public static ArrayList< Spot > extractSpots( final Image< FloatType > image, final ArrayList< DifferenceOfGaussianPeak< FloatType > > peaks )
+	public static ArrayList< Spot > extractSpots( final Img< FloatType > image, final ArrayList< DifferenceOfGaussianPeak< FloatType > > peaks )
 	{
-		final int numDimensions = image.getNumDimensions();
+		final int numDimensions = image.numDimensions();
 		
 		// size around the detection to use
 		// we detect at 0.5, 0.5, 0.5 - so we need an even size
 		final int[] size = new int[]{ 10, 10, 10 };
-		final int[] offset = new int[ 3 ];
 		
-		final int w = image.getDimension( 0 ) - 2;
-		final int h = image.getDimension( 1 ) - 2;
-		final int d = image.getDimension( 2 ) - 2;
+		final long[] min = new long[ 3 ];
+		final long[] max = new long[ 3 ];
 		
-		final LocalizableByDimCursor< FloatType > randomAccess = image.createLocalizableByDimCursor();// new OutOfBoundsStrategyValueFactory<FloatType>() );
-		final LocalizableByDimCursor< FloatType > randomAccessRoi = image.createLocalizableByDimCursor( new OutOfBoundsStrategyValueFactory<FloatType>() );
+		final int w = (int)image.dimension( 0 ) - 2;
+		final int h = (int)image.dimension( 1 ) - 2;
+		final int d = (int)image.dimension( 2 ) - 2;
 		
-		final ArrayList< Spot > spots = new ArrayList<Spot>();
+		final RandomAccess< FloatType > randomAccess = image.randomAccess();// new OutOfBoundsStrategyValueFactory<FloatType>() );
+		
+		final ArrayList< Spot > spots = new ArrayList<Spot>();		
+		final RandomAccessible< FloatType > infinite = Views.extendZero( image );
 		
 		for ( final DifferenceOfGaussianPeak< FloatType > peak : peaks )
 		{
-			System.out.println( "peak: " + Util.printCoordinates( peak.getPosition() ) );
+			//int[] tmp = new int[]{ peak.getIntPosition( 0 ), peak.getIntPosition( 1 ), peak.getIntPosition( 2 ) };
+			//System.out.println( "peak: " + Util.printCoordinates( tmp ) );
 			
 			final Spot spot = new Spot();
 			
 			for ( int e = 0; e < numDimensions; ++e )
-				offset[ e ] = peak.getPosition( e ) - size[ e ] / 2;
-			
-			final RegionOfInterestCursor< FloatType > roi = new RegionOfInterestCursor<FloatType>( randomAccessRoi, offset, size );
-
-			while ( roi.hasNext() )
 			{
-				roi.fwd();
+				min[ e ] = peak.getIntPosition( e ) - size[ e ] / 2;
+				max[ e ] = min[ e ] + size[ e ] - 1;
+			}
+
+			final Cursor< FloatType > cursor = Views.iterable( Views.interval( infinite, min, max ) ).localizingCursor();
+			//final RegionOfInterestCursor< FloatType > roi = new RegionOfInterestCursor<FloatType>( randomAccessRoi, offset, size );
+
+			while ( cursor.hasNext() )
+			{
+				cursor.fwd();
 								
-				final int x = randomAccessRoi.getPosition( 0 );
-				final int y = randomAccessRoi.getPosition( 1 );
-				final int z = randomAccessRoi.getPosition( 2 );
+				final int x = cursor.getIntPosition( 0 );
+				final int y = cursor.getIntPosition( 1 );
+				final int z = cursor.getIntPosition( 2 );
 				
 				if ( x < 0 || y < 0 || z < 0 || x > w || y > h || z > d )
 					continue;
@@ -132,15 +139,15 @@ public class Spot
 				final float[] v = new float[ 3 ];
 				final float[] p = new float[ 3 ];
 				
-				randomAccess.setPosition( randomAccessRoi );
+				randomAccess.setPosition( cursor );
 
 				Gradient3d.computeDerivativeVector3d( randomAccess, v );
 				
 				//norm( v );
 				
-				p[ 0 ] = randomAccessRoi.getPosition( 0 ) + 0.5f;
-				p[ 1 ] = randomAccessRoi.getPosition( 1 ) + 0.5f;
-				p[ 2 ] = randomAccessRoi.getPosition( 2 ) + 0.5f;
+				p[ 0 ] = x + 0.5f;
+				p[ 1 ] = y + 0.5f;
+				p[ 2 ] = z + 0.5f;
 								
 				if ( length( v ) != 0 )
 					spot.candidates.add( new PointFunctionMatch( new OrientedPoint( p, v, 1 ) ) );
@@ -179,9 +186,9 @@ public class Spot
 			spot.center.fit( spot.inliers );
 	}
 	
-	public static <T extends RealType<T> > void drawRANSACArea( final ArrayList< Spot > spots, final Image< T > draw )
+	public static <T extends RealType<T> > void drawRANSACArea( final ArrayList< Spot > spots, final Img< T > draw )
 	{
-		final int numDimensions = draw.getNumDimensions();
+		final int numDimensions = draw.numDimensions();
 		double point = 1;
 		final Random random = new Random( 34563646 );
 		
@@ -190,7 +197,7 @@ public class Spot
 			if ( spot.inliers.size() == 0 )
 				continue;
 			
-			final LocalizableByDimCursor< T > drawRA = draw.createLocalizableByDimCursor();
+			final RandomAccess< T > drawRA = draw.randomAccess();
 			double rnd = (random.nextDouble() - 0.5) / 2.0;
 			final float[] scale = spot.scale;
 			
@@ -201,7 +208,7 @@ public class Spot
 				for ( int d = 0; d < numDimensions; ++d )
 					drawRA.setPosition( Math.round( p.getW()[ d ]/scale[ d ] ), d );
 				
-				drawRA.getType().setReal( point + rnd );
+				drawRA.get().setReal( point + rnd );
 			}
 			//++point;
 		}

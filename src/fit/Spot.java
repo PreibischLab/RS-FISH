@@ -5,6 +5,8 @@ import gradient.Gradient3d;
 import java.util.ArrayList;
 import java.util.Random;
 
+import net.imglib2.util.Util;
+
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
@@ -107,6 +109,8 @@ public class Spot
 		
 		for ( final DifferenceOfGaussianPeak< FloatType > peak : peaks )
 		{
+			System.out.println( "peak: " + Util.printCoordinates( peak.getPosition() ) );
+			
 			final Spot spot = new Spot();
 			
 			for ( int e = 0; e < numDimensions; ++e )

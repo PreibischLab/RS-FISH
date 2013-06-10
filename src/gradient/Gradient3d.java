@@ -55,32 +55,31 @@ public class Gradient3d
 	}
 
 	/**
-	 * Computes the n-dimensional 1st derivative vector in 3x3x3...x3 environment for a certain {@link Image} location
-	 * defined by the position of the {@link LocalizableByDimCursor}.
+	 * Computes the n-dimensional 1st derivative vector in center of a 2x2x2 environment for a certain location
+	 * defined by the position of the RandomAccess
 	 * 
-	 * @param cursor - the position for which to compute the Hessian Matrix
-	 * @param Image<DoubleType> - the derivative, which is essentially a one-dimensional {@link DoubleType} {@link Image} of size [numDimensions]
+	 * @param randomAccess - the top-left-front position for which to compute the derivative
+	 * @param derivativeVector - where to put the derivative vector [3]
 	 */
-	final public static <T extends RealType<T>> void computeDerivativeVector3d( final LocalizableByDimCursor<T> cursor, final float[] derivativeVector )
+	final public static <T extends RealType<T>> void computeDerivativeVector3d( final LocalizableByDimCursor<T> randomAccess, final float[] derivativeVector )
 	{
-		// we need all 8 points
-		final double p0 = cursor.getType().getRealDouble();
-		cursor.fwd( 0 );
-		final double p1 = cursor.getType().getRealDouble();
-		cursor.fwd( 1 );
-		final double p3 = cursor.getType().getRealDouble();
-		cursor.bck( 0 );
-		final double p2 = cursor.getType().getRealDouble();
-		cursor.fwd( 2 );
-		final double p6 = cursor.getType().getRealDouble();
-		cursor.fwd( 0 );
-		final double p7 = cursor.getType().getRealDouble();
-		cursor.bck( 1 );
-		final double p5 = cursor.getType().getRealDouble();
-		cursor.bck( 0 );
-		final double p4 = cursor.getType().getRealDouble();
+		// we need 8 points
+		final double p0 = randomAccess.getType().getRealDouble();
+		randomAccess.fwd( 0 );
+		final double p1 = randomAccess.getType().getRealDouble();
+		randomAccess.fwd( 1 );
+		final double p3 = randomAccess.getType().getRealDouble();
+		randomAccess.bck( 0 );
+		final double p2 = randomAccess.getType().getRealDouble();
+		randomAccess.fwd( 2 );
+		final double p6 = randomAccess.getType().getRealDouble();
+		randomAccess.fwd( 0 );
+		final double p7 = randomAccess.getType().getRealDouble();
+		randomAccess.bck( 1 );
+		final double p5 = randomAccess.getType().getRealDouble();
+		randomAccess.bck( 0 );
+		final double p4 = randomAccess.getType().getRealDouble();
 		
-		// dim 0 
 		derivativeVector[ 0 ] = (float) ( ( (p1+p3+p5+p7) - (p0+p2+p4+p6) ) / 4.0 );
 		derivativeVector[ 1 ] = (float) ( ( (p2+p3+p6+p7) - (p0+p1+p4+p5) ) / 4.0 );
 		derivativeVector[ 2 ] = (float) ( ( (p4+p5+p6+p7) - (p0+p1+p2+p3) ) / 4.0 );		

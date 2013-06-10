@@ -16,7 +16,7 @@ public class DerivativeOnDemand extends Derivative
 	
 	public DerivativeOnDemand( final RandomAccessibleInterval<FloatType> source )
 	{
-		super( source );
+		super( source.numDimensions() );
 		
 		this.randomAccess = source.randomAccess();
 	}
@@ -47,5 +47,4 @@ public class DerivativeOnDemand extends Derivative
 		derivativeVector[ 1 ] = (float) ( ( (p2+p3+p6+p7) - (p0+p1+p4+p5) ) / 4.0 );
 		derivativeVector[ 2 ] = (float) ( ( (p4+p5+p6+p7) - (p0+p1+p2+p3) ) / 4.0 );
 	}
-
 }

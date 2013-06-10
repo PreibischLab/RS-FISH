@@ -71,16 +71,21 @@ public class TestGauss
 		final Random rnd = new Random( 534545 );
 		final double[] sigma = new double[]{ 2, 2, 2 };
 		
+		/*
 		for ( int i = 0; i < 1500; ++i )
 		{
 			final double[] location = new double[]{ rnd.nextDouble() * 256, rnd.nextDouble() * 256, rnd.nextDouble() * 256 };
 			addGaussian( image, location, sigma );
 			points.add( location );
 		}
-		//addGaussian( image, new double[]{ 100.3, 100.1, 100.8 }, new double[]{ 2, 2, 2 } );
-		//addGaussian( image, new double[]{ 102.8, 104.0, 100.8 }, new double[]{ 2, 3, 2 } );
+		*/
 		
-		addGaussianNoise( image, rnd, 0.1f, true );
+		addGaussian( image, new double[]{ 10.6, 10, 10 }, new double[]{ 2, 2, 2 } );
+		
+		addGaussian( image, new double[]{ 100.3, 100.1, 100.8 }, new double[]{ 2, 2, 2 } );
+		addGaussian( image, new double[]{ 102.8, 104.0, 100.8 }, new double[]{ 2, 3, 2 } );
+		
+		//addGaussianNoise( image, rnd, 0.1f, true );
 		
 		new ImageJ();
 		ImageJFunctions.show( image );
@@ -94,15 +99,17 @@ public class TestGauss
 		//SimpleMultiThreading.threadHaltUnClean();
 		
 		// ransac on all spots
-		Spot.ransac( spots, 100, 2.5, 20.0/100.0 );
+		Spot.ransac( spots, 100, 0.15, 20.0/100.0 );
 		
 		// print localizations
-		//for ( final Spot spot : spots )
-		//{
-		//	spot.computeAverageCostInliers();
-		//	System.out.println( spot );
-		//}
+		for ( final Spot spot : spots )
+		{
+			spot.computeAverageCostInliers();
+			System.out.println( spot );
+		}
 
+		SimpleMultiThreading.threadHaltUnClean();
+		
 		int foundCorrect = 0;
 		double avgDist = 0;
 		

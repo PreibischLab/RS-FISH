@@ -15,6 +15,7 @@ import net.imglib2.algorithm.legacy.scalespace.DifferenceOfGaussianPeak;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
 public class Spot 
@@ -110,6 +111,9 @@ public class Spot
 		
 		for ( final DifferenceOfGaussianPeak< FloatType > peak : peaks )
 		{
+			//int[] tmp = new int[]{ peak.getIntPosition( 0 ), peak.getIntPosition( 1 ), peak.getIntPosition( 2 ) };
+			//System.out.println( "peak: " + Util.printCoordinates( tmp ) );
+
 			final Spot spot = new Spot();
 			
 			for ( int e = 0; e < numDimensions; ++e )

@@ -10,16 +10,13 @@ import net.imglib2.outofbounds.OutOfBoundsMirrorFactory;
 import net.imglib2.outofbounds.OutOfBoundsMirrorFactory.Boundary;
 import net.imglib2.type.numeric.real.FloatType;
 
-public class LocalMaximaDoG extends LocalMaximaCandidates
+public class LocalMaximaDoG extends LocalMaxima
 {
-	final RandomAccessibleInterval< FloatType > img;
-	final int numDimensions;
 	final double sigma1, sigma2, minPeakValue;
 	
-	public LocalMaximaDoG( final RandomAccessibleInterval< FloatType > img, final double sigma1, final double sigma2, final double minPeakValue )
+	public LocalMaximaDoG( final RandomAccessibleInterval< FloatType > source, final double sigma1, final double sigma2, final double minPeakValue )
 	{
-		this.img = img;
-		this.numDimensions = img.numDimensions();
+		super( source );
 		this.sigma1 = sigma1;
 		this.sigma2 = sigma2;
 		this.minPeakValue = minPeakValue;
@@ -29,7 +26,7 @@ public class LocalMaximaDoG extends LocalMaximaCandidates
 	public ArrayList<int[]> estimateLocalMaxima() 
 	{
 		DifferenceOfGaussian< FloatType > dog = new DifferenceOfGaussian<FloatType>( 
-				img, 
+				source, 
 				new ArrayImgFactory<FloatType>(), 
 				new OutOfBoundsMirrorFactory<FloatType, RandomAccessibleInterval<FloatType>>( Boundary.SINGLE ), 
 				sigma1, 
@@ -54,7 +51,4 @@ public class LocalMaximaDoG extends LocalMaximaCandidates
 
 		return peakList;
 	}
-
-	@Override
-	public int numDimensions() { return numDimensions; }
 }

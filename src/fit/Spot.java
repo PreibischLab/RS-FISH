@@ -104,16 +104,13 @@ public class Spot
 		final long[] min = new long[ 3 ];
 		final long[] max = new long[ 3 ];
 		
+		// we always compute the location at 0.5, 0.5, 0.5 - so we cannot compute it at the last entry of each dimension 
 		final int w = (int)image.dimension( 0 ) - 2;
 		final int h = (int)image.dimension( 1 ) - 2;
 		final int d = (int)image.dimension( 2 ) - 2;
 		
-		//final RandomAccess< FloatType > randomAccess = image.randomAccess();// new OutOfBoundsStrategyValueFactory<FloatType>() );
-		
 		final ArrayList< Spot > spots = new ArrayList<Spot>();		
 		final RandomAccessible< FloatType > infinite = Views.extendZero( image );
-		
-		int i = 0;
 		
 		for ( final int[] peak : peaks )
 		{	
@@ -127,6 +124,7 @@ public class Spot
 				max[ e ] = min[ e ] + size[ e ] - 1;
 			}
 
+			// define a local region to iterate around the potential detection
 			final Cursor< FloatType > cursor = Views.iterable( Views.interval( infinite, min, max ) ).localizingCursor();
 			
 			while ( cursor.hasNext() )
@@ -143,8 +141,6 @@ public class Spot
 				final float[] v = new float[ 3 ];
 				
 				derivative.gradientAt( cursor, v );
-				//randomAccess.setPosition( cursor );
-				//Gradient3d.computeDerivativeVector3d( randomAccess, v );
 				
 				//norm( v );
 												

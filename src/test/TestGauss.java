@@ -7,6 +7,7 @@ import java.util.Random;
 
 import derivative.Derivative;
 import derivative.DerivativeOnDemand;
+import derivative.DerivativePreCompute;
 
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
@@ -92,10 +93,8 @@ public class TestGauss
 		// we need something to compute the derivatives
 		final Derivative derivative;
 		
-		if ( peaks.size() < 10 )
-			derivative = new DerivativeOnDemand( image );
-		else
-			derivative = new DerivativeOnDemand( image );
+		//derivative = new DerivativeOnDemand( image );
+		derivative = new DerivativePreCompute( image );
 		
 		//peaks.add( new int[] { 12, 12, 12 } );
 		

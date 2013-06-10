@@ -1,18 +1,17 @@
 package derivative;
 
+import net.imglib2.EuclideanSpace;
 import net.imglib2.Localizable;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.type.numeric.real.FloatType;
 
-public abstract class Derivative 
+public abstract class Derivative implements EuclideanSpace
 {
-	final RandomAccessibleInterval< FloatType > source;
+	final int numDimensions;
 	
-	public Derivative( final RandomAccessibleInterval< FloatType > source )
+	public Derivative( final int numDimensions )
 	{
-		this.source = source;
+		this.numDimensions = numDimensions;
 		
-		if ( source.numDimensions() != 3 )
+		if ( numDimensions != 3 )
 			throw new RuntimeException( "Only 3d is allowed for now" );
 	}
 	
@@ -24,4 +23,7 @@ public abstract class Derivative
 	 * @param derivativeVector - where to put the derivative vector [3]
 	 */
 	public abstract void gradientAt( final Localizable location, final float[] derivativeVector );
+	
+	@Override
+	public int numDimensions() { return numDimensions; }
 }

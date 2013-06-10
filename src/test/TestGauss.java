@@ -79,10 +79,10 @@ public class TestGauss
 		}
 		*/
 		
-		addGaussian( image, new double[]{ 10.5, 10, 10 }, new double[]{ 2, 2, 2 } );
+		addGaussian( image, new double[]{ 10.6, 10, 10 }, new double[]{ 2, 2, 2 } );
 		
 		addGaussian( image, new double[]{ 100.3, 100.1, 100.8 }, new double[]{ 2, 2, 2 } );
-		addGaussian( image, new double[]{ 102.8, 104.0, 100.8 }, new double[]{ 2, 3, 2 } );
+		addGaussian( image, new double[]{ 102.8, 104.0, 100.8 }, new double[]{ 2, 2, 2 } );
 		
 		//addGaussianNoise( image, rnd, 0.1f, true );
 		
@@ -98,7 +98,7 @@ public class TestGauss
 		//SimpleMultiThreading.threadHaltUnClean();
 		
 		// ransac on all spots
-		Spot.ransac( spots, 100, 2.5, 20.0/100.0 );
+		Spot.ransac( spots, 100, 0.15, 20.0/100.0 );
 		
 		// print localizations
 		for ( final Spot spot : spots )

@@ -1,6 +1,6 @@
 package fit;
 
-import mpicbg.imglib.util.Util;
+import net.imglib2.util.Util;
 import mpicbg.models.Point;
 
 public class LinkedPoint<P> extends Point

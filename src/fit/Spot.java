@@ -5,6 +5,8 @@ import gradient.Gradient3d;
 import java.util.ArrayList;
 import java.util.Random;
 
+import derivative.Derivative;
+
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
@@ -89,8 +91,10 @@ public class Spot
 	}
 
 
-	public static ArrayList< Spot > extractSpots( final Img< FloatType > image, final ArrayList< int[] > peaks )
+	public static ArrayList< Spot > extractSpots( final Img< FloatType > image, final ArrayList< int[] > peaks, final Derivative derivative )
 	{
+		System.out.println( "Found " + peaks.size() + " peaks. " );
+		
 		final int numDimensions = image.numDimensions();
 		
 		// size around the detection to use
@@ -104,15 +108,16 @@ public class Spot
 		final int h = (int)image.dimension( 1 ) - 2;
 		final int d = (int)image.dimension( 2 ) - 2;
 		
-		final RandomAccess< FloatType > randomAccess = image.randomAccess();// new OutOfBoundsStrategyValueFactory<FloatType>() );
+		//final RandomAccess< FloatType > randomAccess = image.randomAccess();// new OutOfBoundsStrategyValueFactory<FloatType>() );
 		
 		final ArrayList< Spot > spots = new ArrayList<Spot>();		
 		final RandomAccessible< FloatType > infinite = Views.extendZero( image );
 		
+		int i = 0;
+		
 		for ( final int[] peak : peaks )
-		{
-			//int[] tmp = new int[]{ peak.getIntPosition( 0 ), peak.getIntPosition( 1 ), peak.getIntPosition( 2 ) };
-			//System.out.println( "peak: " + Util.printCoordinates( tmp ) );
+		{	
+			System.out.println( "peak: " + Util.printCoordinates( peak ) );
 			
 			final Spot spot = new Spot();
 			
@@ -123,8 +128,7 @@ public class Spot
 			}
 
 			final Cursor< FloatType > cursor = Views.iterable( Views.interval( infinite, min, max ) ).localizingCursor();
-			//final RegionOfInterestCursor< FloatType > roi = new RegionOfInterestCursor<FloatType>( randomAccessRoi, offset, size );
-
+			
 			while ( cursor.hasNext() )
 			{
 				cursor.fwd();
@@ -139,9 +143,9 @@ public class Spot
 				final float[] v = new float[ 3 ];
 				final float[] p = new float[ 3 ];
 				
-				randomAccess.setPosition( cursor );
-
-				Gradient3d.computeDerivativeVector3d( randomAccess, v );
+				derivative.gradientAt( cursor, v );
+				//randomAccess.setPosition( cursor );
+				//Gradient3d.computeDerivativeVector3d( randomAccess, v );
 				
 				//norm( v );
 				

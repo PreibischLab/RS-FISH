@@ -1,19 +1,31 @@
-package gradient;
+package derivative;
 
+import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
-import net.imglib2.type.numeric.RealType;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.numeric.real.FloatType;
 
-public class Gradient3d 
+/**
+ * Computes the derivative on demand at a certain location, this is useful if it is only a few spots in a big image 
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ */
+public class DerivativeOnDemand extends Derivative
 {
-	/**
-	 * Computes the n-dimensional 1st derivative vector in center of a 2x2x2 environment for a certain location
-	 * defined by the position of the RandomAccess
-	 * 
-	 * @param randomAccess - the top-left-front position for which to compute the derivative
-	 * @param derivativeVector - where to put the derivative vector [3]
-	 */
-	final public static <T extends RealType<T>> void computeDerivativeVector3d1( final RandomAccess<T> randomAccess, final float[] derivativeVector )
+	final RandomAccess< FloatType > randomAccess;
+	
+	public DerivativeOnDemand( final RandomAccessibleInterval<FloatType> source )
 	{
+		super( source );
+		
+		this.randomAccess = source.randomAccess();
+	}
+
+	@Override
+	public void gradientAt( final Localizable location, final float[] derivativeVector )
+	{
+		randomAccess.setPosition( location );
+		
 		// we need 8 points
 		final double p0 = randomAccess.get().getRealDouble();
 		randomAccess.fwd( 0 );
@@ -33,7 +45,7 @@ public class Gradient3d
 		
 		derivativeVector[ 0 ] = (float) ( ( (p1+p3+p5+p7) - (p0+p2+p4+p6) ) / 4.0 );
 		derivativeVector[ 1 ] = (float) ( ( (p2+p3+p6+p7) - (p0+p1+p4+p5) ) / 4.0 );
-		derivativeVector[ 2 ] = (float) ( ( (p4+p5+p6+p7) - (p0+p1+p2+p3) ) / 4.0 );		
+		derivativeVector[ 2 ] = (float) ( ( (p4+p5+p6+p7) - (p0+p1+p2+p3) ) / 4.0 );
 	}
 
 }

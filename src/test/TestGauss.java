@@ -5,6 +5,9 @@ import ij.ImageJ;
 import java.util.ArrayList;
 import java.util.Random;
 
+import derivative.Derivative;
+import derivative.DerivativeOnDemand;
+
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.IterableInterval;
@@ -32,43 +35,22 @@ import gradient.GradientDescent;
 
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
-import localmaxima.LocalMaximaCandidates;
+import localmaxima.LocalMaxima;
+import localmaxima.LocalMaximaAll;
 import localmaxima.LocalMaximaDoG;
+import localmaxima.LocalMaximaNeighborhood;
+import localmaxima.LocalMaximaSmoothNeighborhood;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 
 public class TestGauss 
-{
-	/*
-	public static ArrayList< DifferenceOfGaussianPeak< FloatType > > findLocalMaxima( final Img< FloatType > image )
-	{
-		DifferenceOfGaussian< FloatType > dog = new DifferenceOfGaussian<FloatType>( 
-				image, image.factory(), new OutOfBoundsMirrorFactory<FloatType, RandomAccessibleInterval<FloatType>>( Boundary.SINGLE ), 0.7, 1.2, 0.1f, 1 );
-		
-		dog.setKeepDoGImg( true );
-		dog.process();
-		final ArrayList< DifferenceOfGaussianPeak< FloatType > > peaks = dog.getPeaks();
-		
-		//SubpixelLocalization< FloatType > sbp = new SubpixelLocalization<FloatType>( image, peaks );
-		//sbp.process();
-
-		//for ( final DifferenceOfGaussianPeak< FloatType > peak : peaks )
-			//System.out.println( Util.printCoordinates( peak.getPosition() ) + " " + Util.printCoordinates( peak.getSubPixelPosition() ) + " " + peak.getPeakType() );
-		
-		System.out.println( "Found " + peaks.size() + " local maxima." );
-		
-		//ImageJFunctions.show( dog.getDoGImage() );
-		//SimpleMultiThreading.threadHaltUnClean();
-		
-		return peaks;
-	}
-	*/
-	
+{	
 	public static void main( String[] args ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
-		final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 256, 256, 256 }, new FloatType() );
+		//final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 256, 256, 256 }, new FloatType() );
+		final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 20, 20, 20 }, new FloatType() );
 		final ArrayList< double[] > points = new ArrayList<double[]>();
 		final Random rnd = new Random( 534545 );
 		final double[] sigma = new double[]{ 2, 2, 2 };
@@ -82,9 +64,9 @@ public class TestGauss
 		}
 		*/
 
-		//addGaussian( image, new double[]{ 10.6, 10, 10 }, new double[]{ 2, 2, 2 } );
-		addGaussian( image, new double[]{ 100.3, 100.1, 100.8 }, new double[]{ 2, 2, 2 } );
-		addGaussian( image, new double[]{ 102.8, 104.0, 100.8 }, new double[]{ 2, 2, 2 } );
+		addGaussian( image, new double[]{ 10.6, 10, 10 }, new double[]{ 2, 2, 2 } );
+		//addGaussian( image, new double[]{ 100.3, 100.1, 100.8 }, new double[]{ 2, 2, 2 } );
+		//addGaussian( image, new double[]{ 102.8, 104.0, 100.8 }, new double[]{ 2, 2, 2 } );
 		
 		//addGaussianNoise( image, rnd, 0.1f, true );
 		
@@ -93,10 +75,31 @@ public class TestGauss
 		
 		//SimpleMultiThreading.threadHaltUnClean();
 		
+		//
 		// extract data for all spots
-		final LocalMaximaCandidates candiateSearch = new LocalMaximaDoG( image, 0.7, 1.2, 0.1 );
+		//
 		
-		final ArrayList< Spot > spots = Spot.extractSpots( image, candiateSearch.estimateLocalMaxima() );
+		// we need an initial candidate search
+		
+		final LocalMaxima candiateSearch;
+		//candiateSearch = new LocalMaximaDoG( image, 0.7, 1.2, 0.1 );
+		candiateSearch = new LocalMaximaNeighborhood( image );
+		//candiateSearch = new LocalMaximaSmoothNeighborhood( image, new double[]{ 1, 1, 1 } );
+		//candiateSearch = new LocalMaximaAll( image );
+		
+		final ArrayList< int[] > peaks = candiateSearch.estimateLocalMaxima();
+		
+		// we need something to compute the derivatives
+		final Derivative derivative;
+		
+		if ( peaks.size() < 10 )
+			derivative = new DerivativeOnDemand( image );
+		else
+			derivative = new DerivativeOnDemand( image );
+		
+		//peaks.add( new int[] { 12, 12, 12 } );
+		
+		final ArrayList< Spot > spots = Spot.extractSpots( image, peaks, derivative );
 		
 		//GradientDescent.testGradientDescent( spots, new boolean[]{ false, false, true } );
 		//SimpleMultiThreading.threadHaltUnClean();
@@ -108,7 +111,9 @@ public class TestGauss
 		for ( final Spot spot : spots )
 		{
 			spot.computeAverageCostInliers();
-			System.out.println( spot );
+			
+			//if ( spot.numRemoved != spot.candidates.size() )
+				System.out.println( spot );
 		}
 
 		SimpleMultiThreading.threadHaltUnClean();

@@ -2,7 +2,9 @@ package localmaxima;
 
 import java.util.ArrayList;
 
-public interface LocalMaximaCandidates 
+import net.imglib2.EuclideanSpace;
+
+public abstract class LocalMaximaCandidates implements EuclideanSpace
 {
-	ArrayList< int[] > estimateLocalMaxima();
+	public abstract ArrayList< int[] > estimateLocalMaxima();
 }

@@ -89,7 +89,7 @@ public class Spot
 	}
 
 
-	public static ArrayList< Spot > extractSpots( final Img< FloatType > image, final ArrayList< DifferenceOfGaussianPeak< FloatType > > peaks )
+	public static ArrayList< Spot > extractSpots( final Img< FloatType > image, final ArrayList< int[] > peaks )
 	{
 		final int numDimensions = image.numDimensions();
 		
@@ -109,7 +109,7 @@ public class Spot
 		final ArrayList< Spot > spots = new ArrayList<Spot>();		
 		final RandomAccessible< FloatType > infinite = Views.extendZero( image );
 		
-		for ( final DifferenceOfGaussianPeak< FloatType > peak : peaks )
+		for ( final int[] peak : peaks )
 		{
 			//int[] tmp = new int[]{ peak.getIntPosition( 0 ), peak.getIntPosition( 1 ), peak.getIntPosition( 2 ) };
 			//System.out.println( "peak: " + Util.printCoordinates( tmp ) );
@@ -118,7 +118,7 @@ public class Spot
 			
 			for ( int e = 0; e < numDimensions; ++e )
 			{
-				min[ e ] = peak.getIntPosition( e ) - size[ e ] / 2;
+				min[ e ] = peak[ e ] - size[ e ] / 2;
 				max[ e ] = min[ e ] + size[ e ] - 1;
 			}
 

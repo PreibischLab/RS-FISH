@@ -32,6 +32,8 @@ import gradient.GradientDescent;
 
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
+import localmaxima.LocalMaximaCandidates;
+import localmaxima.LocalMaximaDoG;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
@@ -39,7 +41,7 @@ import mpicbg.models.PointMatch;
 
 public class TestGauss 
 {
-	
+	/*
 	public static ArrayList< DifferenceOfGaussianPeak< FloatType > > findLocalMaxima( final Img< FloatType > image )
 	{
 		DifferenceOfGaussian< FloatType > dog = new DifferenceOfGaussian<FloatType>( 
@@ -62,6 +64,7 @@ public class TestGauss
 		
 		return peaks;
 	}
+	*/
 	
 	public static void main( String[] args ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
@@ -91,7 +94,9 @@ public class TestGauss
 		//SimpleMultiThreading.threadHaltUnClean();
 		
 		// extract data for all spots
-		final ArrayList< Spot > spots = Spot.extractSpots( image, findLocalMaxima( image ) );
+		final LocalMaximaCandidates candiateSearch = new LocalMaximaDoG( image, 0.7, 1.2, 0.1 );
+		
+		final ArrayList< Spot > spots = Spot.extractSpots( image, candiateSearch.estimateLocalMaxima() );
 		
 		//GradientDescent.testGradientDescent( spots, new boolean[]{ false, false, true } );
 		//SimpleMultiThreading.threadHaltUnClean();

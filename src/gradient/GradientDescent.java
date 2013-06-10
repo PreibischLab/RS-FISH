@@ -2,7 +2,8 @@ package gradient;
 
 import java.util.ArrayList;
 
-import mpicbg.imglib.util.Util;
+import net.imglib2.util.Util;
+
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 

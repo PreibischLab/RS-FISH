@@ -31,7 +31,6 @@ import fit.OrientedPoint;
 import fit.PointFunctionMatch;
 import fit.Spot;
 import fit.SymmetryCenter3d;
-import gradient.Gradient3d;
 import gradient.GradientDescent;
 
 import Jama.EigenvalueDecomposition;

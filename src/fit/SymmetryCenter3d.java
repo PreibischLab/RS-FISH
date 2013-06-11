@@ -11,8 +11,13 @@ import mpicbg.models.NoninvertibleModelException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
 
-public class SymmetryCenter3d extends AbstractFunction<SymmetryCenter3d>
+public class SymmetryCenter3d extends AbstractFunction<SymmetryCenter3d> implements SymmetryCenter<SymmetryCenter3d>
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6317425588261467332L;
+
 	/**
 	 * We need at least 2 points to fit
 	 */
@@ -128,6 +133,18 @@ public class SymmetryCenter3d extends AbstractFunction<SymmetryCenter3d>
 	public double getYc() { return yc; }
 	public double getZc() { return zc; }
 	
+	@Override
+	public double getSymmetryCenter( final int d )
+	{
+		if ( d == 0 )
+			return xc;
+		else if ( d == 1 )
+			return yc;
+		else
+			return zc;
+	}
+
+	@Override
 	public void getSymmetryCenter( final double center[] )
 	{
 		center[ 0 ] = xc;
@@ -135,6 +152,7 @@ public class SymmetryCenter3d extends AbstractFunction<SymmetryCenter3d>
 		center[ 2 ] = zc;
 	}
 
+	@Override
 	public void getSymmetryCenter( final float center[] )
 	{
 		center[ 0 ] = (float)xc;

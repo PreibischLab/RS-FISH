@@ -55,7 +55,6 @@ public class TestGauss
 		final int[] range = new int[]{ 10, 10, 10 };
 		
 		final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 256, 256, 256 }, new FloatType() );
-		//final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 20, 20, 20 }, new FloatType() );
 		final ArrayList< double[] > points = new ArrayList<double[]>();
 		final Random rnd = new Random( 534545 );
 		final double[] sigma = new double[]{ 2, 2, 2 };
@@ -70,8 +69,8 @@ public class TestGauss
 		*/
 
 		addGaussian( image, new double[]{ 10.6, 10, 10 }, new double[]{ 2, 2, 2 } );
-		//addGaussian( image, new double[]{ 100.3, 100.1, 100.8 }, new double[]{ 2, 2, 2 } );
-		//addGaussian( image, new double[]{ 102.8, 104.0, 100.8 }, new double[]{ 2, 2, 2 } );
+		addGaussian( image, new double[]{ 100.3, 100.1, 100.8 }, new double[]{ 2, 2, 2 } );
+		addGaussian( image, new double[]{ 102.8, 104.0, 100.8 }, new double[]{ 2, 2, 2 } );
 		
 		//addGaussianNoise( image, rnd, 0.1f, true );
 		
@@ -87,10 +86,10 @@ public class TestGauss
 		// we need an initial candidate search
 		
 		final LocalMaxima candiateSearch;
-		//candiateSearch = new LocalMaximaDoG( image, 0.7, 1.2, 0.1 );
+		candiateSearch = new LocalMaximaDoG( image, 0.7, 1.2, 0.1 );
 		//candiateSearch = new LocalMaximaNeighborhood( image );
 		//candiateSearch = new LocalMaximaSmoothNeighborhood( image, new double[]{ 1, 1, 1 } );
-		candiateSearch = new LocalMaximaAll( image );
+		//candiateSearch = new LocalMaximaAll( image );
 		
 		final ArrayList< int[] > peaks = candiateSearch.estimateLocalMaxima();
 		
@@ -170,7 +169,8 @@ public class TestGauss
 			if ( spot.inliers.size() == 0 )
 				continue;
 			
-			final double[] location = new double[]{ spot.center.getXc(), spot.center.getYc(), spot.center.getZc() };
+			final double[] location = new double[ image.numDimensions() ];//{ spot.center.getXc(), spot.center.getYc(), spot.center.getZc() };
+			spot.center.getSymmetryCenter( location );
 			addGaussian( detected, location, sigma );			
 		}
 		ImageJFunctions.show( detected );

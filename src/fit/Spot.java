@@ -1,11 +1,7 @@
 package fit;
 
-import gradient.Gradient3d;
-
 import java.util.ArrayList;
 import java.util.Random;
-
-import derivative.Derivative;
 
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
@@ -13,35 +9,62 @@ import mpicbg.models.Point;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
-import net.imglib2.algorithm.legacy.scalespace.DifferenceOfGaussianPeak;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Util;
 import net.imglib2.view.Views;
+import derivative.Derivative;
 
 public class Spot 
 {
-	public final SymmetryCenter3d center = new SymmetryCenter3d();
+	public final SymmetryCenter< ? extends SymmetryCenter< ? > > center;// = new SymmetryCenter3d();
 	public final ArrayList< PointFunctionMatch > candidates = new ArrayList<PointFunctionMatch>();
 	public final ArrayList< PointFunctionMatch > inliers = new ArrayList<PointFunctionMatch>();
 	public final float[] scale = new float[]{ 1, 1, 1 };
 		
 	public int numRemoved = -1;
 	public double avgCost = -1, minCost = -1, maxCost = -1;
+
+	public final int n;
+	
+	public Spot( final int n )
+	{
+		this.n = n;
+		
+		if ( n == 2 )
+			center = new SymmetryCenter2d();
+		else if ( n == 3 )
+			center = new SymmetryCenter3d();
+		else
+			throw new RuntimeException( "only 2d and 3d is allowed." );
+	}
 	
 	@Override
 	public String toString()
 	{
-		return "center: " + center.getXc()/scale[ 0 ] + " " + center.getYc()/scale[ 1 ] + " " + center.getZc()/scale[ 2 ] + " Removed = " + numRemoved + "/" + candidates.size() + " error = " + minCost + ";" + avgCost + ";" + maxCost;
+		String result = "center: ";
+		
+		for ( int d = 0; d < n; ++d )
+			result += center.getSymmetryCenter( d )/scale[ d ] + " ";
+		
+		result += " Removed = " + numRemoved + "/" + candidates.size() + " error = " + minCost + ";" + avgCost + ";" + maxCost;
+		
+		return result;
 	}
 	
-	public double[] getCenter() { return new double[]{ center.getXc()/scale[ 0 ], center.getYc()/scale[ 1 ], center.getZc()/scale[ 2 ] }; }
+	public double[] getCenter()
+	{
+		final double[] c = new double[ n ];
+		
+		getCenter( c );
+		
+		return c; 
+	}
+	
 	public void getCenter( final double[] c )
 	{ 
-		 c[ 0 ] = center.getXc()/scale[ 0 ];
-		 c[ 1 ] = center.getYc()/scale[ 1 ];
-		 c[ 2 ] = center.getZc()/scale[ 2 ]; 
+		for ( int d = 0; d < n; ++d )
+			c[ d ] = center.getSymmetryCenter( d ) / scale[ d ];
 	}
 	
 	public double computeAverageCostCandidates() { return computeAverageCost( candidates ); }
@@ -101,13 +124,19 @@ public class Spot
 		// we detect at 0.5, 0.5, 0.5 - so we need an even size
 		// final int[] size = new int[]{ 10, 10, 10 };
 		
-		final long[] min = new long[ 3 ];
-		final long[] max = new long[ 3 ];
+		final long[] min = new long[ numDimensions ];
+		final long[] max = new long[ numDimensions ];
+
+		// we always compute the location at 0.5, 0.5, 0.5 - so we cannot compute it at the last entry of each dimension
 		
-		// we always compute the location at 0.5, 0.5, 0.5 - so we cannot compute it at the last entry of each dimension 
-		final int w = (int)image.dimension( 0 ) - 2;
-		final int h = (int)image.dimension( 1 ) - 2;
-		final int d = (int)image.dimension( 2 ) - 2;
+		final int[] maxDim = new int[ numDimensions ];
+
+		for ( int d = 0; d < numDimensions; ++d )
+			maxDim[ d ] = (int)image.dimension( d ) - 2;
+
+		//final int w = (int)image.dimension( 0 ) - 2;
+		//final int h = (int)image.dimension( 1 ) - 2;
+		//final int d = (int)image.dimension( 2 ) - 2;
 		
 		final ArrayList< Spot > spots = new ArrayList<Spot>();		
 		final RandomAccessible< FloatType > infinite = Views.extendZero( image );
@@ -116,12 +145,16 @@ public class Spot
 		{	
 			//System.out.println( "peak: " + Util.printCoordinates( peak ) );
 			
-			final Spot spot = new Spot();
+			final Spot spot = new Spot( numDimensions );
 			
 			for ( int e = 0; e < numDimensions; ++e )
 			{
 				min[ e ] = peak[ e ] - size[ e ] / 2;
 				max[ e ] = min[ e ] + size[ e ] - 1;
+				
+				// check that it does not exceed bounds of the underlying image
+				min[ e ] = Math.max( min[ e ], 0 );
+				max[ e ] = Math.min( max[ e ], maxDim[ e ] );
 			}
 
 			// define a local region to iterate around the potential detection
@@ -130,15 +163,17 @@ public class Spot
 			while ( cursor.hasNext() )
 			{
 				cursor.fwd();
-								
+				
+				/*
 				final int x = cursor.getIntPosition( 0 );
 				final int y = cursor.getIntPosition( 1 );
 				final int z = cursor.getIntPosition( 2 );
 				
 				if ( x < 0 || y < 0 || z < 0 || x > w || y > h || z > d )
 					continue;
+				*/
 				
-				final float[] v = new float[ 3 ];
+				final float[] v = new float[ numDimensions ];
 				
 				derivative.gradientAt( cursor, v );
 				
@@ -146,11 +181,16 @@ public class Spot
 												
 				if ( length( v ) != 0 )
 				{
-					final float[] p = new float[ 3 ];
+					final float[] p = new float[ numDimensions ];
 					
+					for ( int e = 0; e < numDimensions; ++e )
+						p[ e ] = cursor.getIntPosition( e ) + 0.5f;
+					
+					/*
 					p[ 0 ] = x + 0.5f;
 					p[ 1 ] = y + 0.5f;
 					p[ 2 ] = z + 0.5f;
+					*/
 					
 					spot.candidates.add( new PointFunctionMatch( new OrientedPoint( p, v, 1 ) ) );
 				}
@@ -185,7 +225,7 @@ public class Spot
 		spot.center.ransac( spot.candidates, spot.inliers, iterations, maxError, inlierRatio );
 		spot.numRemoved = spot.candidates.size() - spot.inliers.size();
 		
-		if ( spot.inliers.size() >= spot.center.minNumPoints )
+		if ( spot.inliers.size() >= spot.center.getMinNumPoints() )
 			spot.center.fit( spot.inliers );
 	}
 	

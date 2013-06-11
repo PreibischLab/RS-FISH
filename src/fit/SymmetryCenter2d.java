@@ -4,15 +4,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
 
-import net.imglib2.util.Util;
-
-
-import mpicbg.models.NoninvertibleModelException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
+import net.imglib2.util.Util;
 
-public class SymmetryCenter2d extends AbstractFunction<SymmetryCenter2d>
+public class SymmetryCenter2d extends AbstractFunction<SymmetryCenter2d> implements SymmetryCenter<SymmetryCenter2d>
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8877129758374682611L;
+
 	/**
 	 * We need at least 2 points to fit
 	 */
@@ -101,13 +103,24 @@ public class SymmetryCenter2d extends AbstractFunction<SymmetryCenter2d>
 
 	public double getXc() { return xc; }
 	public double getYc() { return yc; }
-	
+
+	@Override
+	public double getSymmetryCenter( final int d )
+	{
+		if ( d == 0 )
+			return xc;
+		else
+			return yc;
+	}
+
+	@Override
 	public void getSymmetryCenter( final double center[] )
 	{
 		center[ 0 ] = xc;
 		center[ 1 ] = yc;
 	}
 
+	@Override
 	public void getSymmetryCenter( final float center[] )
 	{
 		center[ 0 ] = (float)xc;

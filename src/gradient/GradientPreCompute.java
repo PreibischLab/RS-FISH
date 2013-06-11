@@ -16,7 +16,7 @@ import net.imglib2.view.Views;
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  */
-public class DerivativePreCompute extends Derivative
+public class GradientPreCompute extends Gradient
 {
 	final RandomAccess< FloatType > randomAccess;
 	final long[] tmp;
@@ -26,7 +26,7 @@ public class DerivativePreCompute extends Derivative
 	final long[] minIterate; 
 	final long[] maxIterate; 
 
-	public DerivativePreCompute( final RandomAccessibleInterval<FloatType> source )
+	public GradientPreCompute( final RandomAccessibleInterval<FloatType> source )
 	{
 		super( source.numDimensions() );
 		
@@ -60,7 +60,7 @@ public class DerivativePreCompute extends Derivative
 		final Img< FloatType > derivatives = new ArrayImgFactory<FloatType>().create( dim, new FloatType() );
 		
 		// we use a local derivative on demand so that we do not need to duplicate code
-		final DerivativeOnDemand derivativeOnDemand = new DerivativeOnDemand( source );
+		final GradientOnDemand derivativeOnDemand = new GradientOnDemand( source );
 		
 		// create an interval 
 		final RandomAccessibleInterval< FloatType > interval = Views.interval( source, minIterate, maxIterate );

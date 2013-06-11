@@ -55,7 +55,7 @@ public class Line extends AbstractFunction<Line>
 		}
 				
 		// invert matrix
-		MatrixFunctions.invert2x2Matrix( delta );
+		MatrixFunctions.invert2x2( delta );
 		
 		this.m = delta[ 0 ] * tetha[ 0 ] + delta[ 1 ] * tetha[ 1 ];
 		this.n = delta[ 2 ] * tetha[ 0 ] + delta[ 3 ] * tetha[ 1 ];

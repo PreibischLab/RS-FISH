@@ -50,8 +50,12 @@ public class TestGauss
 {	
 	public static void main( String[] args ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
-		//final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 256, 256, 256 }, new FloatType() );
-		final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 20, 20, 20 }, new FloatType() );
+		// size around the detection to use
+		// we detect at 0.5, 0.5, 0.5 - so we need an even size
+		final int[] range = new int[]{ 10, 10, 10 };
+		
+		final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 256, 256, 256 }, new FloatType() );
+		//final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 20, 20, 20 }, new FloatType() );
 		final ArrayList< double[] > points = new ArrayList<double[]>();
 		final Random rnd = new Random( 534545 );
 		final double[] sigma = new double[]{ 2, 2, 2 };
@@ -84,9 +88,9 @@ public class TestGauss
 		
 		final LocalMaxima candiateSearch;
 		//candiateSearch = new LocalMaximaDoG( image, 0.7, 1.2, 0.1 );
-		candiateSearch = new LocalMaximaNeighborhood( image );
+		//candiateSearch = new LocalMaximaNeighborhood( image );
 		//candiateSearch = new LocalMaximaSmoothNeighborhood( image, new double[]{ 1, 1, 1 } );
-		//candiateSearch = new LocalMaximaAll( image );
+		candiateSearch = new LocalMaximaAll( image );
 		
 		final ArrayList< int[] > peaks = candiateSearch.estimateLocalMaxima();
 		
@@ -96,9 +100,7 @@ public class TestGauss
 		//derivative = new DerivativeOnDemand( image );
 		derivative = new DerivativePreCompute( image );
 		
-		//peaks.add( new int[] { 12, 12, 12 } );
-		
-		final ArrayList< Spot > spots = Spot.extractSpots( image, peaks, derivative );
+		final ArrayList< Spot > spots = Spot.extractSpots( image, peaks, derivative, range );
 		
 		//GradientDescent.testGradientDescent( spots, new boolean[]{ false, false, true } );
 		//SimpleMultiThreading.threadHaltUnClean();

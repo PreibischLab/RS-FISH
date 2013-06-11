@@ -9,7 +9,7 @@ public class MatrixFunctions
 	 */
 	private MatrixFunctions() {}
 	
-	final public static void invert2x2Matrix( final float[] matrix )
+	final public static void invert2x2( final float[] matrix )
 	{
 		final float a = matrix[ 0 ];
 		final float b = matrix[ 1 ];
@@ -24,7 +24,7 @@ public class MatrixFunctions
 		matrix[ 3 ] = a * det;
 	}
 
-	final public static void invert2x2Matrix( final double[] matrix )
+	final public static void invert2x2( final double[] matrix )
 	{
 		final double a = matrix[ 0 ];
 		final double b = matrix[ 1 ];
@@ -39,11 +39,11 @@ public class MatrixFunctions
 		matrix[ 3 ] = a * det;
 	}
 
-	final static public void invert( final double[] m ) throws NoninvertibleModelException
+	final static public void invert3x3( final double[] m ) throws NoninvertibleModelException
 	{
 		assert m.length == 9 : "Matrix3x3 supports 3x3 double[][] only.";
 		
-		final double det = det( m );
+		final double det = det3x3( m );
 		if ( det == 0 ) throw new NoninvertibleModelException( "Matrix not invertible." );
 		
 		final double i00 = ( m[ 4 ] * m[ 8 ] - m[ 5 ] * m[ 7 ] ) / det;
@@ -81,7 +81,7 @@ public class MatrixFunctions
 	 * 
 	 * @return determinant
 	 */
-	final static public double det( final double[] a )
+	final static public double det3x3( final double[] a )
 	{
 		assert a.length == 9 : "Matrix3x3 supports 3x3 float[][] only.";
 		

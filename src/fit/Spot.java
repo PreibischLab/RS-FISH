@@ -91,7 +91,7 @@ public class Spot
 	}
 
 
-	public static ArrayList< Spot > extractSpots( final Img< FloatType > image, final ArrayList< int[] > peaks, final Derivative derivative )
+	public static ArrayList< Spot > extractSpots( final Img< FloatType > image, final ArrayList< int[] > peaks, final Derivative derivative, final int[] size )
 	{
 		System.out.println( "Found " + peaks.size() + " peaks. " );
 		
@@ -99,7 +99,7 @@ public class Spot
 		
 		// size around the detection to use
 		// we detect at 0.5, 0.5, 0.5 - so we need an even size
-		final int[] size = new int[]{ 10, 10, 10 };
+		// final int[] size = new int[]{ 10, 10, 10 };
 		
 		final long[] min = new long[ 3 ];
 		final long[] max = new long[ 3 ];
@@ -114,7 +114,7 @@ public class Spot
 		
 		for ( final int[] peak : peaks )
 		{	
-			System.out.println( "peak: " + Util.printCoordinates( peak ) );
+			//System.out.println( "peak: " + Util.printCoordinates( peak ) );
 			
 			final Spot spot = new Spot();
 			

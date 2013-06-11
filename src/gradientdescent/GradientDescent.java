@@ -1,4 +1,4 @@
-package gradient;
+package gradientdescent;
 
 import java.util.ArrayList;
 

@@ -10,11 +10,11 @@ import net.imglib2.type.numeric.real.FloatType;
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  */
-public class DerivativeOnDemand extends Derivative
+public class GradientOnDemand extends Gradient
 {
 	final RandomAccess< FloatType > randomAccess;
 	
-	public DerivativeOnDemand( final RandomAccessibleInterval<FloatType> source )
+	public GradientOnDemand( final RandomAccessibleInterval<FloatType> source )
 	{
 		super( source.numDimensions() );
 		

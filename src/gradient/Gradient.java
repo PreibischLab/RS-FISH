@@ -3,11 +3,11 @@ package gradient;
 import net.imglib2.EuclideanSpace;
 import net.imglib2.Localizable;
 
-public abstract class Derivative implements EuclideanSpace
+public abstract class Gradient implements EuclideanSpace
 {
 	final int numDimensions;
 	
-	public Derivative( final int numDimensions )
+	public Gradient( final int numDimensions )
 	{
 		this.numDimensions = numDimensions;
 		

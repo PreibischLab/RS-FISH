@@ -28,9 +28,9 @@ import fit.OrientedPoint;
 import fit.PointFunctionMatch;
 import fit.Spot;
 import fit.SymmetryCenter3d;
-import gradient.Derivative;
-import gradient.DerivativeOnDemand;
-import gradient.DerivativePreCompute;
+import gradient.Gradient;
+import gradient.GradientOnDemand;
+import gradient.GradientPreCompute;
 import gradientdescent.GradientDescent;
 
 import Jama.EigenvalueDecomposition;
@@ -93,10 +93,10 @@ public class TestGauss
 		final ArrayList< int[] > peaks = candiateSearch.estimateLocalMaxima();
 		
 		// we need something to compute the derivatives
-		final Derivative derivative;
+		final Gradient derivative;
 		
 		//derivative = new DerivativeOnDemand( image );
-		derivative = new DerivativePreCompute( image );
+		derivative = new GradientPreCompute( image );
 		
 		final ArrayList< Spot > spots = Spot.extractSpots( image, peaks, derivative, range );
 		

@@ -1,6 +1,6 @@
 package fit;
 
-import gradient.Derivative;
+import gradient.Gradient;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -115,7 +115,7 @@ public class Spot
 	}
 
 
-	public static ArrayList< Spot > extractSpots( final Img< FloatType > image, final ArrayList< int[] > peaks, final Derivative derivative, final int[] size )
+	public static ArrayList< Spot > extractSpots( final Img< FloatType > image, final ArrayList< int[] > peaks, final Gradient derivative, final int[] size )
 	{
 		System.out.println( "Found " + peaks.size() + " peaks. " );
 		

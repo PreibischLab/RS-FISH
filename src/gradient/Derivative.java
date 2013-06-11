@@ -1,4 +1,4 @@
-package derivative;
+package gradient;
 
 import net.imglib2.EuclideanSpace;
 import net.imglib2.Localizable;

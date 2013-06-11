@@ -1,5 +1,7 @@
 package fit;
 
+import gradient.Derivative;
+
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -13,7 +15,6 @@ import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
-import derivative.Derivative;
 
 public class Spot 
 {

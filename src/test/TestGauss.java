@@ -5,9 +5,6 @@ import ij.ImageJ;
 import java.util.ArrayList;
 import java.util.Random;
 
-import derivative.Derivative;
-import derivative.DerivativeOnDemand;
-import derivative.DerivativePreCompute;
 
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
@@ -31,6 +28,9 @@ import fit.OrientedPoint;
 import fit.PointFunctionMatch;
 import fit.Spot;
 import fit.SymmetryCenter3d;
+import gradient.Derivative;
+import gradient.DerivativeOnDemand;
+import gradient.DerivativePreCompute;
 import gradientdescent.GradientDescent;
 
 import Jama.EigenvalueDecomposition;

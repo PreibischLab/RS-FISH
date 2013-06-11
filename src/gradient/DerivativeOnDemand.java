@@ -1,4 +1,4 @@
-package derivative;
+package gradient;
 
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;

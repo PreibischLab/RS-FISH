@@ -11,12 +11,14 @@ import mpicbg.models.Point;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
+import net.imglib2.RealLocalizable;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
-public class Spot 
+public class Spot implements RealLocalizable
 {
 	public final SymmetryCenter< ? extends SymmetryCenter< ? > > center;// = new SymmetryCenter3d();
 	public final ArrayList< PointFunctionMatch > candidates = new ArrayList<PointFunctionMatch>();
@@ -25,6 +27,9 @@ public class Spot
 		
 	public int numRemoved = -1;
 	public double avgCost = -1, minCost = -1, maxCost = -1;
+
+	// from where it was ran
+	public int[] loc = null;
 
 	public final int n;
 	
@@ -39,6 +44,9 @@ public class Spot
 		else
 			throw new RuntimeException( "only 2d and 3d is allowed." );
 	}
+
+	public void setOriginalLocation(int[] loc) { this.loc = loc; }
+	public int[] getOriginalLocation() { return loc; }
 	
 	@Override
 	public String toString()
@@ -73,6 +81,15 @@ public class Spot
 
 	public double computeAverageCost( final ArrayList< PointFunctionMatch > set )
 	{
+		if ( set.size() == 0 )
+		{
+			minCost = Double.MAX_VALUE;
+			maxCost = Double.MAX_VALUE;
+			avgCost = Double.MAX_VALUE;
+			
+			return avgCost;
+		}
+		
 		minCost = Double.MAX_VALUE;
 		maxCost = 0;
 		avgCost = 0;
@@ -117,7 +134,7 @@ public class Spot
 
 	public static ArrayList< Spot > extractSpots( final Img< FloatType > image, final ArrayList< int[] > peaks, final Gradient derivative, final int[] size )
 	{
-		System.out.println( "Found " + peaks.size() + " peaks. " );
+		//System.out.println( "Found " + peaks.size() + " peaks. " );
 		
 		final int numDimensions = image.numDimensions();
 		
@@ -142,11 +159,15 @@ public class Spot
 		final ArrayList< Spot > spots = new ArrayList<Spot>();		
 		final RandomAccessible< FloatType > infinite = Views.extendZero( image );
 		
+		int i = 0;
+		
 		for ( final int[] peak : peaks )
 		{	
-			//System.out.println( "peak: " + Util.printCoordinates( peak ) );
+			//if ( i++ % 1000 == 0 )
+			//	System.out.println( "peak " + i + ": " + Util.printCoordinates( peak ) );
 			
 			final Spot spot = new Spot( numDimensions );
+			spot.setOriginalLocation( peak );
 			
 			for ( int e = 0; e < numDimensions; ++e )
 			{
@@ -215,10 +236,27 @@ public class Spot
 			spot.center.fit( spot.inliers );
 	}
 
-	public static void ransac( final ArrayList< Spot > spots, final int iterations, final double maxError, final double inlierRatio ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
+	public static void ransac( final ArrayList< Spot > spots, final int iterations, final double maxError, final double inlierRatio )
 	{
 		for ( final Spot spot : spots )
-			ransac( spot, iterations, maxError, inlierRatio );
+		{
+			try 
+			{
+				ransac( spot, iterations, maxError, inlierRatio );
+			} 
+			catch (NotEnoughDataPointsException e) 
+			{
+				spot.inliers.clear();
+				spot.numRemoved = spot.candidates.size();
+				System.out.println( "e1" );
+			}
+			catch (IllDefinedDataPointsException e)
+			{
+				spot.inliers.clear();
+				spot.numRemoved = spot.candidates.size();
+				System.out.println( "e2" );
+			}
+		}
 	}
 	
 	public static void ransac( final Spot spot, final int iterations, final double maxError, final double inlierRatio ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
@@ -279,5 +317,20 @@ public class Spot
 		
 		for ( int i = 0; i < f.length; ++i )
 			f[ i ] = (float)( f[ i ] / l );
-	}	
+	}
+
+	@Override
+	public int numDimensions() { return n; }
+
+	@Override
+	public void localize( final float[] position ) { center.getSymmetryCenter( position ); }
+
+	@Override
+	public void localize( final double[] position ) { center.getSymmetryCenter( position ); }
+
+	@Override
+	public float getFloatPosition( final int d ) { return (float)center.getSymmetryCenter( d ); }
+
+	@Override
+	public double getDoublePosition( final int d ) { return center.getSymmetryCenter( d ); }	
 }

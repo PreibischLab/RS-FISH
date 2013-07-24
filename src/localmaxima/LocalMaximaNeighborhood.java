@@ -13,11 +13,20 @@ import net.imglib2.view.Views;
 
 public class LocalMaximaNeighborhood extends LocalMaxima
 {
+	final double threshold;
+	
 	public LocalMaximaNeighborhood( final RandomAccessibleInterval<FloatType> source )
 	{
-		super( source );
+		this( source, -Double.MAX_VALUE );
 	}
 
+	public LocalMaximaNeighborhood( final RandomAccessibleInterval<FloatType> source, final double threshold )
+	{
+		super( source );
+
+		this.threshold = threshold;;
+	}
+	
 	@Override
 	public ArrayList<int[]> estimateLocalMaxima()
 	{
@@ -46,6 +55,10 @@ public class LocalMaximaNeighborhood extends LocalMaxima
             // (the center cursor runs over the image in the same iteration order as neighborhood)
             final float centerValue = center.next().get();
  
+            // only if it has a certain value
+            if ( centerValue < threshold )
+            	continue;
+            
             // keep this boolean true as long as no other value in the local neighborhood
             // is larger or equal
             boolean isMax = true;

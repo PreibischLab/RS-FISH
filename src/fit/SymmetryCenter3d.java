@@ -27,7 +27,7 @@ public class SymmetryCenter3d extends AbstractFunction<SymmetryCenter3d> impleme
 	 * the symmetry center
 	 */
 	double xc, yc, zc;
-
+	
 	/**
 	 * Fit the function to a list of {@link OrientedPoint}s.
 	 */
@@ -90,8 +90,8 @@ public class SymmetryCenter3d extends AbstractFunction<SymmetryCenter3d> impleme
 		}
 		catch ( NoninvertibleModelException e )
 		{
-			xc = yc = zc = 0;
-			System.out.println( "Cannot determine center, cannot compute determinant." );
+			xc = yc = zc = Double.NaN;
+			//System.out.println( "Cannot determine center, cannot compute determinant." );
 			return;
 		}
 		
@@ -182,7 +182,10 @@ public class SymmetryCenter3d extends AbstractFunction<SymmetryCenter3d> impleme
 		
 		return center;
 	}
-	
+
+	@Override
+	public int numDimensions() { return 2; }	
+
 	public static void main( String[] args ) throws NotEnoughDataPointsException
 	{
 		final Random rnd = new Random( 345 );

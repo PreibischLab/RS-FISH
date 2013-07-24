@@ -148,6 +148,9 @@ public class SymmetryCenter2d extends AbstractFunction<SymmetryCenter2d> impleme
 		return center;
 	}
 	
+	@Override
+	public int numDimensions() { return 2; }	
+
 	public static void main( String[] args ) throws NotEnoughDataPointsException
 	{
 		final Random rnd = new Random( 345 );

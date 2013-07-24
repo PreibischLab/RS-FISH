@@ -14,6 +14,11 @@ public class LocalMaximaSmoothNeighborhood extends LocalMaximaNeighborhood
 	{
 		super( smooth( source, sigma ) );	
 	}
+
+	public LocalMaximaSmoothNeighborhood( final RandomAccessibleInterval<FloatType> source, final double[] sigma, final double threshold )
+	{
+		super( smooth( source, sigma ), threshold );	
+	}
 	
 	private static final Img< FloatType > smooth( final RandomAccessibleInterval<FloatType> source, final double[] sigma )
 	{

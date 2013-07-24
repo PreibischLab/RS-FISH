@@ -18,6 +18,8 @@ public abstract class LocalMaxima implements EuclideanSpace
 	}
 
 	public abstract ArrayList< int[] > estimateLocalMaxima();
+	
+	public RandomAccessibleInterval< FloatType > getSource() { return source; }
 
 	@Override
 	public int numDimensions() { return numDimensions; }

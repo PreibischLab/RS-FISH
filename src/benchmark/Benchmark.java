@@ -31,6 +31,7 @@ public class Benchmark
 	final String dir, file;
 	final String imageFile = ".tif";
 	final String textFile = ".loc";
+	final String matlabFile = ".loc3";
 
 	// the ground truth
 	final ArrayList< GroundTruthPoint > groundtruth;
@@ -92,7 +93,7 @@ public class Benchmark
 		final LocalMaxima candiateSearch;
 		//candiateSearch = new LocalMaximaDoG( img, 0.7, 1.2, 0.1 );
 		//candiateSearch = new LocalMaximaNeighborhood( img );
-		candiateSearch = new LocalMaximaSmoothNeighborhood( img, new double[]{ 1, 1, 1 }, 0.4 );
+		candiateSearch = new LocalMaximaSmoothNeighborhood( img, new double[]{ 1, 1, 1 }, 0.5 );
 		//candiateSearch = new LocalMaximaAll( img );
 		
 		//ImageJFunctions.show( candiateSearch.getSource() );
@@ -100,6 +101,13 @@ public class Benchmark
 		peaks = candiateSearch.estimateLocalMaxima();
 		
 		return peaks.size();
+	}
+	
+	public void matlabSpots()
+	{
+		this.goodspots = LoadSpotFile.loadSpots2( new File( dir + file + matlabFile ) );
+		
+		System.out.print( goodspots.size() + "\t" );
 	}
 	
 	public void gaussfit()
@@ -266,14 +274,19 @@ public class Benchmark
 	public static void main(String[] args) throws ImgIOException 
 	{
 		final String dir = "documents/Images For Stephan/Tests/";
+		//final String dir = "documents/Images For Stephan/Empty Bg Density Range Sigxy 2 SigZ 2/";
 		final String file = "Poiss_30spots_bg_200_2_I_1000_0_img0";
 		
 		final Benchmark b = new Benchmark( dir, file );
 		
 		System.out.println( "peaks: " + b.findPeaks() );
 		
-		//SimpleMultiThreading.threadHaltUnClean();
-		/*
+		// analyze Tim's matlab results
+		b.matlabSpots();
+		b.analyzePoints();
+		
+		SimpleMultiThreading.threadHaltUnClean();
+		
 		for ( double s = 0.5; s <= 5; s = s + 0.1 )
 		{
 			System.out.print( s + "\t" );
@@ -282,7 +295,7 @@ public class Benchmark
 			b.analyzePoints();
 		}
 		System.exit( 0 );
-		*/
+		
 		
 		//double error = 2.19;
 		for ( double error = 0.0625/2; error < 65; error = error * Math.sqrt( Math.sqrt( Math.sqrt( 2 ) ) ) )

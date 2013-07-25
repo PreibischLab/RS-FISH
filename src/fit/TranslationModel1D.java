@@ -14,6 +14,11 @@ import mpicbg.models.PointMatch;
  */
 public class TranslationModel1D extends AbstractModel< TranslationModel1D > implements InvertibleCoordinateTransform
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7193913463278025602L;
+
 	static final protected int MIN_NUM_MATCHES = 1;
 	
 	public float tx = 0;

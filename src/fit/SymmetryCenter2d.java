@@ -183,4 +183,13 @@ public class SymmetryCenter2d extends AbstractFunction<SymmetryCenter2d> impleme
 			System.out.println( "Distance: " + center.distanceTo( p ) );
 		}
 	}
+
+	@Override
+	public void setSymmetryCenter( final double center, final int d )
+	{
+		if ( d == 0 )
+			xc = center;
+		else if ( d == 1 )
+			yc = center;
+	}
 }

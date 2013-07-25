@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import localmaxima.LocalMaxima;
 import localmaxima.LocalMaximaDoG;
 import localmaxima.LocalMaximaSmoothNeighborhood;
+import mpicbg.imglib.algorithm.math.MathLib;
 import fit.Spot;
+import gauss.GaussFit;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
 
@@ -90,7 +92,7 @@ public class Benchmark
 		final LocalMaxima candiateSearch;
 		//candiateSearch = new LocalMaximaDoG( img, 0.7, 1.2, 0.1 );
 		//candiateSearch = new LocalMaximaNeighborhood( img );
-		candiateSearch = new LocalMaximaSmoothNeighborhood( img, new double[]{ 1, 1, 1 }, 0.5 );
+		candiateSearch = new LocalMaximaSmoothNeighborhood( img, new double[]{ 1, 1, 1 }, 0.4 );
 		//candiateSearch = new LocalMaximaAll( img );
 		
 		//ImageJFunctions.show( candiateSearch.getSource() );
@@ -98,6 +100,31 @@ public class Benchmark
 		peaks = candiateSearch.estimateLocalMaxima();
 		
 		return peaks.size();
+	}
+	
+	public void gaussfit()
+	{
+		final GaussFit f = new GaussFit( img );
+		final int n = img.numDimensions();
+		goodspots = new ArrayList<Spot>();
+		
+		for ( final int[] p : peaks )
+		{
+			final float[] loc = f.fit( p );
+			
+			if ( loc != null )
+			{
+				final Spot s = new Spot( n );
+				
+				for ( int d = 0; d < n; ++d )
+					s.center.setSymmetryCenter( loc[ d ], d );
+				
+				goodspots.add( s );
+			}
+		}
+		
+		System.out.print( goodspots.size() + "\t" );
+		
 	}
 	
 	public void fitPoints( final double ransacError )
@@ -188,7 +215,9 @@ public class Benchmark
 		double avgError = 0;
 		double minError = Double.MAX_VALUE;
 		double maxError = -Double.MAX_VALUE;
+		final double[] median = new double[ goodspots.size() ];
 		
+		int i = 0;
 		for ( final Spot spot : goodspots )
 		{
 			searchGroundTruth.search( spot );
@@ -196,15 +225,24 @@ public class Benchmark
 			
 			final double dist = dist( p, spot );
 			avgError += dist;
+			median[ i++ ] = dist;
 			minError = Math.min( minError, dist );
 			maxError = Math.max( maxError, dist );
 			//System.out.println( dist );
 		}
 		
 		avgError /= (double)goodspots.size();
+		double stdev = 0;
 		
-		//System.out.println( "error: " + avgError + " [" + minError + " ... " + maxError + "]" );
-		System.out.println( avgError + "\t" + minError + "\t" + maxError );
+		for ( i = 0; i < median.length; ++i )
+			stdev += ( median[ i ] - avgError ) * ( median[ i ] - avgError ); 
+
+		stdev /= (double)goodspots.size();
+		stdev = Math.sqrt( stdev );
+		
+		double medianError = mpicbg.imglib.util.Util.computeMedian( median );
+		
+		System.out.println( avgError + "\t" + stdev + "\t" + medianError + "\t" + minError + "\t" + maxError );
 		
 	}
 	
@@ -234,7 +272,19 @@ public class Benchmark
 		
 		System.out.println( "peaks: " + b.findPeaks() );
 		
-		//double error = 0.08838834764831845;
+		//SimpleMultiThreading.threadHaltUnClean();
+		/*
+		for ( double s = 0.5; s <= 5; s = s + 0.1 )
+		{
+			System.out.print( s + "\t" );
+			GaussFit.s = s;//4.4;
+			b.gaussfit();
+			b.analyzePoints();
+		}
+		System.exit( 0 );
+		*/
+		
+		//double error = 2.19;
 		for ( double error = 0.0625/2; error < 65; error = error * Math.sqrt( Math.sqrt( Math.sqrt( 2 ) ) ) )
 		{
 			b.fitPoints( error );

@@ -21,4 +21,6 @@ public interface SymmetryCenter< M extends AbstractFunction< M > > extends Model
 	 * @return the center in dimension d
 	 */
 	public double getSymmetryCenter( final int d );
+	
+	public void setSymmetryCenter( final double center, final int d );
 }

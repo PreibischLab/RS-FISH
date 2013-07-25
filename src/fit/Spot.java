@@ -5,6 +5,7 @@ import gradient.Gradient;
 import java.util.ArrayList;
 import java.util.Random;
 
+import mpicbg.models.AbstractModel;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
@@ -238,6 +239,9 @@ public class Spot implements RealLocalizable
 
 	public static void ransac( final ArrayList< Spot > spots, final int iterations, final double maxError, final double inlierRatio )
 	{
+		// TODO: This is only to make it reproducible
+		AbstractModel.resetRandom();
+
 		for ( final Spot spot : spots )
 		{
 			try 

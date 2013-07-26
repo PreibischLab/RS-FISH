@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import net.imglib2.util.Util;
+
 import fit.Spot;
 
 public class LoadSpotFile 
@@ -76,6 +78,14 @@ public class LoadSpotFile
 				final double tmp = v[ 1 ];
 				v[ 1 ] = v[ 0 ];
 				v[ 0 ] = tmp;
+				
+				// adjust for different pixel offsets in tim's code
+				v[ 0 ] -= 0.5;
+				v[ 1 ] -= 0.5;
+				if ( v.length > 2 )
+					v[ 2 ] -= 1.0;
+				
+				System.out.println( Util.printCoordinates( v ) );
 				
 				values.add( v );
 			}

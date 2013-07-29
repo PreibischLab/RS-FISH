@@ -11,6 +11,7 @@ import localmaxima.LocalMaximaSmoothNeighborhood;
 import mpicbg.imglib.algorithm.math.MathLib;
 import fit.Spot;
 import gauss.GaussFit;
+import gauss.GaussianMaskFit;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
 
@@ -25,6 +26,7 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.neighborsearch.NearestNeighborSearchOnKDTree;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
+import net.imglib2.view.Views;
 
 public class Benchmark 
 {
@@ -133,6 +135,40 @@ public class Benchmark
 		
 		System.out.print( goodspots.size() + "\t" );
 		
+	}
+	
+	public void gaussianMaskFit()
+	{
+		final int n = img.numDimensions();
+		goodspots = new ArrayList<Spot>();
+		
+		final long[] min = new long[ n ];
+		final long[] max = new long[ n ];
+		final double[] loc = new double[ n ];
+		final double[] sigma = new double[]{ 1.35, 1.35, 2 };
+		
+		for ( final int[] p : peaks )
+		{
+			for ( int d = 0; d < n; ++d )
+			{
+				min[ d ] = p[ d ] - range[ d ]/2;
+				max[ d ] = p[ d ] + range[ d ]/2;
+				
+				loc[ d ] = p[ d ];
+			}
+			
+			GaussianMaskFit.gaussianMaskFit( Views.interval( img, min, max ), loc, sigma );
+			
+			
+			final Spot s = new Spot( n );
+			
+			for ( int d = 0; d < n; ++d )
+				s.center.setSymmetryCenter( loc[ d ], d );
+			
+			goodspots.add( s );
+		}
+		
+		System.out.print( goodspots.size() + "\t" );
 	}
 	
 	public void fitPoints( final double ransacError )
@@ -273,20 +309,26 @@ public class Benchmark
 	 */
 	public static void main(String[] args) throws ImgIOException 
 	{
-		final String dir = "documents/Images For Stephan/Tests/";
+		//final String dir = "documents/Images For Stephan/Tests/";
 		//final String dir = "documents/Images For Stephan/Empty Bg Density Range Sigxy 2 SigZ 2/";
-		final String file = "Poiss_30spots_bg_200_2_I_1000_0_img0";
+		final String dir = "documents/Images For Stephan/Infinite SNR Density Range Sigxy 1pt35 SigZ 2/";		
+		final String file = "Poiss_30spots_bg_200_0_I_10000_0_img0";
 		
 		final Benchmark b = new Benchmark( dir, file );
 		
 		System.out.println( "peaks: " + b.findPeaks() );
 		
-		// analyze Tim's matlab results
-		b.matlabSpots();
+		b.gaussianMaskFit();
 		b.analyzePoints();
 		
-		SimpleMultiThreading.threadHaltUnClean();
+		System.exit( 0 );
 		
+		// analyze Tim's matlab results
+		//b.matlabSpots();
+		//b.analyzePoints();
+		//SimpleMultiThreading.threadHaltUnClean();
+		
+		/*
 		for ( double s = 0.5; s <= 5; s = s + 0.1 )
 		{
 			System.out.print( s + "\t" );
@@ -295,7 +337,7 @@ public class Benchmark
 			b.analyzePoints();
 		}
 		System.exit( 0 );
-		
+		*/
 		
 		//double error = 2.19;
 		for ( double error = 0.0625/2; error < 65; error = error * Math.sqrt( Math.sqrt( Math.sqrt( 2 ) ) ) )

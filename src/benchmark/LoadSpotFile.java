@@ -85,7 +85,7 @@ public class LoadSpotFile
 				if ( v.length > 2 )
 					v[ 2 ] -= 1.0;
 				
-				System.out.println( Util.printCoordinates( v ) );
+				//System.out.println( Util.printCoordinates( v ) );
 				
 				values.add( v );
 			}

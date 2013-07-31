@@ -9,12 +9,17 @@ import localmaxima.LocalMaxima;
 import localmaxima.LocalMaximaDoG;
 import localmaxima.LocalMaximaSmoothNeighborhood;
 import mpicbg.imglib.algorithm.math.MathLib;
+import fit.OrientedPoint;
+import fit.PointFunctionMatch;
 import fit.Spot;
 import gauss.GaussFit;
 import gauss.GaussianMaskFit;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
 
+import net.imglib2.Cursor;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
 import net.imglib2.collection.KDTree;
 import net.imglib2.img.Img;
@@ -107,8 +112,7 @@ public class Benchmark
 	
 	public void matlabSpots()
 	{
-		this.goodspots = LoadSpotFile.loadSpots2( new File( dir + file + matlabFile ) );
-		
+		this.goodspots = LoadSpotFile.loadSpots2( new File( dir + file + matlabFile ) );	
 		System.out.print( goodspots.size() + "\t" );
 	}
 	
@@ -137,6 +141,18 @@ public class Benchmark
 		
 	}
 	
+	public void getRangeForFit( final long[] min, final long[] max, final long[] size, final int[] p )
+	{
+		for ( int d = 0; d < p.length; ++d )
+		{
+			min[ d ] = p[ d ] - range[ d ]/2;
+			max[ d ] = p[ d ] + range[ d ]/2;
+			
+			if ( size != null )
+				size[ d ] = max[ d ] - min[ d ] + 1;
+		}		
+	}
+	
 	public void gaussianMaskFit()
 	{
 		final int n = img.numDimensions();
@@ -145,20 +161,16 @@ public class Benchmark
 		final long[] min = new long[ n ];
 		final long[] max = new long[ n ];
 		final double[] loc = new double[ n ];
-		final double[] sigma = new double[]{ 1.35, 1.35, 2 };
+		final double[] sigma = new double[]{ 2, 2, 2 };
 		
 		for ( final int[] p : peaks )
 		{
+			getRangeForFit( min, max, null, p );
+
 			for ( int d = 0; d < n; ++d )
-			{
-				min[ d ] = p[ d ] - range[ d ]/2;
-				max[ d ] = p[ d ] + range[ d ]/2;
-				
 				loc[ d ] = p[ d ];
-			}
 			
-			GaussianMaskFit.gaussianMaskFit( Views.interval( img, min, max ), loc, sigma );
-			
+			GaussianMaskFit.gaussianMaskFit( Views.interval( img, min, max ), loc, sigma );		
 			
 			final Spot s = new Spot( n );
 			
@@ -171,7 +183,7 @@ public class Benchmark
 		System.out.print( goodspots.size() + "\t" );
 	}
 	
-	public void fitPoints( final double ransacError )
+	protected ArrayList< Spot > extractSpotsRANSAC( final double ransacError )
 	{
 		// we need something to compute the derivatives
 		final Gradient derivative;
@@ -179,13 +191,128 @@ public class Benchmark
 		//derivative = new DerivativeOnDemand( image );
 		derivative = new GradientPreCompute( img );
 		
-		spots = Spot.extractSpots( img, peaks, derivative, range );
+		final ArrayList< Spot > spots = Spot.extractSpots( img, peaks, derivative, range );
 		
 		//GradientDescent.testGradientDescent( spots, new boolean[]{ false, false, true } );
-		//SimpleMultiThreading.threadHaltUnClean();
 		
 		// ransac on all spots
 		Spot.ransac( spots, 1000, ransacError, 1.0/100.0 );
+		
+		return spots;
+	}
+	
+	public ArrayList< Img< FloatType > > extractMaskByRANSAC( final double ransacError )
+	{
+		this.spots = extractSpotsRANSAC( ransacError );
+		
+		final int n = img.numDimensions();
+		final ArrayList< Img< FloatType > > masks = new ArrayList<Img<FloatType>>();
+		final long[] min = new long[ n ];
+		final long[] max = new long[ n ];
+		final long[] size = new long[ n ];
+		final long[] tmp = new long[ n ];
+		final FloatType one = new FloatType( 1 );
+		
+		for ( final Spot spot : spots )
+		{
+			spot.computeAverageCostInliers();
+			
+			if ( spot.inliers.size() > spot.center.getMinNumPoints() * 3 )
+			{
+				// get the center location of the image used to compute the radial symmetry
+				final int[] p = spot.getOriginalLocation();
+				
+				System.out.println( "p: " + Util.printCoordinates( p ) );
+
+				// set the range we will use for the fit
+				getRangeForFit( min, max, size, p );
+
+				System.out.println( "min: " + Util.printCoordinates( min ) );
+				System.out.println( "max: " + Util.printCoordinates( max ) );
+				System.out.println( "size: " + Util.printCoordinates( size ) );
+
+				// create the mask image
+				final Img< FloatType > ransacMask = new ArrayImgFactory< FloatType >().create( size, img.firstElement() );
+				
+				// set the mask image to the same location as the interval we fit on and make it iterable
+				final RandomAccessibleInterval<FloatType> translatedMask = Views.translate( ransacMask, min );				
+				final RandomAccess< FloatType > r = Views.extendZero( translatedMask ).randomAccess();
+
+				System.out.println( "inliers: " + spot.inliers.size() );
+
+				// add weight for every pixel involved in the inliers
+				for ( final PointFunctionMatch pfm : spot.inliers )
+				{
+					final OrientedPoint op = (OrientedPoint)pfm.getP1();
+					
+					// get the top left front location
+					for ( int d = 0; d < n; ++d )
+						tmp[ d ] = Math.round( op.getL()[ d ] - 0.5 );
+					
+					System.out.println( "op: " + Util.printCoordinates( op.getL() ) );
+					System.out.println( "round(op): " + Util.printCoordinates( tmp ) );
+					
+					r.setPosition( tmp );
+					r.get().add( one );
+					r.fwd( 0 );
+					r.get().add( one );
+					
+					if ( n > 1 )
+					{
+						r.fwd( 1 );
+						r.get().add( one );
+						r.bck( 0 );
+						r.get().add( one );
+						
+						if ( n == 3 )
+						{
+							r.fwd( 2 );
+							r.get().add( one );
+							r.fwd( 0 );
+							r.get().add( one );
+							r.bck( 1 );
+							r.get().add( one );
+							r.bck( 0 );							
+							r.get().add( one );
+						}
+					}					
+				}
+
+				// copy and show the spot itself
+				/*
+				final Img< FloatType > tmpImg = new ArrayImgFactory< FloatType >().create( size, img.firstElement() );
+				final RandomAccessibleInterval<FloatType> translatedTmpImg = Views.translate( tmpImg, min );
+				final RandomAccess< FloatType > rImg = Views.extendZero( img ).randomAccess();
+				final Cursor< FloatType > cTmpImg = Views.iterable( translatedTmpImg ).localizingCursor();
+
+				while ( cTmpImg.hasNext() )
+				{
+					cTmpImg.fwd();
+					rImg.setPosition( cTmpImg );
+					cTmpImg.get().set( rImg.get() );
+				}
+				
+				ImageJFunctions.show( translatedTmpImg ).setTitle( "img_spot" );
+				*/
+				
+				ImageJFunctions.show( translatedMask ).setTitle( "ransac_mask" );
+				SimpleMultiThreading.threadHaltUnClean();
+
+				
+				masks.add( ransacMask );
+			}
+			else
+			{
+				masks.add( null );
+			}
+		}
+		
+		return masks;
+	}
+	
+	public void fitPointsRANSAC( final double ransacError )
+	{
+		this.spots = extractSpotsRANSAC( ransacError );
 		
 		// some statistics on inliers
 		int minNumInliers = Integer.MAX_VALUE;
@@ -309,19 +436,19 @@ public class Benchmark
 	 */
 	public static void main(String[] args) throws ImgIOException 
 	{
-		//final String dir = "documents/Images For Stephan/Tests/";
+		final String dir = "documents/Images For Stephan/Tests/";
 		//final String dir = "documents/Images For Stephan/Empty Bg Density Range Sigxy 2 SigZ 2/";
-		final String dir = "documents/Images For Stephan/Infinite SNR Density Range Sigxy 1pt35 SigZ 2/";		
-		final String file = "Poiss_30spots_bg_200_0_I_10000_0_img0";
+		//final String dir = "documents/Images For Stephan/Infinite SNR Density Range Sigxy 1pt35 SigZ 2/";		
+		final String file = "Poiss_30spots_bg_200_2_I_1000_0_img0";
 		
 		final Benchmark b = new Benchmark( dir, file );
 		
 		System.out.println( "peaks: " + b.findPeaks() );
 		
-		b.gaussianMaskFit();
-		b.analyzePoints();
-		
-		System.exit( 0 );
+		b.extractMaskByRANSAC( 2.19 );
+		//b.gaussianMaskFit();
+		//b.analyzePoints();
+		SimpleMultiThreading.threadHaltUnClean();
 		
 		// analyze Tim's matlab results
 		//b.matlabSpots();
@@ -339,10 +466,10 @@ public class Benchmark
 		System.exit( 0 );
 		*/
 		
-		//double error = 2.19;
-		for ( double error = 0.0625/2; error < 65; error = error * Math.sqrt( Math.sqrt( Math.sqrt( 2 ) ) ) )
+		double error = 2.19;
+		//for ( double error = 0.0625/2; error < 65; error = error * Math.sqrt( Math.sqrt( Math.sqrt( 2 ) ) ) )
 		{
-			b.fitPoints( error );
+			b.fitPointsRANSAC( error );
 			b.analyzePoints();
 		}
 	}

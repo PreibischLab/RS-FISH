@@ -5,4 +5,4 @@ After the Nature Methods paper "Rapid, accurate particle tracking by calculation
 
 Including derivation for 3d + integration with RANSAC
 
-License: GPLv2
+License: GPLv2, written by Stephan Preibisch & Timothee Lionnet

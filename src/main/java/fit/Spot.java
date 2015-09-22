@@ -240,7 +240,7 @@ public class Spot implements RealLocalizable
 	public static void ransac( final ArrayList< Spot > spots, final int iterations, final double maxError, final double inlierRatio )
 	{
 		// TODO: This is only to make it reproducible
-		AbstractModel.resetRandom();
+		//AbstractModel.resetRandom();
 
 		for ( final Spot spot : spots )
 		{

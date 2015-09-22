@@ -5,7 +5,6 @@ import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
@@ -13,7 +12,11 @@ import net.imglib2.view.Views;
 
 public class GaussianMaskFit 
 {
-	public static void gaussianMaskFit( final RandomAccessibleInterval<FloatType> signalInterval, final double[] location, final double[] sigma )
+	public static void gaussianMaskFit( 
+			final RandomAccessibleInterval<FloatType> signalInterval, 
+			final double[] location, 
+			final double[] sigma, 
+			final Img< FloatType > ransacWeight )
 	{
 		final int n = signalInterval.numDimensions();
 		
@@ -49,6 +52,12 @@ public class GaussianMaskFit
 			// compute the sums
 			final Cursor< FloatType > cMask = gaussianMask.cursor();
 			final Cursor< FloatType > cImg = signalIterable.localizingCursor();
+			final Cursor< FloatType > cWeight;
+			
+			if ( ransacWeight == null )
+				cWeight = null;
+			else
+				cWeight = ransacWeight.cursor();
 			
 			double sumLocSN[] = new double[ n ]; // int_{all_px} d * S[ d ] * N[ d ]
 			double sumSN = 0; // int_{all_px} S[ d ] * N[ d ]
@@ -61,11 +70,17 @@ public class GaussianMaskFit
 				
 				final double signal = cImg.get().getRealDouble();
 				final double mask = cMask.get().getRealDouble();
+				final double weight;
 				
-				final double signalmask = signal * mask;
+				if ( cWeight != null )
+					weight = cWeight.next().getRealDouble();
+				else
+					weight = 8;
+				
+				final double signalmask = signal * mask * weight;
 				
 				sumSN += signalmask;
-				sumSS += signal * signal;
+				sumSS += signal * signal * weight;
 				
 				for ( int d = 0; d < n; ++d )
 				{

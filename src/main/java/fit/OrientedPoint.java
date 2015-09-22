@@ -9,12 +9,12 @@ public class OrientedPoint extends Point
 	/**
 	 * Orientation in local coordinates
 	 */
-	protected final float[] ol;
+	protected final double[] ol;
 
 	/**
 	 * Orientation in world coordinates
 	 */
-	protected final float[] ow;
+	protected final double[] ow;
 
 	/**
 	 * gradient magnitude
@@ -22,9 +22,9 @@ public class OrientedPoint extends Point
 	protected final float magnitude;
 
 	// TODO: Multithreading-save
-	protected final float[] tmp;
+	protected final double[] tmp;
 	
-	public OrientedPoint( final float[] position, final float[] vector, final float magnitude )
+	public OrientedPoint( final double[] position, final double[] vector, final float magnitude )
 	{
 		super( position );
 
@@ -32,23 +32,23 @@ public class OrientedPoint extends Point
 		ow = ol.clone();
 		this.magnitude = magnitude;
 		
-		tmp = new float[ ol.length ];
+		tmp = new double[ ol.length ];
 	}
 	
 	/**
 	 * @return The magnitude of the orientation/gradient
 	 */
-	public float getMagnitude(){ return magnitude; }	
+	public double getMagnitude(){ return magnitude; }	
 
 	/**
 	 * @return The orientation/gradient in local coordinates
 	 */
-	public float[] getOrientationL(){ return ol; }
+	public double[] getOrientationL(){ return ol; }
 	
 	/**
 	 * @return The orientation/gradient in world coordinates
 	 */
-	public float[] getOrientationW(){ return ow; }
+	public double[] getOrientationW(){ return ow; }
 	
 	/**
 	 * angle between this points orientation

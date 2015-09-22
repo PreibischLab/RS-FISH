@@ -11,5 +11,5 @@ public interface ComputeGradient
 	 * @param location - the top-left-front position for which to compute the derivative
 	 * @param derivativeVector - where to put the derivative vector [3]
 	 */
-	public void gradientAt( final Localizable location, final float[] derivativeVector );
+	public void gradientAt( final Localizable location, final double[] derivativeVector );
 }

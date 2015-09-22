@@ -26,7 +26,7 @@ public class GradientOnDemand extends Gradient
 	}
 
 	@Override
-	public void gradientAt( final Localizable location, final float[] derivativeVector )
+	public void gradientAt( final Localizable location, final double[] derivativeVector )
 	{
 		computeGradient.gradientAt( location, derivativeVector );
 	}

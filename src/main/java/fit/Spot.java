@@ -24,7 +24,7 @@ public class Spot implements RealLocalizable
 	public final SymmetryCenter< ? extends SymmetryCenter< ? > > center;// = new SymmetryCenter3d();
 	public final ArrayList< PointFunctionMatch > candidates = new ArrayList<PointFunctionMatch>();
 	public final ArrayList< PointFunctionMatch > inliers = new ArrayList<PointFunctionMatch>();
-	public final float[] scale = new float[]{ 1, 1, 1 };
+	public final double[] scale = new double[]{ 1, 1, 1 };
 		
 	public int numRemoved = -1;
 	public double avgCost = -1, minCost = -1, maxCost = -1;
@@ -98,7 +98,7 @@ public class Spot implements RealLocalizable
 		for ( final PointFunctionMatch pm : set )
 		{
 			pm.apply( center );
-			final double d = pm.getDistanceDouble();
+			final double d = pm.getDistance();
 			
 			avgCost += d;
 			minCost = Math.min( d, minCost );
@@ -116,10 +116,10 @@ public class Spot implements RealLocalizable
 		{
 			final OrientedPoint p = (OrientedPoint)pm.getP1();
 			
-			final float[] l = p.getL();
-			final float[] w = p.getW();
-			final float[] ol = p.getOrientationL();
-			final float[] ow = p.getOrientationW();
+			final double[] l = p.getL();
+			final double[] w = p.getW();
+			final double[] ol = p.getOrientationL();
+			final double[] ow = p.getOrientationW();
 			
 			for ( int d = 0; d < l.length; ++d )
 			{
@@ -186,35 +186,35 @@ public class Spot implements RealLocalizable
 			while ( cursor.hasNext() )
 			{
 				cursor.fwd();
-				
+
 				/*
 				final int x = cursor.getIntPosition( 0 );
 				final int y = cursor.getIntPosition( 1 );
 				final int z = cursor.getIntPosition( 2 );
-				
+
 				if ( x < 0 || y < 0 || z < 0 || x > w || y > h || z > d )
 					continue;
 				*/
-				
-				final float[] v = new float[ numDimensions ];
-				
+
+				final double[] v = new double[ numDimensions ];
+
 				derivative.gradientAt( cursor, v );
-				
+
 				//norm( v );
-												
+
 				if ( length( v ) != 0 )
 				{
-					final float[] p = new float[ numDimensions ];
+					final double[] p = new double[ numDimensions ];
 					
 					for ( int e = 0; e < numDimensions; ++e )
 						p[ e ] = cursor.getIntPosition( e ) + 0.5f;
-					
+
 					/*
 					p[ 0 ] = x + 0.5f;
 					p[ 1 ] = y + 0.5f;
 					p[ 2 ] = z + 0.5f;
 					*/
-					
+
 					spot.candidates.add( new PointFunctionMatch( new OrientedPoint( p, v, 1 ) ) );
 				}
 			}
@@ -285,7 +285,7 @@ public class Spot implements RealLocalizable
 			
 			final RandomAccess< T > drawRA = draw.randomAccess();
 			double rnd = (random.nextDouble() - 0.5) / 2.0;
-			final float[] scale = spot.scale;
+			final double[] scale = spot.scale;
 			
 			for ( final PointFunctionMatch pm : spot.inliers )
 			{
@@ -300,11 +300,11 @@ public class Spot implements RealLocalizable
 		}
 	}
 	
-	public static double length( final float[] f )
+	public static double length( final double[] f )
 	{
 		double l = 0;
 		
-		for ( final float v : f )
+		for ( final double v : f )
 			l += v*v;
 		
 		l = Math.sqrt( l );
@@ -312,7 +312,7 @@ public class Spot implements RealLocalizable
 		return l;
 	}
 	
-	public static void norm( final float[] f )
+	public static void norm( final double[] f )
 	{
 		double l = length( f );
 
@@ -320,7 +320,7 @@ public class Spot implements RealLocalizable
 			return;
 		
 		for ( int i = 0; i < f.length; ++i )
-			f[ i ] = (float)( f[ i ] / l );
+			f[ i ] = ( f[ i ] / l );
 	}
 
 	@Override

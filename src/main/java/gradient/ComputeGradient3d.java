@@ -14,7 +14,7 @@ public class ComputeGradient3d implements ComputeGradient
 	}
 	
 	@Override
-	public void gradientAt( final Localizable location, final float[] derivativeVector )
+	public void gradientAt( final Localizable location, final double[] derivativeVector )
 	{
 		randomAccess.setPosition( location );
 		
@@ -35,8 +35,8 @@ public class ComputeGradient3d implements ComputeGradient
 		randomAccess.bck( 0 );
 		final double p4 = randomAccess.get().getRealDouble();
 		
-		derivativeVector[ 0 ] = (float) ( ( (p1+p3+p5+p7) - (p0+p2+p4+p6) ) / 4.0 );
-		derivativeVector[ 1 ] = (float) ( ( (p2+p3+p6+p7) - (p0+p1+p4+p5) ) / 4.0 );
-		derivativeVector[ 2 ] = (float) ( ( (p4+p5+p6+p7) - (p0+p1+p2+p3) ) / 4.0 );
+		derivativeVector[ 0 ] = ( ( (p1+p3+p5+p7) - (p0+p2+p4+p6) ) / 4.0 );
+		derivativeVector[ 1 ] = ( ( (p2+p3+p6+p7) - (p0+p1+p4+p5) ) / 4.0 );
+		derivativeVector[ 2 ] = ( ( (p4+p5+p6+p7) - (p0+p1+p2+p3) ) / 4.0 );
 	}
 }

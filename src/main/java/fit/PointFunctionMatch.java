@@ -38,8 +38,5 @@ public class PointFunctionMatch extends PointMatch
 	}
 	
 	@Override
-	public float getDistance() { return (float)distance; }
-	
-	public double getDistanceDouble() { return distance; }
-	
+	public double getDistance() { return distance; }
 }

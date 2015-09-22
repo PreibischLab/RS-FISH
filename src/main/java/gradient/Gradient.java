@@ -19,7 +19,7 @@ public abstract class Gradient implements EuclideanSpace
 	 * @param location - the top-left-front position for which to compute the derivative
 	 * @param derivativeVector - where to put the derivative vector [3]
 	 */
-	public abstract void gradientAt( final Localizable location, final float[] derivativeVector );
+	public abstract void gradientAt( final Localizable location, final double[] derivativeVector );
 	
 	@Override
 	public int numDimensions() { return numDimensions; }

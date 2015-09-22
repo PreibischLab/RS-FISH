@@ -28,8 +28,8 @@ public abstract class AbstractFunction< M extends AbstractFunction< M > > extend
 	}
 
 	@Override
-	public float[] apply( final float[] location ) { return null; }
+	public double[] apply( final double[] location ) { return null; }
 
 	@Override
-	public void applyInPlace( final float[] location ) {}	
+	public void applyInPlace( final double[] location ) {}
 }

@@ -9,13 +9,13 @@ public class LinkedPoint<P> extends Point
 
 	final P link;
 	
-	public LinkedPoint( final float[] l, final P link )
+	public LinkedPoint( final double[] l, final P link )
 	{
-		super( l.clone() );		
+		super( l.clone() );
 		this.link = link;
 	}
 
-	public LinkedPoint( final float[] l, final float[] w, final P link )
+	public LinkedPoint( final double[] l, final double[] w, final P link )
 	{
 		super( l.clone(), w.clone() );
 		this.link = link;

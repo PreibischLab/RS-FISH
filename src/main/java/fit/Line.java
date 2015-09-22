@@ -97,15 +97,15 @@ public class Line extends AbstractFunction<Line>
 	{
 		final ArrayList< Point > points = new ArrayList<Point>();
 
-		points.add( new Point( new float[]{ 1f, -3.95132f } ) );
-		points.add( new Point( new float[]{ 2f, 6.51205f } ) );
-		points.add( new Point( new float[]{ 3f, 18.03612f } ) );
-		points.add( new Point( new float[]{ 4f, 28.65245f } ) );
-		points.add( new Point( new float[]{ 5f, 42.05581f } ) );
-		points.add( new Point( new float[]{ 6f, 54.01327f } ) );
-		points.add( new Point( new float[]{ 7f, 64.58747f } ) );
-		points.add( new Point( new float[]{ 8f, 76.48754f } ) );
-		points.add( new Point( new float[]{ 9f, 89.00033f } ) );
+		points.add( new Point( new double[]{ 1f, -3.95132f } ) );
+		points.add( new Point( new double[]{ 2f, 6.51205f } ) );
+		points.add( new Point( new double[]{ 3f, 18.03612f } ) );
+		points.add( new Point( new double[]{ 4f, 28.65245f } ) );
+		points.add( new Point( new double[]{ 5f, 42.05581f } ) );
+		points.add( new Point( new double[]{ 6f, 54.01327f } ) );
+		points.add( new Point( new double[]{ 7f, 64.58747f } ) );
+		points.add( new Point( new double[]{ 8f, 76.48754f } ) );
+		points.add( new Point( new double[]{ 9f, 89.00033f } ) );
 		
 		final ArrayList< PointFunctionMatch > candidates = new ArrayList<PointFunctionMatch>();
 		final ArrayList< PointFunctionMatch > inliers = new ArrayList<PointFunctionMatch>();

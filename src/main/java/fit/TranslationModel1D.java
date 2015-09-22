@@ -21,21 +21,21 @@ public class TranslationModel1D extends AbstractModel< TranslationModel1D > impl
 
 	static final protected int MIN_NUM_MATCHES = 1;
 	
-	public float tx = 0;
+	public double tx = 0;
 	
 	@Override
 	final public int getMinNumMatches(){ return MIN_NUM_MATCHES; }
 	
 	@Override
-	final public float[] apply( final float[] l )
+	final public double[] apply( final double[] l )
 	{
 		assert l.length == 1 : "1d translation transformations can be applied to 1d points only.";
 		
-		return new float[]{ l[ 0 ] + tx };
+		return new double[]{ l[ 0 ] + tx };
 	}
 	
 	@Override
-	final public void applyInPlace( final float[] l )
+	final public void applyInPlace( final double[] l )
 	{
 		assert l.length == 1 : "1d translation transformations can be applied to 1d points only.";
 		
@@ -43,15 +43,15 @@ public class TranslationModel1D extends AbstractModel< TranslationModel1D > impl
 	}
 	
 	@Override
-	final public float[] applyInverse( final float[] l )
+	final public double[] applyInverse( final double[] l )
 	{
 		assert l.length == 1 : "1d translation transformations can be applied to 1d points only.";
 		
-		return new float[]{ l[ 0 ] - tx };
+		return new double[]{ l[ 0 ] - tx };
 	}
 
 	@Override
-	final public void applyInverseInPlace( final float[] l )
+	final public void applyInverseInPlace( final double[] l )
 	{
 		assert l.length == 1 : "1d translation transformations can be applied to 1d points only.";
 		
@@ -71,8 +71,8 @@ public class TranslationModel1D extends AbstractModel< TranslationModel1D > impl
 		
 		for ( final P m : matches )
 		{
-			final float[] p = m.getP1().getL(); 
-			final float[] q = m.getP2().getW(); 
+			final double[] p = m.getP1().getL(); 
+			final double[] q = m.getP2().getW(); 
 			
 			final double w = m.getWeight();
 			ws += w;
@@ -83,7 +83,7 @@ public class TranslationModel1D extends AbstractModel< TranslationModel1D > impl
 		pcx /= ws;
 		qcx /= ws;
 
-		tx = ( float )( qcx - pcx );
+		tx = ( qcx - pcx );
 	}
 
 	@Override

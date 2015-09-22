@@ -66,7 +66,7 @@ public class GradientPreCompute extends Gradient
 		// iterate it and populate the precomputed array
 		final Cursor< FloatType > cursor = Views.iterable( interval ).localizingCursor();
 		final RandomAccess< FloatType > randomAccess = derivatives.randomAccess();
-		final float[] derivativeVector = new float[ n1 ];
+		final double[] derivativeVector = new double[ n1 ];
 		
 		while ( cursor.hasNext() )
 		{
@@ -80,13 +80,13 @@ public class GradientPreCompute extends Gradient
 				tmp[ d ] = cursor.getLongPosition( d ) - minIterate[ d ];
 			
 			tmp[ n1 ] = 0;
-			randomAccess.setPosition( tmp );			
-			randomAccess.get().set( derivativeVector[ 0 ] );
+			randomAccess.setPosition( tmp );
+			randomAccess.get().setReal( derivativeVector[ 0 ] );
 			
 			for ( int d = 1; d < n1; ++d )
 			{
 				randomAccess.fwd( n1 );
-				randomAccess.get().set( derivativeVector[ d ] );
+				randomAccess.get().setReal( derivativeVector[ d ] );
 			}
 		}
 		
@@ -94,7 +94,7 @@ public class GradientPreCompute extends Gradient
 	}
 
 	@Override
-	public void gradientAt( final Localizable location, final float[] derivativeVector )
+	public void gradientAt( final Localizable location, final double[] derivativeVector )
 	{
 		// where to read the computed derivatives
 		for ( int d = 0; d < n1; ++d )

@@ -192,13 +192,13 @@ public class SymmetryCenter3d extends AbstractFunction<SymmetryCenter3d> impleme
 		final ArrayList< Point > list = new ArrayList<Point>();
 		
 		
-		final float c[] = new float[]{ rnd.nextFloat()*2-1, rnd.nextFloat()*2-1, rnd.nextFloat()*2-1 };
+		final double c[] = new double[]{ rnd.nextFloat()*2-1, rnd.nextFloat()*2-1, rnd.nextFloat()*2-1 };
 		System.out.println( "Center should be: " + Util.printCoordinates( c ) );
 		
 		for ( int i = 0; i < 10; ++i )
 		{
-			final float v[] = new float[]{ rnd.nextFloat()*2-1, rnd.nextFloat()*2-1, rnd.nextFloat()*2-1 };
-			final float p[] = new float[]{ c[ 0 ] - v[ 0 ]*2.3f, c[ 1 ] - v[ 1 ]*2.3f, c[ 2 ] - v[ 2 ]*2.3f };
+			final double v[] = new double[]{ rnd.nextFloat()*2-1, rnd.nextFloat()*2-1, rnd.nextFloat()*2-1 };
+			final double p[] = new double[]{ c[ 0 ] - v[ 0 ]*2.3f, c[ 1 ] - v[ 1 ]*2.3f, c[ 2 ] - v[ 2 ]*2.3f };
 		
 			list.add( new OrientedPoint( p, v, 1 ) );
 		}

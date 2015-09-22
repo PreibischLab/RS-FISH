@@ -1,6 +1,8 @@
 package benchmark;
 
 import ij.ImageJ;
+import io.scif.img.ImgIOException;
+import io.scif.img.ImgOpener;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -16,7 +18,6 @@ import gauss.GaussFit;
 import gauss.GaussianMaskFit;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
-
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;

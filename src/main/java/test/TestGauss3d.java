@@ -1,10 +1,13 @@
 package test;
 
+import fit.OrientedPoint;
 import fit.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
 import ij.ImageJ;
 
+import java.io.File;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -12,6 +15,7 @@ import localmaxima.LocalMaxima;
 import localmaxima.LocalMaximaDoG;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
+import mpicbg.models.Point;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessible;
@@ -97,6 +101,9 @@ public class TestGauss3d
 		
 		final ArrayList< Spot > spots = Spot.extractSpots( image, peaks, derivative, range );
 		
+//		System.out.println("peaks size = " + peaks.size());
+//		System.out.println("spots size = " + spots.size());
+		
 		//GradientDescent.testGradientDescent( spots, new boolean[]{ false, false, true } );
 		//SimpleMultiThreading.threadHaltUnClean();
 		
@@ -109,10 +116,10 @@ public class TestGauss3d
 			spot.computeAverageCostInliers();
 			
 			//if ( spot.numRemoved != spot.candidates.size() )
-				System.out.println( spot );
+			// 	System.out.println( spot );
 		}
 
-		SimpleMultiThreading.threadHaltUnClean();
+		// SimpleMultiThreading.threadHaltUnClean();
 		
 		int foundCorrect = 0;
 		double avgDist = 0;
@@ -149,6 +156,8 @@ public class TestGauss3d
 			}
 		}
 
+//		System.out.println("spots size = " + spots.size());
+		
 		avgDist /= (double)foundCorrect;
 		
 		System.out.println( "found " + spots.size() );

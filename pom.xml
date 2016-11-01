@@ -5,8 +5,12 @@
   <parent>
   	<groupId>sc.fiji</groupId>
   	<artifactId>pom-fiji</artifactId>
-  	<version>6.8.0</version>
+  	<version>26.1.0</version>
+  	<relativePath />
   </parent>
+  	<properties>
+		<scijava.jvm.version>1.8</scijava.jvm.version>
+	</properties>
 	<repositories>
 		<!-- NB: for project parent -->
 		<repository>
@@ -16,14 +20,12 @@
 	</repositories>
 	<dependencies>
 		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>SPIM_Registration</artifactId>
-			<version>2.4.3-SNAPSHOT</version><!--$NO-MVN-MAN-VER$-->
-		</dependency>
-		<dependency>
 			<groupId>mpicbg</groupId>
 			<artifactId>mpicbg</artifactId>
-			<version>1.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>SPIM_Registration</artifactId>
 		</dependency>
 	</dependencies>
 </project>

@@ -11,6 +11,7 @@ import java.awt.Insets;
 import java.awt.Label;
 import java.awt.Rectangle;
 import java.awt.Scrollbar;
+import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
@@ -394,7 +395,37 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		for ( final Spot spot : spots )
 			spot.computeAverageCostInliers();
+		
+		showRansacResult(spots);
 
+//		// make draw global
+//		for ( final FloatType t : ransacPreview )
+//			t.setZero();
+//
+//		// TODO: add roi here
+//		Spot.drawRANSACArea( spots, ransacPreview );
+//		drawImp.updateAndDraw();		
+//		drawDetectedSpots(spots, imp);
+//		
+//		Overlay overlay = drawImp.getOverlay();
+//		if ( overlay == null )
+//		{
+//			System.out.println("If this message pops up probably something went wrong.");
+//			overlay = new Overlay();
+//			drawImp.setOverlay( overlay );
+//			
+//		}
+//		
+//		overlay.clear();
+//		
+//		drawDetectedSpots(spots, drawImp);
+		
+		System.out.println("Completed!");
+	}
+	
+	// gui: show the results for ransac
+	// draw detected points
+	protected void showRansacResult(final ArrayList< Spot > spots){
 		// make draw global
 		for ( final FloatType t : ransacPreview )
 			t.setZero();
@@ -402,25 +433,36 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// TODO: add roi here
 		Spot.drawRANSACArea( spots, ransacPreview );
 		drawImp.updateAndDraw();		
-		drawDetectedSpots(spots);
-	
-		System.out.println("Completed!");
+		drawDetectedSpots(spots, imp);
+		
+		Overlay overlay = drawImp.getOverlay();
+		if ( overlay == null )
+		{
+			// System.out.println("If this message pops up probably something went wrong.");
+			overlay = new Overlay();
+			drawImp.setOverlay( overlay );			
+		}
+		
+		overlay.clear();		
+				
+		drawImp.setSlice( imp.getSlice() );		
+		drawImp.setRoi( imp.getRoi() );				
+		drawDetectedSpots(spots, drawImp);
+		
 	}
 
-
-	// TODO: Check that the location of the spots is shown correctly
-	protected void drawDetectedSpots(final ArrayList< Spot > spots){
+	protected void drawDetectedSpots(final ArrayList< Spot > spots, ImagePlus imagePlus){
 		// extract peaks to show
 		// we will overlay them with RANSAC result
-		Overlay overlay = imp.getOverlay();
+		Overlay overlay = imagePlus.getOverlay();
 
 		if ( overlay == null )
 		{
 			System.out.println("If this message pops up probably something went wrong.");
 			overlay = new Overlay();
-			imp.setOverlay( overlay );
+			imagePlus.setOverlay( overlay );		
 		}
-
+		
 		for ( final Spot spot : spots )
 		{
 			if ( spot.inliers.size() == 0 )
@@ -431,11 +473,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			spot.center.getSymmetryCenter( location );
 			final OvalRoi or = new OvalRoi( location[0] - sigma, location[1] - sigma, Util.round( sigma + sigma2 ), Util.round( sigma + sigma2 ) );
 
-			or.setStrokeColor(Color.yellow);
+			or.setStrokeColor(Color.ORANGE);
 			overlay.add(or);
 		}
 
-		imp.updateAndDraw();
+		imagePlus.updateAndDraw();
 
 	}
 
@@ -454,6 +496,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitSupportRegion, 10, 1, 10 + scrollbarSize );
 		this.supportRegion = (int)computeValueFromScrollbarPosition(ransacInitSupportRegion, supportRegionMin, supportRegionMax, scrollbarSize);
+		
+		final TextField SupportRegionTextField = new TextField();
+		
 
 		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitInlierRatio, 10, 1, 10 + scrollbarSize );
 		this.inlierRatio = computeValueFromScrollbarPosition(ransacInitInlierRatio, inlierRatioMin, inlierRatioMax, scrollbarSize);
@@ -637,7 +682,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	/**
-	 * Updates the Preview with the current parameters (sigma, threshold, roi, slicenumber)
+	 * Updates the Preview with the current parameters (sigma, threshold, roi, slicenumber + RANSAC parameters)
 	 * 
 	 * @param change - what did change
 	 */
@@ -715,7 +760,56 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		}
 
-		// extract peaks to show
+		
+		showPeaks();
+		
+//		// extract peaks to show
+//		Overlay o = imp.getOverlay();
+//
+//		if ( o == null )
+//		{
+//			o = new Overlay();
+//			imp.setOverlay( o );
+//		}
+//
+//		o.clear();
+//
+//		for ( final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks )
+//		{
+//			if ( ( peak.isMax() && lookForMaxima ) || ( peak.isMin() && lookForMinima ) )
+//			{
+//				final float x = peak.getPosition( 0 ); 
+//				final float y = peak.getPosition( 1 );
+//
+//				// take only peaks that are inside of the image
+//				if ( Math.abs( peak.getValue().get() ) > threshold &&
+//						x >= extraSize/2 && y >= extraSize/2 &&
+//						x < rectangle.width+extraSize/2 && y < rectangle.height+extraSize/2 )
+//				{
+//					final OvalRoi or = new OvalRoi( Util.round( x - sigma ) + rectangle.x - extraSize/2, Util.round( y - sigma ) + rectangle.y - extraSize/2, Util.round( sigma+sigma2 ), Util.round( sigma+sigma2 ) );
+//
+//					if ( peak.isMax() )
+//						or.setStrokeColor( Color.green );
+//					else if ( peak.isMin() )
+//						or.setStrokeColor( Color.red );
+//
+//					o.add( or );
+//				}
+//			}
+//		}
+
+		imp.updateAndDraw();
+		
+		runRansac();
+
+		
+
+		isComputing = false;
+	}
+	
+	// TODO: is used? 
+	// extract peaks to show
+	protected void showPeaks(){
 		Overlay o = imp.getOverlay();
 
 		if ( o == null )
@@ -736,9 +830,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				// take only peaks that are inside of the image
 				if ( Math.abs( peak.getValue().get() ) > threshold &&
 						x >= extraSize/2 && y >= extraSize/2 &&
-						x < rect.width+extraSize/2 && y < rect.height+extraSize/2 )
+						x < rectangle.width+extraSize/2 && y < rectangle.height+extraSize/2 )
 				{
-					final OvalRoi or = new OvalRoi( Util.round( x - sigma ) + rect.x - extraSize/2, Util.round( y - sigma ) + rect.y - extraSize/2, Util.round( sigma+sigma2 ), Util.round( sigma+sigma2 ) );
+					final OvalRoi or = new OvalRoi( Util.round( x - sigma ) + rectangle.x - extraSize/2, Util.round( y - sigma ) + rectangle.y - extraSize/2, Util.round( sigma+sigma2 ), Util.round( sigma+sigma2 ) );
 
 					if ( peak.isMax() )
 						or.setStrokeColor( Color.green );
@@ -749,12 +843,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				}
 			}
 		}
-
-		runRansac();
-
-		imp.updateAndDraw();
-
-		isComputing = false;
 	}
 
 

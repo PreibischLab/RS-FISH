@@ -21,7 +21,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,20 +34,15 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.gui.OvalRoi;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.io.Opener;
 import ij.plugin.PlugIn;
-import ij.plugin.filter.PlugInFilter;
-import ij.plugin.frame.Editor;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import localmaxima.LocalMaxima;
-import localmaxima.LocalMaximaDoG;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionReal;
 import mpicbg.imglib.algorithm.math.LocalizablePoint;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
@@ -64,7 +58,6 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.util.Util;
 import mpicbg.imglib.wrapper.ImgLib1;
-import mpicbg.imglib.wrapper.ImgLib2;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.spim.io.IOFunctions;
@@ -74,46 +67,39 @@ import net.imglib2.RandomAccess;
 import net.imglib2.exception.ImgLibException;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.imageplus.FloatImagePlus;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.ImgUtil;
 import net.imglib2.view.Views;
 import spim.process.fusion.FusionHelper;
-import test.TestGauss3d;
 
-public class InteractiveRadialSymmetry implements PlugIn  {
+public class InteractiveRadialSymmetry implements PlugIn {
+
+	final public static boolean debug = false;
 
 	// ImagePlus  imp = null;
 	ImageStack stack = null;
 	ImageStack stackOut = null;
 
-	// DoG parameters
-	// TODO: set the parameters in the constructor
-	static final double[] sigmaDoG = new double[]{ 0.7, 1.2};
-	static double thresholdDoG = 0.1;
-	// used to crop the peak
-	// static final int[] range = new int[]{ 10, 10, 10 };
-
 	// RANSAC parameters
-	static int numIterations = 100;
-	static float maxError = 0.15f;
-	static float inlierRatio = (float) (20.0/100.0); 
+	int numIterations = 100; 
+	float maxError = 0.15f;
+	float inlierRatio = (float) (20.0/100.0); 
+	int supportRegion = 10;
 
+	// TODO: adjust all this parameters during constructor call
 
-	// used to keep this example running
-	static final int TRANSLATION = 0;
-	static final int AFFINE = 1;
-	String     outputDir = null;
-	boolean    stackVirtual = false;
-	boolean    outputNewStack = false;
-	int        transform = TRANSLATION;
-	int        pyramidLevel = 1;
-	int        maxIter = 200;
-	double     tol = 1e-7;
-	double     alpha = 0.9;
-	boolean    logEnabled = false;
-	Editor     logEditor = null;
+	int supportRegionMin = 1;
+	int supportRegionMax = 50; 
+	float inlierRatioMin = (float) (10.0/100.0); // 10%
+	float inlierRatioMax = (float) (100.0/100.0); // 100%
+	float maxErrorMin = 0.0001f;
+	float maxErrorMax = 10.00f;
+
+	// RANSAC parameters for gui
+	int ransacInitSupportRegion = 10;
+	int ransacInitInlierRatio = 1;
+	int ransacInitMaxError = 1;
 
 	// DoG -------------------------------
 
@@ -160,37 +146,12 @@ public class InteractiveRadialSymmetry implements PlugIn  {
 	boolean lookForMinima = false;
 	boolean lookForMaxima = true;
 
-	public static enum ValueChange { SIGMA, THRESHOLD, SLICE, ROI, MINMAX, ALL }
+	public static enum ValueChange { SIGMA, THRESHOLD, SLICE, ROI, MINMAX, ALL, SUPPORTREGION, INLIERRATIO, MAXERROR}
 
 	boolean isFinished = false;
 	boolean wasCanceled = false;
 	public boolean isFinished() { return isFinished; }
 	public boolean wasCanceled() { return wasCanceled; }
-	public double getInitialSigma() { return sigma; }
-	public void setInitialSigma( final float value ) 
-	{ 
-		sigma = value; 
-		sigmaInit = computeScrollbarPositionFromValue( sigma, sigmaMin, sigmaMax, scrollbarSize );
-	}
-	public double getSigma2() { return sigma2; }
-	public double getThreshold() { return threshold; }
-	public void setThreshold( final float value ) 
-	{ 
-		threshold = value;
-		final double log1001 = Math.log10( scrollbarSize + 1);
-		thresholdInit = (int)Math.round( 1001-Math.pow(10, -(((threshold - thresholdMin)/(thresholdMax-thresholdMin))*log1001) + log1001 ) );
-	}
-	public boolean getSigma2WasAdjusted() { return enableSigma2; }
-	public boolean getLookForMaxima() { return lookForMaxima; }
-	public boolean getLookForMinima() { return lookForMinima; }
-	public void setLookForMaxima( final boolean lookForMaxima ) { this.lookForMaxima = lookForMaxima; }
-	public void setLookForMinima( final boolean lookForMinima ) { this.lookForMinima = lookForMinima; }
-
-	public void setSigmaMax( final float sigmaMax ) { this.sigmaMax = sigmaMax; }
-	public void setSigma2isAdjustable( final boolean state ) { sigma2IsAdjustable = state; }
-
-	// for the case that it is needed again, we can save one conversion
-	public FloatImagePlus< net.imglib2.type.numeric.real.FloatType > getConvertedImage() { return source; }
 
 	public InteractiveRadialSymmetry( final ImagePlus imp, final int channel ) 
 	{ 
@@ -200,15 +161,17 @@ public class InteractiveRadialSymmetry implements PlugIn  {
 	public InteractiveRadialSymmetry( final ImagePlus imp ) { this.imp = imp; }
 	public InteractiveRadialSymmetry() {}
 
-	public void setMinIntensityImage( final double min ) { this.minIntensityImage = min; }
-	public void setMaxIntensityImage( final double max ) { this.maxIntensityImage = max; }
-
 	// ===================================
 
 	// necessary!
 	public int setup(String arg, ImagePlus imp){
 		return 1;
-	}
+	}	
+
+	// TODO: Ransac preview
+	FloatProcessor ransacFloatProcessor;
+	ImagePlus drawImp;
+	Img<FloatType> ransacPreview;
 
 	@Override
 	public void run( String arg )
@@ -242,8 +205,16 @@ public class InteractiveRadialSymmetry implements PlugIn  {
 		// copy the ImagePlus into an ArrayImage<FloatType> for faster access
 		source = convertToFloat( imp, channel, 0, minIntensityImage, maxIntensityImage );
 
+		// initialize variables for interactive preview 
+		// called before updatePreview() ! 
+		ransacPreviewInitialize();		
+
 		// show the interactive kit
 		displaySliders();
+
+		// TODO: check if the listeners are working correctly here
+		// show the interactive ransac kit
+		displayRansacSliders();
 
 		// add listener to the imageplus slice slider
 		sliceObserver = new SliceObserver( imp, new ImagePlusListener() );
@@ -255,6 +226,20 @@ public class InteractiveRadialSymmetry implements PlugIn  {
 		// check whenever roi is modified to update accordingly
 		roiListener = new RoiListener();
 		imp.getCanvas().addMouseListener( roiListener );
+	}
+
+	/**
+	 * Initialize preview variables for RANSAC
+	 * */
+	protected void ransacPreviewInitialize(){
+		int width = source.getWidth();
+		int height = source.getHeight();
+
+		ransacFloatProcessor = new FloatProcessor(width, height);
+		float[] pixels = (float[])ransacFloatProcessor.getPixels();
+		drawImp = new ImagePlus("RANSAC preview", ransacFloatProcessor);
+		ransacPreview = ArrayImgs.floats(pixels, width, height);
+		drawImp.show();
 	}
 
 	boolean showDialog(ImageProcessor ip) {
@@ -370,187 +355,171 @@ public class InteractiveRadialSymmetry implements PlugIn  {
 	}
 
 
-	// call of the radial symmetry algorithm
-	// TODO: everything is supposed to be FloatType only
-	// TODO: figure out what has to in the gui
-	public static void algorithmCall(Img<FloatType> img) {
+	/**
+	 * Copy peaks found by DoG to lighter ArrayList
+	 * */
+	protected void copyPeaks(final ArrayList< int[] > simplifiedPeaks){
+		for ( final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks )
+		{
+			if ( ( peak.isMax() && lookForMaxima ) || ( peak.isMin() && lookForMinima ) )
+			{
+				final float x = peak.getPosition( 0 ); 
+				final float y = peak.getPosition( 1 );
 
-		// size around the detection to use
-		// we detect at 0.5, 0.5, 0.5 - so we need an even size
+				// take only peaks that are inside of the image
+				if ( Math.abs( peak.getValue().get() ) > threshold &&
+						x >= extraSize/2 && y >= extraSize/2 &&
+						x < rectangle.width + extraSize/2 && y < rectangle.height + extraSize/2 )
+				{ 						
+					simplifiedPeaks.add(new int[]{Util.round( x - sigma ) + rectangle.x - extraSize/2, 
+							Util.round( y - sigma ) + rectangle.y - extraSize/2});
+				}
+			}
+		}
+	}
 
-		// TODO: insted of makeing new image 
-		// use current one with overlapping
-		// this sigmaLocal is used to plot the points 
-		// maybe this value will be taken from another place
-		final double[] sigmaLocal = new double[]{ 2, 2, 2 };
-		final LocalMaxima candiateSearch = new LocalMaximaDoG( img, sigmaDoG[0], sigmaDoG[1], thresholdDoG );
-		final ArrayList< int[] > peaks = candiateSearch.estimateLocalMaxima();
+	protected void runRansac() {
+		final ArrayList< int[] > simplifiedPeaks = new ArrayList<int[]>(1);
+		copyPeaks(simplifiedPeaks);
 
+		Rectangle sourceRectangle = new Rectangle( 0, 0, source.getWidth(), source.getHeight());
 		final Gradient derivative;
-		//derivative = new DerivativeOnDemand( image );
-		derivative = new GradientPreCompute( img );
-		final int[] range = new int []{10, 10, 10};
-		final ArrayList< Spot > spots = Spot.extractSpots( img, peaks, derivative, range );
+		derivative = new GradientPreCompute( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)) );
 
-		// DEBUG: 
-		System.out.println("spots size = " + spots.size());
+		// TODO: move this as a parameter?
+		final int[] range = new int[]{ 10, 10 }; 
+		final ArrayList< Spot > spots = Spot.extractSpots( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), simplifiedPeaks, derivative, range );
+
 		Spot.ransac( spots, numIterations, maxError, inlierRatio );
 
-		// TODO: make a form for the results
-		// instead of ptin outs
-		// print localizations
 		for ( final Spot spot : spots )
-		{
 			spot.computeAverageCostInliers();
 
-			//if ( spot.numRemoved != spot.candidates.size() )
-			// System.out.println( spot );
+		// make draw global
+		for ( final FloatType t : ransacPreview )
+			t.setZero();
+
+		// TODO: add roi here
+		Spot.drawRANSACArea( spots, ransacPreview );
+		drawImp.updateAndDraw();		
+		drawDetectedSpots(spots);
+	
+		System.out.println("Completed!");
+	}
+
+
+	// TODO: Check that the location of the spots is shown correctly
+	protected void drawDetectedSpots(final ArrayList< Spot > spots){
+		// extract peaks to show
+		// we will overlay them with RANSAC result
+		Overlay overlay = imp.getOverlay();
+
+		if ( overlay == null )
+		{
+			System.out.println("If this message pops up probably something went wrong.");
+			overlay = new Overlay();
+			imp.setOverlay( overlay );
 		}
-		int foundCorrect = 0;
-		double avgDist = 0;
 
-		// TODO: figure out what is necessary here
-
-		System.out.println( "found " + spots.size() );
-
-		final Img< FloatType > draw = img.factory().create( img, img.firstElement() );
-		Spot.drawRANSACArea( spots, draw );
-		ImageJFunctions.show( draw );
-
-		final Img< FloatType > detected = img.factory().create( img, img.firstElement() );
 		for ( final Spot spot : spots )
 		{
 			if ( spot.inliers.size() == 0 )
 				continue;
 
-			final double[] location = new double[ img.numDimensions() ];//{ spot.center.getXc(), spot.center.getYc(), spot.center.getZc() };
+			final double[] location = new double[ source.numDimensions() ];
+
 			spot.center.getSymmetryCenter( location );
-			TestGauss3d.addGaussian( detected, location, sigmaLocal );			
+			final OvalRoi or = new OvalRoi( location[0] - sigma, location[1] - sigma, Util.round( sigma + sigma2 ), Util.round( sigma + sigma2 ) );
+
+			or.setStrokeColor(Color.yellow);
+			overlay.add(or);
 		}
-		ImageJFunctions.show( detected );
-		System.out.println("Completed!");
+
+		imp.updateAndDraw();
+
 	}
 
-	protected void runRansac() {
-		try{
-			// size around the detection to use
-			// we detect at 0.5, 0.5, 0.5 - so we need an even size
-
-			// TODO: insted of makeing new image 
-			// use current one with overlapping
-			// this sigmaLocal is used to plot the points 
-			// maybe this value will be taken from another place
-
-			final double[] sigmaLocal = new double[]{ 2, 2, 2 };
-
-
-			// this part is done in the in updatePreview
-			// final LocalMaxima candiateSearch = new LocalMaximaDoG( source, sigmaDoG[0], sigmaDoG[1], thresholdDoG );
-			final ArrayList< int[] > simplifiedPeaks = new ArrayList<int[]>(1); // candiateSearch.estimateLocalMaxima();
-			
-			for ( final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks )
-			{
-				if ( ( peak.isMax() && lookForMaxima ) || ( peak.isMin() && lookForMinima ) )
-				{
-					final float x = peak.getPosition( 0 ); 
-					final float y = peak.getPosition( 1 );
-
-					// take only peaks that are inside of the image
-					if ( Math.abs( peak.getValue().get() ) > threshold &&
-							x >= extraSize/2 && y >= extraSize/2 &&
-							x < rectangle.width+extraSize/2 && y < rectangle.height+extraSize/2 )
-					{
-						 						
-						simplifiedPeaks.add(new int[]{Util.round( x - sigma ) + rectangle.x - extraSize/2, 
-													  Util.round( y - sigma ) + rectangle.y - extraSize/2});
-					}
-				}
-			}
-			
-			
-			
-			
-			
-//			for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks){
-//				simplifiedPeaks.add(peak.getPosition());
-//				for (int d = 0; d < source.numDimensions() - 1; ++d){
-//					// System.out.print(peak.getPosition(d) + " ");
-//					// System.out.print(simplifiedPeaks.get(simplifiedPeaks.size() - 1)[d] + " ");
-//				}
-//				// System.out.println();    
-//			}
-			
-			System.out.println("Checkpoint #1!");
-			
-			
-			Rectangle sourceRectangle = new Rectangle( 0, 0, source.getWidth(), source.getHeight());
-			mpicbg.imglib.image.display.imagej.ImageJFunctions.show(extractImage(source, sourceRectangle, 0));
-			
-			// ImageJFunctions.show(ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0))).setTitle("Greetings, friend");
-			
-			System.out.println("Checkpoint #2!");
-
-			final Gradient derivative;
-			//derivative = new DerivativeOnDemand( source );
-			derivative = new GradientPreCompute( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)) );
-			System.out.println("Checkpoint #3!");
-			
-			final int[] range = new int[]{ 10, 10 };
-			final ArrayList< Spot > spots = Spot.extractSpots( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), simplifiedPeaks, derivative, range );
-
-			System.out.println("Checkpoint #4!");
-
-
-			// DEBUG: 
-			System.out.println("spots size = " + spots.size());
-			//		try{
-			Spot.ransac( spots, numIterations, maxError, inlierRatio );
-			
-			System.out.println("Checkpoint #5!");
-
-			for ( final Spot spot : spots )
-			{
-				spot.computeAverageCostInliers();
-				//if ( spot.numRemoved != spot.candidates.size() )
-				// System.out.println( spot );
-			}
-
-			System.out.println( "found " + spots.size() );
-
-			final Img< FloatType > draw = source.factory().create( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), source.firstElement() );
-			
-			System.out.println("Checkpoint #6!");
-			
-			Spot.drawRANSACArea( spots, draw );
-			ImageJFunctions.show( draw );
-
-			
-			
-			final Img< FloatType > detected = source.factory().create( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), source.firstElement() );
-			for ( final Spot spot : spots )
-			{
-				if ( spot.inliers.size() == 0 )
-					continue;
-
-				final double[] location = new double[ source.numDimensions() ];//{ spot.center.getXc(), spot.center.getYc(), spot.center.getZc() };
-
-				spot.center.getSymmetryCenter( location );
-
-
-				TestGauss3d.addGaussian( detected, location, sigmaLocal );		
-			}
-			ImageJFunctions.show( detected );
-			System.out.println("Completed!");
-
-		}
-		catch (Exception e) 
-		{
-			System.out.println( "e1" );
-		}
-	}
 
 	/**
-	 * Instantiates the panel for adjusting the paramters
+	 * Instantiates the panel for adjusting the RANSAC parameters
+	 */
+	protected void displayRansacSliders()
+	{
+		final Frame frame = new Frame("Adjust RANSAC Values");
+		frame.setSize( 400, 330 );
+
+		/* Instantiation */
+		final GridBagLayout layout = new GridBagLayout();
+		final GridBagConstraints c = new GridBagConstraints();
+
+		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitSupportRegion, 10, 1, 10 + scrollbarSize );
+		this.supportRegion = (int)computeValueFromScrollbarPosition(ransacInitSupportRegion, supportRegionMin, supportRegionMax, scrollbarSize);
+
+		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitInlierRatio, 10, 1, 10 + scrollbarSize );
+		this.inlierRatio = computeValueFromScrollbarPosition(ransacInitInlierRatio, inlierRatioMin, inlierRatioMax, scrollbarSize);
+
+		final Scrollbar maxErrorScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitMaxError, 10, 1, 10 + scrollbarSize );
+		
+		final float log1001 = (float) Math.log10( scrollbarSize + 1);
+		this.maxError = maxErrorMin + ( (log1001 - (float)Math.log10(1001-ransacInitMaxError))/log1001 ) * (maxErrorMax-maxErrorMin);
+						
+ 		//this.maxError = computeValueFromScrollbarPosition(ransacInitMaxError, maxErrorMin, maxErrorMax, scrollbarSize);
+
+		final Label supportRegionText = new Label( "Support Region Size = " + this.supportRegion, Label.CENTER );	
+		final Label inlierRatioText = new Label( "Inlier Ratio = " + this.inlierRatio, Label.CENTER ); 		
+		final Label maxErrorText = new Label( "Max Error = " + this.maxError, Label.CENTER ); 		
+
+		final Button button = new Button( "Done" );
+		final Button cancel = new Button( "Cancel" );
+
+		//		/* Location */
+		frame.setLayout( layout );
+
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 0;
+		c.weightx = 1;
+		frame.add ( supportRegionScrollbar, c );
+
+		++c.gridy;
+		frame.add( supportRegionText, c );
+
+		++c.gridy;
+		frame.add ( inlierRatioScrollbar, c );
+
+		++c.gridy;
+		frame.add( inlierRatioText, c );
+
+		++c.gridy;
+		frame.add ( maxErrorScrollbar, c );
+
+		++c.gridy;
+		frame.add( maxErrorText, c );
+
+		++c.gridy;
+		c.insets = new Insets(10, 150, 0, 150);
+		frame.add( button, c );
+
+		++c.gridy;
+		c.insets = new Insets(10, 150, 0, 150);
+		frame.add( cancel, c );	
+
+		//		/* Configuration */
+		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(supportRegionText, supportRegionMin, supportRegionMax, ValueChange.SUPPORTREGION));
+		inlierRatioScrollbar.addAdjustmentListener(new GeneralListener(inlierRatioText, inlierRatioMin, inlierRatioMax, ValueChange.INLIERRATIO));
+		maxErrorScrollbar.addAdjustmentListener(new GeneralListener(maxErrorText, maxErrorMin, maxErrorMax, ValueChange.MAXERROR));
+
+		button.addActionListener( new FinishedButtonListener( frame, false ) );
+		cancel.addActionListener( new FinishedButtonListener( frame, true ) );
+
+		frame.addWindowListener( new FrameListener( frame ) );
+
+		frame.setVisible( true );
+	}
+
+
+	/**
+	 * Instantiates the panel for adjusting the parameters
 	 */
 	protected void displaySliders()
 	{
@@ -692,8 +661,6 @@ public class InteractiveRadialSymmetry implements PlugIn  {
 				rect.getMinY() != rectangle.getMinY() || rect.getMaxY() != rectangle.getMaxY() )
 		{
 			rectangle = rect;
-			// TODO: Here we should adjust the image slice!!!
-			// change source, otherwise we always take the initial slice
 			img = extractImage( source, rectangle, extraSize );
 			roiChanged = true;
 		}
@@ -744,22 +711,10 @@ public class InteractiveRadialSymmetry implements PlugIn  {
 
 			// peaks contain some values that are out of bounds
 			peaks = dog.getPeaks();
-			
-			// drop unnecessary peaks in ransac
-			runRansac();
-			
+
+
 		}
 
-		// DEBUG: DELETE WHEN DONE
-//		for (int j = 0; j < peaks.size(); ++j){			
-//			int[] pos = peaks.get(j).getPosition().clone();
-//			System.out.print(j + ": ");
-//			for(int d = 0; d < pos.length; ++d)
-//				System.out.print(pos[d] + " ");
-//			System.out.println();
-//		}
-		
-		
 		// extract peaks to show
 		Overlay o = imp.getOverlay();
 
@@ -770,8 +725,6 @@ public class InteractiveRadialSymmetry implements PlugIn  {
 		}
 
 		o.clear();
-
-		
 
 		for ( final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks )
 		{
@@ -797,12 +750,13 @@ public class InteractiveRadialSymmetry implements PlugIn  {
 			}
 		}
 
-
+		runRansac();
 
 		imp.updateAndDraw();
 
 		isComputing = false;
 	}
+
 
 	/**
 	 * Extract the current 2d region of interest from the source image
@@ -1175,7 +1129,7 @@ public class InteractiveRadialSymmetry implements PlugIn  {
 			}
 
 			label.setText( "Sigma 1 = " + sigma );
-			// TODO: Looks like this one is never executed!
+
 			if ( !event.getValueIsAdjusting() )
 			{
 				while ( isComputing )
@@ -1248,47 +1202,62 @@ public class InteractiveRadialSymmetry implements PlugIn  {
 		}		
 	}
 
+	// general listener used by ransac
+	protected class GeneralListener implements AdjustmentListener{
+		final Label label;
+		final float min, max;
+		final ValueChange valueAdjust;
 
-	public static void testPlugin() throws NotEnoughDataPointsException, IllDefinedDataPointsException{
-		String pathMac = "/Users/kkolyva/Desktop/latest_desktop/";
-		String pathUbuntu = "/home/milkyklim/Desktop/latest_desktop/";
+		public GeneralListener(final Label label, final float min, final float max, ValueChange valueAdjust){
+			this.label = label; 
+			this.min = min;
+			this.max = max;
+			this.valueAdjust = valueAdjust;		
+		}
 
-		String path = pathMac;
-		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File(path + "multiple_dots.tif"));
+		@Override
+		public void adjustmentValueChanged(final AdjustmentEvent event){
+			float value = computeValueFromScrollbarPosition( event.getValue(), min, max, scrollbarSize );
+			String labelText = ""; 
 
-		ImagePlus imp = ImageJFunctions.wrap(img, "tImage");
-
-		// RadialSymmetryGUI tGui = new RadialSymmetryGUI();
-		// tGui.setup("no args", imp);
-		// tGui.run(imp.getProcessor());
-
-		imp.show();
-		// imp.setSlice( 27 );		
-		// imp.setRoi( imp.getWidth()/4, imp.getHeight()/4, imp.getWidth()/2, imp.getHeight()/2 );
-		// InteractiveDoG iDoG = new InteractiveDoG(); 
-
-		// iDoG.run(null);
-
-		algorithmCall(img);
-
-		GenericDialog gd = new GenericDialog("");
-		gd.addTextAreas("Hello", "There", 2, 5);
-		gd.showDialog();
+			if (valueAdjust == ValueChange.SUPPORTREGION){
+				supportRegion = (int)value;
+				labelText = "Support Region Size = " + supportRegion;
+			}
+			else if (valueAdjust == ValueChange.INLIERRATIO){
+				inlierRatio = value;
+				labelText = "Inlier Ratio = " + inlierRatio;
+			}
+			else{ // MAXERROR
+				final float log1001 = (float)Math.log10(1001);
+				value  = min + ( (log1001 - (float)Math.log10(1001-event.getValue()))/log1001 ) * (max-min);
+				
+				maxError = value;
+				labelText = "Max Error = " + maxError;
+			}		
+			label.setText(labelText); 
+			if (!isComputing){
+				updatePreview(valueAdjust);
+			}
+			else if ( !event.getValueIsAdjusting() )
+			{
+				while ( isComputing )
+				{
+					SimpleMultiThreading.threadWait( 10 );
+				}
+				updatePreview( valueAdjust );
+			}
+		}
 	}
 
 	public static void main(String[] args) throws NotEnoughDataPointsException, IllDefinedDataPointsException{
-		//testPlugin();
-
 		new ImageJ();
 
 		ImagePlus imp = new Opener().openImage( "/Users/kkolyva/Desktop/latest_desktop/multiple_dots.tif" );
-
-		//ImagePlus imp = new Opener().openImage( "D:/Documents and Settings/Stephan/My Documents/Downloads/1-315--0.08-isotropic-subvolume/1-315--0.08-isotropic-subvolume.tif" );
 		imp.show();
 
 		imp.setSlice( 20 );		
-		// imp.setRoi( imp.getWidth()/4, imp.getHeight()/4, imp.getWidth()/2, imp.getHeight()/2 );	
-		imp.setRoi( 0, 0, imp.getWidth()-1, imp.getHeight() - 1 );	
+		imp.setRoi( imp.getWidth()/4, imp.getHeight()/4, imp.getWidth()/2, imp.getHeight()/2 );		
 
 		new InteractiveRadialSymmetry().run( null ); 
 

@@ -1,30 +1,5 @@
 package gui;
 
-import java.awt.Button;
-import java.awt.Checkbox;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Frame;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.Label;
-import java.awt.Rectangle;
-import java.awt.Scrollbar;
-import java.awt.TextField;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.ArrayList;
-import java.util.List;
-
 import fiji.tool.SliceListener;
 import fiji.tool.SliceObserver;
 import fit.Spot;
@@ -73,6 +48,34 @@ import net.imglib2.img.imageplus.FloatImagePlus;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.process.fusion.FusionHelper;
+
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Label;
+import java.awt.Rectangle;
+import java.awt.Scrollbar;
+import java.awt.TextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.List;
+
+import java.awt.Button;
+import java.awt.Checkbox;
+
 
 public class InteractiveRadialSymmetry implements PlugIn {
 
@@ -395,34 +398,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		for ( final Spot spot : spots )
 			spot.computeAverageCostInliers();
-		
+
 		showRansacResult(spots);
 
-//		// make draw global
-//		for ( final FloatType t : ransacPreview )
-//			t.setZero();
-//
-//		// TODO: add roi here
-//		Spot.drawRANSACArea( spots, ransacPreview );
-//		drawImp.updateAndDraw();		
-//		drawDetectedSpots(spots, imp);
-//		
-//		Overlay overlay = drawImp.getOverlay();
-//		if ( overlay == null )
-//		{
-//			System.out.println("If this message pops up probably something went wrong.");
-//			overlay = new Overlay();
-//			drawImp.setOverlay( overlay );
-//			
-//		}
-//		
-//		overlay.clear();
-//		
-//		drawDetectedSpots(spots, drawImp);
-		
-		System.out.println("Completed!");
+		// System.out.println("Completed!");
 	}
-	
+
 	// gui: show the results for ransac
 	// draw detected points
 	protected void showRansacResult(final ArrayList< Spot > spots){
@@ -434,7 +415,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		Spot.drawRANSACArea( spots, ransacPreview );
 		drawImp.updateAndDraw();		
 		drawDetectedSpots(spots, imp);
-		
+
 		Overlay overlay = drawImp.getOverlay();
 		if ( overlay == null )
 		{
@@ -442,13 +423,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			overlay = new Overlay();
 			drawImp.setOverlay( overlay );			
 		}
-		
+
 		overlay.clear();		
-				
+
 		drawImp.setSlice( imp.getSlice() );		
 		drawImp.setRoi( imp.getRoi() );				
 		drawDetectedSpots(spots, drawImp);
-		
+
 	}
 
 	protected void drawDetectedSpots(final ArrayList< Spot > spots, ImagePlus imagePlus){
@@ -462,7 +443,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			overlay = new Overlay();
 			imagePlus.setOverlay( overlay );		
 		}
-		
+
 		for ( final Spot spot : spots )
 		{
 			if ( spot.inliers.size() == 0 )
@@ -496,18 +477,18 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitSupportRegion, 10, 1, 10 + scrollbarSize );
 		this.supportRegion = (int)computeValueFromScrollbarPosition(ransacInitSupportRegion, supportRegionMin, supportRegionMax, scrollbarSize);
-		
+
 		final TextField SupportRegionTextField = new TextField(Integer.toString(this.supportRegion));
 		SupportRegionTextField.setEditable(true);
-		
+
 		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitInlierRatio, 10, 1, 10 + scrollbarSize );
 		this.inlierRatio = computeValueFromScrollbarPosition(ransacInitInlierRatio, inlierRatioMin, inlierRatioMax, scrollbarSize);
 
 		final Scrollbar maxErrorScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitMaxError, 10, 1, 10 + scrollbarSize );
-		
+
 		final float log1001 = (float) Math.log10( scrollbarSize + 1);
 		this.maxError = maxErrorMin + ( (log1001 - (float)Math.log10(1001-ransacInitMaxError))/log1001 ) * (maxErrorMax-maxErrorMin);						
- 		//this.maxError = computeValueFromScrollbarPosition(ransacInitMaxError, maxErrorMin, maxErrorMax, scrollbarSize);
+		//this.maxError = computeValueFromScrollbarPosition(ransacInitMaxError, maxErrorMin, maxErrorMax, scrollbarSize);
 
 		final Label supportRegionText = new Label( "Support Region Size = " + this.supportRegion, Label.CENTER );	
 		final Label inlierRatioText = new Label( "Inlier Ratio = " + this.inlierRatio, Label.CENTER ); 		
@@ -527,7 +508,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		++c.gridy;
 		frame.add(SupportRegionTextField, c);
-		
+
 		++c.gridy;
 		frame.add( supportRegionText, c );
 
@@ -557,10 +538,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		maxErrorScrollbar.addAdjustmentListener(new GeneralListener(maxErrorText, maxErrorMin, maxErrorMax, ValueChange.MAXERROR, new TextField()));
 
 		// SupportRegionTextField.addAdjustmentListener(new TextFieldListener(supportRegionText, supportRegionMin, supportRegionMax, ValueChange.SUPPORTREGION, SupportRegionTextField));
-		
-		
+		SupportRegionTextField.addActionListener(new TextFieldListener(supportRegionText, supportRegionMin, supportRegionMax, ValueChange.SUPPORTREGION, SupportRegionTextField));
+
+
 		// SupportRegionTextField.addKeyListenerl);
-		
+
 		button.addActionListener( new FinishedButtonListener( frame, false ) );
 		cancel.addActionListener( new FinishedButtonListener( frame, true ) );
 
@@ -766,14 +748,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 
 		}
-		
+
 		showPeaks();
 		imp.updateAndDraw();
-		
+
 		runRansac();
 		isComputing = false;
 	}
-	
+
 	// extract peaks to show
 	protected void showPeaks(){
 		Overlay o = imp.getOverlay();
@@ -1256,15 +1238,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}		
 	}
 
-	
-	
+
 	// changes value of the scroller so that it is the same as in the text field
-	protected class TextFieldListener implements AdjustmentListener{
+	protected class TextFieldListener implements ActionListener{
 		final Label label;
 		final TextField textField;
 		final float min, max;
 		final ValueChange valueAdjust;
-		
+
 		public TextFieldListener(final Label label, final float min, final float max, ValueChange valueAdjust, TextField textField){
 			this.label = label; 
 			this.min = min;
@@ -1272,42 +1253,67 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			this.valueAdjust = valueAdjust;		
 			this.textField = textField;
 		}
-		
+
 		@Override
-		public void adjustmentValueChanged(final AdjustmentEvent event){
+		public void actionPerformed(final ActionEvent event){
 			// check that the value is in (min, max)
 			// adjust and grab value
-			
-			// float value = computeValueFromScrollbarPosition( event.getValue(), min, max, scrollbarSize );
-			float value = event.getValue();
+
+			// TODO: check that the number is passed
+			// TODO: ensure that the number is between min and max support region
+			int value = Math.round(Float.valueOf(textField.getText()));
+
+			System.out.println("value in the text field = " + value);			
 			String labelText = ""; 
 
 			if (valueAdjust == ValueChange.SUPPORTREGION){
-				supportRegion = (int)value;
+				supportRegion = value;
 				labelText = "Support Region Size = " + supportRegion;	
 				// will be set by user
-				//textField.setText(Integer.toString(supportRegion));
+				//textField.setText(Integer.toString(supportRegion));					
+
+				textField.setText(Integer.toString(supportRegion));
+				
 				
 			}
-					
+			else{
+				System.out.println("There is error in the support region adjustment");
+			}
+			
+			
 			label.setText(labelText); 
-			if (!isComputing){
-				updatePreview(valueAdjust);
-			}
-			else if ( !event.getValueIsAdjusting() )
+			while ( isComputing )
 			{
-				while ( isComputing )
-				{
-					SimpleMultiThreading.threadWait( 10 );
-				}
-				updatePreview( valueAdjust );
+				SimpleMultiThreading.threadWait( 10 );
 			}
+// 			updatePreview( ValueChange.SUPPORTREGION );
+			
+			
+//			if (!isComputing){
+//				updatePreview(valueAdjust);
+//			}
+//			else if ( !event.getValueIsAdjusting() )
+//			{
+//				while ( isComputing )
+//				{
+//					SimpleMultiThreading.threadWait( 10 );
+//				}
+//				updatePreview( valueAdjust );
+//			}
+			
+
+//			label.setText(labelText);
+
+
+
+
+
 		}
 	}
-	
-	
-	
-	
+
+
+
+
 	// general listener used by ransac
 	protected class GeneralListener implements AdjustmentListener{
 		final Label label;
@@ -1321,6 +1327,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			this.max = max;
 			this.valueAdjust = valueAdjust;		
 			this.textField = textField;
+			
+			
 		}
 
 		@Override
@@ -1331,9 +1339,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			if (valueAdjust == ValueChange.SUPPORTREGION){
 				supportRegion = (int)value;
 				labelText = "Support Region Size = " + supportRegion;
-				
+
 				textField.setText(Integer.toString(supportRegion));
-				
+
 			}
 			else if (valueAdjust == ValueChange.INLIERRATIO){
 				inlierRatio = value;
@@ -1342,7 +1350,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			else{ // MAXERROR
 				final float log1001 = (float)Math.log10(1001);
 				value  = min + ( (log1001 - (float)Math.log10(1001-event.getValue()))/log1001 ) * (max-min);
-				
+
 				maxError = value;
 				labelText = "Max Error = " + maxError;
 			}		
@@ -1364,7 +1372,16 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	public static void main(String[] args) throws NotEnoughDataPointsException, IllDefinedDataPointsException{
 		new ImageJ();
 
-		ImagePlus imp = new Opener().openImage( "/Users/kkolyva/Desktop/latest_desktop/multiple_dots.tif" );
+		String pathMac = "/Users/kkolyva/Desktop/latest_desktop/multiple_dots.tif";
+		String pathUbuntu = "/home/milkyklim/eclipse.input/multiple_dots.tif";
+
+		String path = pathUbuntu;
+
+		ImagePlus imp = new Opener().openImage( path );
+
+		if (imp == null)
+			System.out.println("image was not loaded");
+
 		imp.show();
 
 		imp.setSlice( 20 );		

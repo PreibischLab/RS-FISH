@@ -497,17 +497,16 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitSupportRegion, 10, 1, 10 + scrollbarSize );
 		this.supportRegion = (int)computeValueFromScrollbarPosition(ransacInitSupportRegion, supportRegionMin, supportRegionMax, scrollbarSize);
 		
-		final TextField SupportRegionTextField = new TextField();
+		final TextField SupportRegionTextField = new TextField(Integer.toString(this.supportRegion));
+		SupportRegionTextField.setEditable(true);
 		
-
 		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitInlierRatio, 10, 1, 10 + scrollbarSize );
 		this.inlierRatio = computeValueFromScrollbarPosition(ransacInitInlierRatio, inlierRatioMin, inlierRatioMax, scrollbarSize);
 
 		final Scrollbar maxErrorScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitMaxError, 10, 1, 10 + scrollbarSize );
 		
 		final float log1001 = (float) Math.log10( scrollbarSize + 1);
-		this.maxError = maxErrorMin + ( (log1001 - (float)Math.log10(1001-ransacInitMaxError))/log1001 ) * (maxErrorMax-maxErrorMin);
-						
+		this.maxError = maxErrorMin + ( (log1001 - (float)Math.log10(1001-ransacInitMaxError))/log1001 ) * (maxErrorMax-maxErrorMin);						
  		//this.maxError = computeValueFromScrollbarPosition(ransacInitMaxError, maxErrorMin, maxErrorMax, scrollbarSize);
 
 		final Label supportRegionText = new Label( "Support Region Size = " + this.supportRegion, Label.CENTER );	
@@ -526,6 +525,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.weightx = 1;
 		frame.add ( supportRegionScrollbar, c );
 
+		++c.gridy;
+		frame.add(SupportRegionTextField, c);
+		
 		++c.gridy;
 		frame.add( supportRegionText, c );
 
@@ -550,10 +552,15 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.add( cancel, c );	
 
 		//		/* Configuration */
-		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(supportRegionText, supportRegionMin, supportRegionMax, ValueChange.SUPPORTREGION));
-		inlierRatioScrollbar.addAdjustmentListener(new GeneralListener(inlierRatioText, inlierRatioMin, inlierRatioMax, ValueChange.INLIERRATIO));
-		maxErrorScrollbar.addAdjustmentListener(new GeneralListener(maxErrorText, maxErrorMin, maxErrorMax, ValueChange.MAXERROR));
+		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(supportRegionText, supportRegionMin, supportRegionMax, ValueChange.SUPPORTREGION, SupportRegionTextField));
+		inlierRatioScrollbar.addAdjustmentListener(new GeneralListener(inlierRatioText, inlierRatioMin, inlierRatioMax, ValueChange.INLIERRATIO, new TextField()));
+		maxErrorScrollbar.addAdjustmentListener(new GeneralListener(maxErrorText, maxErrorMin, maxErrorMax, ValueChange.MAXERROR, new TextField()));
 
+		// SupportRegionTextField.addAdjustmentListener(new TextFieldListener(supportRegionText, supportRegionMin, supportRegionMax, ValueChange.SUPPORTREGION, SupportRegionTextField));
+		
+		
+		// SupportRegionTextField.addKeyListenerl);
+		
 		button.addActionListener( new FinishedButtonListener( frame, false ) );
 		cancel.addActionListener( new FinishedButtonListener( frame, true ) );
 
@@ -759,55 +766,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 
 		}
-
 		
 		showPeaks();
-		
-//		// extract peaks to show
-//		Overlay o = imp.getOverlay();
-//
-//		if ( o == null )
-//		{
-//			o = new Overlay();
-//			imp.setOverlay( o );
-//		}
-//
-//		o.clear();
-//
-//		for ( final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks )
-//		{
-//			if ( ( peak.isMax() && lookForMaxima ) || ( peak.isMin() && lookForMinima ) )
-//			{
-//				final float x = peak.getPosition( 0 ); 
-//				final float y = peak.getPosition( 1 );
-//
-//				// take only peaks that are inside of the image
-//				if ( Math.abs( peak.getValue().get() ) > threshold &&
-//						x >= extraSize/2 && y >= extraSize/2 &&
-//						x < rectangle.width+extraSize/2 && y < rectangle.height+extraSize/2 )
-//				{
-//					final OvalRoi or = new OvalRoi( Util.round( x - sigma ) + rectangle.x - extraSize/2, Util.round( y - sigma ) + rectangle.y - extraSize/2, Util.round( sigma+sigma2 ), Util.round( sigma+sigma2 ) );
-//
-//					if ( peak.isMax() )
-//						or.setStrokeColor( Color.green );
-//					else if ( peak.isMin() )
-//						or.setStrokeColor( Color.red );
-//
-//					o.add( or );
-//				}
-//			}
-//		}
-
 		imp.updateAndDraw();
 		
 		runRansac();
-
-		
-
 		isComputing = false;
 	}
 	
-	// TODO: is used? 
 	// extract peaks to show
 	protected void showPeaks(){
 		Overlay o = imp.getOverlay();
@@ -1290,17 +1256,71 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}		
 	}
 
-	// general listener used by ransac
-	protected class GeneralListener implements AdjustmentListener{
+	
+	
+	// changes value of the scroller so that it is the same as in the text field
+	protected class TextFieldListener implements AdjustmentListener{
 		final Label label;
+		final TextField textField;
 		final float min, max;
 		final ValueChange valueAdjust;
-
-		public GeneralListener(final Label label, final float min, final float max, ValueChange valueAdjust){
+		
+		public TextFieldListener(final Label label, final float min, final float max, ValueChange valueAdjust, TextField textField){
 			this.label = label; 
 			this.min = min;
 			this.max = max;
 			this.valueAdjust = valueAdjust;		
+			this.textField = textField;
+		}
+		
+		@Override
+		public void adjustmentValueChanged(final AdjustmentEvent event){
+			// check that the value is in (min, max)
+			// adjust and grab value
+			
+			// float value = computeValueFromScrollbarPosition( event.getValue(), min, max, scrollbarSize );
+			float value = event.getValue();
+			String labelText = ""; 
+
+			if (valueAdjust == ValueChange.SUPPORTREGION){
+				supportRegion = (int)value;
+				labelText = "Support Region Size = " + supportRegion;	
+				// will be set by user
+				//textField.setText(Integer.toString(supportRegion));
+				
+			}
+					
+			label.setText(labelText); 
+			if (!isComputing){
+				updatePreview(valueAdjust);
+			}
+			else if ( !event.getValueIsAdjusting() )
+			{
+				while ( isComputing )
+				{
+					SimpleMultiThreading.threadWait( 10 );
+				}
+				updatePreview( valueAdjust );
+			}
+		}
+	}
+	
+	
+	
+	
+	// general listener used by ransac
+	protected class GeneralListener implements AdjustmentListener{
+		final Label label;
+		final TextField textField;
+		final float min, max;
+		final ValueChange valueAdjust;
+
+		public GeneralListener(final Label label, final float min, final float max, ValueChange valueAdjust, TextField textField){
+			this.label = label; 
+			this.min = min;
+			this.max = max;
+			this.valueAdjust = valueAdjust;		
+			this.textField = textField;
 		}
 
 		@Override
@@ -1311,6 +1331,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			if (valueAdjust == ValueChange.SUPPORTREGION){
 				supportRegion = (int)value;
 				labelText = "Support Region Size = " + supportRegion;
+				
+				textField.setText(Integer.toString(supportRegion));
+				
 			}
 			else if (valueAdjust == ValueChange.INLIERRATIO){
 				inlierRatio = value;

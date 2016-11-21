@@ -306,11 +306,13 @@ public class Spot implements RealLocalizable
 			for ( final PointFunctionMatch pm : spot.inliers )
 			{
 				final Point p = pm.getP1();
-
+				
 				for ( int d = 0; d < numDimensions; ++d )
 					drawRA.setPosition( Math.round( p.getW()[ d ]/scale[ d ] ), d );
 
-				drawRA.get().setReal( point + rnd );
+				// drawRA.get().setReal( point + rnd );
+				// set color to error value
+				drawRA.get().setReal(pm.getDistance());
 			}
 			//++point;
 		}

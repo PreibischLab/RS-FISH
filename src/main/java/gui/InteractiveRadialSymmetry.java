@@ -72,7 +72,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.regex.Pattern;
 import java.awt.Button;
 import java.awt.Checkbox;
 
@@ -474,7 +474,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
 		final GridBagConstraints c = new GridBagConstraints();
-
+		
 		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitSupportRegion, 10, 1, 10 + scrollbarSize );
 		this.supportRegion = (int)computeValueFromScrollbarPosition(ransacInitSupportRegion, supportRegionMin, supportRegionMax, scrollbarSize);
 
@@ -538,7 +538,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		maxErrorScrollbar.addAdjustmentListener(new GeneralListener(maxErrorText, maxErrorMin, maxErrorMax, ValueChange.MAXERROR, new TextField()));
 
 		// SupportRegionTextField.addAdjustmentListener(new TextFieldListener(supportRegionText, supportRegionMin, supportRegionMax, ValueChange.SUPPORTREGION, SupportRegionTextField));
-		SupportRegionTextField.addActionListener(new TextFieldListener(supportRegionText, supportRegionMin, supportRegionMax, ValueChange.SUPPORTREGION, SupportRegionTextField));
+		SupportRegionTextField.addActionListener(new TextFieldListener(supportRegionText, supportRegionMin, supportRegionMax, ValueChange.SUPPORTREGION, SupportRegionTextField, supportRegionScrollbar));
 
 
 		// SupportRegionTextField.addKeyListenerl);
@@ -1243,15 +1243,38 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	protected class TextFieldListener implements ActionListener{
 		final Label label;
 		final TextField textField;
-		final float min, max;
+		final int min, max;
 		final ValueChange valueAdjust;
+		final Scrollbar scrollbar;
 
-		public TextFieldListener(final Label label, final float min, final float max, ValueChange valueAdjust, TextField textField){
+		public TextFieldListener(final Label label, final int min, final int max, ValueChange valueAdjust, TextField textField, Scrollbar scrollbar){
 			this.label = label; 
 			this.min = min;
 			this.max = max;
 			this.valueAdjust = valueAdjust;		
 			this.textField = textField;
+			this.scrollbar = scrollbar;
+		}
+		
+		// function checks that the textfield contains number 
+		// add ensures that the number is inside region [min, max]
+		public int ensureNumber(String number, int min, int max){
+			boolean isInteger = Pattern.matches("^\\d*$", number);
+			int res = -1;
+			// TODO: instead of if/else write full try/catch block
+			if(isInteger){
+				res =  Integer.parseInt(number);
+				if (res > max)
+					res = max;
+				if (res < min)
+					res = min;
+			}
+			else{ 
+				System.out.println("Not a valid number");
+				// idle
+			}
+			
+			return res;
 		}
 
 		@Override
@@ -1261,53 +1284,33 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 			// TODO: check that the number is passed
 			// TODO: ensure that the number is between min and max support region
-			int value = Math.round(Float.valueOf(textField.getText()));
+			// int value = Math.round(Float.valueOf(textField.getText()));
+			int value = ensureNumber(textField.getText(), min, max);
 
 			System.out.println("value in the text field = " + value);			
 			String labelText = ""; 
 
 			if (valueAdjust == ValueChange.SUPPORTREGION){
+				// set the value for the support region
 				supportRegion = value;
-				labelText = "Support Region Size = " + supportRegion;	
-				// will be set by user
-				//textField.setText(Integer.toString(supportRegion));					
-
-				textField.setText(Integer.toString(supportRegion));
-				
-				
+				// set label
+				labelText = "Support Region Size = " + supportRegion;					
+				// calculate new position of the scrollbar
+				int newScrollbarPosition = computeScrollbarPositionFromValue(value, min, max, scrollbarSize);
+				// adjust the scrollbar position!
+				scrollbar.setValue( newScrollbarPosition);
+				// set new value for text label
+				label.setText(labelText); 
 			}
 			else{
 				System.out.println("There is error in the support region adjustment");
 			}
-			
-			
-			label.setText(labelText); 
+						
 			while ( isComputing )
 			{
 				SimpleMultiThreading.threadWait( 10 );
 			}
-// 			updatePreview( ValueChange.SUPPORTREGION );
-			
-			
-//			if (!isComputing){
-//				updatePreview(valueAdjust);
-//			}
-//			else if ( !event.getValueIsAdjusting() )
-//			{
-//				while ( isComputing )
-//				{
-//					SimpleMultiThreading.threadWait( 10 );
-//				}
-//				updatePreview( valueAdjust );
-//			}
-			
-
-//			label.setText(labelText);
-
-
-
-
-
+ 			updatePreview( ValueChange.SUPPORTREGION );
 		}
 	}
 
@@ -1326,9 +1329,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			this.min = min;
 			this.max = max;
 			this.valueAdjust = valueAdjust;		
-			this.textField = textField;
-			
-			
+			this.textField = textField;			
 		}
 
 		@Override
@@ -1375,7 +1376,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		String pathMac = "/Users/kkolyva/Desktop/latest_desktop/multiple_dots.tif";
 		String pathUbuntu = "/home/milkyklim/eclipse.input/multiple_dots.tif";
 
-		String path = pathUbuntu;
+		String path = pathMac;
 
 		ImagePlus imp = new Opener().openImage( path );
 

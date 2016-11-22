@@ -481,7 +481,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		final TextField SupportRegionTextField = new TextField(Integer.toString(this.supportRegion));
 		SupportRegionTextField.setEditable(true);
-		SupportRegionTextField.setCaretPosition(Integer.toString(this.supportRegion).length());
 
 		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitInlierRatio, 10, 1, 10 + scrollbarSize );
 		this.inlierRatio = computeValueFromScrollbarPosition(ransacInitInlierRatio, inlierRatioMin, inlierRatioMax, scrollbarSize);
@@ -492,7 +491,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		this.maxError = maxErrorMin + ( (log1001 - (float)Math.log10(1001-ransacInitMaxError))/log1001 ) * (maxErrorMax-maxErrorMin);						
 		//this.maxError = computeValueFromScrollbarPosition(ransacInitMaxError, maxErrorMin, maxErrorMax, scrollbarSize);
 		
-		final Label supportRegionText = new Label( "Support Region Radius:" /* = " + this.supportRegion*/, Label.CENTER );	
+		final Label supportRegionText = new Label( "Support Region Size:" /* = " + this.supportRegion*/, Label.CENTER );	
 		final Label inlierRatioText = new Label( "Inlier Ratio = " + String.format(java.util.Locale.US,"%.2f", this.inlierRatio), Label.CENTER ); 		
 		final Label maxErrorText = new Label( "Max Error = " + String.format(java.util.Locale.US,"%.2f", this.maxError) , Label.CENTER ); 		
 
@@ -548,7 +547,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.gridwidth = 2;
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		frame.add ( maxErrorScrollbar, c );
-		
+
 		++c.gridy;
 		c.insets = new Insets(10, 60, 0, 60);
 		frame.add( button, c );
@@ -597,10 +596,10 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final int sigma2init = computeScrollbarPositionFromValue( this.sigma2, sigmaMin, sigmaMax, scrollbarSize ); 
 		final Scrollbar sigma2 = new Scrollbar ( Scrollbar.HORIZONTAL, sigma2init, 10, 0, 10 + scrollbarSize );
 
-		final Label sigmaText1 = new Label( "Sigma 1 = " + String.format(java.util.Locale.US,"%.2f", this.sigma) , Label.CENTER );
-		final Label sigmaText2 = new Label( "Sigma 2 = " + String.format(java.util.Locale.US,"%.2f", this.sigma2), Label.CENTER );
+		final Label sigmaText1 = new Label( "Sigma 1 = " + this.sigma, Label.CENTER );
+		final Label sigmaText2 = new Label( "Sigma 2 = " + this.sigma2, Label.CENTER );
 
-		final Label thresholdText = new Label( "Threshold = " + String.format(java.util.Locale.US,"%.2f", this.threshold), Label.CENTER );
+		final Label thresholdText = new Label( "Threshold = " + this.threshold, Label.CENTER );
 		final Button apply = new Button( "Apply to Stack (will take some time)" );
 		final Button button = new Button( "Done" );
 		final Button cancel = new Button( "Cancel" );
@@ -611,51 +610,41 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		/* Location */
 		frame.setLayout( layout );
-		
-		// insets constants
-		int inTop = 0;
-		int inRight = 5;
-		int inBottom = 0;
-		int inLeft = inRight;
-		
-		
+
 		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0; 
+		c.gridx = 0;
 		c.gridy = 0;
-		c.weightx = 1; 
-		c.gridwidth = 1;
-		frame.add( sigmaText1, c );
-		
-		++c.gridy;
-		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
+		c.weightx = 1;
 		frame.add ( sigma1, c );
 
-		// TODO: talk to @stephan, I would rather delete this
-		// ++c.gridy;
-		// frame.add ( sigma2, c );
-
-		// ++c.gridy;
-		// frame.add( sigmaText2, c );
-
-		// ++c.gridy;
-		// c.insets = new Insets(0,65,0,65);
-		// frame.add( sigma2Enable, c );
-		
 		++c.gridy;
+		frame.add( sigmaText1, c );
+
+		++c.gridy;
+		frame.add ( sigma2, c );
+
+		++c.gridy;
+		frame.add( sigmaText2, c );
+
+		++c.gridy;
+		c.insets = new Insets(0,65,0,65);
+		frame.add( sigma2Enable, c );
+
+		++c.gridy;
+		c.insets = new Insets(10,0,0,0);
+		frame.add ( threshold, c );
 		c.insets = new Insets(0,0,0,0);
+
+		++c.gridy;
 		frame.add( thresholdText, c );
 
 		++c.gridy;
-		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add ( threshold, c );
+		c.insets = new Insets(0,130,0,75);
+		frame.add( min, c );
 
 		++c.gridy;
 		c.insets = new Insets(0,125,0,75);
 		frame.add( max, c );
-		
-		++c.gridy;
-		c.insets = new Insets(0,130,0,75);
-		frame.add( min, c );
 
 		++c.gridy;
 		c.insets = new Insets(0,75,0,75);
@@ -671,29 +660,26 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		/* Configuration */
 		sigma1.addAdjustmentListener( new SigmaListener( sigmaText1, sigmaMin, sigmaMax, scrollbarSize, sigma1, sigma2, sigmaText2 ) );
-		// sigma2.addAdjustmentListener( new Sigma2Listener( sigmaMin, sigmaMax, scrollbarSize, sigma2, sigmaText2 ) );
+		sigma2.addAdjustmentListener( new Sigma2Listener( sigmaMin, sigmaMax, scrollbarSize, sigma2, sigmaText2 ) );
 		threshold.addAdjustmentListener( new ThresholdListener( thresholdText, thresholdMin, thresholdMax ) );
 		button.addActionListener( new FinishedButtonListener( frame, false ) );
 		cancel.addActionListener( new FinishedButtonListener( frame, true ) );
 		apply.addActionListener( new ApplyButtonListener() );
 		min.addItemListener( new MinListener() );
 		max.addItemListener( new MaxListener() );
-		// sigma2Enable.addItemListener( new EnableListener( sigma2, sigmaText2 ) );
+		sigma2Enable.addItemListener( new EnableListener( sigma2, sigmaText2 ) );
 
-		
-		// TODO: remove if necessary
-		// if ( !sigma2IsAdjustable )
-		// 	sigma2Enable.setEnabled( false );
+		if ( !sigma2IsAdjustable )
+			sigma2Enable.setEnabled( false );
 
 		frame.addWindowListener( new FrameListener( frame ) );
 
 		frame.setVisible( true );
 
-		// originalColor = sigma2.getBackground();
-		// sigma2.setBackground( inactiveColor );
-		// TODO: Bold is for loosers
-		// sigmaText1.setFont( sigmaText1.getFont().deriveFont( Font.BOLD ) );
-		// thresholdText.setFont( thresholdText.getFont().deriveFont( Font.BOLD ) );
+		originalColor = sigma2.getBackground();
+		sigma2.setBackground( inactiveColor );
+		sigmaText1.setFont( sigmaText1.getFont().deriveFont( Font.BOLD ) );
+		thresholdText.setFont( thresholdText.getFont().deriveFont( Font.BOLD ) );
 	}
 
 	public static float computeSigma2( final float sigma1, final int sensitivity )
@@ -1324,7 +1310,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				// set the value for the support region
 				supportRegion = value;
 				// set label
-				labelText = "Support Region Radius:"; // = " + supportRegion;					
+				labelText = "Support Region Size:"; // = " + supportRegion;					
 				// calculate new position of the scrollbar
 				int newScrollbarPosition = computeScrollbarPositionFromValue(supportRegion, min, max, scrollbarSize);
 				// adjust the scrollbar position!
@@ -1369,7 +1355,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 			if (valueAdjust == ValueChange.SUPPORTREGION){
 				supportRegion = (int)value;
-				labelText = "Support Region Radius:"; // = " + supportRegion ;
+				labelText = "Support Region Size:"; // = " + supportRegion ;
 
 				textField.setText(Integer.toString(supportRegion));
 

@@ -470,7 +470,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	protected void displayRansacSliders()
 	{
 		final Frame frame = new Frame("Adjust RANSAC Values");
-		frame.setSize( 300, 330 );
+		frame.setSize( 300, 220 );
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
@@ -491,7 +491,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		this.maxError = maxErrorMin + ( (log1001 - (float)Math.log10(1001-ransacInitMaxError))/log1001 ) * (maxErrorMax-maxErrorMin);						
 		//this.maxError = computeValueFromScrollbarPosition(ransacInitMaxError, maxErrorMin, maxErrorMax, scrollbarSize);
 		
-		final Label supportRegionText = new Label( "Support Region Size = " + this.supportRegion, Label.CENTER );	
+		final Label supportRegionText = new Label( "Support Region Size:" /* = " + this.supportRegion*/, Label.CENTER );	
 		final Label inlierRatioText = new Label( "Inlier Ratio = " + String.format(java.util.Locale.US,"%.2f", this.inlierRatio), Label.CENTER ); 		
 		final Label maxErrorText = new Label( "Max Error = " + String.format(java.util.Locale.US,"%.2f", this.maxError) , Label.CENTER ); 		
 
@@ -501,28 +501,22 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		//		/* Location */
 		frame.setLayout( layout );
 		
-		// TODO: set the parameters for each object that is in the form!
-		// remember that properties _do_ snowball to the next level
-
-		// TODO: adjust the aspect ratio (padding) of the first row
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0; 
-		c.gridy = 0;
-		c.weightx = 0.50; // 
-		c.gridwidth = 1; // number of columns used by element
-		frame.add( supportRegionText, c );
-
 		// insets constants
 		int inTop = 0;
 		int inRight = 5;
 		int inBottom = 0;
 		int inLeft = inRight;
 		
-		
-		c.gridx = 1;
-		c.weightx = 0.50; // 
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0; 
+		c.gridy = 0;
+		c.weightx = 0.50; 
 		c.gridwidth = 1;
-		c.ipadx = 20;
+		frame.add( supportRegionText, c );
+
+		c.gridx = 1;
+		c.weightx = 0.50; 
+		c.gridwidth = 1;
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		frame.add(SupportRegionTextField, c);
 
@@ -554,13 +548,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		frame.add ( maxErrorScrollbar, c );
 
-
 		++c.gridy;
-		c.insets = new Insets(10, 30, 0, 30);
+		c.insets = new Insets(10, 60, 0, 60);
 		frame.add( button, c );
 
 		++c.gridy;
-		c.insets = new Insets(10, 30, 0, 30);
+		c.insets = new Insets(10, 60, 0, 60);
 		frame.add( cancel, c );	
 
 		//		/* Configuration */
@@ -1317,7 +1310,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				// set the value for the support region
 				supportRegion = value;
 				// set label
-				labelText = "Support Region Size = " + supportRegion;					
+				labelText = "Support Region Size:"; // = " + supportRegion;					
 				// calculate new position of the scrollbar
 				int newScrollbarPosition = computeScrollbarPositionFromValue(supportRegion, min, max, scrollbarSize);
 				// adjust the scrollbar position!
@@ -1362,7 +1355,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 			if (valueAdjust == ValueChange.SUPPORTREGION){
 				supportRegion = (int)value;
-				labelText = "Support Region Size = " + supportRegion ;
+				labelText = "Support Region Size:"; // = " + supportRegion ;
 
 				textField.setText(Integer.toString(supportRegion));
 

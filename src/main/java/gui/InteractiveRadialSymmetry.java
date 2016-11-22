@@ -95,7 +95,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	int supportRegionMin = 1;
 	int supportRegionMax = 50; 
-	float inlierRatioMin = (float) (10.0/100.0); // 10%
+	float inlierRatioMin = (float) (0.0/100.0);   // 0%
 	float inlierRatioMax = (float) (100.0/100.0); // 100%
 	float maxErrorMin = 0.0001f;
 	float maxErrorMax = 10.00f;
@@ -406,6 +406,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	// gui: show the results for ransac
 	// draw detected points
+	// TODO: create a table with the results here
 	protected void showRansacResult(final ArrayList< Spot > spots){
 		// make draw global
 		for ( final FloatType t : ransacPreview )
@@ -489,10 +490,10 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final float log1001 = (float) Math.log10( scrollbarSize + 1);
 		this.maxError = maxErrorMin + ( (log1001 - (float)Math.log10(1001-ransacInitMaxError))/log1001 ) * (maxErrorMax-maxErrorMin);						
 		//this.maxError = computeValueFromScrollbarPosition(ransacInitMaxError, maxErrorMin, maxErrorMax, scrollbarSize);
-
+		
 		final Label supportRegionText = new Label( "Support Region Size = " + this.supportRegion, Label.CENTER );	
-		final Label inlierRatioText = new Label( "Inlier Ratio = " + this.inlierRatio, Label.CENTER ); 		
-		final Label maxErrorText = new Label( "Max Error = " + this.maxError, Label.CENTER ); 		
+		final Label inlierRatioText = new Label( "Inlier Ratio = " + String.format(java.util.Locale.US,"%.2f", this.inlierRatio), Label.CENTER ); 		
+		final Label maxErrorText = new Label( "Max Error = " + String.format(java.util.Locale.US,"%.2f", this.maxError) , Label.CENTER ); 		
 
 		final Button button = new Button( "Done" );
 		final Button cancel = new Button( "Cancel" );
@@ -507,29 +508,31 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.add ( supportRegionScrollbar, c );
 
 		++c.gridy;
+		c.insets = new Insets(10, 150, 0, 150);
 		frame.add(SupportRegionTextField, c);
 
 		++c.gridy;
+		c.insets = new Insets(0, 0, 0, 0); // reset insets
 		frame.add( supportRegionText, c );
 
-		++c.gridy;
-		frame.add ( inlierRatioScrollbar, c );
-
-		++c.gridy;
-		frame.add( inlierRatioText, c );
-
-		++c.gridy;
-		frame.add ( maxErrorScrollbar, c );
-
-		++c.gridy;
-		frame.add( maxErrorText, c );
+//		++c.gridy;
+//		frame.add ( inlierRatioScrollbar, c );
+//
+//		++c.gridy;
+//		frame.add( inlierRatioText, c );
+//
+//		++c.gridy;
+//		frame.add ( maxErrorScrollbar, c );
+//
+//		++c.gridy;
+//		frame.add( maxErrorText, c );
 
 		++c.gridy;
 		c.insets = new Insets(10, 150, 0, 150);
 		frame.add( button, c );
 
 		++c.gridy;
-		c.insets = new Insets(10, 150, 0, 150);
+		//c.insets = new Insets(10, 150, 0, 150);
 		frame.add( cancel, c );	
 
 		//		/* Configuration */
@@ -1331,21 +1334,20 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 			if (valueAdjust == ValueChange.SUPPORTREGION){
 				supportRegion = (int)value;
-				labelText = "Support Region Size = " + supportRegion;
+				labelText = "Support Region Size = " + supportRegion ;
 
 				textField.setText(Integer.toString(supportRegion));
 
 			}
 			else if (valueAdjust == ValueChange.INLIERRATIO){
 				inlierRatio = value;
-				labelText = "Inlier Ratio = " + inlierRatio;
+				labelText = "Inlier Ratio = " + String.format(java.util.Locale.US,"%.2f", inlierRatio);
 			}
 			else{ // MAXERROR
 				final float log1001 = (float)Math.log10(1001);
 				value  = min + ( (log1001 - (float)Math.log10(1001-event.getValue()))/log1001 ) * (max-min);
-
 				maxError = value;
-				labelText = "Max Error = " + maxError;
+				labelText = "Max Error = " + String.format(java.util.Locale.US,"%.2f", maxError);
 			}		
 			label.setText(labelText); 
 			if (!isComputing){
@@ -1362,13 +1364,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-	public static void main(String[] args) throws NotEnoughDataPointsException, IllDefinedDataPointsException{
+	public static void main(String[] args) {
 		new ImageJ();
 
 		String pathMac = "/Users/kkolyva/Desktop/latest_desktop/multiple_dots.tif";
 		String pathUbuntu = "/home/milkyklim/eclipse.input/multiple_dots.tif";
 
-		String path = pathMac;
+		String path = pathUbuntu;
 
 		ImagePlus imp = new Opener().openImage( path );
 

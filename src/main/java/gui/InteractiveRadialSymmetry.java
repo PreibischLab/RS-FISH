@@ -470,7 +470,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	protected void displayRansacSliders()
 	{
 		final Frame frame = new Frame("Adjust RANSAC Values");
-		frame.setSize( 400, 330 );
+		frame.setSize( 300, 330 );
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
@@ -500,39 +500,67 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		//		/* Location */
 		frame.setLayout( layout );
+		
+		// TODO: set the parameters for each object that is in the form!
+		// remember that properties _do_ snowball to the next level
 
+		// TODO: adjust the aspect ratio (padding) of the first row
 		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
+		c.gridx = 0; 
 		c.gridy = 0;
-		c.weightx = 1;
-		frame.add ( supportRegionScrollbar, c );
-
-		++c.gridy;
-		c.insets = new Insets(10, 150, 0, 150);
-		frame.add(SupportRegionTextField, c);
-
-		++c.gridy;
-		c.insets = new Insets(0, 0, 0, 0); // reset insets
+		c.weightx = 0.50; // 
+		c.gridwidth = 1; // number of columns used by element
 		frame.add( supportRegionText, c );
 
-//		++c.gridy;
-//		frame.add ( inlierRatioScrollbar, c );
-//
-//		++c.gridy;
-//		frame.add( inlierRatioText, c );
-//
-//		++c.gridy;
-//		frame.add ( maxErrorScrollbar, c );
-//
-//		++c.gridy;
-//		frame.add( maxErrorText, c );
+		// insets constants
+		int inTop = 0;
+		int inRight = 5;
+		int inBottom = 0;
+		int inLeft = inRight;
+		
+		
+		c.gridx = 1;
+		c.weightx = 0.50; // 
+		c.gridwidth = 1;
+		c.ipadx = 20;
+		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
+		frame.add(SupportRegionTextField, c);
+
+		c.gridx = 0;
+		c.gridy = 1;
+		c.gridwidth = 2;
+		c.insets = new Insets(5, inLeft, inBottom, inRight);
+		frame.add ( supportRegionScrollbar, c );
+		
+		c.gridx = 0;
+		c.gridy = 2;
+		c.gridwidth = 2;
+		frame.add( inlierRatioText, c );
+
+		c.gridx = 0;
+		c.gridy = 3;
+		c.gridwidth = 2;
+		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
+		frame.add ( inlierRatioScrollbar, c );
+
+		c.gridx = 0;
+		c.gridy = 4;
+		c.gridwidth = 2;
+		frame.add( maxErrorText, c );
+
+		c.gridx = 0;
+		c.gridy = 5;
+		c.gridwidth = 2;
+		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
+		frame.add ( maxErrorScrollbar, c );
+
 
 		++c.gridy;
-		c.insets = new Insets(10, 150, 0, 150);
+		c.insets = new Insets(10, 30, 0, 30);
 		frame.add( button, c );
 
 		++c.gridy;
-		//c.insets = new Insets(10, 150, 0, 150);
+		c.insets = new Insets(10, 30, 0, 30);
 		frame.add( cancel, c );	
 
 		//		/* Configuration */

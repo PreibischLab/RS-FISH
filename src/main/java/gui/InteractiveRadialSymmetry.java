@@ -537,11 +537,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		inlierRatioScrollbar.addAdjustmentListener(new GeneralListener(inlierRatioText, inlierRatioMin, inlierRatioMax, ValueChange.INLIERRATIO, new TextField()));
 		maxErrorScrollbar.addAdjustmentListener(new GeneralListener(maxErrorText, maxErrorMin, maxErrorMax, ValueChange.MAXERROR, new TextField()));
 
-		// SupportRegionTextField.addAdjustmentListener(new TextFieldListener(supportRegionText, supportRegionMin, supportRegionMax, ValueChange.SUPPORTREGION, SupportRegionTextField));
 		SupportRegionTextField.addActionListener(new TextFieldListener(supportRegionText, supportRegionMin, supportRegionMax, ValueChange.SUPPORTREGION, SupportRegionTextField, supportRegionScrollbar));
-
-
-		// SupportRegionTextField.addKeyListenerl);
 
 		button.addActionListener( new FinishedButtonListener( frame, false ) );
 		cancel.addActionListener( new FinishedButtonListener( frame, true ) );
@@ -1272,8 +1268,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			else{ 
 				System.out.println("Not a valid number");
 				// idle
-			}
-			
+			}			
 			return res;
 		}
 
@@ -1281,10 +1276,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		public void actionPerformed(final ActionEvent event){
 			// check that the value is in (min, max)
 			// adjust and grab value
-
-			// TODO: check that the number is passed
-			// TODO: ensure that the number is between min and max support region
-			// int value = Math.round(Float.valueOf(textField.getText()));
+			
 			int value = ensureNumber(textField.getText(), min, max);
 
 			System.out.println("value in the text field = " + value);			
@@ -1296,7 +1288,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				// set label
 				labelText = "Support Region Size = " + supportRegion;					
 				// calculate new position of the scrollbar
-				int newScrollbarPosition = computeScrollbarPositionFromValue(value, min, max, scrollbarSize);
+				int newScrollbarPosition = computeScrollbarPositionFromValue(supportRegion, min, max, scrollbarSize);
 				// adjust the scrollbar position!
 				scrollbar.setValue( newScrollbarPosition);
 				// set new value for text label

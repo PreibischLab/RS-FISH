@@ -470,7 +470,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	protected void displayRansacSliders()
 	{
 		final Frame frame = new Frame("Adjust RANSAC Values");
-		frame.setSize( 300, 220 );
+		frame.setSize( 260, 220 );
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
@@ -510,12 +510,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0; 
 		c.gridy = 0;
-		c.weightx = 0.50; 
+		// c.weightx = 0.50; 
 		c.gridwidth = 1;
 		frame.add( supportRegionText, c );
 
 		c.gridx = 1;
-		c.weightx = 0.50; 
+		// c.weightx = 0.50; 
 		c.gridwidth = 1;
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		frame.add(SupportRegionTextField, c);
@@ -549,11 +549,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.add ( maxErrorScrollbar, c );
 
 		++c.gridy;
-		c.insets = new Insets(10, 60, 0, 60);
+		c.insets = new Insets(5, 50, 0, 50);
 		frame.add( button, c );
 
 		++c.gridy;
-		c.insets = new Insets(10, 60, 0, 60);
+		c.insets = new Insets(0, 50, 0, 50);
 		frame.add( cancel, c );	
 
 		//		/* Configuration */
@@ -578,7 +578,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	protected void displaySliders()
 	{
 		final Frame frame = new Frame("Adjust Difference-of-Gaussian Values");
-		frame.setSize( 400, 330 );
+		frame.setSize( 360, 250 );
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
@@ -596,11 +596,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final int sigma2init = computeScrollbarPositionFromValue( this.sigma2, sigmaMin, sigmaMax, scrollbarSize ); 
 		final Scrollbar sigma2 = new Scrollbar ( Scrollbar.HORIZONTAL, sigma2init, 10, 0, 10 + scrollbarSize );
 
-		final Label sigmaText1 = new Label( "Sigma 1 = " + this.sigma, Label.CENTER );
-		final Label sigmaText2 = new Label( "Sigma 2 = " + this.sigma2, Label.CENTER );
+		final Label sigmaText1 = new Label( "Sigma 1 = " + String.format(java.util.Locale.US,"%.2f", this.sigma) , Label.CENTER );
+		final Label sigmaText2 = new Label( "Sigma 2 = " + String.format(java.util.Locale.US,"%.2f", this.sigma2), Label.CENTER );
 
-		final Label thresholdText = new Label( "Threshold = " + this.threshold, Label.CENTER );
-		final Button apply = new Button( "Apply to Stack (will take some time)" );
+		final Label thresholdText = new Label( "Threshold = " +  String.format(java.util.Locale.US,"%.2f", this.threshold), Label.CENTER );
+		final Button apply = new Button( "Apply to Stack" );
 		final Button button = new Button( "Done" );
 		final Button cancel = new Button( "Cancel" );
 
@@ -614,72 +614,75 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
 		c.gridy = 0;
-		c.weightx = 1;
+		// c.weightx = 1;
+		frame.add( sigmaText1, c );
+		
+		++c.gridy;
 		frame.add ( sigma1, c );
 
-		++c.gridy;
-		frame.add( sigmaText1, c );
-
-		++c.gridy;
-		frame.add ( sigma2, c );
-
-		++c.gridy;
-		frame.add( sigmaText2, c );
-
-		++c.gridy;
-		c.insets = new Insets(0,65,0,65);
-		frame.add( sigma2Enable, c );
-
-		++c.gridy;
-		c.insets = new Insets(10,0,0,0);
-		frame.add ( threshold, c );
-		c.insets = new Insets(0,0,0,0);
+		// TODO: delete this part, user unfriendly
+//		++c.gridy;
+//		c.insets = new Insets(0,65,0,65);
+//		frame.add( sigma2Enable, c );
+//		
+//		++c.gridy;
+//		frame.add( sigmaText2, c );
+//
+//		++c.gridy;
+//		frame.add ( sigma2, c );
 
 		++c.gridy;
 		frame.add( thresholdText, c );
+		
+		++c.gridy;
+		// c.insets = new Insets(10,0,0,0);
+		frame.add ( threshold, c );
+		// c.insets = new Insets(0,0,0,0);
 
 		++c.gridy;
-		c.insets = new Insets(0,130,0,75);
+		// c.insets = new Insets(0,130,0,75);
 		frame.add( min, c );
 
 		++c.gridy;
-		c.insets = new Insets(0,125,0,75);
+		// c.insets = new Insets(0,125,0,75);
 		frame.add( max, c );
 
 		++c.gridy;
-		c.insets = new Insets(0,75,0,75);
+		c.insets = new Insets(0, 50, 0, 50);
 		frame.add( apply, c );
 
 		++c.gridy;
-		c.insets = new Insets(10,150,0,150);
+		// c.insets = new Insets(10,150,0,150);
+		c.insets = new Insets(0, 50, 0, 50);
 		frame.add( button, c );
 
 		++c.gridy;
-		c.insets = new Insets(10,150,0,150);
+		// c.insets = new Insets(10,150,0,150);
+		c.insets = new Insets(0, 50, 0, 50);
 		frame.add( cancel, c );
 
 		/* Configuration */
 		sigma1.addAdjustmentListener( new SigmaListener( sigmaText1, sigmaMin, sigmaMax, scrollbarSize, sigma1, sigma2, sigmaText2 ) );
-		sigma2.addAdjustmentListener( new Sigma2Listener( sigmaMin, sigmaMax, scrollbarSize, sigma2, sigmaText2 ) );
+		// sigma2.addAdjustmentListener( new Sigma2Listener( sigmaMin, sigmaMax, scrollbarSize, sigma2, sigmaText2 ) );
 		threshold.addAdjustmentListener( new ThresholdListener( thresholdText, thresholdMin, thresholdMax ) );
 		button.addActionListener( new FinishedButtonListener( frame, false ) );
 		cancel.addActionListener( new FinishedButtonListener( frame, true ) );
 		apply.addActionListener( new ApplyButtonListener() );
 		min.addItemListener( new MinListener() );
 		max.addItemListener( new MaxListener() );
-		sigma2Enable.addItemListener( new EnableListener( sigma2, sigmaText2 ) );
+// 		sigma2Enable.addItemListener( new EnableListener( sigma2, sigmaText2 ) );
 
-		if ( !sigma2IsAdjustable )
-			sigma2Enable.setEnabled( false );
+//		if ( !sigma2IsAdjustable )
+//			sigma2Enable.setEnabled( false );
 
 		frame.addWindowListener( new FrameListener( frame ) );
 
 		frame.setVisible( true );
 
-		originalColor = sigma2.getBackground();
-		sigma2.setBackground( inactiveColor );
-		sigmaText1.setFont( sigmaText1.getFont().deriveFont( Font.BOLD ) );
-		thresholdText.setFont( thresholdText.getFont().deriveFont( Font.BOLD ) );
+//		originalColor = sigma2.getBackground();
+//		sigma2.setBackground( inactiveColor );
+//		sigmaText1.setFont( sigmaText1.getFont().deriveFont( Font.BOLD ) );
+//		thresholdText.setFont( thresholdText.getFont().deriveFont( Font.BOLD ) );
 	}
 
 	public static float computeSigma2( final float sigma1, final int sensitivity )
@@ -1175,7 +1178,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			if ( !enableSigma2 )
 			{
 				sigma2 = computeSigma2( sigma, sensitivity );
-				sigmaText2.setText( "Sigma 2 = " + sigma2 );			    
+				sigmaText2.setText( "Sigma 2 = " + String.format(java.util.Locale.US,"%.2f", sigma2) );			    
 				sigmaScrollbar2.setValue( computeScrollbarPositionFromValue( sigma2, min, max, scrollbarSize ) );
 			}
 			else if ( sigma > sigma2 )
@@ -1184,7 +1187,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				sigmaScrollbar1.setValue( computeScrollbarPositionFromValue( sigma, min, max, scrollbarSize ) );
 			}
 
-			label.setText( "Sigma 1 = " + sigma );
+			label.setText( "Sigma 1 = " + String.format(java.util.Locale.US,"%.2f", sigma) );
 
 			if ( !event.getValueIsAdjusting() )
 			{
@@ -1224,7 +1227,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		public void adjustmentValueChanged( final AdjustmentEvent event )
 		{			
 			threshold = min + ( (log1001 - (float)Math.log10(1001-event.getValue()))/log1001 ) * (max-min);
-			label.setText( "Threshold = " + threshold );
+			label.setText( "Threshold = " + String.format(java.util.Locale.US,"%.2f", threshold) );
 
 			if ( !isComputing )
 			{

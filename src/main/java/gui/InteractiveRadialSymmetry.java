@@ -470,7 +470,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	protected void displayRansacSliders()
 	{
 		final Frame frame = new Frame("Adjust RANSAC Values");
-		frame.setSize( 260, 220 );
+		frame.setSize( 260, 200 );
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
@@ -481,6 +481,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		final TextField SupportRegionTextField = new TextField(Integer.toString(this.supportRegion));
 		SupportRegionTextField.setEditable(true);
+		SupportRegionTextField.setCaretPosition(Integer.toString(this.supportRegion).length());
 
 		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, ransacInitInlierRatio, 10, 1, 10 + scrollbarSize );
 		this.inlierRatio = computeValueFromScrollbarPosition(ransacInitInlierRatio, inlierRatioMin, inlierRatioMax, scrollbarSize);
@@ -510,12 +511,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0; 
 		c.gridy = 0;
-		// c.weightx = 0.50; 
+		c.weightx = 0.50; 
 		c.gridwidth = 1;
 		frame.add( supportRegionText, c );
 
 		c.gridx = 1;
-		// c.weightx = 0.50; 
+		c.weightx = 0.50; 
 		c.gridwidth = 1;
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		frame.add(SupportRegionTextField, c);
@@ -578,7 +579,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	protected void displaySliders()
 	{
 		final Frame frame = new Frame("Adjust Difference-of-Gaussian Values");
-		frame.setSize( 360, 250 );
+		frame.setSize( 360, 230 );
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
@@ -604,20 +605,27 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final Button button = new Button( "Done" );
 		final Button cancel = new Button( "Cancel" );
 
-		final Checkbox sigma2Enable = new Checkbox( "Enable Manual Adjustment of Sigma 2 ", enableSigma2 );
+		// final Checkbox sigma2Enable = new Checkbox( "Enable Manual Adjustment of Sigma 2 ", enableSigma2 );
 		final Checkbox min = new Checkbox( "Look for Minima (red)", lookForMinima );
 		final Checkbox max = new Checkbox( "Look for Maxima (green)", lookForMaxima );
 
 		/* Location */
 		frame.setLayout( layout );
-
+		
+		// insets constants
+		int inTop = 0;
+		int inRight = 5;
+		int inBottom = 0;
+		int inLeft = inRight;
+		
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
 		c.gridy = 0;
-		// c.weightx = 1;
+		c.weightx = 1;
 		frame.add( sigmaText1, c );
 		
 		++c.gridy;
+		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		frame.add ( sigma1, c );
 
 		// TODO: delete this part, user unfriendly
@@ -640,25 +648,25 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// c.insets = new Insets(0,0,0,0);
 
 		++c.gridy;
-		// c.insets = new Insets(0,130,0,75);
+		c.insets = new Insets(0,90,0,80);
+		frame.add( max, c );
+		
+		++c.gridy;
+		c.insets = new Insets(0,90,0,80);
 		frame.add( min, c );
 
 		++c.gridy;
-		// c.insets = new Insets(0,125,0,75);
-		frame.add( max, c );
-
-		++c.gridy;
-		c.insets = new Insets(0, 50, 0, 50);
+		c.insets = new Insets(0, 125, 0, 125);
 		frame.add( apply, c );
 
 		++c.gridy;
 		// c.insets = new Insets(10,150,0,150);
-		c.insets = new Insets(0, 50, 0, 50);
+		c.insets = new Insets(0, 125, 0, 125);
 		frame.add( button, c );
 
 		++c.gridy;
 		// c.insets = new Insets(10,150,0,150);
-		c.insets = new Insets(0, 50, 0, 50);
+		c.insets = new Insets(0, 125, 0, 125);
 		frame.add( cancel, c );
 
 		/* Configuration */

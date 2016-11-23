@@ -34,8 +34,6 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.util.Util;
 import mpicbg.imglib.wrapper.ImgLib1;
-import mpicbg.models.IllDefinedDataPointsException;
-import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
@@ -48,7 +46,6 @@ import net.imglib2.img.imageplus.FloatImagePlus;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.process.fusion.FusionHelper;
-
 
 import java.awt.Color;
 import java.awt.Font;
@@ -102,8 +99,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	// RANSAC parameters for gui
 	int ransacInitSupportRegion = 10;
-	int ransacInitInlierRatio = 1;
-	int ransacInitMaxError = 3;
+	float ransacInitInlierRatio = 0.75f;
+	float ransacInitMaxError = 3;
 
 	// DoG -------------------------------
 
@@ -125,7 +122,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	float thresholdMin = 0.0001f;
 	float thresholdMax = 1f;
-	int thresholdInit = 1;
+	float thresholdInit = 0.03f;
 
 	double minIntensityImage = Double.NaN;
 	double maxIntensityImage = Double.NaN;
@@ -358,11 +355,15 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		return ImagePlusAdapter.wrapFloat( imp );
 	}
 
+	// this function will show the result of RANSAC
+	protected void showRANSACresults(){
+		
+	}
 
 	/**
 	 * Copy peaks found by DoG to lighter ArrayList
 	 * */
-	protected void copyPeaks(final ArrayList< int[] > simplifiedPeaks){
+ 	protected void copyPeaks(final ArrayList< int[] > simplifiedPeaks){
 		for ( final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks )
 		{
 			if ( ( peak.isMax() && lookForMaxima ) || ( peak.isMin() && lookForMinima ) )
@@ -383,10 +384,19 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	protected void runRansac() {
-		final ArrayList< int[] > simplifiedPeaks = new ArrayList<int[]>(1);
+		final ArrayList< int[] > simplifiedPeaks = new ArrayList<int[]>(1);	
 		copyPeaks(simplifiedPeaks);
 
+		// TODO: might be wrong
+		// do I need the whole source size here?
+		// looks like I only need to recalculate roi here
+		// wrong rectangle is used here , you shoud use "rectangle instead"
 		Rectangle sourceRectangle = new Rectangle( 0, 0, source.getWidth(), source.getHeight());
+		
+		System.out.println(source.getWidth() + " " + rectangle);
+		
+		
+		
 		final Gradient derivative;
 		derivative = new GradientPreCompute( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)) );
 
@@ -399,6 +409,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		for ( final Spot spot : spots )
 			spot.computeAverageCostInliers();
 
+		// System.out.println(simplifiedPeaks.size() + " " + spots.size());
+		
 		showRansacResult(spots);
 
 		// System.out.println("Completed!");
@@ -497,7 +509,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		
 		final Label supportRegionText = new Label( "Support Region Radius:" /* = " + this.supportRegion*/, Label.CENTER );	
 		final Label inlierRatioText = new Label( "Inlier Ratio = " + String.format(java.util.Locale.US,"%.2f", this.inlierRatio), Label.CENTER ); 		
-		final Label maxErrorText = new Label( "Max Error = " + String.format(java.util.Locale.US,"%.2f", this.maxError) , Label.CENTER ); 		
+		final Label maxErrorText = new Label( "Max Error = " + String.format(java.util.Locale.US,"%.4f", this.maxError) , Label.CENTER ); 		
 
 		final Button button = new Button( "Done" );
 		final Button cancel = new Button( "Cancel" );
@@ -997,6 +1009,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	}
 
+	
+	// TODO: adjust this one to apply the RANSAC to the full image
 	protected class ApplyButtonListener implements ActionListener
 	{
 		@Override
@@ -1038,7 +1052,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			// display as extra image
 			Image<mpicbg.imglib.type.numeric.real.FloatType> detections = source.createNewImage();
 			final LocalizableByDimCursor<mpicbg.imglib.type.numeric.real.FloatType> c = detections.createLocalizableByDimCursor();
-
+			
 			for ( final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks )
 			{
 				final LocalizablePoint p = new LocalizablePoint( new float[]{ peak.getSubPixelPosition( 0 ), peak.getSubPixelPosition( 1 ), peak.getSubPixelPosition( 2 ) } );
@@ -1355,8 +1369,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 
-
-
 	// general listener used by ransac
 	protected class GeneralListener implements AdjustmentListener{
 		final Label label;
@@ -1392,7 +1404,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				final float log1001 = (float)Math.log10(1001);
 				value  = min + ( (log1001 - (float)Math.log10(1001-event.getValue()))/log1001 ) * (max-min);
 				maxError = value;
-				labelText = "Max Error = " + String.format(java.util.Locale.US,"%.2f", maxError);
+				labelText = "Max Error = " + String.format(java.util.Locale.US,"%.4f", maxError);
 			}		
 			label.setText(labelText); 
 			if (!isComputing){

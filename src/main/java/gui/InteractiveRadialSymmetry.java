@@ -121,11 +121,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	float imageSigma = 0.5f;
 	float sigmaMin = 0.5f;
 	float sigmaMax = 10f;
-	int sigmaInit = 300;
+	int sigmaInit = 5;
 
 	float thresholdMin = 0.0001f;
 	float thresholdMax = 1f;
-	int thresholdInit = 500;
+	int thresholdInit = 1;
 
 	double minIntensityImage = Double.NaN;
 	double maxIntensityImage = Double.NaN;
@@ -477,7 +477,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final GridBagConstraints c = new GridBagConstraints();
 		
 		int scrollbarInitialPosition = computeScrollbarPositionFromValue(ransacInitSupportRegion, supportRegionMin, supportRegionMax, scrollbarSize);
-		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 1, 10 + scrollbarSize );		
+		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );		
 		this.supportRegion = ransacInitSupportRegion; // (int)computeValueFromScrollbarPosition(ransacInitSupportRegion, supportRegionMin, supportRegionMax, scrollbarSize);
 		
 		final TextField SupportRegionTextField = new TextField(Integer.toString(this.supportRegion));
@@ -485,12 +485,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		SupportRegionTextField.setCaretPosition(Integer.toString(this.supportRegion).length());
 
 		scrollbarInitialPosition = computeScrollbarPositionFromValue(ransacInitInlierRatio, inlierRatioMin, inlierRatioMax, scrollbarSize);
-		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 1, 10 + scrollbarSize );
+		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );
 		this.inlierRatio = ransacInitInlierRatio; //computeValueFromScrollbarPosition(ransacInitInlierRatio, inlierRatioMin, inlierRatioMax, scrollbarSize);
 
 		final float log1001 = (float) Math.log10( scrollbarSize + 1);
-		scrollbarInitialPosition = 1001 - (int)Math.pow(10, log1001*(1 - (ransacInitMaxError - maxErrorMin)/(maxErrorMax-maxErrorMin)));		
-		final Scrollbar maxErrorScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 1, 10 + scrollbarSize );
+		// scrollbarInitialPosition = 1001 - (int)Math.pow(10, log1001*(1 - (ransacInitMaxError - maxErrorMin)/(maxErrorMax-maxErrorMin)));		
+		scrollbarInitialPosition = 1001 - (int)Math.pow(10, (maxErrorMax - ransacInitMaxError)/(maxErrorMax - maxErrorMin)*log1001);		
+		
+		final Scrollbar maxErrorScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );
 		this.maxError = ransacInitMaxError; // maxErrorMin + ( (log1001 - (float)Math.log10(1001-ransacInitMaxError))/log1001 ) * (maxErrorMax-maxErrorMin);						
 		
 		final Label supportRegionText = new Label( "Support Region Radius:" /* = " + this.supportRegion*/, Label.CENTER );	
@@ -586,14 +588,15 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final GridBagLayout layout = new GridBagLayout();
 		final GridBagConstraints c = new GridBagConstraints();
 
-		// TODO: There are multiple copy/paste bugs in the assignment of scrollbar positions!
-		final Scrollbar sigma1 = new Scrollbar ( Scrollbar.HORIZONTAL, sigmaInit, 10, 0, 10 + scrollbarSize );		
-		this.sigma = computeValueFromScrollbarPosition( sigmaInit, sigmaMin, sigmaMax, scrollbarSize); 
+		// TODO: FIXED: There are multiple copy/paste bugs in the assignment of scrollbar positions!
+		int scrollbarInitialPosition = computeScrollbarPositionFromValue(sigmaInit, sigmaMin, sigmaMax, scrollbarSize);		
+		final Scrollbar sigma1 = new Scrollbar ( Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );		
+		this.sigma = sigmaInit; // computeValueFromScrollbarPosition( sigmaInit, sigmaMin, sigmaMax, scrollbarSize); 
 
-		final Scrollbar threshold = new Scrollbar ( Scrollbar.HORIZONTAL, thresholdInit, 10, 0, 10 + scrollbarSize );
-		final float log1001 = (float)Math.log10( scrollbarSize + 1);
-
-		this.threshold = thresholdMin + ( (log1001 - (float)Math.log10(1001-thresholdInit))/log1001 ) * (thresholdMax-thresholdMin);
+		final float log1001 = (float) Math.log10( scrollbarSize + 1);				
+		scrollbarInitialPosition = (int)Math.round(1001 - Math.pow(10, (thresholdMax - thresholdInit)/(thresholdMax - thresholdMin)*log1001));			
+		final Scrollbar threshold = new Scrollbar ( Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );
+		this.threshold = thresholdInit; // thresholdMin + ( (log1001 - (float)Math.log10(1001-thresholdInit))/log1001 ) * (thresholdMax-thresholdMin);
 
 		this.sigma2 = computeSigma2( this.sigma, this.sensitivity );
 		final int sigma2init = computeScrollbarPositionFromValue( this.sigma2, sigmaMin, sigmaMax, scrollbarSize ); 
@@ -602,7 +605,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final Label sigmaText1 = new Label( "Sigma 1 = " + String.format(java.util.Locale.US,"%.2f", this.sigma) , Label.CENTER );
 		final Label sigmaText2 = new Label( "Sigma 2 = " + String.format(java.util.Locale.US,"%.2f", this.sigma2), Label.CENTER );
 
-		final Label thresholdText = new Label( "Threshold = " +  String.format(java.util.Locale.US,"%.2f", this.threshold), Label.CENTER );
+		final Label thresholdText = new Label( "Threshold = " +  String.format(java.util.Locale.US,"%.4f", this.threshold), Label.CENTER );
 		final Button apply = new Button( "Apply to Stack" );
 		final Button button = new Button( "Done" );
 		final Button cancel = new Button( "Cancel" );
@@ -1191,7 +1194,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		public void adjustmentValueChanged( final AdjustmentEvent event )
 		{
 			sigma = computeValueFromScrollbarPosition( event.getValue(), min, max, scrollbarSize );			
-
+			
 			if ( !enableSigma2 )
 			{
 				sigma2 = computeSigma2( sigma, sensitivity );
@@ -1206,7 +1209,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 			label.setText( "Sigma 1 = " + String.format(java.util.Locale.US,"%.2f", sigma) );
 
-			if ( !event.getValueIsAdjusting() )
+			// Real time change of the radius 
+			// if ( !event.getValueIsAdjusting() )
 			{
 				while ( isComputing )
 				{
@@ -1244,8 +1248,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		public void adjustmentValueChanged( final AdjustmentEvent event )
 		{			
 			threshold = min + ( (log1001 - (float)Math.log10(1001-event.getValue()))/log1001 ) * (max-min);
-			label.setText( "Threshold = " + String.format(java.util.Locale.US,"%.2f", threshold) );
-
+			label.setText( "Threshold = " + String.format(java.util.Locale.US,"%.4f", threshold) );
+			
 			if ( !isComputing )
 			{
 				updatePreview( ValueChange.THRESHOLD );

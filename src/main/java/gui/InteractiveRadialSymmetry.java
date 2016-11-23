@@ -75,7 +75,8 @@ import java.awt.Checkbox;
 
 
 public class InteractiveRadialSymmetry implements PlugIn {
-
+	// TODO: set all parameters in "constructor"
+	
 	final public static boolean debug = false;
 
 	// ImagePlus  imp = null;
@@ -87,8 +88,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	float maxError = 0.15f;
 	float inlierRatio = (float) (20.0/100.0); 
 	int supportRegion = 10;
-
-	// TODO: adjust all this parameters during constructor call
 
 	int supportRegionMin = 1;
 	int supportRegionMax = 50; 
@@ -169,7 +168,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		return 1;
 	}	
 
-	// TODO: Ransac preview
 	FloatProcessor ransacFloatProcessor;
 	ImagePlus drawImp;
 	Img<FloatType> ransacPreview;
@@ -213,7 +211,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// show the interactive kit
 		displaySliders();
 
-		// TODO: check if the listeners are working correctly here
 		// show the interactive ransac kit
 		displayRansacSliders();
 
@@ -394,8 +391,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		Rectangle sourceRectangle = new Rectangle( 0, 0, source.getWidth(), source.getHeight());
 		
 		System.out.println(source.getWidth() + " " + rectangle);
-		
-		
 		
 		final Gradient derivative;
 		derivative = new GradientPreCompute( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)) );
@@ -600,7 +595,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final GridBagLayout layout = new GridBagLayout();
 		final GridBagConstraints c = new GridBagConstraints();
 
-		// TODO: FIXED: There are multiple copy/paste bugs in the assignment of scrollbar positions!
 		int scrollbarInitialPosition = computeScrollbarPositionFromValue(sigmaInit, sigmaMin, sigmaMax, scrollbarSize);		
 		final Scrollbar sigma1 = new Scrollbar ( Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );		
 		this.sigma = sigmaInit; // computeValueFromScrollbarPosition( sigmaInit, sigmaMin, sigmaMax, scrollbarSize); 

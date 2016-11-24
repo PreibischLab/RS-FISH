@@ -37,13 +37,16 @@ import mpicbg.imglib.wrapper.ImgLib1;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
+import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.exception.ImgLibException;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.imageplus.FloatImagePlus;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 import spim.process.fusion.FusionHelper;
 
@@ -372,9 +375,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				if ( Math.abs( peak.getValue().get() ) > threshold &&
 						x >= extraSize/2 && y >= extraSize/2 &&
 						x < rectangle.width + extraSize/2 && y < rectangle.height + extraSize/2 )
-				{ 						
-					simplifiedPeaks.add(new int[]{Util.round( x - sigma ) + rectangle.x - extraSize/2, 
-							Util.round( y - sigma ) + rectangle.y - extraSize/2});
+				{ 	
+					// TODO: check that this correction is correct
+					// FIXED: Looks correct now!
+					simplifiedPeaks.add(new int[]{Util.round(x) + rectangle.x - extraSize/2, 
+							Util.round(y) + rectangle.y - extraSize/2});
+					//simplifiedPeaks.add(new int[]{Util.round( x - sigma ) + rectangle.x - extraSize/2, 
+					//		Util.round( y - sigma ) + rectangle.y - extraSize/2});
 				}
 			}
 		}
@@ -382,33 +389,66 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	protected void runRansac() {
 		final ArrayList< int[] > simplifiedPeaks = new ArrayList<int[]>(1);	
+		
+		// TODO: There is a bug with the peak coordinates. I suppose it is sigma off the real coordinate value
+		// FIXED: See inside
 		copyPeaks(simplifiedPeaks);
 
 		// TODO: might be wrong
 		// do I need the whole source size here?
 		// looks like I only need to recalculate roi here
-		// wrong rectangle is used here , you shoud use "rectangle instead"
+		// wrong rectangle is used here , you should use "rectangle instead"
 		Rectangle sourceRectangle = new Rectangle( 0, 0, source.getWidth(), source.getHeight());
 		
-		System.out.println(source.getWidth() + " " + rectangle);
+		// Maybe you need an offset for computations here ?! 
+		final Gradient derivative = new GradientPreCompute( ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)));
+
+		Cursor <FloatType> cursor = Views.offset(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), new long[]{-rectangle.x, -rectangle.y}).localizingCursor();
 		
-		final Gradient derivative;
-		derivative = new GradientPreCompute( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)) );
-
+//		long total = 1;
+//		
+//		while(cursor.hasNext()){
+//			cursor.fwd();
+//			total = 1;
+//			for (int d = 0; d < cursor.numDimensions(); ++d){
+//				System.out.print(cursor.getLongPosition(d) + " ");
+//				total *= (cursor.getLongPosition(d) + 1) ;
+//			}
+//			System.out.println();
+//		}
+		
+//		for (int[] peak : simplifiedPeaks){
+//			for (int d = 0; d < peak.length; ++d){
+//				System.out.print(peak[d] + " ");
+//				// total *= (cursor.getLongPosition(d) + 1) ;
+//			}
+//			System.out.println();
+//		}
+			
+//		System.out.println("Done with cursor! # = " + total);
+		
+		
+// 		Views.interval(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), interval);
+		
+		
 		// TODO: move this as a parameter?
-		final int[] range = new int[]{ 10, 10 }; 
-		final ArrayList< Spot > spots = Spot.extractSpots( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), simplifiedPeaks, derivative, range );
+		final int[] range = new int[]{ 10, 10 };
+		// TODO: You can reduce number of gradient calculations if you 
+		// find a way to pass cast IntervalView to Img
+		// IntervalView <FloatType> interval = Views.offset(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), new long[]{-rectangle.x, -rectangle.y});
+		// final ArrayList< Spot > spots = Spot.extractSpots(interval, simplifiedPeaks, derivative, range );
+		final ArrayList< Spot > spots = Spot.extractSpots( ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), simplifiedPeaks, derivative, range );
 
+		
+		System.out.println("it can extract spots");
+		
+		// (+) this call is correct
 		Spot.ransac( spots, numIterations, maxError, inlierRatio );
-
+		// (+) this call is correct
 		for ( final Spot spot : spots )
 			spot.computeAverageCostInliers();
-
-		// System.out.println(simplifiedPeaks.size() + " " + spots.size());
-		
+		// (+) this call is correct
 		showRansacResult(spots);
-
-		// System.out.println("Completed!");
 	}
 
 	// gui: show the results for ransac

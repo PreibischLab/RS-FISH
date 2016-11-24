@@ -413,42 +413,17 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// wrong rectangle is used here , you should use "rectangle instead"
 		Rectangle sourceRectangle = new Rectangle( 0, 0, source.getWidth(), source.getHeight());
 		
+		IntervalView <FloatType> interval = Views.offset(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), new long[]{-rectangle.x, -rectangle.y});
+		
 		// Maybe you need an offset for computations here ?! 
-		final Gradient derivative = new GradientPreCompute( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)));
-
-// 		Cursor <FloatType> cursor = Views.offset(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), new long[]{-rectangle.x, -rectangle.y}).localizingCursor();		
-//		long total = 1;
-//		
-//		while(cursor.hasNext()){
-//			cursor.fwd();
-//			total = 1;
-//			for (int d = 0; d < cursor.numDimensions(); ++d){
-//				System.out.print(cursor.getLongPosition(d) + " ");
-//				total *= (cursor.getLongPosition(d) + 1) ;
-//			}
-//			System.out.println();
-//		}
-		
-//		for (int[] peak : simplifiedPeaks){
-//			for (int d = 0; d < peak.length; ++d){
-//				System.out.print(peak[d] + " ");
-//				// total *= (cursor.getLongPosition(d) + 1) ;
-//			}
-//			System.out.println();
-//		}
-			
-//		System.out.println("Done with cursor! # = " + total);
-		
-		
-// 		Views.interval(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), interval);		
+		final Gradient derivative = new GradientPreCompute(interval);	
 		
 		// TODO: move this as a parameter?
 		final int[] range = new int[]{ 10, 10 };
 		// TODO: You can reduce number of gradient calculations if you 
 		// find a way to pass cast IntervalView to Img
-		// IntervalView <FloatType> interval = Views.offset(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), new long[]{-rectangle.x, -rectangle.y});
-		// final ArrayList< Spot > spots = Spot.extractSpots(interval, simplifiedPeaks, derivative, range );
-		final ArrayList< Spot > spots = Spot.extractSpots( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), simplifiedPeaks, derivative, range );
+		final ArrayList< Spot > spots = Spot.extractSpots(interval, simplifiedPeaks, derivative, range );
+		// final ArrayList< Spot > spots = Spot.extractSpots( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), simplifiedPeaks, derivative, range );
 		
 		// System.out.println("it can extract spots");
 		
@@ -487,7 +462,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		drawImp.setSlice( imp.getSlice() );		
 		drawImp.setRoi( imp.getRoi() );				
 		drawDetectedSpots(spots, drawImp);
-		showRansacLog(spots);
+		// showRansacLog(spots);
 
 	}
 

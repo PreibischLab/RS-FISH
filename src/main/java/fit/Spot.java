@@ -12,6 +12,7 @@ import mpicbg.models.Point;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
@@ -151,7 +152,7 @@ public class Spot implements RealLocalizable
 	}
 
 
-	public static ArrayList< Spot > extractSpots( final Img< FloatType > image, final ArrayList< int[] > peaks, final Gradient derivative, final int[] size )
+	public static ArrayList< Spot > extractSpots( final RandomAccessibleInterval<FloatType> image, final ArrayList< int[] > peaks, final Gradient derivative, final int[] size )
 	{
 		//System.out.println( "Found " + peaks.size() + " peaks. " );
 

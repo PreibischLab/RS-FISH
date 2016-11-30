@@ -1,5 +1,6 @@
 package gradient;
 
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
@@ -75,6 +76,8 @@ public class GradientPreCompute extends Gradient
 		// where to store the precomputed derivatives
 		final Img< FloatType > derivatives = new ArrayImgFactory<FloatType>().create( dim, new FloatType() );
 		
+		
+		
 		// we use a local derivative on demand so that we do not need to duplicate code
 		final GradientOnDemand derivativeOnDemand = new GradientOnDemand( source );
 		
@@ -108,6 +111,8 @@ public class GradientPreCompute extends Gradient
 			}
 		}
 		
+//		net.imglib2.img.display.imagej.ImageJFunctions.show(derivatives);
+		
 		return derivatives;
 	}
 
@@ -120,6 +125,13 @@ public class GradientPreCompute extends Gradient
 		
 		tmp[ n1 ] = 0;
 		randomAccess.setPosition( tmp );
+		
+//		for ( int d = 0; d < n1; ++d )
+//		{
+//			System.out.print(location.getLongPosition(d) + " ");
+//		}
+//		System.out.println();
+		
 		derivativeVector[ 0 ] = randomAccess.get().get();
 		
 		for ( int d = 1; d < n1; ++d )

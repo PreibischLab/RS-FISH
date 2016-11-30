@@ -40,11 +40,13 @@ import mpicbg.spim.registration.detection.DetectionSegmentation;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.exception.ImgLibException;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.imageplus.FloatImagePlus;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
@@ -375,6 +377,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			// IOFunctions.println(result);
 		}
 	}
+	
+	
+	public static <T extends RealType<T>> void printCoordinates(RandomAccessibleInterval<T> img){
+		for (int d = 0; d < img.numDimensions(); ++d){
+			System.out.println("[" + img.min(d) + " " + img.max(d) + "] ");
+		}
+	}
+	
 
 	/**
 	 * Copy peaks found by DoG to lighter ArrayList
@@ -405,30 +415,68 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	protected void runRansac() {
 		final ArrayList< int[] > simplifiedPeaks = new ArrayList<int[]>(1);	
+		// extract peaks for the roi
 		copyPeaks(simplifiedPeaks);
-
+		
+//		for (int j = 0; j < simplifiedPeaks.size(); ++j){
+//			int [] loc = simplifiedPeaks.get(j).clone();
+//			loc[0] -= rectangle.x;
+//			loc[1] -= rectangle.y;
+//			
+//			
+//		}
+		
+//		for(int[] location: simplifiedPeaks){
+//			// int[] location = spot.loc.clone();
+//			System.out.print("[ ");
+//			for(int d =0; d < location.length; ++d)
+//				System.out.print(location[d] + " ");
+//			System.out.println("]");
+//		}
+		
+		
 		// TODO: might be wrong
 		// do I need the whole source size here?
 		// looks like I only need to recalculate roi here 
 		// wrong rectangle is used here , you should use "rectangle instead"
+				 				
 		Rectangle sourceRectangle = new Rectangle( 0, 0, source.getWidth(), source.getHeight());
-		
 		IntervalView <FloatType> interval = Views.offset(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), new long[]{-rectangle.x, -rectangle.y});
 		
-		// Maybe you need an offset for computations here ?! 
-		final Gradient derivative = new GradientPreCompute(interval);	
+		// ( + ) the shown min and max are correct
+ 		// printCoordinates(interval); 
+
+		// ( . ) suppoose that thois function inside is fine
+		final Gradient derivative = new GradientPreCompute(interval);
+		// final Gradient derivative = new GradientPreCompute(ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)));	
+		
+		//derivative.
+		
 		
 		// TODO: move this as a parameter?
 		final int[] range = new int[]{ 10, 10 };
 		// TODO: You can reduce number of gradient calculations if you 
 		// find a way to pass cast IntervalView to Img
+		// (+) the values produced by extractor look reasonable
 		final ArrayList< Spot > spots = Spot.extractSpots(interval, simplifiedPeaks, derivative, range );
 		// final ArrayList< Spot > spots = Spot.extractSpots( ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), simplifiedPeaks, derivative, range );
 		
-		// System.out.println("it can extract spots");
-		
+//		System.out.println("it can extract spots");
+//		
+		for(Spot spot : spots){
+			System.out.println("# of candidates " + spot.candidates.size());
+			int[] location = spot.loc.clone();
+			System.out.print("[ ");
+			for(int d =0; d < spot.numDimensions(); ++d)
+				System.out.print(location[d] + " ");
+			System.out.println("]");
+		}
+			
 		// (+) this call is correct
 		Spot.ransac( spots, numIterations, maxError, inlierRatio );
+		
+//		System.out.println("Where do you throw this error?");
+		
 		// (+) this call is correct
 		for ( final Spot spot : spots )
 			spot.computeAverageCostInliers();

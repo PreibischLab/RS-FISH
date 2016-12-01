@@ -388,11 +388,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	// TODO: what if size is larger than the whole image
 	// FIXME: check that the formula below is correct
-	public static <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> img, long [] size, long [] adjustedBoundary){
+	public static <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> img, long [] size, long [] min, long [] max){
 		final int numDimensions = img.numDimensions();
 
-		final long[] min = new long[ numDimensions ];
-		final long[] max = new long[ numDimensions ];
+//		final long[] min = new long[ numDimensions ];
+//		final long[] max = new long[ numDimensions ];
 
 		for (int d = 0; d < numDimensions; ++d){
 			min[ d ] = img.min(d) - size[d];
@@ -461,6 +461,12 @@ protected void runRansac() {
 
 	// TODO: move this as a parameter?
 	final long[] range = new long[]{ 10, 10 };
+	
+	final long[] min = new long[interval.numDimensions()];
+	final long[] max = new long[interval.numDimensions()];
+	
+	adjustBoundaries(interval, range, min, max);
+	
 	final Gradient derivative = new GradientPreCompute(interval);
 	final ArrayList< Spot > spots = Spot.extractSpots(interval, ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), simplifiedPeaks, derivative, range );
 

@@ -221,7 +221,7 @@ public class Spot implements RealLocalizable
 				// et is fine otherwise skip the point  
 
 				final double[] v = new double[ numDimensions ];
-				System.out.print("Greetings ");
+				// System.out.print("Greetings ");
 				derivative.gradientAt( cursor, v );
 				//norm( v );
 
@@ -241,7 +241,7 @@ public class Spot implements RealLocalizable
 					 */
 					spot.candidates.add( new PointFunctionMatch( new OrientedPoint( p, v, 1 ) ) );
 				}
-				System.out.println("friend!");
+				// System.out.println("friend!");
 			}
 
 			spots.add( spot );

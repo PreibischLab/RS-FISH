@@ -49,7 +49,7 @@ public class Spot implements RealLocalizable
 	public double avgCost = -1, minCost = -1, maxCost = -1;
 
 	// from where it was ran
-	public int[] loc = null;
+	public long[] loc = null;
 
 	public final int n;
 
@@ -65,8 +65,9 @@ public class Spot implements RealLocalizable
 			throw new RuntimeException( "only 2d and 3d is allowed." );
 	}
 
-	public void setOriginalLocation(int[] loc) { this.loc = loc; }
-	public int[] getOriginalLocation() { return loc; }
+	// public void setOriginalLocation(int[] loc) { this.loc = loc; }
+	public void setOriginalLocation(long[] loc) { this.loc = loc; }
+	public long[] getOriginalLocation() { return loc; }
 
 	@Override
 	public String toString()
@@ -150,13 +151,15 @@ public class Spot implements RealLocalizable
 		for ( int d = 0; d < scale.length; ++d )
 			this.scale[ d ] = scale[ d ];
 	}
-	
+
 	// TODO: maybe it makes sense to pass the initial image here 
 	// so that you don't have to use out of bound strategy
-	public static ArrayList< Spot > extractSpots( final RandomAccessibleInterval<FloatType> image, final ArrayList< int[] > peaks, final Gradient derivative, final int[] size )
+	// FIXME: main problem with the update you want to introduce is that
+	// derivative should also be calculated outside of the "image" interval
+	// this causes the problem of wrong access 
+	// in the line derivative.gradientAt( cursor, v );
+	public static <T extends RealType<T> > ArrayList< Spot > extractSpots( final RandomAccessibleInterval<T> image, final RandomAccessibleInterval<T> fullImage, final ArrayList< long[] > peaks, final Gradient derivative, final long[] size )
 	{
-		//System.out.println( "Found " + peaks.size() + " peaks. " );
-
 		final int numDimensions = image.numDimensions();
 
 		// size around the detection to use
@@ -169,72 +172,60 @@ public class Spot implements RealLocalizable
 		// we always compute the location at 0.5, 0.5, 0.5 - so we cannot compute it at the last entry of each dimension
 
 		final int[] maxDim = new int[ numDimensions ];
-
 		// TODO: important update here 
+		// FIXED: 
 		// use .max instead of .dimension
 		for ( int d = 0; d < numDimensions; ++d)
 			maxDim[ d ] = (int)image.max(d) - 2;
 
-		// this part doesn't work for intervalvie
-		
-//		for (int d = 0; d < numDimensions; ++d){
-//			System.out.println("[" + maxDim[d] + "] ");
-//		}
-
-		//final int w = (int)image.dimension( 0 ) - 2;
-		//final int h = (int)image.dimension( 1 ) - 2;
-		//final int d = (int)image.dimension( 2 ) - 2;
-
 		final ArrayList< Spot > spots = new ArrayList<Spot>();		
-		final RandomAccessible< FloatType > infinite = Views.extendZero( image );
+		final RandomAccessible< T > infinite = Views.extendZero( image );
+		// final RandomAccessible< FloatType > infinite = Views.extendZero( fullImage );
 
 		int i = 0;
 
-		for ( final int[] peak : peaks )
+		for ( final long[] peak : peaks )
 		{	
-			//if ( i++ % 1000 == 0 )
-			//	System.out.println( "peak " + i + ": " + Util.printCoordinates( peak ) );
-
 			final Spot spot = new Spot( numDimensions );
 			spot.setOriginalLocation( peak );
 
+			// this part defines the possible values
+			// for roi, adjust it properly
 			for ( int e = 0; e < numDimensions; ++e )
 			{
 				min[ e ] = peak[ e ] - size[ e ] / 2;
 				max[ e ] = min[ e ] + size[ e ] - 1;
 
 				// check that it does not exceed bounds of the underlying image
-				min[ e ] = Math.max( min[ e ], 0 );
+				min[ e ] = Math.max( min[ e ], 0 ); // (+)				
 				max[ e ] = Math.min( max[ e ], maxDim[ e ] );
+				// FIXME
+				// max[ e ] = Math.min( max[ e ], fullImage.max(e) - 2 );
 			}
 
 			// FIXED: Remove 
-			//			for (int d = 0; d < numDimensions; ++d){
-			//				System.out.println("[" + min[d] + " " + max[d] + "] ");
-			//			}
-
+			// the values look fine but the access cvalues must be wrong somehow
+			for (int d = 0; d < numDimensions; ++d){
+				System.out.println("[" + min[d] + " " + max[d] + "] ");
+			}
 
 			// define a local region to iterate around the potential detection
-			final Cursor< FloatType > cursor = Views.iterable( Views.interval( infinite, min, max ) ).localizingCursor();
-
+			final Cursor< T > cursor = Views.iterable( Views.interval( infinite, min, max ) ).localizingCursor();
+			//final Cursor< FloatType > cursor = Views.iterable( Views.interval( infinite, image ) ).localizingCursor();
+			
 			while ( cursor.hasNext() )
 			{
 				cursor.fwd();
 
-				/*
-				final int x = cursor.getIntPosition( 0 );
-				final int y = cursor.getIntPosition( 1 );
-				final int z = cursor.getIntPosition( 2 );
-
-				if ( x < 0 || y < 0 || z < 0 || x > w || y > h || z > d )
-					continue;
-				 */
+				// TODO: if the cursor is inside of the full inage then 
+				// et is fine otherwise skip the point  
 
 				final double[] v = new double[ numDimensions ];
-
+				System.out.print("Greetings ");
 				derivative.gradientAt( cursor, v );
 				//norm( v );
 
+				
 				if ( length( v ) != 0 )
 				{
 					final double[] p = new double[ numDimensions ];
@@ -242,118 +233,15 @@ public class Spot implements RealLocalizable
 					for ( int e = 0; e < numDimensions; ++e )
 						p[ e ] = cursor.getIntPosition( e ) + 0.5f;
 
+					// TODO: where does come from
 					/*
 					p[ 0 ] = x + 0.5f;
 					p[ 1 ] = y + 0.5f;
 					p[ 2 ] = z + 0.5f;
 					 */
-
 					spot.candidates.add( new PointFunctionMatch( new OrientedPoint( p, v, 1 ) ) );
 				}
-			}
-
-			spots.add( spot );
-		}
-		return spots;
-	}
-	
-
-
-	public static ArrayList< Spot > extractSpots( final Img<FloatType> image, final ArrayList< int[] > peaks, final Gradient derivative, final int[] size )
-	{
-		//System.out.println( "Found " + peaks.size() + " peaks. " );
-
-		final int numDimensions = image.numDimensions();
-
-		// size around the detection to use
-		// we detect at 0.5, 0.5, 0.5 - so we need an even size
-		// final int[] size = new int[]{ 10, 10, 10 };
-
-		final long[] min = new long[ numDimensions ];
-		final long[] max = new long[ numDimensions ];
-
-
-		// we always compute the location at 0.5, 0.5, 0.5 - so we cannot compute it at the last entry of each dimension
-
-		final int[] maxDim = new int[ numDimensions ];
-
-		for ( int d = 0; d < numDimensions; ++d )
-			maxDim[ d ] = (int)image.dimension( d ) - 2;
-
-
-		for (int d = 0; d < numDimensions; ++d){
-			System.out.println("[" + maxDim[d] + "] ");
-		}
-
-		//final int w = (int)image.dimension( 0 ) - 2;
-		//final int h = (int)image.dimension( 1 ) - 2;
-		//final int d = (int)image.dimension( 2 ) - 2;
-
-		final ArrayList< Spot > spots = new ArrayList<Spot>();		
-		final RandomAccessible< FloatType > infinite = Views.extendZero( image );
-
-		int i = 0;
-
-		for ( final int[] peak : peaks )
-		{	
-			//if ( i++ % 1000 == 0 )
-			//	System.out.println( "peak " + i + ": " + Util.printCoordinates( peak ) );
-
-			final Spot spot = new Spot( numDimensions );
-			spot.setOriginalLocation( peak );
-
-			for ( int e = 0; e < numDimensions; ++e )
-			{
-				min[ e ] = peak[ e ] - size[ e ] / 2;
-				max[ e ] = min[ e ] + size[ e ] - 1;
-
-				// check that it does not exceed bounds of the underlying image
-				min[ e ] = Math.max( min[ e ], 0 );
-				max[ e ] = Math.min( max[ e ], maxDim[ e ] );
-			}
-
-			// FIXED: Remove 
-			//			for (int d = 0; d < numDimensions; ++d){
-			//				System.out.println("[" + min[d] + " " + max[d] + "] ");
-			//			}
-
-
-			// define a local region to iterate around the potential detection
-			final Cursor< FloatType > cursor = Views.iterable( Views.interval( infinite, min, max ) ).localizingCursor();
-
-			while ( cursor.hasNext() )
-			{
-				cursor.fwd();
-
-				/*
-				final int x = cursor.getIntPosition( 0 );
-				final int y = cursor.getIntPosition( 1 );
-				final int z = cursor.getIntPosition( 2 );
-
-				if ( x < 0 || y < 0 || z < 0 || x > w || y > h || z > d )
-					continue;
-				 */
-
-				final double[] v = new double[ numDimensions ];
-
-				derivative.gradientAt( cursor, v );
-				//norm( v );
-
-				if ( length( v ) != 0 )
-				{
-					final double[] p = new double[ numDimensions ];
-
-					for ( int e = 0; e < numDimensions; ++e )
-						p[ e ] = cursor.getIntPosition( e ) + 0.5f;
-
-					/*
-					p[ 0 ] = x + 0.5f;
-					p[ 1 ] = y + 0.5f;
-					p[ 2 ] = z + 0.5f;
-					 */
-
-					spot.candidates.add( new PointFunctionMatch( new OrientedPoint( p, v, 1 ) ) );
-				}
+				System.out.println("friend!");
 			}
 
 			spots.add( spot );
@@ -407,8 +295,10 @@ public class Spot implements RealLocalizable
 		if ( spot.inliers.size() >= spot.center.getMinNumPoints() )
 			spot.center.fit( spot.inliers );
 	}
-
-	public static <T extends RealType<T> > void drawRANSACArea( final ArrayList< Spot > spots, final Img< T > draw )
+	
+	// NEW!
+	// TODO: Check if working
+	public static <T extends RealType<T> > void drawRANSACArea( final ArrayList< Spot > spots, final RandomAccessibleInterval< T > draw )
 	{
 		final int numDimensions = draw.numDimensions();
 		double point = 1;
@@ -437,7 +327,8 @@ public class Spot implements RealLocalizable
 			//++point;
 		}
 	}
-
+	
+	
 	public static double length( final double[] f )
 	{
 		double l = 0;

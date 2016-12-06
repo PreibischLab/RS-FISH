@@ -19,30 +19,21 @@ import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import mpicbg.imglib.algorithm.gauss.GaussianConvolutionReal;
-import mpicbg.imglib.algorithm.math.LocalizablePoint;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.util.Util;
 import mpicbg.imglib.wrapper.ImgLib1;
 import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
-import net.imglib2.Cursor;
-import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.exception.ImgLibException;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
@@ -81,56 +72,52 @@ import java.awt.Checkbox;
 
 
 public class InteractiveRadialSymmetry implements PlugIn {
-	// TODO: set all parameters in "constructor"
-
-	final public static boolean debug = false;
-
-	// ImagePlus  imp = null;
-	ImageStack stack = null;
-	ImageStack stackOut = null;
-
 	// RANSAC parameters
+	// initial values
+	int ransacInitSupportRadius = 10;
+	float ransacInitInlierRatio = 0.75f;
+	float ransacInitMaxError = 3;
+	// current value
 	int numIterations = 100; 
 	float maxError = 0.15f;
 	float inlierRatio = (float) (20.0/100.0); 
 	int supportRegion = 10;
-
-	int supportRegionMin = 1;
-	int supportRegionMax = 50; 
+	// min/max value
+	int supportRadiusMin = 1;
+	int supportRadiusMax = 50; 
 	float inlierRatioMin = (float) (0.0/100.0);   // 0%
-	float inlierRatioMax = (float) (100.0/100.0); // 100%
+	float inlierRatioMax = (float) (1); 		  // 100%
 	float maxErrorMin = 0.0001f;
-	float maxErrorMax = 10.00f;
-
-	// RANSAC parameters for gui
-	int ransacInitSupportRegion = 10;
-	float ransacInitInlierRatio = 0.75f;
-	float ransacInitMaxError = 3;
-
-	// DoG -------------------------------
-
-	final int extraSize = 40;
-	final int scrollbarSize = 1000;
-
+	float maxErrorMax = 10.00f;	
+	// ----------------------------------------
+	
+	// DoG parameters
+	// initial
+	int sigmaInit = 5;
+	float thresholdInit = 0.03f;
+	// current 
 	float sigma = 0.5f;
 	float sigma2 = 0.5f;
 	float threshold = 0.0001f;
-
+	// min/max value
+	float sigmaMin = 0.5f;
+	float sigmaMax = 10f;
+	float thresholdMin = 0.0001f;
+	float thresholdMax = 1f;
+	
+	//--------------------------------
+	ImageStack stack = null;
+	ImageStack stackOut = null;
+	final int extraSize = 40;
+	final int scrollbarSize = 1000;
+	float imageSigma = 0.5f;
+	
+	double minIntensityImage = Double.NaN;
+	double maxIntensityImage = Double.NaN;
+		
 	// steps per octave
 	public static int standardSensitivity = 4;
 	int sensitivity = standardSensitivity;
-
-	float imageSigma = 0.5f;
-	float sigmaMin = 0.5f;
-	float sigmaMax = 10f;
-	int sigmaInit = 5;
-
-	float thresholdMin = 0.0001f;
-	float thresholdMax = 1f;
-	float thresholdInit = 0.03f;
-
-	double minIntensityImage = Double.NaN;
-	double maxIntensityImage = Double.NaN;
 
 	SliceObserver sliceObserver;
 	RoiListener roiListener;
@@ -146,8 +133,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	public Rectangle standardRectangle;
 	boolean isComputing = false;
 	boolean isStarted = false;
-	boolean enableSigma2 = false;
-	boolean sigma2IsAdjustable = true;
 
 	boolean lookForMinima = false;
 	boolean lookForMaxima = true;
@@ -166,8 +151,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 	public InteractiveRadialSymmetry( final ImagePlus imp ) { this.imp = imp; }
 	public InteractiveRadialSymmetry() {}
-
-	// ===================================
 
 	// necessary!
 	public int setup(String arg, ImagePlus imp){
@@ -332,10 +315,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			FusionHelper.normalizeImage( i );
 		else
 			FusionHelper.normalizeImage( i, (float)min, (float)max );
-
-		// DEBUG:
-		// ImageJFunctions.show(i).setTitle("i pic");
-
 		return i;
 	}
 
@@ -430,7 +409,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// TODO: move this as a parameter?
 		// have a look into extraSize -- maybe it will be useful here
 		final long[] range = new long[]{ 10, 10 };
-
+		
 		final long[] min = new long[numDimensions];
 		final long[] max = new long[numDimensions];		
 		// hard coded because I there is no better function
@@ -503,9 +482,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			or.setStrokeColor(Color.ORANGE);
 			overlay.add(or);
 		}
-
 		imagePlus.updateAndDraw();
-
 	}
 
 
@@ -521,9 +498,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final GridBagLayout layout = new GridBagLayout();
 		final GridBagConstraints c = new GridBagConstraints();
 
-		int scrollbarInitialPosition = computeScrollbarPositionFromValue(ransacInitSupportRegion, supportRegionMin, supportRegionMax, scrollbarSize);
+		int scrollbarInitialPosition = computeScrollbarPositionFromValue(ransacInitSupportRadius, supportRadiusMin, supportRadiusMax, scrollbarSize);
 		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );		
-		this.supportRegion = ransacInitSupportRegion; // (int)computeValueFromScrollbarPosition(ransacInitSupportRegion, supportRegionMin, supportRegionMax, scrollbarSize);
+		this.supportRegion = ransacInitSupportRadius; // (int)computeValueFromScrollbarPosition(ransacInitSupportRegion, supportRegionMin, supportRegionMax, scrollbarSize);
 
 		final TextField SupportRegionTextField = new TextField(Integer.toString(this.supportRegion));
 		SupportRegionTextField.setEditable(true);
@@ -606,11 +583,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.add( cancel, c );	
 
 		//		/* Configuration */
-		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(supportRegionText, supportRegionMin, supportRegionMax, ValueChange.SUPPORTREGION, SupportRegionTextField));
+		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(supportRegionText, supportRadiusMin, supportRadiusMax, ValueChange.SUPPORTREGION, SupportRegionTextField));
 		inlierRatioScrollbar.addAdjustmentListener(new GeneralListener(inlierRatioText, inlierRatioMin, inlierRatioMax, ValueChange.INLIERRATIO, new TextField()));
 		maxErrorScrollbar.addAdjustmentListener(new GeneralListener(maxErrorText, maxErrorMin, maxErrorMax, ValueChange.MAXERROR, new TextField()));
 
-		SupportRegionTextField.addActionListener(new TextFieldListener(supportRegionText, supportRegionMin, supportRegionMax, ValueChange.SUPPORTREGION, SupportRegionTextField, supportRegionScrollbar));
+		SupportRegionTextField.addActionListener(new TextFieldListener(supportRegionText, supportRadiusMin, supportRadiusMax, ValueChange.SUPPORTREGION, SupportRegionTextField, supportRegionScrollbar));
 
 		button.addActionListener( new FinishedButtonListener( frame, false ) );
 		cancel.addActionListener( new FinishedButtonListener( frame, true ) );
@@ -679,9 +656,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.add( thresholdText, c );
 
 		++c.gridy;
-		// c.insets = new Insets(10,0,0,0);
 		frame.add ( threshold, c );
-		// c.insets = new Insets(0,0,0,0);
 
 		++c.gridy;
 		c.insets = new Insets(0,90,0,80);
@@ -834,7 +809,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-
 	/**
 	 * Extract the current 2d region of interest from the source image
 	 * 
@@ -884,35 +858,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 
 		return img;
-	}
-
-	protected class EnableListener implements ItemListener
-	{
-		final Scrollbar sigma2;
-		final Label sigmaText2;
-
-		public EnableListener( final Scrollbar sigma2, final Label sigmaText2 )
-		{
-			this.sigmaText2 = sigmaText2;
-			this.sigma2 = sigma2;
-		}
-
-		@Override
-		public void itemStateChanged( final ItemEvent arg0 )
-		{
-			if ( arg0.getStateChange() == ItemEvent.DESELECTED )
-			{
-				sigmaText2.setFont( sigmaText2.getFont().deriveFont( Font.PLAIN ) );
-				sigma2.setBackground( inactiveColor );
-				enableSigma2 = false;
-			}
-			else if ( arg0.getStateChange() == ItemEvent.SELECTED  )
-			{
-				sigmaText2.setFont( sigmaText2.getFont().deriveFont( Font.BOLD ) );
-				sigma2.setBackground( originalColor );
-				enableSigma2 = true;
-			}
-		}
 	}
 
 	protected class MinListener implements ItemListener
@@ -1078,13 +1023,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		{
 			sigma = computeValueFromScrollbarPosition( event.getValue(), min, max, scrollbarSize );			
 
-			if ( !enableSigma2 )
-			{
-				sigma2 = computeSigma2( sigma, sensitivity );
-				sigmaText2.setText( "Sigma 2 = " + String.format(java.util.Locale.US,"%.2f", sigma2) );			    
-				sigmaScrollbar2.setValue( computeScrollbarPositionFromValue( sigma2, min, max, scrollbarSize ) );
-			}
-			else if ( sigma > sigma2 )
+			if ( sigma > sigma2 )
 			{
 				sigma = sigma2 - 0.001f;
 				sigmaScrollbar1.setValue( computeScrollbarPositionFromValue( sigma, min, max, scrollbarSize ) );
@@ -1261,12 +1200,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			if (valueAdjust == ValueChange.SUPPORTREGION){
 				supportRegion = (int)value;
 				labelText = "Support Region Radius:"; // = " + supportRegion ;
-
 				textField.setText(Integer.toString(supportRegion));
-
 			}
 			else if (valueAdjust == ValueChange.INLIERRATIO){
-				inlierRatio = value;
+				inlierRatio = value;				
+				// this is ugly fix of the problem when inlier's ratio is 1.0
+				if (inlierRatio >= 0.999)
+					inlierRatio = 0.99999f;
 				labelText = "Inlier Ratio = " + String.format(java.util.Locale.US,"%.2f", inlierRatio);
 			}
 			else{ // MAXERROR

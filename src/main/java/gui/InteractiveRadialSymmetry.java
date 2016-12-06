@@ -386,18 +386,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-	// TODO: what if size is larger than the whole image
-	// FIXME: check that the formula below is correct
+	// extended or shorten the size of the boundaries
 	protected  <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> img, long [] size, long [] min, long [] max, long[] fullImgMax){
 		final int numDimensions = img.numDimensions();
-
 		for (int d = 0; d < numDimensions; ++d){
 			min[ d ] = img.min(d) - size[d];
 			max[ d ] = img.max(d) + size[d];
-
 			// check that it does not exceed bounds of the underlying image
-			min[ d ] = Math.max( min[ d ], 0 ); // (+)				
-			// max[ d ] = Math.min( max[ d ], img.max(d)); // this one is wrong instead of second arg there should be fullimage max
+			min[ d ] = Math.max( min[ d ], 0 ); 			
 			max[ d ] = Math.min( max[ d ], fullImgMax[d]);
 		}
 	}
@@ -417,14 +413,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				// take only peaks that are inside of the image
 				if ( Math.abs( peak.getValue().get() ) > threshold &&
 						x >= extraSize/2 && y >= extraSize/2 &&
-						x < rectangle.width + extraSize/2 && y < rectangle.height + extraSize/2 )
-				{ 	
-					// TODO: check that this correction is correct
-					// FIXED: Looks correct now!
-					simplifiedPeaks.add(new long[]{Util.round(x) + rectangle.x - extraSize/2, 
-							Util.round(y) + rectangle.y - extraSize/2});
-					//simplifiedPeaks.add(new int[]{Util.round( x - sigma ) + rectangle.x - extraSize/2, 
-					//		Util.round( y - sigma ) + rectangle.y - extraSize/2});
+						x < rectangle.width + extraSize/2 && y < rectangle.height + extraSize/2 ){ 	
+					simplifiedPeaks.add(new long[]{Util.round(x) + rectangle.x - extraSize/2, Util.round(y) + rectangle.y - extraSize/2});
 				}
 			}
 		}
@@ -434,40 +424,26 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final ArrayList< long[] > simplifiedPeaks = new ArrayList<long[]>(1);	
 		// extract peaks for the roi
 		copyPeaks(simplifiedPeaks);		
-		
-		// TODO: this one should be changed
-		int numDimensions = simplifiedPeaks.get(0).length;
+		int numDimensions = img.getNumDimensions();
 
-		// defines rectangle on the whole image
 		Rectangle sourceRectangle = new Rectangle( 0, 0, source.getWidth(), source.getHeight());
-		// necessary to define the ROI
-		IntervalView <FloatType> interval = Views.offset(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), new long[]{-rectangle.x, -rectangle.y});
-
 		// TODO: move this as a parameter?
 		// have a look into extraSize -- maybe it will be useful here
 		final long[] range = new long[]{ 10, 10 };
 
 		final long[] min = new long[numDimensions];
 		final long[] max = new long[numDimensions];		
-		// hard coded because I can't find a better function
-		final long[] fullImgMax = new long[numDimensions];
-		
-		
+		// hard coded because I there is no better function
+		final long[] fullImgMax = new long[numDimensions];	
 		fullImgMax[0] = source.getWidth() - 1;
 		fullImgMax[1] = source.getHeight() - 1;
-		
-		// at this point you get the extended roi
-		adjustBoundaries(interval, range, min, max, fullImgMax);
-		// important that here we use extended rectangle! -- sourceRectangle
-		
-		for (int d = 0; d < numDimensions; ++d){
-			System.out.println(min[d] + " " + max[d]);
-		}		
-		
-		final Gradient derivative = new GradientPreCompute(Views.interval(ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), min, max));
 
-		final ArrayList< Spot > spots = Spot.extractSpots(Views.interval(ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), min, max), ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), simplifiedPeaks, derivative, range );
+		IntervalView <FloatType> roi = Views.offset(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), new long[]{-rectangle.x, -rectangle.y});		
+		adjustBoundaries(roi, range, min, max, fullImgMax);
 
+		IntervalView<FloatType> extendedRoi = Views.interval(ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), min, max);		
+		final Gradient derivative = new GradientPreCompute(extendedRoi);
+		final ArrayList< Spot > spots = Spot.extractSpots(extendedRoi, ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), simplifiedPeaks, derivative, range );
 
 		Spot.ransac( spots, numIterations, maxError, inlierRatio );
 		for ( final Spot spot : spots )
@@ -475,7 +451,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		showRansacResult(spots);
 	}
 
-	// gui: show the results for ransac
 	// draw detected points
 	// TODO: create a table with the results here
 	protected void showRansacResult(final ArrayList< Spot > spots){
@@ -483,7 +458,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		for ( final FloatType t : ransacPreview )
 			t.setZero();
 
-		// TODO: add roi here
 		Spot.drawRANSACArea( spots, ransacPreview );
 		drawImp.updateAndDraw();		
 		drawDetectedSpots(spots, imp);
@@ -491,7 +465,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		Overlay overlay = drawImp.getOverlay();
 		if ( overlay == null )
 		{
-			System.out.println("If this message pops up probably something went wrong.");
+			// System.out.println("If this message pops up probably something went wrong.");
 			overlay = new Overlay();
 			drawImp.setOverlay( overlay );			
 		}
@@ -502,7 +476,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		drawImp.setRoi( imp.getRoi() );				
 		drawDetectedSpots(spots, drawImp);
 		// showRansacLog(spots);
-
 	}
 
 	protected void drawDetectedSpots(final ArrayList< Spot > spots, ImagePlus imagePlus){
@@ -654,7 +627,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	protected void displaySliders()
 	{
 		final Frame frame = new Frame("Adjust Difference-of-Gaussian Values");
-		frame.setSize( 360, 230 );
+		frame.setSize( 360, 200 );
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
@@ -662,12 +635,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		int scrollbarInitialPosition = computeScrollbarPositionFromValue(sigmaInit, sigmaMin, sigmaMax, scrollbarSize);		
 		final Scrollbar sigma1 = new Scrollbar ( Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );		
-		this.sigma = sigmaInit; // computeValueFromScrollbarPosition( sigmaInit, sigmaMin, sigmaMax, scrollbarSize); 
+		this.sigma = sigmaInit; 
 
 		final float log1001 = (float) Math.log10( scrollbarSize + 1);				
 		scrollbarInitialPosition = (int)Math.round(1001 - Math.pow(10, (thresholdMax - thresholdInit)/(thresholdMax - thresholdMin)*log1001));			
 		final Scrollbar threshold = new Scrollbar ( Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );
-		this.threshold = thresholdInit; // thresholdMin + ( (log1001 - (float)Math.log10(1001-thresholdInit))/log1001 ) * (thresholdMax-thresholdMin);
+		this.threshold = thresholdInit; 
 
 		this.sigma2 = computeSigma2( this.sigma, this.sensitivity );
 		final int sigma2init = computeScrollbarPositionFromValue( this.sigma2, sigmaMin, sigmaMax, scrollbarSize ); 
@@ -677,11 +650,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final Label sigmaText2 = new Label( "Sigma 2 = " + String.format(java.util.Locale.US,"%.2f", this.sigma2), Label.CENTER );
 
 		final Label thresholdText = new Label( "Threshold = " +  String.format(java.util.Locale.US,"%.4f", this.threshold), Label.CENTER );
-		final Button apply = new Button( "Apply to Stack" );
 		final Button button = new Button( "Done" );
 		final Button cancel = new Button( "Cancel" );
 
-		// final Checkbox sigma2Enable = new Checkbox( "Enable Manual Adjustment of Sigma 2 ", enableSigma2 );
 		final Checkbox min = new Checkbox( "Look for Minima (red)", lookForMinima );
 		final Checkbox max = new Checkbox( "Look for Maxima (green)", lookForMaxima );
 
@@ -704,17 +675,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		frame.add ( sigma1, c );
 
-		// TODO: delete this part, user unfriendly
-		//		++c.gridy;
-		//		c.insets = new Insets(0,65,0,65);
-		//		frame.add( sigma2Enable, c );
-		//		
-		//		++c.gridy;
-		//		frame.add( sigmaText2, c );
-		//
-		//		++c.gridy;
-		//		frame.add ( sigma2, c );
-
 		++c.gridy;
 		frame.add( thresholdText, c );
 
@@ -731,7 +691,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.insets = new Insets(0,90,0,80);
 		frame.add( min, c );
 
-
 		// insets for buttons
 		int bInTop = 0;
 		int bInRight = 120;
@@ -740,40 +699,22 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		++c.gridy;
 		c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);
-		frame.add( apply, c );
-
-		++c.gridy;
-		// c.insets = new Insets(10,150,0,150);
-		c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);
 		frame.add( button, c );
 
 		++c.gridy;
-		// c.insets = new Insets(10,150,0,150);
 		c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);
 		frame.add( cancel, c );
 
 		/* Configuration */
 		sigma1.addAdjustmentListener( new SigmaListener( sigmaText1, sigmaMin, sigmaMax, scrollbarSize, sigma1, sigma2, sigmaText2 ) );
-		// sigma2.addAdjustmentListener( new Sigma2Listener( sigmaMin, sigmaMax, scrollbarSize, sigma2, sigmaText2 ) );
 		threshold.addAdjustmentListener( new ThresholdListener( thresholdText, thresholdMin, thresholdMax ) );
 		button.addActionListener( new FinishedButtonListener( frame, false ) );
 		cancel.addActionListener( new FinishedButtonListener( frame, true ) );
-		apply.addActionListener( new ApplyButtonListener() );
 		min.addItemListener( new MinListener() );
 		max.addItemListener( new MaxListener() );
-		// 		sigma2Enable.addItemListener( new EnableListener( sigma2, sigmaText2 ) );
-
-		//		if ( !sigma2IsAdjustable )
-		//			sigma2Enable.setEnabled( false );
-
 		frame.addWindowListener( new FrameListener( frame ) );
 
 		frame.setVisible( true );
-
-		//		originalColor = sigma2.getBackground();
-		//		sigma2.setBackground( inactiveColor );
-		//		sigmaText1.setFont( sigmaText1.getFont().deriveFont( Font.BOLD ) );
-		//		thresholdText.setFont( thresholdText.getFont().deriveFont( Font.BOLD ) );
 	}
 
 	public static float computeSigma2( final float sigma1, final int sensitivity )
@@ -830,22 +771,10 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			final float k, K_MIN1_INV;
 			final float[] sigma, sigmaDiff;
 
-			if ( enableSigma2 )
-			{				
-				sigma = new float[ 2 ];
-				sigma[ 0 ] = this.sigma;
-				sigma[ 1 ] = this.sigma2;
-				k = sigma[ 1 ] / sigma[ 0 ];
-				K_MIN1_INV = DetectionSegmentation.computeKWeight( k );
-				sigmaDiff = DetectionSegmentation.computeSigmaDiff( sigma, imageSigma );
-			}
-			else
-			{
-				k = (float)DetectionSegmentation.computeK( sensitivity );
-				K_MIN1_INV = DetectionSegmentation.computeKWeight( k );
-				sigma = DetectionSegmentation.computeSigma( k, this.sigma );
-				sigmaDiff = DetectionSegmentation.computeSigmaDiff( sigma, imageSigma );
-			}
+			k = (float)DetectionSegmentation.computeK( sensitivity );
+			K_MIN1_INV = DetectionSegmentation.computeKWeight( k );
+			sigma = DetectionSegmentation.computeSigma( k, this.sigma );
+			sigmaDiff = DetectionSegmentation.computeSigmaDiff( sigma, imageSigma );
 
 			// the upper boundary
 			this.sigma2 = sigma[ 1 ];
@@ -859,8 +788,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 			// peaks contain some values that are out of bounds
 			peaks = dog.getPeaks();
-
-
 		}
 
 		showPeaks();
@@ -1068,72 +995,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	}
 
-
-	// TODO: adjust this one to apply the RANSAC to the full image
-	protected class ApplyButtonListener implements ActionListener
-	{
-		@Override
-		public void actionPerformed( final ActionEvent arg0 ) 
-		{
-			ImagePlus imp;
-
-			try
-			{
-				imp = source.getImagePlus();
-			}
-			catch (ImgLibException e)
-			{
-				imp = null;
-				e.printStackTrace();
-			}
-
-			// convert ImgLib2 image to ImgLib1 image via the imageplus
-			final Image< mpicbg.imglib.type.numeric.real.FloatType > source = mpicbg.imglib.image.display.imagej.ImageJFunctions.wrap(imp);
-
-			IOFunctions.println( "Computing DoG ... " );
-
-			// test the parameters on the complete stack
-			final ArrayList<DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType>> peaks = 
-					DetectionSegmentation.extractBeadsLaPlaceImgLib( 
-							source, 
-							new OutOfBoundsStrategyMirrorFactory<mpicbg.imglib.type.numeric.real.FloatType>(), 
-							imageSigma, 
-							sigma,
-							sigma2,
-							threshold, 
-							threshold/4, 
-							lookForMaxima,
-							lookForMinima,
-							ViewStructure.DEBUG_MAIN );
-
-			IOFunctions.println( "Drawing DoG result ... " );
-
-			// display as extra image
-			Image<mpicbg.imglib.type.numeric.real.FloatType> detections = source.createNewImage();
-			final LocalizableByDimCursor<mpicbg.imglib.type.numeric.real.FloatType> c = detections.createLocalizableByDimCursor();
-
-			for ( final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks )
-			{
-				final LocalizablePoint p = new LocalizablePoint( new float[]{ peak.getSubPixelPosition( 0 ), peak.getSubPixelPosition( 1 ), peak.getSubPixelPosition( 2 ) } );
-
-				c.setPosition( p );
-				c.getType().set( 1 );
-			}
-
-			IOFunctions.println( "Convolving DoG result ... " );
-
-			final GaussianConvolutionReal<mpicbg.imglib.type.numeric.real.FloatType> gauss = new GaussianConvolutionReal<mpicbg.imglib.type.numeric.real.FloatType>( detections, new OutOfBoundsStrategyValueFactory<mpicbg.imglib.type.numeric.real.FloatType>(), 2 );
-			gauss.process();
-
-			detections = gauss.getResult();
-
-			IOFunctions.println( "Showing DoG result ... " );
-
-			mpicbg.imglib.image.display.imagej.ImageJFunctions.show(detections) ;
-
-		}
-	}
-
 	protected class FinishedButtonListener implements ActionListener
 	{
 		final Frame parent;
@@ -1188,57 +1049,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 
 		isFinished = true;
-	}
-
-	protected class Sigma2Listener implements AdjustmentListener
-	{
-		final float min, max;
-		final int scrollbarSize;
-
-		final Scrollbar sigmaScrollbar2;
-		final Label sigma2Label;
-
-		public Sigma2Listener( final float min, final float max, final int scrollbarSize, final Scrollbar sigmaScrollbar2, final Label sigma2Label )
-		{
-			this.min = min;
-			this.max = max;
-			this.scrollbarSize = scrollbarSize;
-
-			this.sigmaScrollbar2 = sigmaScrollbar2;
-			this.sigma2Label = sigma2Label;
-		}
-
-		@Override
-		public void adjustmentValueChanged( final AdjustmentEvent event )
-		{
-			if ( enableSigma2 )
-			{
-				sigma2 = computeValueFromScrollbarPosition( event.getValue(), min, max, scrollbarSize );
-
-				if ( sigma2 < sigma )
-				{
-					sigma2 = sigma + 0.001f;
-					sigmaScrollbar2.setValue( computeScrollbarPositionFromValue( sigma2, min, max, scrollbarSize ) );
-				}
-
-				sigma2Label.setText( "Sigma 2 = " + sigma2 );
-
-				if ( !event.getValueIsAdjusting() )
-				{
-					while ( isComputing )
-					{
-						SimpleMultiThreading.threadWait( 10 );
-					}
-					updatePreview( ValueChange.SIGMA );
-				}
-
-			}
-			else
-			{
-				// if no manual adjustment simply reset it
-				sigmaScrollbar2.setValue( computeScrollbarPositionFromValue( sigma2, min, max, scrollbarSize ) );
-			}
-		}		
 	}
 
 	protected class SigmaListener implements AdjustmentListener
@@ -1345,7 +1155,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		{
 			if ( isStarted )
 			{
-				System.out.println("Slice changed!");
+				// System.out.println("Slice changed!");
 				while ( isComputing )
 				{
 					SimpleMultiThreading.threadWait( 10 );

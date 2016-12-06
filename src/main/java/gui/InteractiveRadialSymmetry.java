@@ -388,11 +388,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	// TODO: what if size is larger than the whole image
 	// FIXME: check that the formula below is correct
-	public static <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> img, long [] size, long [] min, long [] max){
+	protected  <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> img, long [] size, long [] min, long [] max, long[] fullImgMax){
 		final int numDimensions = img.numDimensions();
-
-		//		final long[] min = new long[ numDimensions ];
-		//		final long[] max = new long[ numDimensions ];
 
 		for (int d = 0; d < numDimensions; ++d){
 			min[ d ] = img.min(d) - size[d];
@@ -400,7 +397,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 			// check that it does not exceed bounds of the underlying image
 			min[ d ] = Math.max( min[ d ], 0 ); // (+)				
-			max[ d ] = Math.min( max[ d ], img.max(d));
+			// max[ d ] = Math.min( max[ d ], img.max(d)); // this one is wrong instead of second arg there should be fullimage max
+			max[ d ] = Math.min( max[ d ], fullImgMax[d]);
 		}
 	}
 
@@ -435,66 +433,41 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	protected void runRansac() {
 		final ArrayList< long[] > simplifiedPeaks = new ArrayList<long[]>(1);	
 		// extract peaks for the roi
-		copyPeaks(simplifiedPeaks);
+		copyPeaks(simplifiedPeaks);		
+		
+		// TODO: this one should be changed
+		int numDimensions = simplifiedPeaks.get(0).length;
 
-		if (false){
-			for (int j = 0; j < simplifiedPeaks.size(); ++j){
-				long [] loc = simplifiedPeaks.get(j).clone();
-				loc[0] -= rectangle.x;
-				loc[1] -= rectangle.y;
-			}
-
-			for(long[] location: simplifiedPeaks){
-				// int[] location = spot.loc.clone();
-				System.out.print("[ ");
-				for(int d =0; d < location.length; ++d)
-					System.out.print(location[d] + " ");
-				System.out.println("]");
-			}
-		}		
-
+		// defines rectangle on the whole image
 		Rectangle sourceRectangle = new Rectangle( 0, 0, source.getWidth(), source.getHeight());
+		// necessary to define the ROI
 		IntervalView <FloatType> interval = Views.offset(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), new long[]{-rectangle.x, -rectangle.y});
-		// TODO: the gradient should be calculated on the extended interval 
 
 		// TODO: move this as a parameter?
+		// have a look into extraSize -- maybe it will be useful here
 		final long[] range = new long[]{ 10, 10 };
 
-		final long[] min = new long[interval.numDimensions()];
-		final long[] max = new long[interval.numDimensions()];
-
-		adjustBoundaries(interval, range, min, max);
-
-		if (false){ // correct
-			for(int d = 0; d < interval.numDimensions(); ++d){
-				System.out.println("[ " + min[d] + " : " + max[d] + " ]");
-			}
-		}
-
-		if (false){
-			for (int d = 0; d < Views.interval(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), min, max).numDimensions(); ++d){
-				long val = Views.interval(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), min, max).dimension(d);
-				System.out.println(val);
-			}
-		}
-
-		// 	final Gradient derivative = new GradientPreCompute(interval);
-		// 	System.out.println("it fails after"); 
-		// TODO: important that here we use extended rectangle! -- sourceRectangle
+		final long[] min = new long[numDimensions];
+		final long[] max = new long[numDimensions];		
+		// hard coded because I can't find a better function
+		final long[] fullImgMax = new long[numDimensions];
+		
+		
+		fullImgMax[0] = source.getWidth() - 1;
+		fullImgMax[1] = source.getHeight() - 1;
+		
+		// at this point you get the extended roi
+		adjustBoundaries(interval, range, min, max, fullImgMax);
+		// important that here we use extended rectangle! -- sourceRectangle
+		
+		for (int d = 0; d < numDimensions; ++d){
+			System.out.println(min[d] + " " + max[d]);
+		}		
+		
 		final Gradient derivative = new GradientPreCompute(Views.interval(ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), min, max));
 
-		final ArrayList< Spot > spots = Spot.extractSpots(interval, ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), simplifiedPeaks, derivative, range );
+		final ArrayList< Spot > spots = Spot.extractSpots(Views.interval(ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), min, max), ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), simplifiedPeaks, derivative, range );
 
-		if (false){
-			for(Spot spot : spots){
-				System.out.println("# of candidates " + spot.candidates.size());
-				long[] location = spot.loc.clone();
-				System.out.print("[ ");
-				for(int d =0; d < spot.numDimensions(); ++d)
-					System.out.print(location[d] + " ");
-				System.out.println("]");
-			}
-		}
 
 		Spot.ransac( spots, numIterations, maxError, inlierRatio );
 		for ( final Spot spot : spots )

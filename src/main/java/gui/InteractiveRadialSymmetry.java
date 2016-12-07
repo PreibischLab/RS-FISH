@@ -333,22 +333,19 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	// this function will show the result of RANSAC
 	protected void showRansacLog(final ArrayList< Spot > spots){
-		IOFunctions.println( "Computing RANSAC ... " );
+		// TODO: add clean log function
+		IOFunctions.println( "Running RANSAC ... " );
 		// TODO: make a more sophisticated solution for this 
 		// use tables from one of the guis
-		// System.out.println(spots.size());
+		IOFunctions.println("Spots found = " + spots.size());
 		for (Spot spot : spots){
 			String result = ""; 
 			for (int d = 0; d < spot.numDimensions(); ++d){
-				// result.concat(String.format(java.util.Locale.US,"%5.3f", spot.getFloatPosition(d)));
-				result.concat(Float.toString(spot.getFloatPosition(d)));
-
-				// 	System.out.println(result);
+				result += String.format(java.util.Locale.US,"%.2f", spot.getFloatPosition(d));
 				if (d != spot.numDimensions() - 1)
-					result.concat(" ");
+					result += " ";
 			}		
-			// System.out.println(result);
-			// IOFunctions.println(result);
+			IOFunctions.println(result);
 		}
 	}
 
@@ -399,7 +396,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		int numDimensions = img.getNumDimensions();
 
 		Rectangle sourceRectangle = new Rectangle( 0, 0, source.getWidth(), source.getHeight());
-		// TODO: move this as a parameter?
 		final long[] range = new long[]{ supportRadius, supportRadius };
 		
 		final long[] min = new long[numDimensions];
@@ -446,7 +442,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		drawImp.setSlice( imp.getSlice() );		
 		drawImp.setRoi( imp.getRoi() );				
 		drawDetectedSpots(spots, drawImp);
-		// showRansacLog(spots);
+		showRansacLog(spots);
 	}
 
 	protected void drawDetectedSpots(final ArrayList< Spot > spots, ImagePlus imagePlus){
@@ -476,7 +472,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 		imagePlus.updateAndDraw();
 	}
-
 
 	/**
 	 * Instantiates the panel for adjusting the RANSAC parameters
@@ -587,7 +582,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		frame.setVisible( true );
 	}
-
 
 	/**
 	 * Instantiates the panel for adjusting the parameters

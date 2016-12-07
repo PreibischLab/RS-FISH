@@ -1127,7 +1127,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 					res = min;
 			}
 			else{ 
-				System.out.println("Not a valid number");
+				System.out.println("Not a valid number. Radius set to 10.");
+				res = 10;
 				// idle
 			}			
 			return res;
@@ -1140,7 +1141,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 			int value = ensureNumber(textField.getText(), min, max);
 
-			System.out.println("value in the text field = " + value);			
+			// System.out.println("value in the text field = " + value);			
 			String labelText = ""; 
 
 			if (valueAdjust == ValueChange.SUPPORTREGION){

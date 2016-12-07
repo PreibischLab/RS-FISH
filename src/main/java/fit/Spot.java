@@ -152,12 +152,13 @@ public class Spot implements RealLocalizable
 			this.scale[ d ] = scale[ d ];
 	}
 
-	// TODO: maybe it makes sense to pass the initial image here 
-	// so that you don't have to use out of bound strategy
-	// FIXME: main problem with the update you want to introduce is that
-	// derivative should also be calculated outside of the "image" interval
-	// this causes the problem of wrong access 
-	// in the line derivative.gradientAt( cursor, v );
+	
+	// use this one when there is no information about underlying image 
+	public static <T extends RealType<T>> ArrayList< Spot > extractSpots ( final RandomAccessibleInterval<T> image, final ArrayList< long[] > peaks, final Gradient derivative, final long[] size) {
+		return extractSpots(image, image, peaks, derivative, size );
+	}
+	
+	// searches for spots in the image which is the part of the fullImage
 	public static <T extends RealType<T> > ArrayList< Spot > extractSpots( final RandomAccessibleInterval<T> image, final RandomAccessibleInterval<T> fullImage, final ArrayList< long[] > peaks, final Gradient derivative, final long[] size )
 	{
 		final int numDimensions = image.numDimensions();
@@ -172,59 +173,38 @@ public class Spot implements RealLocalizable
 		// we always compute the location at 0.5, 0.5, 0.5 - so we cannot compute it at the last entry of each dimension
 
 		final int[] maxDim = new int[ numDimensions ];
-		// TODO: important update here 
-		// FIXED: 
-		// use .max instead of .dimension
+		
 		for ( int d = 0; d < numDimensions; ++d)
-			maxDim[ d ] = (int)image.max(d) - 2;
+			maxDim[ d ] = (int)fullImage.max(d) - 2;
 
 		final ArrayList< Spot > spots = new ArrayList<Spot>();		
-		final RandomAccessible< T > infinite = Views.extendZero( image );
-		// final RandomAccessible< FloatType > infinite = Views.extendZero( fullImage );
-
-		int i = 0;
+		final RandomAccessible< T > infinite = Views.extendZero( fullImage );
 
 		for ( final long[] peak : peaks )
 		{	
 			final Spot spot = new Spot( numDimensions );
 			spot.setOriginalLocation( peak );
 
-			// this part defines the possible values
-			// for roi, adjust it properly
+			// this part defines the possible values		
 			for ( int e = 0; e < numDimensions; ++e )
 			{
 				min[ e ] = peak[ e ] - size[ e ] / 2;
 				max[ e ] = min[ e ] + size[ e ] - 1;
-
 				// check that it does not exceed bounds of the underlying image
-				min[ e ] = Math.max( min[ e ], 0 ); // (+)				
+				min[ e ] = Math.max( min[ e ], 0 ); 			
 				max[ e ] = Math.min( max[ e ], maxDim[ e ] );
-				// FIXME
-				// max[ e ] = Math.min( max[ e ], fullImage.max(e) - 2 );
-			}
-
-			// FIXED: Remove 
-			// the values look fine but the access cvalues must be wrong somehow
-			for (int d = 0; d < numDimensions; ++d){
-				System.out.println("[" + min[d] + " " + max[d] + "] ");
 			}
 
 			// define a local region to iterate around the potential detection
 			final Cursor< T > cursor = Views.iterable( Views.interval( infinite, min, max ) ).localizingCursor();
-			//final Cursor< FloatType > cursor = Views.iterable( Views.interval( infinite, image ) ).localizingCursor();
 			
 			while ( cursor.hasNext() )
 			{
 				cursor.fwd();
 
-				// TODO: if the cursor is inside of the full inage then 
-				// et is fine otherwise skip the point  
-
 				final double[] v = new double[ numDimensions ];
-				// System.out.print("Greetings ");
 				derivative.gradientAt( cursor, v );
 				//norm( v );
-
 				
 				if ( length( v ) != 0 )
 				{
@@ -232,23 +212,15 @@ public class Spot implements RealLocalizable
 
 					for ( int e = 0; e < numDimensions; ++e )
 						p[ e ] = cursor.getIntPosition( e ) + 0.5f;
-
-					// TODO: where does come from
-					/*
-					p[ 0 ] = x + 0.5f;
-					p[ 1 ] = y + 0.5f;
-					p[ 2 ] = z + 0.5f;
-					 */
+					
 					spot.candidates.add( new PointFunctionMatch( new OrientedPoint( p, v, 1 ) ) );
 				}
-				// System.out.println("friend!");
 			}
-
 			spots.add( spot );
 		}
 		return spots;
 	}
-
+	
 	public static void fitCandidates( final ArrayList< Spot > spots ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
 		for ( final Spot spot : spots )

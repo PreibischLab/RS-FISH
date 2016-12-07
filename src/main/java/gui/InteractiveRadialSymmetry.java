@@ -81,7 +81,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	int numIterations = 100; 
 	float maxError = 0.15f;
 	float inlierRatio = (float) (20.0/100.0); 
-	int supportRegion = 10;
+	int supportRadius = 10;
 	// min/max value
 	int supportRadiusMin = 1;
 	int supportRadiusMax = 50; 
@@ -253,12 +253,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final int h = imp.getHeight();
 		final int w = imp.getWidth();
 
-
-		//		System.out.print("being paranoid here...");
-		//		imp.show("check the content of imp");
-		//		imp.updateAndDraw();
-
-
 		final ArrayList< float[] > img = new ArrayList< float[] >();
 
 		if ( imp.getProcessor() instanceof FloatProcessor )
@@ -377,7 +371,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-
 	/**
 	 * Copy peaks found by DoG to lighter ArrayList
 	 * */
@@ -407,8 +400,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		Rectangle sourceRectangle = new Rectangle( 0, 0, source.getWidth(), source.getHeight());
 		// TODO: move this as a parameter?
-		// have a look into extraSize -- maybe it will be useful here
-		final long[] range = new long[]{ 10, 10 };
+		final long[] range = new long[]{ supportRadius, supportRadius };
 		
 		final long[] min = new long[numDimensions];
 		final long[] max = new long[numDimensions];		
@@ -422,7 +414,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		IntervalView<FloatType> extendedRoi = Views.interval(ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), min, max);		
 		final Gradient derivative = new GradientPreCompute(extendedRoi);
-		final ArrayList< Spot > spots = Spot.extractSpots(extendedRoi, ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), simplifiedPeaks, derivative, range );
+		final ArrayList< Spot > spots = Spot.extractSpots(extendedRoi, extendedRoi, simplifiedPeaks, derivative, range );
 
 		Spot.ransac( spots, numIterations, maxError, inlierRatio );
 		for ( final Spot spot : spots )
@@ -500,22 +492,21 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		int scrollbarInitialPosition = computeScrollbarPositionFromValue(ransacInitSupportRadius, supportRadiusMin, supportRadiusMax, scrollbarSize);
 		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );		
-		this.supportRegion = ransacInitSupportRadius; // (int)computeValueFromScrollbarPosition(ransacInitSupportRegion, supportRegionMin, supportRegionMax, scrollbarSize);
-
-		final TextField SupportRegionTextField = new TextField(Integer.toString(this.supportRegion));
+		this.supportRadius = ransacInitSupportRadius; 
+		
+		final TextField SupportRegionTextField = new TextField(Integer.toString(this.supportRadius));
 		SupportRegionTextField.setEditable(true);
-		SupportRegionTextField.setCaretPosition(Integer.toString(this.supportRegion).length());
+		SupportRegionTextField.setCaretPosition(Integer.toString(this.supportRadius).length());
 
 		scrollbarInitialPosition = computeScrollbarPositionFromValue(ransacInitInlierRatio, inlierRatioMin, inlierRatioMax, scrollbarSize);
 		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );
-		this.inlierRatio = ransacInitInlierRatio; //computeValueFromScrollbarPosition(ransacInitInlierRatio, inlierRatioMin, inlierRatioMax, scrollbarSize);
-
+		this.inlierRatio = ransacInitInlierRatio;
+		
 		final float log1001 = (float) Math.log10( scrollbarSize + 1);
-		// scrollbarInitialPosition = 1001 - (int)Math.pow(10, log1001*(1 - (ransacInitMaxError - maxErrorMin)/(maxErrorMax-maxErrorMin)));		
 		scrollbarInitialPosition = 1001 - (int)Math.pow(10, (maxErrorMax - ransacInitMaxError)/(maxErrorMax - maxErrorMin)*log1001);		
 
 		final Scrollbar maxErrorScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );
-		this.maxError = ransacInitMaxError; // maxErrorMin + ( (log1001 - (float)Math.log10(1001-ransacInitMaxError))/log1001 ) * (maxErrorMax-maxErrorMin);						
+		this.maxError = ransacInitMaxError; 
 
 		final Label supportRegionText = new Label( "Support Region Radius:" /* = " + this.supportRegion*/, Label.CENTER );	
 		final Label inlierRatioText = new Label( "Inlier Ratio = " + String.format(java.util.Locale.US,"%.2f", this.inlierRatio), Label.CENTER ); 		
@@ -1154,11 +1145,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 			if (valueAdjust == ValueChange.SUPPORTREGION){
 				// set the value for the support region
-				supportRegion = value;
+				supportRadius = value;
 				// set label
 				labelText = "Support Region Radius:"; // = " + supportRegion;					
 				// calculate new position of the scrollbar
-				int newScrollbarPosition = computeScrollbarPositionFromValue(supportRegion, min, max, scrollbarSize);
+				int newScrollbarPosition = computeScrollbarPositionFromValue(supportRadius, min, max, scrollbarSize);
 				// adjust the scrollbar position!
 				scrollbar.setValue( newScrollbarPosition);
 				// set new value for text label
@@ -1198,9 +1189,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			String labelText = ""; 
 
 			if (valueAdjust == ValueChange.SUPPORTREGION){
-				supportRegion = (int)value;
+				supportRadius = (int)value;
 				labelText = "Support Region Radius:"; // = " + supportRegion ;
-				textField.setText(Integer.toString(supportRegion));
+				textField.setText(Integer.toString(supportRadius));
 			}
 			else if (valueAdjust == ValueChange.INLIERRATIO){
 				inlierRatio = value;				

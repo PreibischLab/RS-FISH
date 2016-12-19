@@ -45,7 +45,6 @@ import net.imglib2.view.Views;
 import spim.process.fusion.FusionHelper;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -70,32 +69,31 @@ import java.util.regex.Pattern;
 import java.awt.Button;
 import java.awt.Checkbox;
 
-
 public class InteractiveRadialSymmetry implements PlugIn {
 	// RANSAC parameters
 	// initial values
-	int ransacInitSupportRadius = 10;
-	float ransacInitInlierRatio = 0.75f;
-	float ransacInitMaxError = 3;
+	final int ransacInitSupportRadius = 10;
+	final float ransacInitInlierRatio = 0.75f;
+	final float ransacInitMaxError = 3;
 	// current value
-	int numIterations = 100; 
+	int numIterations = 100;
 	float maxError = 0.15f;
-	float inlierRatio = (float) (20.0/100.0); 
+	float inlierRatio = (float) (20.0 / 100.0);
 	int supportRadius = 10;
 	// min/max value
 	int supportRadiusMin = 1;
-	int supportRadiusMax = 50; 
-	float inlierRatioMin = (float) (0.0/100.0);   // 0%
-	float inlierRatioMax = (float) (1); 		  // 100%
+	int supportRadiusMax = 50;
+	float inlierRatioMin = (float) (0.0 / 100.0); // 0%
+	float inlierRatioMax = (float) (1); // 100%
 	float maxErrorMin = 0.0001f;
-	float maxErrorMax = 10.00f;	
+	float maxErrorMax = 10.00f;
 	// ----------------------------------------
-	
+
 	// DoG parameters
 	// initial
-	int sigmaInit = 5;
-	float thresholdInit = 0.03f;
-	// current 
+	final int sigmaInit = 5;
+	final float thresholdInit = 0.03f;
+	// current
 	float sigma = 0.5f;
 	float sigma2 = 0.5f;
 	float threshold = 0.0001f;
@@ -104,17 +102,17 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	float sigmaMax = 10f;
 	float thresholdMin = 0.0001f;
 	float thresholdMax = 1f;
-	
-	//--------------------------------
+
+	// --------------------------------
 	ImageStack stack = null;
 	ImageStack stackOut = null;
 	final int extraSize = 40;
 	final int scrollbarSize = 1000;
 	float imageSigma = 0.5f;
-	
+
 	double minIntensityImage = Double.NaN;
 	double maxIntensityImage = Double.NaN;
-		
+
 	// steps per octave
 	public static int standardSensitivity = 4;
 	int sensitivity = standardSensitivity;
@@ -125,11 +123,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	int channel = 0;
 	Rectangle rectangle;
 	Image<mpicbg.imglib.type.numeric.real.FloatType> img;
-	FloatImagePlus< net.imglib2.type.numeric.real.FloatType > source;
+	FloatImagePlus<net.imglib2.type.numeric.real.FloatType> source;
 	ArrayList<DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType>> peaks;
 
-	Color originalColor = new Color( 0.8f, 0.8f, 0.8f );
-	Color inactiveColor = new Color( 0.95f, 0.95f, 0.95f );
+	Color originalColor = new Color(0.8f, 0.8f, 0.8f);
+	Color inactiveColor = new Color(0.95f, 0.95f, 0.95f);
 	public Rectangle standardRectangle;
 	boolean isComputing = false;
 	boolean isStarted = false;
@@ -137,65 +135,74 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	boolean lookForMinima = false;
 	boolean lookForMaxima = true;
 
-	public static enum ValueChange { SIGMA, THRESHOLD, SLICE, ROI, MINMAX, ALL, SUPPORTREGION, INLIERRATIO, MAXERROR}
+	public static enum ValueChange {
+		SIGMA, THRESHOLD, SLICE, ROI, MINMAX, ALL, SUPPORTREGION, INLIERRATIO, MAXERROR
+	}
 
 	boolean isFinished = false;
 	boolean wasCanceled = false;
-	public boolean isFinished() { return isFinished; }
-	public boolean wasCanceled() { return wasCanceled; }
 
-	public InteractiveRadialSymmetry( final ImagePlus imp, final int channel ) 
-	{ 
+	public boolean isFinished() {
+		return isFinished;
+	}
+
+	public boolean wasCanceled() {
+		return wasCanceled;
+	}
+
+	public InteractiveRadialSymmetry(final ImagePlus imp, final int channel) {
 		this.imp = imp;
 		this.channel = channel;
 	}
-	public InteractiveRadialSymmetry( final ImagePlus imp ) { this.imp = imp; }
-	public InteractiveRadialSymmetry() {}
+
+	public InteractiveRadialSymmetry(final ImagePlus imp) {
+		this.imp = imp;
+	}
+
+	public InteractiveRadialSymmetry() {
+	}
 
 	// necessary!
-	public int setup(String arg, ImagePlus imp){
-		return 1;
-	}	
+	public int setup(String arg, ImagePlus imp) {
+		return 0;
+	}
 
 	FloatProcessor ransacFloatProcessor;
 	ImagePlus drawImp;
 	Img<FloatType> ransacPreview;
 
 	@Override
-	public void run( String arg )
-	{
-		if ( imp == null )
+	public void run(String arg) {
+		if (imp == null)
 			imp = WindowManager.getCurrentImage();
 
-		standardRectangle = new Rectangle( imp.getWidth()/4, imp.getHeight()/4, imp.getWidth()/2, imp.getHeight()/2 );
+		standardRectangle = new Rectangle(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2,
+				imp.getHeight() / 2);
 
-		if ( imp.getType() == ImagePlus.COLOR_RGB || imp.getType() == ImagePlus.COLOR_256 )
-		{			
-			IJ.log( "Color images are not supported, please convert to 8, 16 or 32-bit grayscale" );
+		if (imp.getType() == ImagePlus.COLOR_RGB || imp.getType() == ImagePlus.COLOR_256) {
+			IJ.log("Color images are not supported, please convert to 8, 16 or 32-bit grayscale");
 			return;
 		}
 
 		Roi roi = imp.getRoi();
 
-		if ( roi == null )
-		{
-			//IJ.log( "A rectangular ROI is required to define the area..." );
-			imp.setRoi( standardRectangle );
+		if (roi == null) {
+			// IJ.log( "A rectangular ROI is required to define the area..." );
+			imp.setRoi(standardRectangle);
 			roi = imp.getRoi();
 		}
 
-		if ( roi.getType() != Roi.RECTANGLE )
-		{
-			IJ.log( "Only rectangular rois are supported..." );
+		if (roi.getType() != Roi.RECTANGLE) {
+			IJ.log("Only rectangular rois are supported...");
 			return;
 		}
 
 		// copy the ImagePlus into an ArrayImage<FloatType> for faster access
-		source = convertToFloat( imp, channel, 0, minIntensityImage, maxIntensityImage );
+		source = convertToFloat(imp, channel, 0, minIntensityImage, maxIntensityImage);
 
-		// initialize variables for interactive preview 
-		// called before updatePreview() ! 
-		ransacPreviewInitialize();		
+		// initialize variables for interactive preview
+		// called before updatePreview() !
+		ransacPreviewInitialize();
 
 		// show the interactive kit
 		displaySliders();
@@ -204,26 +211,26 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		displayRansacSliders();
 
 		// add listener to the imageplus slice slider
-		sliceObserver = new SliceObserver( imp, new ImagePlusListener() );
+		sliceObserver = new SliceObserver(imp, new ImagePlusListener());
 
 		// compute first version
-		updatePreview( ValueChange.ALL );		
+		updatePreview(ValueChange.ALL);
 		isStarted = true;
 
 		// check whenever roi is modified to update accordingly
 		roiListener = new RoiListener();
-		imp.getCanvas().addMouseListener( roiListener );
+		imp.getCanvas().addMouseListener(roiListener);
 	}
 
 	/**
 	 * Initialize preview variables for RANSAC
-	 * */
-	protected void ransacPreviewInitialize(){
+	 */
+	protected void ransacPreviewInitialize() {
 		int width = source.getWidth();
 		int height = source.getHeight();
 
 		ransacFloatProcessor = new FloatProcessor(width, height);
-		float[] pixels = (float[])ransacFloatProcessor.getPixels();
+		float[] pixels = (float[]) ransacFloatProcessor.getPixels();
 		drawImp = new ImagePlus("RANSAC preview", ransacFloatProcessor);
 		ransacPreview = ArrayImgs.floats(pixels, width, height);
 		drawImp.show();
@@ -234,18 +241,20 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	/**
-	 * Normalize and make a copy of the {@link ImagePlus} into an {@link Image}&gt;FloatType&lt; for faster access when copying the slices
+	 * Normalize and make a copy of the {@link ImagePlus} into an
+	 * {@link Image}&gt;FloatType&lt; for faster access when copying the slices
 	 * 
-	 * @param imp - the {@link ImagePlus} input image
+	 * @param imp
+	 *            - the {@link ImagePlus} input image
 	 * @return - the normalized copy [0...1]
 	 */
-	public static FloatImagePlus< net.imglib2.type.numeric.real.FloatType > convertToFloat( final ImagePlus imp, int channel, int timepoint )
-	{
-		return convertToFloat( imp, channel, timepoint, Double.NaN, Double.NaN );
+	public static FloatImagePlus<net.imglib2.type.numeric.real.FloatType> convertToFloat(final ImagePlus imp,
+			int channel, int timepoint) {
+		return convertToFloat(imp, channel, timepoint, Double.NaN, Double.NaN);
 	}
 
-	public static FloatImagePlus< net.imglib2.type.numeric.real.FloatType > convertToFloat( final ImagePlus imp, int channel, int timepoint, final double min, final double max )
-	{
+	public static FloatImagePlus<net.imglib2.type.numeric.real.FloatType> convertToFloat(final ImagePlus imp,
+			int channel, int timepoint, final double min, final double max) {
 		// stupid 1-offset of imagej
 		channel++;
 		timepoint++;
@@ -253,219 +262,209 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final int h = imp.getHeight();
 		final int w = imp.getWidth();
 
-		final ArrayList< float[] > img = new ArrayList< float[] >();
+		final ArrayList<float[]> img = new ArrayList<float[]>();
 
-		if ( imp.getProcessor() instanceof FloatProcessor )
-		{
-			for ( int z = 0; z < imp.getNSlices(); ++z )
-				img.add( ( (float[])imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) ).getPixels() ).clone() );
-		}
-		else if ( imp.getProcessor() instanceof ByteProcessor )
-		{
-			for ( int z = 0; z < imp.getNSlices(); ++z )
-			{
-				final byte[] pixels = (byte[])imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) ).getPixels();
-				final float[] pixelsF = new float[ pixels.length ];
+		if (imp.getProcessor() instanceof FloatProcessor) {
+			for (int z = 0; z < imp.getNSlices(); ++z)
+				img.add(((float[]) imp.getStack().getProcessor(imp.getStackIndex(channel, z + 1, timepoint))
+						.getPixels()).clone());
+		} else if (imp.getProcessor() instanceof ByteProcessor) {
+			for (int z = 0; z < imp.getNSlices(); ++z) {
+				final byte[] pixels = (byte[]) imp.getStack().getProcessor(imp.getStackIndex(channel, z + 1, timepoint))
+						.getPixels();
+				final float[] pixelsF = new float[pixels.length];
 
-				for ( int i = 0; i < pixels.length; ++i )
-					pixelsF[ i ] = pixels[ i ] & 0xff;
+				for (int i = 0; i < pixels.length; ++i)
+					pixelsF[i] = pixels[i] & 0xff;
 
-				img.add( pixelsF );
+				img.add(pixelsF);
 			}
-		}
-		else if ( imp.getProcessor() instanceof ShortProcessor )
-		{
-			for ( int z = 0; z < imp.getNSlices(); ++z )
-			{
-				final short[] pixels = (short[])imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) ).getPixels();
-				final float[] pixelsF = new float[ pixels.length ];
+		} else if (imp.getProcessor() instanceof ShortProcessor) {
+			for (int z = 0; z < imp.getNSlices(); ++z) {
+				final short[] pixels = (short[]) imp.getStack()
+						.getProcessor(imp.getStackIndex(channel, z + 1, timepoint)).getPixels();
+				final float[] pixelsF = new float[pixels.length];
 
-				for ( int i = 0; i < pixels.length; ++i )
-					pixelsF[ i ] = pixels[ i ] & 0xffff;
+				for (int i = 0; i < pixels.length; ++i)
+					pixelsF[i] = pixels[i] & 0xffff;
 
-				img.add( pixelsF );
+				img.add(pixelsF);
 			}
-		}
-		else // some color stuff or so 
+		} else // some color stuff or so
 		{
-			for ( int z = 0; z < imp.getNSlices(); ++z )
-			{
-				final ImageProcessor ip = imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) );
-				final float[] pixelsF = new float[ w * h ];
+			for (int z = 0; z < imp.getNSlices(); ++z) {
+				final ImageProcessor ip = imp.getStack().getProcessor(imp.getStackIndex(channel, z + 1, timepoint));
+				final float[] pixelsF = new float[w * h];
 
 				int i = 0;
 
-				for ( int y = 0; y < h; ++y )
-					for ( int x = 0; x < w; ++x )
-						pixelsF[ i++ ] = ip.getPixelValue( x, y );
+				for (int y = 0; y < h; ++y)
+					for (int x = 0; x < w; ++x)
+						pixelsF[i++] = ip.getPixelValue(x, y);
 
-				img.add( pixelsF );
+				img.add(pixelsF);
 			}
 		}
 
-		final FloatImagePlus< net.imglib2.type.numeric.real.FloatType > i = createImgLib2( img, w, h );
+		final FloatImagePlus<net.imglib2.type.numeric.real.FloatType> i = createImgLib2(img, w, h);
 
-		if ( Double.isNaN( min ) || Double.isNaN( max ) || Double.isInfinite( min ) || Double.isInfinite( max ) || min == max )
-			FusionHelper.normalizeImage( i );
+		if (Double.isNaN(min) || Double.isNaN(max) || Double.isInfinite(min) || Double.isInfinite(max) || min == max)
+			FusionHelper.normalizeImage(i);
 		else
-			FusionHelper.normalizeImage( i, (float)min, (float)max );
+			FusionHelper.normalizeImage(i, (float) min, (float) max);
 		return i;
 	}
 
-	public static FloatImagePlus< net.imglib2.type.numeric.real.FloatType > createImgLib2( final List< float[] > img, final int w, final int h )
-	{
+	public static FloatImagePlus<net.imglib2.type.numeric.real.FloatType> createImgLib2(final List<float[]> img,
+			final int w, final int h) {
 		final ImagePlus imp;
 
-		if ( img.size() > 1 )
-		{
-			final ImageStack stack = new ImageStack( w, h );
-			for ( int z = 0; z < img.size(); ++z )
-				stack.addSlice( new FloatProcessor( w, h, img.get( z ) ) );
-			imp = new ImagePlus( "ImgLib2 FloatImagePlus (3d)", stack );
-		}
-		else
-		{
-			imp = new ImagePlus( "ImgLib2 FloatImagePlus (2d)", new FloatProcessor( w, h, img.get( 0 ) ) );
+		if (img.size() > 1) {
+			final ImageStack stack = new ImageStack(w, h);
+			for (int z = 0; z < img.size(); ++z)
+				stack.addSlice(new FloatProcessor(w, h, img.get(z)));
+			imp = new ImagePlus("ImgLib2 FloatImagePlus (3d)", stack);
+		} else {
+			imp = new ImagePlus("ImgLib2 FloatImagePlus (2d)", new FloatProcessor(w, h, img.get(0)));
 		}
 
-		return ImagePlusAdapter.wrapFloat( imp );
+		return ImagePlusAdapter.wrapFloat(imp);
 	}
 
 	// this function will show the result of RANSAC
-	protected void showRansacLog(final ArrayList< Spot > spots){
+	protected void showRansacLog(final ArrayList<Spot> spots) {
 		// TODO: add clean log function
-		IOFunctions.println( "Running RANSAC ... " );
-		// TODO: make a more sophisticated solution for this 
+		IOFunctions.println("Running RANSAC ... ");
+		// TODO: make a more sophisticated solution for this
 		// use tables from one of the guis
 		IOFunctions.println("Spots found = " + spots.size());
-		for (Spot spot : spots){
-			String result = ""; 
-			for (int d = 0; d < spot.numDimensions(); ++d){
-				result += String.format(java.util.Locale.US,"%.2f", spot.getFloatPosition(d));
+		for (Spot spot : spots) {
+			String result = "";
+			for (int d = 0; d < spot.numDimensions(); ++d) {
+				result += String.format(java.util.Locale.US, "%.2f", spot.getFloatPosition(d));
 				if (d != spot.numDimensions() - 1)
 					result += " ";
-			}		
+			}
 			IOFunctions.println(result);
 		}
 	}
 
-
-	public static <T extends RealType<T>> void printCoordinates(RandomAccessibleInterval<T> img){
-		for (int d = 0; d < img.numDimensions(); ++d){
+	public static <T extends RealType<T>> void printCoordinates(RandomAccessibleInterval<T> img) {
+		for (int d = 0; d < img.numDimensions(); ++d) {
 			System.out.println("[" + img.min(d) + " " + img.max(d) + "] ");
 		}
 	}
 
 	// extended or shorten the size of the boundaries
-	protected  <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> img, long [] size, long [] min, long [] max, long[] fullImgMax){
+	protected <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> img, long[] size, long[] min,
+			long[] max, long[] fullImgMax) {
 		final int numDimensions = img.numDimensions();
-		for (int d = 0; d < numDimensions; ++d){
-			min[ d ] = img.min(d) - size[d];
-			max[ d ] = img.max(d) + size[d];
+		for (int d = 0; d < numDimensions; ++d) {
+			min[d] = img.min(d) - size[d];
+			max[d] = img.max(d) + size[d];
 			// check that it does not exceed bounds of the underlying image
-			min[ d ] = Math.max( min[ d ], 0 ); 			
-			max[ d ] = Math.min( max[ d ], fullImgMax[d]);
+			min[d] = Math.max(min[d], 0);
+			max[d] = Math.min(max[d], fullImgMax[d]);
 		}
 	}
 
 	/**
 	 * Copy peaks found by DoG to lighter ArrayList
-	 * */
-	protected void copyPeaks(final ArrayList< long[] > simplifiedPeaks){
-		for ( final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks )
-		{
-			if ( ( peak.isMax() && lookForMaxima ) || ( peak.isMin() && lookForMinima ) )
-			{
-				final float x = peak.getPosition( 0 ); 
-				final float y = peak.getPosition( 1 );
+	 */
+	protected void copyPeaks(final ArrayList<long[]> simplifiedPeaks) {
+		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {
+			if ((peak.isMax() && lookForMaxima) || (peak.isMin() && lookForMinima)) {
+				final float x = peak.getPosition(0);
+				final float y = peak.getPosition(1);
 
 				// take only peaks that are inside of the image
-				if ( Math.abs( peak.getValue().get() ) > threshold &&
-						x >= extraSize/2 && y >= extraSize/2 &&
-						x < rectangle.width + extraSize/2 && y < rectangle.height + extraSize/2 ){ 	
-					simplifiedPeaks.add(new long[]{Util.round(x) + rectangle.x - extraSize/2, Util.round(y) + rectangle.y - extraSize/2});
+				if (Math.abs(peak.getValue().get()) > threshold && x >= extraSize / 2 && y >= extraSize / 2
+						&& x < rectangle.width + extraSize / 2 && y < rectangle.height + extraSize / 2) {
+					simplifiedPeaks.add(new long[] { Util.round(x) + rectangle.x - extraSize / 2,
+							Util.round(y) + rectangle.y - extraSize / 2 });
 				}
 			}
 		}
 	}
 
 	protected void runRansac() {
-		final ArrayList< long[] > simplifiedPeaks = new ArrayList<long[]>(1);	
+		final ArrayList<long[]> simplifiedPeaks = new ArrayList<long[]>(1);
 		// extract peaks for the roi
-		copyPeaks(simplifiedPeaks);		
+		copyPeaks(simplifiedPeaks);
 		int numDimensions = img.getNumDimensions();
 
-		Rectangle sourceRectangle = new Rectangle( 0, 0, source.getWidth(), source.getHeight());
-		final long[] range = new long[]{ supportRadius, supportRadius };
-		
+		Rectangle sourceRectangle = new Rectangle(0, 0, source.getWidth(), source.getHeight());
+		final long[] range = new long[] { supportRadius, supportRadius };
+
 		final long[] min = new long[numDimensions];
-		final long[] max = new long[numDimensions];		
+		final long[] max = new long[numDimensions];
 		// hard coded because I there is no better function
-		final long[] fullImgMax = new long[numDimensions];	
+		final long[] fullImgMax = new long[numDimensions];
 		fullImgMax[0] = source.getWidth() - 1;
 		fullImgMax[1] = source.getHeight() - 1;
 
-		IntervalView <FloatType> roi = Views.offset(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)), new long[]{-rectangle.x, -rectangle.y});		
+		IntervalView<FloatType> roi = Views.offset(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)),
+				new long[] { -rectangle.x, -rectangle.y });
 		adjustBoundaries(roi, range, min, max, fullImgMax);
 
-		IntervalView<FloatType> extendedRoi = Views.interval(ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), min, max);		
+		IntervalView<FloatType> extendedRoi = Views
+				.interval(ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), min, max);
 		final Gradient derivative = new GradientPreCompute(extendedRoi);
-		final ArrayList< Spot > spots = Spot.extractSpots(extendedRoi, extendedRoi, simplifiedPeaks, derivative, range );
+		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, extendedRoi, simplifiedPeaks, derivative, range);
 
-		Spot.ransac( spots, numIterations, maxError, inlierRatio );
-		for ( final Spot spot : spots )
+		Spot.ransac(spots, numIterations, maxError, inlierRatio);
+		for (final Spot spot : spots)
 			spot.computeAverageCostInliers();
 		showRansacResult(spots);
 	}
 
 	// draw detected points
 	// TODO: create a table with the results here
-	protected void showRansacResult(final ArrayList< Spot > spots){
+	protected void showRansacResult(final ArrayList<Spot> spots) {
 		// make draw global
-		for ( final FloatType t : ransacPreview )
+		for (final FloatType t : ransacPreview)
 			t.setZero();
 
-		Spot.drawRANSACArea( spots, ransacPreview );
-		drawImp.updateAndDraw();		
+		Spot.drawRANSACArea(spots, ransacPreview);
+		drawImp.updateAndDraw();
 		drawDetectedSpots(spots, imp);
 
 		Overlay overlay = drawImp.getOverlay();
-		if ( overlay == null )
-		{
-			// System.out.println("If this message pops up probably something went wrong.");
+		if (overlay == null) {
+			// System.out.println("If this message pops up probably something
+			// went wrong.");
 			overlay = new Overlay();
-			drawImp.setOverlay( overlay );			
+			drawImp.setOverlay(overlay);
 		}
 
-		overlay.clear();		
+		overlay.clear();
 
-		drawImp.setSlice( imp.getSlice() );		
-		drawImp.setRoi( imp.getRoi() );				
+		drawImp.setSlice(imp.getSlice());
+		drawImp.setRoi(imp.getRoi());
 		drawDetectedSpots(spots, drawImp);
 		showRansacLog(spots);
 	}
 
-	protected void drawDetectedSpots(final ArrayList< Spot > spots, ImagePlus imagePlus){
+	protected void drawDetectedSpots(final ArrayList<Spot> spots, ImagePlus imagePlus) {
 		// extract peaks to show
 		// we will overlay them with RANSAC result
 		Overlay overlay = imagePlus.getOverlay();
 
-		if ( overlay == null )
-		{
+		if (overlay == null) {
 			System.out.println("If this message pops up probably something went wrong.");
 			overlay = new Overlay();
-			imagePlus.setOverlay( overlay );		
+			imagePlus.setOverlay(overlay);
 		}
 
-		for ( final Spot spot : spots )
-		{
-			if ( spot.inliers.size() == 0 )
+		for (final Spot spot : spots) {
+			if (spot.inliers.size() == 0)
 				continue;
 
-			final double[] location = new double[ source.numDimensions() ];
+			final double[] location = new double[source.numDimensions()];
 
-			spot.center.getSymmetryCenter( location );
-			final OvalRoi or = new OvalRoi( location[0] - sigma, location[1] - sigma, Util.round( sigma + sigma2 ), Util.round( sigma + sigma2 ) );
+			spot.center.getSymmetryCenter(location);
+			final OvalRoi or = new OvalRoi(location[0] - sigma, location[1] - sigma, Util.round(sigma + sigma2),
+					Util.round(sigma + sigma2));
 
 			or.setStrokeColor(Color.ORANGE);
 			overlay.add(or);
@@ -476,42 +475,50 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	/**
 	 * Instantiates the panel for adjusting the RANSAC parameters
 	 */
-	protected void displayRansacSliders()
-	{
+	protected void displayRansacSliders() {
 		final Frame frame = new Frame("Adjust RANSAC Values");
-		frame.setSize( 260, 200 );
+		frame.setSize(260, 200);
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
 		final GridBagConstraints c = new GridBagConstraints();
 
-		int scrollbarInitialPosition = computeScrollbarPositionFromValue(ransacInitSupportRadius, supportRadiusMin, supportRadiusMax, scrollbarSize);
-		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );		
-		this.supportRadius = ransacInitSupportRadius; 
-		
+		int scrollbarInitialPosition = computeScrollbarPositionFromValue(ransacInitSupportRadius, supportRadiusMin,
+				supportRadiusMax, scrollbarSize);
+		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
+				10 + scrollbarSize);
+		this.supportRadius = ransacInitSupportRadius;
+
 		final TextField SupportRegionTextField = new TextField(Integer.toString(this.supportRadius));
 		SupportRegionTextField.setEditable(true);
 		SupportRegionTextField.setCaretPosition(Integer.toString(this.supportRadius).length());
 
-		scrollbarInitialPosition = computeScrollbarPositionFromValue(ransacInitInlierRatio, inlierRatioMin, inlierRatioMax, scrollbarSize);
-		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );
+		scrollbarInitialPosition = computeScrollbarPositionFromValue(ransacInitInlierRatio, inlierRatioMin,
+				inlierRatioMax, scrollbarSize);
+		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
+				10 + scrollbarSize);
 		this.inlierRatio = ransacInitInlierRatio;
-		
-		final float log1001 = (float) Math.log10( scrollbarSize + 1);
-		scrollbarInitialPosition = 1001 - (int)Math.pow(10, (maxErrorMax - ransacInitMaxError)/(maxErrorMax - maxErrorMin)*log1001);		
 
-		final Scrollbar maxErrorScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );
-		this.maxError = ransacInitMaxError; 
+		final float log1001 = (float) Math.log10(scrollbarSize + 1);
+		scrollbarInitialPosition = 1001
+				- (int) Math.pow(10, (maxErrorMax - ransacInitMaxError) / (maxErrorMax - maxErrorMin) * log1001);
 
-		final Label supportRegionText = new Label( "Support Region Radius:" /* = " + this.supportRegion*/, Label.CENTER );	
-		final Label inlierRatioText = new Label( "Inlier Ratio = " + String.format(java.util.Locale.US,"%.2f", this.inlierRatio), Label.CENTER ); 		
-		final Label maxErrorText = new Label( "Max Error = " + String.format(java.util.Locale.US,"%.4f", this.maxError) , Label.CENTER ); 		
+		final Scrollbar maxErrorScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
+				10 + scrollbarSize);
+		this.maxError = ransacInitMaxError;
 
-		final Button button = new Button( "Done" );
-		final Button cancel = new Button( "Cancel" );
+		final Label supportRegionText = new Label(
+				"Support Region Radius:" /* = " + this.supportRegion */, Label.CENTER);
+		final Label inlierRatioText = new Label(
+				"Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", this.inlierRatio), Label.CENTER);
+		final Label maxErrorText = new Label("Max Error = " + String.format(java.util.Locale.US, "%.4f", this.maxError),
+				Label.CENTER);
 
-		//		/* Location */
-		frame.setLayout( layout );
+		final Button button = new Button("Done");
+		final Button cancel = new Button("Cancel");
+
+		// /* Location */
+		frame.setLayout(layout);
 
 		// insets constants
 		int inTop = 0;
@@ -520,14 +527,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		int inLeft = inRight;
 
 		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0; 
+		c.gridx = 0;
 		c.gridy = 0;
-		c.weightx = 0.50; 
+		c.weightx = 0.50;
 		c.gridwidth = 1;
-		frame.add( supportRegionText, c );
+		frame.add(supportRegionText, c);
 
 		c.gridx = 1;
-		c.weightx = 0.50; 
+		c.weightx = 0.50;
 		c.gridwidth = 1;
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		frame.add(SupportRegionTextField, c);
@@ -536,90 +543,99 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.gridy = 1;
 		c.gridwidth = 2;
 		c.insets = new Insets(5, inLeft, inBottom, inRight);
-		frame.add ( supportRegionScrollbar, c );
+		frame.add(supportRegionScrollbar, c);
 
 		c.gridx = 0;
 		c.gridy = 2;
 		c.gridwidth = 2;
-		frame.add( inlierRatioText, c );
+		frame.add(inlierRatioText, c);
 
 		c.gridx = 0;
 		c.gridy = 3;
 		c.gridwidth = 2;
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add ( inlierRatioScrollbar, c );
+		frame.add(inlierRatioScrollbar, c);
 
 		c.gridx = 0;
 		c.gridy = 4;
 		c.gridwidth = 2;
-		frame.add( maxErrorText, c );
+		frame.add(maxErrorText, c);
 
 		c.gridx = 0;
 		c.gridy = 5;
 		c.gridwidth = 2;
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add ( maxErrorScrollbar, c );
+		frame.add(maxErrorScrollbar, c);
 
 		++c.gridy;
 		c.insets = new Insets(5, 50, 0, 50);
-		frame.add( button, c );
+		frame.add(button, c);
 
 		++c.gridy;
 		c.insets = new Insets(0, 50, 0, 50);
-		frame.add( cancel, c );	
+		frame.add(cancel, c);
 
-		//		/* Configuration */
-		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(supportRegionText, supportRadiusMin, supportRadiusMax, ValueChange.SUPPORTREGION, SupportRegionTextField));
-		inlierRatioScrollbar.addAdjustmentListener(new GeneralListener(inlierRatioText, inlierRatioMin, inlierRatioMax, ValueChange.INLIERRATIO, new TextField()));
-		maxErrorScrollbar.addAdjustmentListener(new GeneralListener(maxErrorText, maxErrorMin, maxErrorMax, ValueChange.MAXERROR, new TextField()));
+		// /* Configuration */
+		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(supportRegionText, supportRadiusMin,
+				supportRadiusMax, ValueChange.SUPPORTREGION, SupportRegionTextField));
+		inlierRatioScrollbar.addAdjustmentListener(new GeneralListener(inlierRatioText, inlierRatioMin, inlierRatioMax,
+				ValueChange.INLIERRATIO, new TextField()));
+		maxErrorScrollbar.addAdjustmentListener(
+				new GeneralListener(maxErrorText, maxErrorMin, maxErrorMax, ValueChange.MAXERROR, new TextField()));
 
-		SupportRegionTextField.addActionListener(new TextFieldListener(supportRegionText, supportRadiusMin, supportRadiusMax, ValueChange.SUPPORTREGION, SupportRegionTextField, supportRegionScrollbar));
+		SupportRegionTextField.addActionListener(new TextFieldListener(supportRegionText, supportRadiusMin,
+				supportRadiusMax, ValueChange.SUPPORTREGION, SupportRegionTextField, supportRegionScrollbar));
 
-		button.addActionListener( new FinishedButtonListener( frame, false ) );
-		cancel.addActionListener( new FinishedButtonListener( frame, true ) );
+		button.addActionListener(new FinishedButtonListener(frame, false));
+		cancel.addActionListener(new FinishedButtonListener(frame, true));
 
-		frame.addWindowListener( new FrameListener( frame ) );
+		frame.addWindowListener(new FrameListener(frame));
 
-		frame.setVisible( true );
+		frame.setVisible(true);
 	}
 
 	/**
 	 * Instantiates the panel for adjusting the parameters
 	 */
-	protected void displaySliders()
-	{
+	protected void displaySliders() {
 		final Frame frame = new Frame("Adjust Difference-of-Gaussian Values");
-		frame.setSize( 360, 200 );
+		frame.setSize(360, 200);
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
 		final GridBagConstraints c = new GridBagConstraints();
 
-		int scrollbarInitialPosition = computeScrollbarPositionFromValue(sigmaInit, sigmaMin, sigmaMax, scrollbarSize);		
-		final Scrollbar sigma1 = new Scrollbar ( Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );		
-		this.sigma = sigmaInit; 
+		int scrollbarInitialPosition = computeScrollbarPositionFromValue(sigmaInit, sigmaMin, sigmaMax, scrollbarSize);
+		final Scrollbar sigma1 = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
+				10 + scrollbarSize);
+		this.sigma = sigmaInit;
 
-		final float log1001 = (float) Math.log10( scrollbarSize + 1);				
-		scrollbarInitialPosition = (int)Math.round(1001 - Math.pow(10, (thresholdMax - thresholdInit)/(thresholdMax - thresholdMin)*log1001));			
-		final Scrollbar threshold = new Scrollbar ( Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + scrollbarSize );
-		this.threshold = thresholdInit; 
+		final float log1001 = (float) Math.log10(scrollbarSize + 1);
+		scrollbarInitialPosition = (int) Math
+				.round(1001 - Math.pow(10, (thresholdMax - thresholdInit) / (thresholdMax - thresholdMin) * log1001));
+		final Scrollbar threshold = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
+				10 + scrollbarSize);
+		this.threshold = thresholdInit;
 
-		this.sigma2 = computeSigma2( this.sigma, this.sensitivity );
-		final int sigma2init = computeScrollbarPositionFromValue( this.sigma2, sigmaMin, sigmaMax, scrollbarSize ); 
-		final Scrollbar sigma2 = new Scrollbar ( Scrollbar.HORIZONTAL, sigma2init, 10, 0, 10 + scrollbarSize );
+		this.sigma2 = computeSigma2(this.sigma, this.sensitivity);
+		final int sigma2init = computeScrollbarPositionFromValue(this.sigma2, sigmaMin, sigmaMax, scrollbarSize);
+		final Scrollbar sigma2 = new Scrollbar(Scrollbar.HORIZONTAL, sigma2init, 10, 0, 10 + scrollbarSize);
 
-		final Label sigmaText1 = new Label( "Sigma 1 = " + String.format(java.util.Locale.US,"%.2f", this.sigma) , Label.CENTER );
-		final Label sigmaText2 = new Label( "Sigma 2 = " + String.format(java.util.Locale.US,"%.2f", this.sigma2), Label.CENTER );
+		final Label sigmaText1 = new Label("Sigma 1 = " + String.format(java.util.Locale.US, "%.2f", this.sigma),
+				Label.CENTER);
+		final Label sigmaText2 = new Label("Sigma 2 = " + String.format(java.util.Locale.US, "%.2f", this.sigma2),
+				Label.CENTER);
 
-		final Label thresholdText = new Label( "Threshold = " +  String.format(java.util.Locale.US,"%.4f", this.threshold), Label.CENTER );
-		final Button button = new Button( "Done" );
-		final Button cancel = new Button( "Cancel" );
+		final Label thresholdText = new Label(
+				"Threshold = " + String.format(java.util.Locale.US, "%.4f", this.threshold), Label.CENTER);
+		final Button button = new Button("Done");
+		final Button cancel = new Button("Cancel");
 
-		final Checkbox min = new Checkbox( "Look for Minima (red)", lookForMinima );
-		final Checkbox max = new Checkbox( "Look for Maxima (green)", lookForMaxima );
+		final Checkbox min = new Checkbox("Look for Minima (red)", lookForMinima);
+		final Checkbox max = new Checkbox("Look for Maxima (green)", lookForMaxima);
 
 		/* Location */
-		frame.setLayout( layout );
+		frame.setLayout(layout);
 
 		// insets constants
 		int inTop = 0;
@@ -631,25 +647,25 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.gridx = 0;
 		c.gridy = 0;
 		c.weightx = 1;
-		frame.add( sigmaText1, c );
+		frame.add(sigmaText1, c);
 
 		++c.gridy;
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add ( sigma1, c );
+		frame.add(sigma1, c);
 
 		++c.gridy;
-		frame.add( thresholdText, c );
+		frame.add(thresholdText, c);
 
 		++c.gridy;
-		frame.add ( threshold, c );
+		frame.add(threshold, c);
 
 		++c.gridy;
-		c.insets = new Insets(0,90,0,80);
-		frame.add( max, c );
+		c.insets = new Insets(0, 90, 0, 80);
+		frame.add(max, c);
 
 		++c.gridy;
-		c.insets = new Insets(0,90,0,80);
-		frame.add( min, c );
+		c.insets = new Insets(0, 90, 0, 80);
+		frame.add(min, c);
 
 		// insets for buttons
 		int bInTop = 0;
@@ -659,71 +675,69 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		++c.gridy;
 		c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);
-		frame.add( button, c );
+		frame.add(button, c);
 
 		++c.gridy;
 		c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);
-		frame.add( cancel, c );
+		frame.add(cancel, c);
 
 		/* Configuration */
-		sigma1.addAdjustmentListener( new SigmaListener( sigmaText1, sigmaMin, sigmaMax, scrollbarSize, sigma1, sigma2, sigmaText2 ) );
-		threshold.addAdjustmentListener( new ThresholdListener( thresholdText, thresholdMin, thresholdMax ) );
-		button.addActionListener( new FinishedButtonListener( frame, false ) );
-		cancel.addActionListener( new FinishedButtonListener( frame, true ) );
-		min.addItemListener( new MinListener() );
-		max.addItemListener( new MaxListener() );
-		frame.addWindowListener( new FrameListener( frame ) );
+		sigma1.addAdjustmentListener(
+				new SigmaListener(sigmaText1, sigmaMin, sigmaMax, scrollbarSize, sigma1, sigma2, sigmaText2));
+		threshold.addAdjustmentListener(new ThresholdListener(thresholdText, thresholdMin, thresholdMax));
+		button.addActionListener(new FinishedButtonListener(frame, false));
+		cancel.addActionListener(new FinishedButtonListener(frame, true));
+		min.addItemListener(new MinListener());
+		max.addItemListener(new MaxListener());
+		frame.addWindowListener(new FrameListener(frame));
 
-		frame.setVisible( true );
+		frame.setVisible(true);
 	}
 
-	public static float computeSigma2( final float sigma1, final int sensitivity )
-	{
-		final float k = (float)DetectionSegmentation.computeK( sensitivity );
-		final float[] sigma = DetectionSegmentation.computeSigma( k, sigma1 );
+	public static float computeSigma2(final float sigma1, final int sensitivity) {
+		final float k = (float) DetectionSegmentation.computeK(sensitivity);
+		final float[] sigma = DetectionSegmentation.computeSigma(k, sigma1);
 
-		return sigma[ 1 ];
+		return sigma[1];
 	}
 
 	/**
-	 * Updates the Preview with the current parameters (sigma, threshold, roi, slicenumber + RANSAC parameters)
+	 * Updates the Preview with the current parameters (sigma, threshold, roi,
+	 * slicenumber + RANSAC parameters)
 	 * 
-	 * @param change - what did change
+	 * @param change
+	 *            - what did change
 	 */
-	protected void updatePreview( final ValueChange change )
-	{		
+	protected void updatePreview(final ValueChange change) {
 		// check if Roi changed
 		boolean roiChanged = false;
 		Roi roi = imp.getRoi();
 
-		if ( roi == null || roi.getType() != Roi.RECTANGLE )
-		{
-			imp.setRoi( new Rectangle( standardRectangle ) );
+		if (roi == null || roi.getType() != Roi.RECTANGLE) {
+			imp.setRoi(new Rectangle(standardRectangle));
 			roi = imp.getRoi();
 			roiChanged = true;
 		}
 
 		final Rectangle rect = roi.getBounds();
 
-		if ( roiChanged || img == null || change == ValueChange.SLICE || 
-				rect.getMinX() != rectangle.getMinX() || rect.getMaxX() != rectangle.getMaxX() ||
-				rect.getMinY() != rectangle.getMinY() || rect.getMaxY() != rectangle.getMaxY() )
-		{
+		if (roiChanged || img == null || change == ValueChange.SLICE || rect.getMinX() != rectangle.getMinX()
+				|| rect.getMaxX() != rectangle.getMaxX() || rect.getMinY() != rectangle.getMinY()
+				|| rect.getMaxY() != rectangle.getMaxY()) {
 			rectangle = rect;
-			img = extractImage( source, rectangle, extraSize );
+			img = extractImage(source, rectangle, extraSize);
 			roiChanged = true;
 		}
 
 		// if we got some mouse click but the ROI did not change we can return
-		if ( !roiChanged && change == ValueChange.ROI )
-		{
+		if (!roiChanged && change == ValueChange.ROI) {
 			isComputing = false;
 			return;
 		}
 
 		// compute the Difference Of Gaussian if necessary
-		if ( peaks == null || roiChanged || change == ValueChange.SIGMA || change == ValueChange.SLICE || change == ValueChange.ALL )
-		{
+		if (peaks == null || roiChanged || change == ValueChange.SIGMA || change == ValueChange.SLICE
+				|| change == ValueChange.ALL) {
 			//
 			// Compute the Sigmas for the gaussian folding
 			//
@@ -731,19 +745,22 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			final float k, K_MIN1_INV;
 			final float[] sigma, sigmaDiff;
 
-			k = (float)DetectionSegmentation.computeK( sensitivity );
-			K_MIN1_INV = DetectionSegmentation.computeKWeight( k );
-			sigma = DetectionSegmentation.computeSigma( k, this.sigma );
-			sigmaDiff = DetectionSegmentation.computeSigmaDiff( sigma, imageSigma );
+			k = (float) DetectionSegmentation.computeK(sensitivity);
+			K_MIN1_INV = DetectionSegmentation.computeKWeight(k);
+			sigma = DetectionSegmentation.computeSigma(k, this.sigma);
+			sigmaDiff = DetectionSegmentation.computeSigmaDiff(sigma, imageSigma);
 
 			// the upper boundary
-			this.sigma2 = sigma[ 1 ];
+			this.sigma2 = sigma[1];
 
-			final DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType> dog = new DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType>( img, new OutOfBoundsStrategyValueFactory<mpicbg.imglib.type.numeric.real.FloatType>(), sigmaDiff[ 0 ], sigmaDiff[ 1 ], thresholdMin/4, K_MIN1_INV );
-			dog.setKeepDoGImage( true );
+			final DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType> dog = new DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType>(
+					img, new OutOfBoundsStrategyValueFactory<mpicbg.imglib.type.numeric.real.FloatType>(), sigmaDiff[0],
+					sigmaDiff[1], thresholdMin / 4, K_MIN1_INV);
+			dog.setKeepDoGImage(true);
 			dog.process();
 
-			final SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType> subpixel = new SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType>( dog.getDoGImage(), dog.getPeaks() );
+			final SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType> subpixel = new SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType>(
+					dog.getDoGImage(), dog.getPeaks());
 			subpixel.process();
 
 			// peaks contain some values that are out of bounds
@@ -758,37 +775,34 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	// extract peaks to show
-	protected void showPeaks(){
+	protected void showPeaks() {
 		Overlay o = imp.getOverlay();
 
-		if ( o == null )
-		{
+		if (o == null) {
 			o = new Overlay();
-			imp.setOverlay( o );
+			imp.setOverlay(o);
 		}
 
 		o.clear();
 
-		for ( final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks )
-		{
-			if ( ( peak.isMax() && lookForMaxima ) || ( peak.isMin() && lookForMinima ) )
-			{
-				final float x = peak.getPosition( 0 ); 
-				final float y = peak.getPosition( 1 );
+		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {
+			if ((peak.isMax() && lookForMaxima) || (peak.isMin() && lookForMinima)) {
+				final float x = peak.getPosition(0);
+				final float y = peak.getPosition(1);
 
 				// take only peaks that are inside of the image
-				if ( Math.abs( peak.getValue().get() ) > threshold &&
-						x >= extraSize/2 && y >= extraSize/2 &&
-						x < rectangle.width+extraSize/2 && y < rectangle.height+extraSize/2 )
-				{
-					final OvalRoi or = new OvalRoi( Util.round( x - sigma ) + rectangle.x - extraSize/2, Util.round( y - sigma ) + rectangle.y - extraSize/2, Util.round( sigma+sigma2 ), Util.round( sigma+sigma2 ) );
+				if (Math.abs(peak.getValue().get()) > threshold && x >= extraSize / 2 && y >= extraSize / 2
+						&& x < rectangle.width + extraSize / 2 && y < rectangle.height + extraSize / 2) {
+					final OvalRoi or = new OvalRoi(Util.round(x - sigma) + rectangle.x - extraSize / 2,
+							Util.round(y - sigma) + rectangle.y - extraSize / 2, Util.round(sigma + sigma2),
+							Util.round(sigma + sigma2));
 
-					if ( peak.isMax() )
-						or.setStrokeColor( Color.green );
-					else if ( peak.isMin() )
-						or.setStrokeColor( Color.red );
+					if (peak.isMax())
+						or.setStrokeColor(Color.green);
+					else if (peak.isMin())
+						or.setStrokeColor(Color.red);
 
-					o.add( or );
+					o.add(or);
 				}
 			}
 		}
@@ -797,182 +811,174 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	/**
 	 * Extract the current 2d region of interest from the source image
 	 * 
-	 * @param source - the source image, a {@link Image} which is a copy of the {@link ImagePlus}
-	 * @param rectangle - the area of interest
-	 * @param extraSize - the extra size around so that detections at the border of the roi are not messed up
+	 * @param source
+	 *            - the source image, a {@link Image} which is a copy of the
+	 *            {@link ImagePlus}
+	 * @param rectangle
+	 *            - the area of interest
+	 * @param extraSize
+	 *            - the extra size around so that detections at the border of
+	 *            the roi are not messed up
 	 * @return
 	 */
-	protected Image<mpicbg.imglib.type.numeric.real.FloatType> extractImage( final FloatImagePlus< net.imglib2.type.numeric.real.FloatType > source, final Rectangle rectangle, final int extraSize )
-	{
-		final Image<mpicbg.imglib.type.numeric.real.FloatType> img = new ImageFactory<mpicbg.imglib.type.numeric.real.FloatType>( new mpicbg.imglib.type.numeric.real.FloatType(), new ArrayContainerFactory() ).createImage( new int[]{ rectangle.width+extraSize, rectangle.height+extraSize } );
+	protected Image<mpicbg.imglib.type.numeric.real.FloatType> extractImage(
+			final FloatImagePlus<net.imglib2.type.numeric.real.FloatType> source, final Rectangle rectangle,
+			final int extraSize) {
+		final Image<mpicbg.imglib.type.numeric.real.FloatType> img = new ImageFactory<mpicbg.imglib.type.numeric.real.FloatType>(
+				new mpicbg.imglib.type.numeric.real.FloatType(), new ArrayContainerFactory())
+						.createImage(new int[] { rectangle.width + extraSize, rectangle.height + extraSize });
 
-		final int offsetX = rectangle.x - extraSize/2;
-		final int offsetY = rectangle.y - extraSize/2;
+		final int offsetX = rectangle.x - extraSize / 2;
+		final int offsetY = rectangle.y - extraSize / 2;
 
-		final int[] location = new int[ source.numDimensions() ];
+		final int[] location = new int[source.numDimensions()];
 
-		if ( location.length > 2 )
-			location[ 2 ] = (imp.getCurrentSlice()-1)/imp.getNChannels();
+		if (location.length > 2)
+			location[2] = (imp.getCurrentSlice() - 1) / imp.getNChannels();
 
 		final LocalizableCursor<mpicbg.imglib.type.numeric.real.FloatType> cursor = img.createLocalizableCursor();
 		final RandomAccess<net.imglib2.type.numeric.real.FloatType> positionable;
 
-		if ( offsetX >= 0 && offsetY >= 0 && 
-				offsetX + img.getDimension( 0 ) < source.dimension( 0 ) && 
-				offsetY + img.getDimension( 1 ) < source.dimension( 1 ) )
-		{
+		if (offsetX >= 0 && offsetY >= 0 && offsetX + img.getDimension(0) < source.dimension(0)
+				&& offsetY + img.getDimension(1) < source.dimension(1)) {
 			// it is completely inside so we need no outofbounds for copying
 			positionable = source.randomAccess();
-		}
-		else
-		{
-			positionable = Views.extendMirrorSingle( source ).randomAccess();
+		} else {
+			positionable = Views.extendMirrorSingle(source).randomAccess();
 		}
 
-		while ( cursor.hasNext() )
-		{
+		while (cursor.hasNext()) {
 			cursor.fwd();
-			cursor.getPosition( location );
+			cursor.getPosition(location);
 
-			location[ 0 ] += offsetX;
-			location[ 1 ] += offsetY;
+			location[0] += offsetX;
+			location[1] += offsetY;
 
-			positionable.setPosition( location );
+			positionable.setPosition(location);
 
-			cursor.getType().set( positionable.get().get() );
+			cursor.getType().set(positionable.get().get());
 		}
 
 		return img;
 	}
 
-	protected class MinListener implements ItemListener
-	{
+	protected class MinListener implements ItemListener {
 		@Override
-		public void itemStateChanged( final ItemEvent arg0 )
-		{
+		public void itemStateChanged(final ItemEvent arg0) {
 			boolean oldState = lookForMinima;
 
-			if ( arg0.getStateChange() == ItemEvent.DESELECTED )				
-				lookForMinima = false;			
-			else if ( arg0.getStateChange() == ItemEvent.SELECTED  )
+			if (arg0.getStateChange() == ItemEvent.DESELECTED)
+				lookForMinima = false;
+			else if (arg0.getStateChange() == ItemEvent.SELECTED)
 				lookForMinima = true;
 
-			if ( lookForMinima != oldState )
-			{
-				while ( isComputing )
-					SimpleMultiThreading.threadWait( 10 );
+			if (lookForMinima != oldState) {
+				while (isComputing)
+					SimpleMultiThreading.threadWait(10);
 
-				updatePreview( ValueChange.MINMAX );
+				updatePreview(ValueChange.MINMAX);
 			}
 		}
 	}
 
-	protected class MaxListener implements ItemListener
-	{
+	protected class MaxListener implements ItemListener {
 		@Override
-		public void itemStateChanged( final ItemEvent arg0 )
-		{
+		public void itemStateChanged(final ItemEvent arg0) {
 			boolean oldState = lookForMaxima;
 
-			if ( arg0.getStateChange() == ItemEvent.DESELECTED )				
-				lookForMaxima = false;			
-			else if ( arg0.getStateChange() == ItemEvent.SELECTED  )
+			if (arg0.getStateChange() == ItemEvent.DESELECTED)
+				lookForMaxima = false;
+			else if (arg0.getStateChange() == ItemEvent.SELECTED)
 				lookForMaxima = true;
 
-			if ( lookForMaxima != oldState )
-			{
-				while ( isComputing )
-					SimpleMultiThreading.threadWait( 10 );
+			if (lookForMaxima != oldState) {
+				while (isComputing)
+					SimpleMultiThreading.threadWait(10);
 
-				updatePreview( ValueChange.MINMAX );
+				updatePreview(ValueChange.MINMAX);
 			}
 		}
 	}
 
 	/**
-	 * Tests whether the ROI was changed and will recompute the preview 
+	 * Tests whether the ROI was changed and will recompute the preview
 	 * 
 	 * @author Stephan Preibisch
 	 */
-	protected class RoiListener implements MouseListener
-	{
+	protected class RoiListener implements MouseListener {
 		@Override
-		public void mouseClicked(MouseEvent e) {}
+		public void mouseClicked(MouseEvent e) {
+		}
 
 		@Override
-		public void mouseEntered(MouseEvent e) {}
+		public void mouseEntered(MouseEvent e) {
+		}
 
 		@Override
-		public void mouseExited(MouseEvent e) {}
+		public void mouseExited(MouseEvent e) {
+		}
 
 		@Override
-		public void mousePressed(MouseEvent e) {}
+		public void mousePressed(MouseEvent e) {
+		}
 
 		@Override
-		public void mouseReleased( final MouseEvent e )
-		{
+		public void mouseReleased(final MouseEvent e) {
 			// here the ROI might have been modified, let's test for that
 			final Roi roi = imp.getRoi();
 
-			if ( roi == null || roi.getType() != Roi.RECTANGLE )
+			if (roi == null || roi.getType() != Roi.RECTANGLE)
 				return;
 
-			while ( isComputing )
-				SimpleMultiThreading.threadWait( 10 );
+			while (isComputing)
+				SimpleMultiThreading.threadWait(10);
 
-			updatePreview( ValueChange.ROI );				
+			updatePreview(ValueChange.ROI);
 		}
 
 	}
 
-	protected class FinishedButtonListener implements ActionListener
-	{
+	protected class FinishedButtonListener implements ActionListener {
 		final Frame parent;
 		final boolean cancel;
 
-		public FinishedButtonListener( Frame parent, final boolean cancel )
-		{
+		public FinishedButtonListener(Frame parent, final boolean cancel) {
 			this.parent = parent;
 			this.cancel = cancel;
 		}
 
 		@Override
-		public void actionPerformed( final ActionEvent arg0 ) 
-		{
+		public void actionPerformed(final ActionEvent arg0) {
 			wasCanceled = cancel;
-			close( parent, sliceObserver, imp, roiListener );
+			close(parent, sliceObserver, imp, roiListener);
 		}
 	}
 
-	protected class FrameListener extends WindowAdapter
-	{
+	protected class FrameListener extends WindowAdapter {
 		final Frame parent;
 
-		public FrameListener( Frame parent )
-		{
+		public FrameListener(Frame parent) {
 			super();
 			this.parent = parent;
 		}
 
 		@Override
-		public void windowClosing (WindowEvent e) 
-		{ 
-			close( parent, sliceObserver, imp, roiListener );
+		public void windowClosing(WindowEvent e) {
+			close(parent, sliceObserver, imp, roiListener);
 		}
 	}
 
-	protected final void close( final Frame parent, final SliceObserver sliceObserver, final ImagePlus imp, final RoiListener roiListener )
-	{
-		if ( parent != null )
+	protected final void close(final Frame parent, final SliceObserver sliceObserver, final ImagePlus imp,
+			final RoiListener roiListener) {
+		if (parent != null)
 			parent.dispose();
 
-		if ( sliceObserver != null )
+		if (sliceObserver != null)
 			sliceObserver.unregister();
 
-		if ( imp != null )
-		{
-			if ( roiListener != null )
-				imp.getCanvas().removeMouseListener( roiListener );
+		if (imp != null) {
+			if (roiListener != null)
+				imp.getCanvas().removeMouseListener(roiListener);
 
 			imp.getOverlay().clear();
 			imp.updateAndDraw();
@@ -981,18 +987,17 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		isFinished = true;
 	}
 
-	protected class SigmaListener implements AdjustmentListener
-	{
+	protected class SigmaListener implements AdjustmentListener {
 		final Label label;
 		final float min, max;
 		final int scrollbarSize;
 
 		final Scrollbar sigmaScrollbar1;
-		final Scrollbar sigmaScrollbar2;		
+		final Scrollbar sigmaScrollbar2;
 		final Label sigmaText2;
 
-		public SigmaListener( final Label label, final float min, final float max, final int scrollbarSize, final Scrollbar sigmaScrollbar1,  final Scrollbar sigmaScrollbar2, final Label sigmaText2  )
-		{
+		public SigmaListener(final Label label, final float min, final float max, final int scrollbarSize,
+				final Scrollbar sigmaScrollbar1, final Scrollbar sigmaScrollbar2, final Label sigmaText2) {
 			this.label = label;
 			this.min = min;
 			this.max = max;
@@ -1004,214 +1009,192 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 
 		@Override
-		public void adjustmentValueChanged( final AdjustmentEvent event )
-		{
-			sigma = computeValueFromScrollbarPosition( event.getValue(), min, max, scrollbarSize );			
+		public void adjustmentValueChanged(final AdjustmentEvent event) {
+			sigma = computeValueFromScrollbarPosition(event.getValue(), min, max, scrollbarSize);
 
-			if ( sigma > sigma2 )
-			{
+			if (sigma > sigma2) {
 				sigma = sigma2 - 0.001f;
-				sigmaScrollbar1.setValue( computeScrollbarPositionFromValue( sigma, min, max, scrollbarSize ) );
+				sigmaScrollbar1.setValue(computeScrollbarPositionFromValue(sigma, min, max, scrollbarSize));
 			}
 
-			label.setText( "Sigma 1 = " + String.format(java.util.Locale.US,"%.2f", sigma) );
+			label.setText("Sigma 1 = " + String.format(java.util.Locale.US, "%.2f", sigma));
 
-			// Real time change of the radius 
+			// Real time change of the radius
 			// if ( !event.getValueIsAdjusting() )
 			{
-				while ( isComputing )
-				{
-					SimpleMultiThreading.threadWait( 10 );
+				while (isComputing) {
+					SimpleMultiThreading.threadWait(10);
 				}
-				updatePreview( ValueChange.SIGMA );
+				updatePreview(ValueChange.SIGMA);
 			}
-		}		
+		}
 	}
 
-	protected static float computeValueFromScrollbarPosition( final int scrollbarPosition, final float min, final float max, final int scrollbarSize )
-	{
-		return min + (scrollbarPosition/(float)scrollbarSize) * (max-min);
+	protected static float computeValueFromScrollbarPosition(final int scrollbarPosition, final float min,
+			final float max, final int scrollbarSize) {
+		return min + (scrollbarPosition / (float) scrollbarSize) * (max - min);
 	}
 
-	protected static int computeScrollbarPositionFromValue( final float sigma, final float min, final float max, final int scrollbarSize )
-	{
-		return Util.round( ((sigma - min)/(max-min)) * scrollbarSize );
+	protected static int computeScrollbarPositionFromValue(final float sigma, final float min, final float max,
+			final int scrollbarSize) {
+		return Util.round(((sigma - min) / (max - min)) * scrollbarSize);
 	}
 
-	protected class ThresholdListener implements AdjustmentListener
-	{
+	protected class ThresholdListener implements AdjustmentListener {
 		final Label label;
 		final float min, max;
-		final float log1001 = (float)Math.log10(1001);
+		final float log1001 = (float) Math.log10(1001);
 
-		public ThresholdListener( final Label label, final float min, final float max )
-		{
+		public ThresholdListener(final Label label, final float min, final float max) {
 			this.label = label;
 			this.min = min;
 			this.max = max;
 		}
 
 		@Override
-		public void adjustmentValueChanged( final AdjustmentEvent event )
-		{			
-			threshold = min + ( (log1001 - (float)Math.log10(1001-event.getValue()))/log1001 ) * (max-min);
-			label.setText( "Threshold = " + String.format(java.util.Locale.US,"%.4f", threshold) );
+		public void adjustmentValueChanged(final AdjustmentEvent event) {
+			threshold = min + ((log1001 - (float) Math.log10(1001 - event.getValue())) / log1001) * (max - min);
+			label.setText("Threshold = " + String.format(java.util.Locale.US, "%.4f", threshold));
 
-			if ( !isComputing )
-			{
-				updatePreview( ValueChange.THRESHOLD );
-			}
-			else if ( !event.getValueIsAdjusting() )
-			{
-				while ( isComputing )
-				{
-					SimpleMultiThreading.threadWait( 10 );
+			if (!isComputing) {
+				updatePreview(ValueChange.THRESHOLD);
+			} else if (!event.getValueIsAdjusting()) {
+				while (isComputing) {
+					SimpleMultiThreading.threadWait(10);
 				}
-				updatePreview( ValueChange.THRESHOLD );
+				updatePreview(ValueChange.THRESHOLD);
 			}
-		}		
+		}
 	}
 
-	protected class ImagePlusListener implements SliceListener
-	{
+	protected class ImagePlusListener implements SliceListener {
 		@Override
-		public void sliceChanged(ImagePlus arg0)
-		{
-			if ( isStarted )
-			{
+		public void sliceChanged(ImagePlus arg0) {
+			if (isStarted) {
 				// System.out.println("Slice changed!");
-				while ( isComputing )
-				{
-					SimpleMultiThreading.threadWait( 10 );
+				while (isComputing) {
+					SimpleMultiThreading.threadWait(10);
 				}
-				updatePreview( ValueChange.SLICE );
+				updatePreview(ValueChange.SLICE);
 			}
-		}		
+		}
 	}
-
 
 	// changes value of the scroller so that it is the same as in the text field
-	protected class TextFieldListener implements ActionListener{
+	protected class TextFieldListener implements ActionListener {
 		final Label label;
 		final TextField textField;
 		final int min, max;
 		final ValueChange valueAdjust;
 		final Scrollbar scrollbar;
 
-		public TextFieldListener(final Label label, final int min, final int max, ValueChange valueAdjust, TextField textField, Scrollbar scrollbar){
-			this.label = label; 
+		public TextFieldListener(final Label label, final int min, final int max, ValueChange valueAdjust,
+				TextField textField, Scrollbar scrollbar) {
+			this.label = label;
 			this.min = min;
 			this.max = max;
-			this.valueAdjust = valueAdjust;		
+			this.valueAdjust = valueAdjust;
 			this.textField = textField;
 			this.scrollbar = scrollbar;
 		}
 
-		// function checks that the textfield contains number 
+		// function checks that the textfield contains number
 		// add ensures that the number is inside region [min, max]
-		public int ensureNumber(String number, int min, int max){
+		public int ensureNumber(String number, int min, int max) {
 			boolean isInteger = Pattern.matches("^\\d*$", number);
 			int res = -1;
 			// TODO: instead of if/else write full try/catch block
-			if(isInteger){
-				res =  Integer.parseInt(number);
+			if (isInteger) {
+				res = Integer.parseInt(number);
 				if (res > max)
 					res = max;
 				if (res < min)
 					res = min;
-			}
-			else{ 
+			} else {
 				System.out.println("Not a valid number. Radius set to 10.");
 				res = 10;
 				// idle
-			}			
+			}
 			return res;
 		}
 
 		@Override
-		public void actionPerformed(final ActionEvent event){
+		public void actionPerformed(final ActionEvent event) {
 			// check that the value is in (min, max)
 			// adjust and grab value
 
 			int value = ensureNumber(textField.getText(), min, max);
 
-			// System.out.println("value in the text field = " + value);			
-			String labelText = ""; 
+			// System.out.println("value in the text field = " + value);
+			String labelText = "";
 
-			if (valueAdjust == ValueChange.SUPPORTREGION){
+			if (valueAdjust == ValueChange.SUPPORTREGION) {
 				// set the value for the support region
 				supportRadius = value;
 				// set label
-				labelText = "Support Region Radius:"; // = " + supportRegion;					
+				labelText = "Support Region Radius:"; // = " + supportRegion;
 				// calculate new position of the scrollbar
 				int newScrollbarPosition = computeScrollbarPositionFromValue(supportRadius, min, max, scrollbarSize);
 				// adjust the scrollbar position!
-				scrollbar.setValue( newScrollbarPosition);
+				scrollbar.setValue(newScrollbarPosition);
 				// set new value for text label
-				label.setText(labelText); 
-			}
-			else{
+				label.setText(labelText);
+			} else {
 				System.out.println("There is error in the support region adjustment");
 			}
 
-			while ( isComputing )
-			{
-				SimpleMultiThreading.threadWait( 10 );
+			while (isComputing) {
+				SimpleMultiThreading.threadWait(10);
 			}
-			updatePreview( ValueChange.SUPPORTREGION );
+			updatePreview(ValueChange.SUPPORTREGION);
 		}
 	}
 
-
 	// general listener used by ransac
-	protected class GeneralListener implements AdjustmentListener{
+	protected class GeneralListener implements AdjustmentListener {
 		final Label label;
 		final TextField textField;
 		final float min, max;
 		final ValueChange valueAdjust;
 
-		public GeneralListener(final Label label, final float min, final float max, ValueChange valueAdjust, TextField textField){
-			this.label = label; 
+		public GeneralListener(final Label label, final float min, final float max, ValueChange valueAdjust,
+				TextField textField) {
+			this.label = label;
 			this.min = min;
 			this.max = max;
-			this.valueAdjust = valueAdjust;		
-			this.textField = textField;			
+			this.valueAdjust = valueAdjust;
+			this.textField = textField;
 		}
 
 		@Override
-		public void adjustmentValueChanged(final AdjustmentEvent event){
-			float value = computeValueFromScrollbarPosition( event.getValue(), min, max, scrollbarSize );
-			String labelText = ""; 
+		public void adjustmentValueChanged(final AdjustmentEvent event) {
+			float value = computeValueFromScrollbarPosition(event.getValue(), min, max, scrollbarSize);
+			String labelText = "";
 
-			if (valueAdjust == ValueChange.SUPPORTREGION){
-				supportRadius = (int)value;
+			if (valueAdjust == ValueChange.SUPPORTREGION) {
+				supportRadius = (int) value;
 				labelText = "Support Region Radius:"; // = " + supportRegion ;
 				textField.setText(Integer.toString(supportRadius));
-			}
-			else if (valueAdjust == ValueChange.INLIERRATIO){
-				inlierRatio = value;				
+			} else if (valueAdjust == ValueChange.INLIERRATIO) {
+				inlierRatio = value;
 				// this is ugly fix of the problem when inlier's ratio is 1.0
 				if (inlierRatio >= 0.999)
 					inlierRatio = 0.99999f;
-				labelText = "Inlier Ratio = " + String.format(java.util.Locale.US,"%.2f", inlierRatio);
-			}
-			else{ // MAXERROR
-				final float log1001 = (float)Math.log10(1001);
-				value  = min + ( (log1001 - (float)Math.log10(1001-event.getValue()))/log1001 ) * (max-min);
+				labelText = "Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", inlierRatio);
+			} else { // MAXERROR
+				final float log1001 = (float) Math.log10(1001);
+				value = min + ((log1001 - (float) Math.log10(1001 - event.getValue())) / log1001) * (max - min);
 				maxError = value;
-				labelText = "Max Error = " + String.format(java.util.Locale.US,"%.4f", maxError);
-			}		
-			label.setText(labelText); 
-			if (!isComputing){
-				updatePreview(valueAdjust);
+				labelText = "Max Error = " + String.format(java.util.Locale.US, "%.4f", maxError);
 			}
-			else if ( !event.getValueIsAdjusting() )
-			{
-				while ( isComputing )
-				{
-					SimpleMultiThreading.threadWait( 10 );
+			label.setText(labelText);
+			if (!isComputing) {
+				updatePreview(valueAdjust);
+			} else if (!event.getValueIsAdjusting()) {
+				while (isComputing) {
+					SimpleMultiThreading.threadWait(10);
 				}
-				updatePreview( valueAdjust );
+				updatePreview(valueAdjust);
 			}
 		}
 	}
@@ -1224,17 +1207,17 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		String path = pathMac;
 
-		ImagePlus imp = new Opener().openImage( path );
+		ImagePlus imp = new Opener().openImage(path);
 
 		if (imp == null)
 			System.out.println("image was not loaded");
 
 		imp.show();
 
-		imp.setSlice( 20 );		
-		imp.setRoi( imp.getWidth()/4, imp.getHeight()/4, imp.getWidth()/2, imp.getHeight()/2 );		
+		imp.setSlice(20);
+		imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
-		new InteractiveRadialSymmetry().run( null ); 
+		new InteractiveRadialSymmetry().run(null);
 
 		System.out.println("DOGE!");
 	}

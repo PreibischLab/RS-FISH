@@ -125,7 +125,7 @@ public class Spot implements RealLocalizable
 			maxCost = Math.max( d, maxCost );
 		}
 
-		avgCost /= (double) set.size();
+		avgCost /= set.size();
 
 		return avgCost;
 	}
@@ -165,19 +165,17 @@ public class Spot implements RealLocalizable
 
 		// size around the detection to use
 		// we detect at 0.5, 0.5, 0.5 - so we need an even size
-		// final int[] size = new int[]{ 10, 10, 10 };
 
 		final long[] min = new long[ numDimensions ];
 		final long[] max = new long[ numDimensions ];
 
 		// we always compute the location at 0.5, 0.5, 0.5 - so we cannot compute it at the last entry of each dimension
-
 		final int[] maxDim = new int[ numDimensions ];
 		
 		for ( int d = 0; d < numDimensions; ++d)
 			maxDim[ d ] = (int)fullImage.max(d) - 2;
 
-		final ArrayList< Spot > spots = new ArrayList<Spot>();		
+		final ArrayList< Spot > spots = new ArrayList<>();		
 		final RandomAccessible< T > infinite = Views.extendZero( fullImage );
 
 		for ( final long[] peak : peaks )
@@ -204,7 +202,6 @@ public class Spot implements RealLocalizable
 
 				final double[] v = new double[ numDimensions ];
 				derivative.gradientAt( cursor, v );
-				//norm( v );
 				
 				if ( length( v ) != 0 )
 				{
@@ -268,13 +265,9 @@ public class Spot implements RealLocalizable
 			spot.center.fit( spot.inliers );
 	}
 	
-	// NEW!
-	// TODO: Check if working
 	public static <T extends RealType<T> > void drawRANSACArea( final ArrayList< Spot > spots, final RandomAccessibleInterval< T > draw )
 	{
 		final int numDimensions = draw.numDimensions();
-		double point = 1;
-		final Random random = new Random( 34563646 );
 
 		for ( final Spot spot : spots )
 		{
@@ -282,24 +275,18 @@ public class Spot implements RealLocalizable
 				continue;
 
 			final RandomAccess< T > drawRA = draw.randomAccess();
-			double rnd = (random.nextDouble() - 0.5) / 2.0;
 			final double[] scale = spot.scale;
 
 			for ( final PointFunctionMatch pm : spot.inliers )
 			{
 				final Point p = pm.getP1();
-
 				for ( int d = 0; d < numDimensions; ++d )
 					drawRA.setPosition( Math.round( p.getW()[ d ]/scale[ d ] ), d );
-
-				// drawRA.get().setReal( point + rnd );
 				// set color to error value
 				drawRA.get().setReal(pm.getDistance());
 			}
-			//++point;
 		}
 	}
-	
 	
 	public static double length( final double[] f )
 	{

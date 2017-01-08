@@ -92,7 +92,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	int supportRadiusMin = 1;
 	int supportRadiusMax = 50;
 	float inlierRatioMin = (float) (0.0 / 100.0); // 0%
-	float inlierRatioMax = (float) (1); // 100%
+	float inlierRatioMax = 1; // 100%
 	float maxErrorMin = 0.0001f;
 	float maxErrorMax = 10.00f;
 	// ----------------------------------------
@@ -142,11 +142,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	boolean isComputing = false;
 	boolean isStarted = false;
 
-	boolean lookForMinima = false;
+//	boolean lookForMinima = false;
 	boolean lookForMaxima = true;
 
 	public static enum ValueChange {
-		SIGMA, THRESHOLD, SLICE, ROI, MINMAX, ALL, SUPPORTREGION, INLIERRATIO, MAXERROR
+		SIGMA, THRESHOLD, SLICE, ROI, ALL, SUPPORTREGION, INLIERRATIO, MAXERROR
 	}
 
 	boolean isFinished = false;
@@ -352,6 +352,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	// this function will show the result of RANSAC
+	// TODO: deprecated / remove 
 	protected void showRansacLog(final ArrayList<Spot> spots) {
 		// TODO: add clean log function
 		IOFunctions.println("Running RANSAC ... ");
@@ -410,8 +411,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	 * Copy peaks found by DoG to lighter ArrayList
 	 */
 	protected void copyPeaks(final ArrayList<long[]> simplifiedPeaks) {
-		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {
-			if ((peak.isMax() && lookForMaxima) || (peak.isMin() && lookForMinima)) {
+		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {	
+			if (peak.isMax() && lookForMaxima) {
 				final float x = peak.getPosition(0);
 				final float y = peak.getPosition(1);
 
@@ -466,6 +467,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		Spot.drawRANSACArea(spots, ransacPreview);
 		drawImp.updateAndDraw();
 		drawDetectedSpots(spots, imp); // ? TODO: is this part correct?
+		
 
 		Overlay overlay = drawImp.getOverlay();
 		if (overlay == null) {
@@ -481,7 +483,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		drawImp.setRoi(imp.getRoi());
 		drawDetectedSpots(spots, drawImp);
 		// showRansacLog(spots);
-		showRansacResultTable(spots);
+		// showRansacResultTable(spots);
 	}
 
 	protected void drawDetectedSpots(final ArrayList<Spot> spots, ImagePlus imagePlus) {
@@ -824,7 +826,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		o.clear();
 
 		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {
-			if ((peak.isMax() && lookForMaxima) || (peak.isMin() && lookForMinima)) {
+			if (peak.isMax() && lookForMaxima) {
 				final float x = peak.getPosition(0);
 				final float y = peak.getPosition(1);
 
@@ -900,43 +902,47 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		return img;
 	}
 
-	protected class MinListener implements ItemListener {
-		@Override
-		public void itemStateChanged(final ItemEvent arg0) {
-			boolean oldState = lookForMinima;
+//  TODO: you always look for maxima
+//  TODO: remove
+//	protected class MinListener implements ItemListener {
+//		@Override
+//		public void itemStateChanged(final ItemEvent arg0) {
+//			boolean oldState = lookForMinima;
+//
+//			if (arg0.getStateChange() == ItemEvent.DESELECTED)
+//				lookForMinima = false;
+//			else if (arg0.getStateChange() == ItemEvent.SELECTED)
+//				lookForMinima = true;
+//
+//			if (lookForMinima != oldState) {
+//				while (isComputing)
+//					SimpleMultiThreading.threadWait(10);
+//
+//				updatePreview(ValueChange.MINMAX);
+//			}
+//		}
+//	}
 
-			if (arg0.getStateChange() == ItemEvent.DESELECTED)
-				lookForMinima = false;
-			else if (arg0.getStateChange() == ItemEvent.SELECTED)
-				lookForMinima = true;
-
-			if (lookForMinima != oldState) {
-				while (isComputing)
-					SimpleMultiThreading.threadWait(10);
-
-				updatePreview(ValueChange.MINMAX);
-			}
-		}
-	}
-
-	protected class MaxListener implements ItemListener {
-		@Override
-		public void itemStateChanged(final ItemEvent arg0) {
-			boolean oldState = lookForMaxima;
-
-			if (arg0.getStateChange() == ItemEvent.DESELECTED)
-				lookForMaxima = false;
-			else if (arg0.getStateChange() == ItemEvent.SELECTED)
-				lookForMaxima = true;
-
-			if (lookForMaxima != oldState) {
-				while (isComputing)
-					SimpleMultiThreading.threadWait(10);
-
-				updatePreview(ValueChange.MINMAX);
-			}
-		}
-	}
+//  TODO: you always look for maxima
+//  TODO: remove
+//	protected class MaxListener implements ItemListener {
+//		@Override
+//		public void itemStateChanged(final ItemEvent arg0) {
+//			boolean oldState = lookForMaxima;
+//
+//			if (arg0.getStateChange() == ItemEvent.DESELECTED)
+//				lookForMaxima = false;
+//			else if (arg0.getStateChange() == ItemEvent.SELECTED)
+//				lookForMaxima = true;
+//
+//			if (lookForMaxima != oldState) {
+//				while (isComputing)
+//					SimpleMultiThreading.threadWait(10);
+//
+//				updatePreview(ValueChange.MINMAX);
+//			}
+//		}
+//	}
 
 	/**
 	 * Tests whether the ROI was changed and will recompute the preview

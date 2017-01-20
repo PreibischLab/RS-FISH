@@ -85,9 +85,10 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	final float ransacInitMaxError = 3;
 	// current value
 	int numIterations = 100;
-	float maxError = 0.15f;
-	float inlierRatio = (float) (20.0 / 100.0);
-	int supportRadius = 10;
+	// important to keep them static here 
+	static float maxError = 0.15f;
+	static float inlierRatio = (float) (20.0 / 100.0);
+	static int supportRadius = 10;
 	// min/max value
 	int supportRadiusMin = 1;
 	int supportRadiusMax = 50;
@@ -142,7 +143,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	boolean isComputing = false;
 	boolean isStarted = false;
 
-//	boolean lookForMinima = false;
+	// boolean lookForMinima = false;
 	boolean lookForMaxima = true;
 
 	public static enum ValueChange {
@@ -181,8 +182,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	ImagePlus drawImp;
 	Img<FloatType> ransacPreview;
 
-	//	Img<FloatType> ransacImg;
-	//	ImagePlus localImg;
+	// Img<FloatType> ransacImg;
+	// ImagePlus localImg;
 
 	/**
 	 * TODO: - Change difference of gaussians to imglib2 - Adjust wrappers -
@@ -191,55 +192,141 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	@Override
 	public void run(String arg) {
+
+		/*
+		 * Check if the image is there (+) Interactive/Offline gui if offline
+		 * run the calcuclation else show dog gui show ransac gui after
+		 * parameters are set run algo for the whole image or concede
+		 */
+
+		// show dialog to choose processing type
+		// displayInitialDialog();
+
+		// check that the are images
+		final int[] imgIdList = WindowManager.getIDList();
+		if (imgIdList == null || imgIdList.length < 1) {
+			IJ.error("You need at least one open image.");
+			return;
+		}
+
+		final String[] imgList = new String[imgIdList.length];
+		for (int i = 0; i < imgIdList.length; ++i)
+			imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
+
+		GenericDialog initialDialog = new GenericDialog("Initial Setup");
+
+		if (defaultImg >= imgList.length)
+			defaultImg = 0;
+
+		initialDialog.addChoice("Image for detection", imgList, imgList[defaultImg]);
+		initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
+		initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
+		initialDialog.showDialog();
+		
+		// Save current index and current choice here 
+		String imgTitle = initialDialog.getNextChoice();
+		String parameterAdjustment = initialDialog.getNextChoice();
+		
+		if (initialDialog.wasCanceled())
+			return;
+
 		if (imp == null)
-			imp = WindowManager.getCurrentImage();
-
-		standardRectangle = new Rectangle(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2,
-				imp.getHeight() / 2);
-
+			imp = WindowManager.getImage(imgTitle);
+		// TODO: Check what of the stuff below is necessary
+		// // if one of the images is rgb or 8-bit color convert them to
+		// hyperstack
+		// imp = Hyperstack_rearranger.convertToHyperStack( imp );
+		//
+		// // test if you can deal with this image (2d? 3d? channels?
+		// timepoints?)
+		// 3d + time should be fine.
+		// right now works with 2d + time
+		
 		if (imp.getType() == ImagePlus.COLOR_RGB || imp.getType() == ImagePlus.COLOR_256) {
 			IJ.log("Color images are not supported, please convert to 8, 16 or 32-bit grayscale");
 			return;
 		}
+		
+		// if interactive
+		if (parameterAdjustment.compareTo(paramChoice[1]) == 0) {
+			// here comes the normal work flow
+			standardRectangle = new Rectangle(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2,
+					imp.getHeight() / 2);
 
-		Roi roi = imp.getRoi();
+			Roi roi = imp.getRoi();
 
-		if (roi == null) {
-			// IJ.log( "A rectangular ROI is required to define the area..." );
+			if (roi == null) {
+				// IJ.log( "A rectangular ROI is required to define the area..." );
+				imp.setRoi(standardRectangle);
+				roi = imp.getRoi();
+			}
+
+			if (roi.getType() != Roi.RECTANGLE) {
+				IJ.log("Only rectangular rois are supported...");
+				return;
+			}
+
+			// copy the ImagePlus into an ArrayImage<FloatType> for faster access
+			source = convertToFloat(imp, channel, 0, minIntensityImage, maxIntensityImage);
+			// TODO: maybe you have to adjust intensities
+			// img2 = ImageJFunctions.wrapFloat(imp);
+
+			// initialize variables for interactive preview
+			// called before updatePreview() !
+			ransacPreviewInitialize();
+
+			// show the interactive kit
+			displaySliders();
+
+			// show the interactive ransac kit
+			displayRansacSliders();
+
+			// add listener to the imageplus slice slider
+			sliceObserver = new SliceObserver(imp, new ImagePlusListener());
+
+			// compute first version
+			updatePreview(ValueChange.ALL);
+			isStarted = true;
+
+			// check whenever roi is modified to update accordingly
+			roiListener = new RoiListener();
+			imp.getCanvas().addMouseListener(roiListener);
+		} 
+		else 
+		{
+			// TODO: here we apply algo to the whole image 
+			// TODO: another gui window pops up: to set up the parameters
+			// here comes the normal work flow
+			standardRectangle = new Rectangle(0, 0, imp.getWidth(), imp.getHeight());
+
 			imp.setRoi(standardRectangle);
-			roi = imp.getRoi();
+			Roi roi = imp.getRoi();
+
+			// copy the ImagePlus into an ArrayImage<FloatType> for faster access
+			source = convertToFloat(imp, channel, 0, minIntensityImage, maxIntensityImage);
+			// TODO: maybe you have to adjust intensities
+			// img2 = ImageJFunctions.wrapFloat(imp);
+
+			// initialize variables for the result
+			ransacPreviewInitialize();
+			
+			// TODO: here you want to run the algorithm for every slice without interaction with the image
+			// You need something like apply to stack button here
+			// which you run once without any listeners
+
+			displayManualGUI();
+			
+			// TODO: you don't have to pre calculate anything 
+			// if user clicks apply -- then you are in!
+			// compute first version
+			// updatePreview(ValueChange.ALL);
+			// isStarted = true;
+
+			// check whenever roi is modified to update accordingly
+			// roiListener = new RoiListener();
+			// imp.getCanvas().addMouseListener(roiListener);
 		}
 
-		if (roi.getType() != Roi.RECTANGLE) {
-			IJ.log("Only rectangular rois are supported...");
-			return;
-		}
-
-		// copy the ImagePlus into an ArrayImage<FloatType> for faster access
-		source = convertToFloat(imp, channel, 0, minIntensityImage, maxIntensityImage);
-		// TODO: maybe you have to adjust intensities
-		// img2 = ImageJFunctions.wrapFloat(imp);
-
-		// initialize variables for interactive preview
-		// called before updatePreview() !
-		ransacPreviewInitialize();
-
-		// show the interactive kit
-		displaySliders();
-
-		// show the interactive ransac kit
-		displayRansacSliders();
-
-		// add listener to the imageplus slice slider
-		sliceObserver = new SliceObserver(imp, new ImagePlusListener());
-
-		// compute first version
-		updatePreview(ValueChange.ALL);
-		isStarted = true;
-
-		// check whenever roi is modified to update accordingly
-		roiListener = new RoiListener();
-		imp.getCanvas().addMouseListener(roiListener);
 	}
 
 	/**
@@ -352,7 +439,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	// this function will show the result of RANSAC
-	// TODO: deprecated / remove 
+	// TODO: deprecated / remove
 	protected void showRansacLog(final ArrayList<Spot> spots) {
 		// TODO: add clean log function
 		IOFunctions.println("Running RANSAC ... ");
@@ -375,12 +462,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	protected void showRansacResultTable(final ArrayList<Spot> spots) {
 		IOFunctions.println("Running RANSAC ... ");
 		IOFunctions.println("Spots found = " + spots.size());
-		//real output
-		ResultsTable rt =  new ResultsTable();
-		String[] xyz = {"x", "y", "z"};
+		// real output
+		ResultsTable rt = new ResultsTable();
+		String[] xyz = { "x", "y", "z" };
 		for (Spot spot : spots) {
-			rt.incrementCounter();			
-			for (int d = 0; d < spot.numDimensions(); ++d) {		
+			rt.incrementCounter();
+			for (int d = 0; d < spot.numDimensions(); ++d) {
 				rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.2f", spot.getFloatPosition(d)));
 			}
 		}
@@ -411,7 +498,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	 * Copy peaks found by DoG to lighter ArrayList
 	 */
 	protected void copyPeaks(final ArrayList<long[]> simplifiedPeaks) {
-		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {	
+		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {
 			if (peak.isMax() && lookForMaxima) {
 				final float x = peak.getPosition(0);
 				final float y = peak.getPosition(1);
@@ -467,7 +554,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		Spot.drawRANSACArea(spots, ransacPreview);
 		drawImp.updateAndDraw();
 		drawDetectedSpots(spots, imp); // ? TODO: is this part correct?
-		
 
 		Overlay overlay = drawImp.getOverlay();
 		if (overlay == null) {
@@ -513,6 +599,157 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		imagePlus.updateAndDraw();
 	}
 
+	/**
+	 * Instantiates the panel for adjusting the RANSAC parameters
+	 */
+	protected void displayManualGUI() {
+		final Frame frame = new Frame("Set Stack Parameters");
+		frame.setSize(260, 200);
+
+		/* Instantiation */
+		final GridBagLayout layout = new GridBagLayout();
+		final GridBagConstraints c = new GridBagConstraints();
+		
+		// TODO: check if these guys are correct
+		// maybe it is better to use the constructor for this task
+		this.sigma = sigmaInit;
+		this.threshold = thresholdInit;
+		this.supportRadius = ransacInitSupportRadius;
+		this.inlierRatio = ransacInitInlierRatio;
+		this.maxError  = ransacInitMaxError;
+		
+		// --------- 
+		
+		final TextField SigmaTextField = new TextField(String.format(java.util.Locale.US, "%.2f", this.sigma)); 
+		SigmaTextField.setEditable(true);
+		SigmaTextField.setCaretPosition(String.format(java.util.Locale.US, "%.2f", this.sigma).length());
+		
+		final TextField ThresholdTextField = new TextField(String.format(java.util.Locale.US, "%.2f", this.threshold));
+		ThresholdTextField.setEditable(true);
+		ThresholdTextField.setCaretPosition(String.format(java.util.Locale.US, "%.2f", this.threshold).length());
+
+		final TextField SupportRegionTextField = new TextField(Integer.toString(this.supportRadius));
+		SupportRegionTextField.setEditable(true);
+		SupportRegionTextField.setCaretPosition(Integer.toString(this.supportRadius).length());
+		
+		final TextField InliersTextField = new TextField(String.format(java.util.Locale.US, "%.2f", this.inlierRatio)); 
+		InliersTextField.setEditable(true);
+		InliersTextField.setCaretPosition(String.format(java.util.Locale.US, "%.2f", this.inlierRatio).length());
+		
+		final TextField MaxErrorTextField = new TextField(String.format(java.util.Locale.US, "%.2f", this.maxError)); 
+		MaxErrorTextField.setEditable(true);
+		MaxErrorTextField.setCaretPosition(String.format(java.util.Locale.US, "%.2f", this.maxError).length());		
+		
+		// --------- 
+		final Label sigmaText = new Label(
+				"Sigma:", Label.CENTER);
+		final Label thresholdText = new Label(
+				"Threshold: ", Label.CENTER);
+		final Label supportRegionText = new Label(
+				"Support Region Radius:", Label.CENTER);
+		final Label inlierRatioText = new Label(
+				"Inlier Ratio:", Label.CENTER);
+		final Label maxErrorText = new Label("Max Error:",
+				Label.CENTER);
+
+		final Button button = new Button("Apply");
+		final Button cancel = new Button("Cancel");
+
+		// /* Location */
+		frame.setLayout(layout);
+
+		// insets constants
+		int inTop = 0;
+		int inRight = 5;
+		int inBottom = 0;
+		int inLeft = inRight;
+		
+		c.fill = GridBagConstraints.HORIZONTAL;
+		
+		c.gridx = 0;
+		c.gridy = 0;
+		c.weightx = 0.50;
+		c.gridwidth = 1;
+		frame.add(sigmaText, c);
+
+		c.gridx = 1;
+		c.weightx = 0.50;
+		c.gridwidth = 1;
+		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
+		frame.add(SigmaTextField, c);		
+		
+		c.gridx = 0;
+		c.gridy++;
+		c.weightx = 0.50;
+		c.gridwidth = 1;
+		frame.add(thresholdText, c);
+
+		c.gridx = 1;
+		c.weightx = 0.50;
+		c.gridwidth = 1;
+		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
+		frame.add(ThresholdTextField, c);	
+		
+		c.gridx = 0;
+		c.gridy++;
+		c.weightx = 0.50;
+		c.gridwidth = 1;
+		frame.add(supportRegionText, c);
+
+		c.gridx = 1;
+		c.weightx = 0.50;
+		c.gridwidth = 1;
+		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
+		frame.add(SupportRegionTextField, c);	
+		
+		c.gridx = 0;
+		c.gridy++;
+		c.weightx = 0.50;
+		c.gridwidth = 1;
+		frame.add(inlierRatioText, c);
+
+		c.gridx = 1;
+		c.weightx = 0.50;
+		c.gridwidth = 1;
+		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
+		frame.add(InliersTextField, c);	
+
+		c.gridx = 0;
+		c.gridy++;
+		c.weightx = 0.50;
+		c.gridwidth = 1;
+		frame.add(maxErrorText, c);
+
+		c.gridx = 1;
+		c.weightx = 0.50;
+		c.gridwidth = 1;
+		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
+		frame.add(MaxErrorTextField, c);	
+
+		c.gridx = 0;
+		c.gridy++;
+		c.weightx = 0.50;
+		c.gridwidth = 1;
+		c.insets = new Insets(5, 50, 0, 50);
+		frame.add(button, c);
+
+		c.gridx = 1;
+		c.weightx = 0.50;
+		c.gridwidth = 1;
+		c.insets = new Insets(0, 50, 0, 50);
+		frame.add(cancel, c);
+
+		// /* Configuration */
+		// TODO: add apply button not the "ok" one
+		button.addActionListener(new FinishedButtonListener(frame, false));
+		cancel.addActionListener(new FinishedButtonListener(frame, true));
+
+		// TODO: Check if you need this part at all
+		frame.addWindowListener(new FrameListener(frame));
+		frame.setVisible(true);
+	}
+	
+	
 	/**
 	 * Instantiates the panel for adjusting the RANSAC parameters
 	 */
@@ -659,20 +896,16 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		this.threshold = thresholdInit;
 
 		this.sigma2 = computeSigma2(this.sigma, this.sensitivity);
-		final int sigma2init = computeScrollbarPositionFromValue(this.sigma2, sigmaMin, sigmaMax, scrollbarSize);
-		//final Scrollbar sigma2 = new Scrollbar(Scrollbar.HORIZONTAL, sigma2init, 10, 0, 10 + scrollbarSize);
+		// final int sigma2init = computeScrollbarPositionFromValue(this.sigma2,
+		// sigmaMin, sigmaMax, scrollbarSize);
 
 		final Label sigmaText1 = new Label("Sigma 1 = " + String.format(java.util.Locale.US, "%.2f", this.sigma),
 				Label.CENTER);
-		// final Label sigmaText2 = new Label("Sigma 2 = " + String.format(java.util.Locale.US, "%.2f", this.sigma2), Label.CENTER);
 
 		final Label thresholdText = new Label(
 				"Threshold = " + String.format(java.util.Locale.US, "%.4f", this.threshold), Label.CENTER);
 		final Button button = new Button("Done");
 		final Button cancel = new Button("Cancel");
-
-		// final Checkbox min = new Checkbox("Look for Minima (red)", lookForMinima);
-		// final Checkbox max = new Checkbox("Look for Maxima (green)", lookForMaxima);
 
 		/* Location */
 		frame.setLayout(layout);
@@ -699,14 +932,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		++c.gridy;
 		frame.add(threshold, c);
 
-//		++c.gridy;
-//		c.insets = new Insets(0, 90, 0, 80);
-//		frame.add(max, c);
-
-//		++c.gridy;
-//		c.insets = new Insets(0, 90, 0, 80);
-//		frame.add(min, c);
-
 		// insets for buttons
 		int bInTop = 0;
 		int bInRight = 120;
@@ -722,16 +947,92 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.add(cancel, c);
 
 		/* Configuration */
-		sigma1.addAdjustmentListener(
-				new SigmaListener(sigmaText1, sigmaMin, sigmaMax, scrollbarSize, sigma1));
+		sigma1.addAdjustmentListener(new SigmaListener(sigmaText1, sigmaMin, sigmaMax, scrollbarSize, sigma1));
 		threshold.addAdjustmentListener(new ThresholdListener(thresholdText, thresholdMin, thresholdMax));
 		button.addActionListener(new FinishedButtonListener(frame, false));
 		cancel.addActionListener(new FinishedButtonListener(frame, true));
-//		min.addItemListener(new MinListener());
-//		max.addItemListener(new MaxListener());
 		frame.addWindowListener(new FrameListener(frame));
 
 		frame.setVisible(true);
+	}
+
+	/**
+	 * In this dialog user chooses where (s)he wants to use the interactive mode
+	 * or apply transformations with the given parameters
+	 * 
+	 */
+	protected void displayInitialDialog() {
+
+		// get list of image stacks
+		final int[] idList = WindowManager.getIDList();
+
+		if (idList == null || idList.length < 1) {
+			// TODO: Global return
+			IJ.error("You need at least one open image.");
+			return;
+		}
+
+		final String[] imgList = new String[idList.length];
+
+		for (int i = 0; i < idList.length; ++i)
+			imgList[i] = WindowManager.getImage(idList[i]).getTitle();
+
+		/**
+		 * The first dialog for choosing the images
+		 */
+		final GenericDialog gd1 = new GenericDialog("...");
+
+		if (defaultImg >= imgList.length)
+			defaultImg = 0;
+
+		gd1.addChoice("Image for detection", imgList, imgList[defaultImg]);
+		gd1.showDialog();
+
+		if (gd1.wasCanceled())
+			return;
+
+		// TODO: should be your global image
+		ImagePlus imp = WindowManager.getImage(idList[defaultImg = gd1.getNextChoiceIndex()]);
+		//
+		// // if one of the images is rgb or 8-bit color convert them to
+		// hyperstack
+		// imp = Hyperstack_rearranger.convertToHyperStack( imp );
+		//
+		// // test if you can deal with this image (2d? 3d? channels?
+		// timepoints?)
+		// 3d + time should be fine.
+		// right now works with 2d + time
+
+		//
+		// // second dialog for parameters
+		GenericDialog gd = new GenericDialog("Radial Symmetry");
+
+		gd.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
+		gd.addCheckbox("Do_additional_gauss_fit", defaultGauss);
+		gd.showDialog();
+		//
+		if (gd.wasCanceled())
+			return;
+		//
+		// int param = defaultParam = gd.getNextChoiceIndex();
+		// boolean gauss = defaultGauss = gd.getNextBoolean();
+		//
+		// if ( param == 0 )
+		// {
+		// // call your interactive
+		// }
+		// else
+		// {
+		// // another generic dialog that asks for all these number
+		// // Dog, RANSAC
+		// }
+		//
+		// // now run on the whole stack with the parameters
+		//
+		// if ( gauss )
+		// {
+		//
+		// }
 	}
 
 	public static float computeSigma2(final float sigma1, final int sensitivity) {
@@ -866,7 +1167,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			final int extraSize) {
 		final Image<mpicbg.imglib.type.numeric.real.FloatType> img = new ImageFactory<mpicbg.imglib.type.numeric.real.FloatType>(
 				new mpicbg.imglib.type.numeric.real.FloatType(), new ArrayContainerFactory())
-				.createImage(new int[] { rectangle.width + extraSize, rectangle.height + extraSize });
+						.createImage(new int[] { rectangle.width + extraSize, rectangle.height + extraSize });
 
 		final int offsetX = rectangle.x - extraSize / 2;
 		final int offsetY = rectangle.y - extraSize / 2;
@@ -901,48 +1202,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		return img;
 	}
-
-//  TODO: you always look for maxima
-//  TODO: remove
-//	protected class MinListener implements ItemListener {
-//		@Override
-//		public void itemStateChanged(final ItemEvent arg0) {
-//			boolean oldState = lookForMinima;
-//
-//			if (arg0.getStateChange() == ItemEvent.DESELECTED)
-//				lookForMinima = false;
-//			else if (arg0.getStateChange() == ItemEvent.SELECTED)
-//				lookForMinima = true;
-//
-//			if (lookForMinima != oldState) {
-//				while (isComputing)
-//					SimpleMultiThreading.threadWait(10);
-//
-//				updatePreview(ValueChange.MINMAX);
-//			}
-//		}
-//	}
-
-//  TODO: you always look for maxima
-//  TODO: remove
-//	protected class MaxListener implements ItemListener {
-//		@Override
-//		public void itemStateChanged(final ItemEvent arg0) {
-//			boolean oldState = lookForMaxima;
-//
-//			if (arg0.getStateChange() == ItemEvent.DESELECTED)
-//				lookForMaxima = false;
-//			else if (arg0.getStateChange() == ItemEvent.SELECTED)
-//				lookForMaxima = true;
-//
-//			if (lookForMaxima != oldState) {
-//				while (isComputing)
-//					SimpleMultiThreading.threadWait(10);
-//
-//				updatePreview(ValueChange.MINMAX);
-//			}
-//		}
-//	}
 
 	/**
 	 * Tests whether the ROI was changed and will recompute the preview
@@ -1243,7 +1502,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-	public static String[] paramChoice = new String[]{ "Interactive", "Manual" };
+	// way the image will be processed
+	public static String[] paramChoice = new String[] { "Interactive", "Manual" };
 	public static int defaultImg = 0;
 	public static int defaultParam = 0;
 	public static boolean defaultGauss = false;
@@ -1251,92 +1511,89 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	public static void main(String[] args) {
 		new ImageJ();
 
-		//		/*
-		//		PrintWriter out = TextFileAccess.openFileWrite( new File("test.txt"));
-		//		out.println( x + "\t" + y );
-		//		out.close();
+		// /*
+		// PrintWriter out = TextFileAccess.openFileWrite( new
+		// File("test.txt"));
+		// out.println( x + "\t" + y );
+		// out.close();
 		//
-		//		BufferedReader in = TextFileAccess.openFileRead( new File("test.txt") );
-		//		while ( in.ready() )
-		//		{
-		//			String line = in.readLine();
-		//		}*/
-		//		
-		//		// get list of image stacks
-		//		final int[] idList = WindowManager.getIDList();		
+		// BufferedReader in = TextFileAccess.openFileRead( new File("test.txt")
+		// );
+		// while ( in.ready() )
+		// {
+		// String line = in.readLine();
+		// }*/
 		//
-		//		if ( idList == null || idList.length < 1 )
-		//		{
-		//			IJ.error( "You need at least one open image." );
-		//			return;
-		//		}
+		// // get list of image stacks
+		// final int[] idList = WindowManager.getIDList();
 		//
-		//		final String[] imgList = new String[ idList.length ];
-		//		for ( int i = 0; i < idList.length; ++i )
-		//			imgList[ i ] = WindowManager.getImage(idList[i]).getTitle();
+		// if ( idList == null || idList.length < 1 )
+		// {
+		// IJ.error( "You need at least one open image." );
+		// return;
+		// }
 		//
-		//		/**
-		//		 * The first dialog for choosing the images
-		//		 */
-		//		final GenericDialog gd1 = new GenericDialog( "..." );
-		//		
-		//		if ( defaultImg >= imgList.length )
-		//			defaultImg = 0;
-		//		
-		//		gd1.addChoice("Image for detection", imgList, imgList[ defaultImg ] );
+		// final String[] imgList = new String[ idList.length ];
+		// for ( int i = 0; i < idList.length; ++i )
+		// imgList[ i ] = WindowManager.getImage(idList[i]).getTitle();
 		//
-		//		if ( gd1.wasCanceled() )
-		//			return;
+		// /**
+		// * The first dialog for choosing the images
+		// */
+		// final GenericDialog gd1 = new GenericDialog( "..." );
 		//
-		//		ImagePlus imp = WindowManager.getImage( idList[ defaultImg = gd1.getNextChoiceIndex() ] );		
+		// if ( defaultImg >= imgList.length )
+		// defaultImg = 0;
 		//
-		//		// if one of the images is rgb or 8-bit color convert them to hyperstack
-		//		imp = Hyperstack_rearranger.convertToHyperStack( imp );
-		//		
-		//		// test if you can deal with this image (2d? 3d? channels? timepoints?)s
-		//				
-		//		// second dialog for parameters
-		//		GenericDialog gd = new GenericDialog( "Radial Symmetry" );
-		//		
-		//		gd.addChoice( "Define_Parameters", paramChoice, paramChoice[ defaultParam ] );
-		//		gd.addCheckbox( "Do_additional_gauss_fit", defaultGauss );
-		//		gd.showDialog();
-		//		
-		//		if ( gd.wasCanceled() )
-		//			return;
-		//		
-		//		int param = defaultParam = gd.getNextChoiceIndex();
-		//		boolean gauss = defaultGauss = gd.getNextBoolean();
-		//		
-		//		if ( param == 0 )
-		//		{
-		//			// call your interactive
-		//		}
-		//		else
-		//		{
-		//			// another generic dialog that asks for all these number
-		//			// Dog, RANSAC
-		//		}
-		//		
-		//		// now run on the whole stack with the parameters
-		//		
-		//		if ( gauss )
-		//		{
-		//			
-		//		}
-		//		// output
-		//		ResultsTable rt =  new ResultsTable();
-		//		rt.incrementCounter();
-		//		rt.addValue("x", 1.55);
-		//		rt.addValue("y", 2.55);
-		//		rt.addValue("z", -1.55);
-		//		rt.incrementCounter();
-		//		rt.addValue("x", 1.65);
-		//		rt.addValue("y", 2.65);
-		//		rt.addValue("z", -1.65);
-		//		rt.show("Results");
-		//		
-		//		SimpleMultiThreading.threadHaltUnClean();
+		// gd1.addChoice("Image for detection", imgList, imgList[ defaultImg ]
+		// );
+		//
+		// if ( gd1.wasCanceled() )
+		// return;
+		//
+		// ImagePlus imp = WindowManager.getImage( idList[ defaultImg =
+		// gd1.getNextChoiceIndex() ] );
+		//
+		// // if one of the images is rgb or 8-bit color convert them to
+		// hyperstack
+		// imp = Hyperstack_rearranger.convertToHyperStack( imp );
+		//
+		// // test if you can deal with this image (2d? 3d? channels?
+		// timepoints?)s
+		//
+		// // second dialog for parameters
+		// GenericDialog gd = new GenericDialog( "Radial Symmetry" );
+		//
+		// gd.addChoice( "Define_Parameters", paramChoice, paramChoice[
+		// defaultParam ] );
+		// gd.addCheckbox( "Do_additional_gauss_fit", defaultGauss );
+		// gd.showDialog();
+		//
+		// if ( gd.wasCanceled() )
+		// return;
+		//
+		// int param = defaultParam = gd.getNextChoiceIndex();
+		// boolean gauss = defaultGauss = gd.getNextBoolean();
+		//
+		// if ( param == 0 )
+		// {
+		// // call your interactive
+		// }
+		// else
+		// {
+		// // another generic dialog that asks for all these number
+		// // Dog, RANSAC
+		// }
+		//
+		// // now run on the whole stack with the parameters
+		//
+		// if ( gauss )
+		// {
+		//
+		// }
+
+		//
+		// SimpleMultiThreading.threadHaltUnClean();
 
 		String pathMac = "/Users/kkolyva/Desktop/latest_desktop/multiple_dots.tif";
 		String pathUbuntu = "/home/milkyklim/eclipse.input/multiple_dots.tif";
@@ -1351,7 +1608,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		imp.show();
 
 		imp.setSlice(20);
-		imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
+		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
 		new InteractiveRadialSymmetry().run(null);
 

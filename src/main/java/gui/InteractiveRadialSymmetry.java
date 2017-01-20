@@ -33,6 +33,7 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.util.Util;
 import mpicbg.imglib.wrapper.ImgLib1;
+import mpicbg.imglib.wrapper.ImgLib2;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.TextFileAccess;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
@@ -222,11 +223,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
 		initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
 		initialDialog.showDialog();
-		
+
 		// Save current index and current choice here 
 		String imgTitle = initialDialog.getNextChoice();
 		String parameterAdjustment = initialDialog.getNextChoice();
-		
+
 		if (initialDialog.wasCanceled())
 			return;
 
@@ -241,12 +242,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// timepoints?)
 		// 3d + time should be fine.
 		// right now works with 2d + time
-		
+
 		if (imp.getType() == ImagePlus.COLOR_RGB || imp.getType() == ImagePlus.COLOR_256) {
 			IJ.log("Color images are not supported, please convert to 8, 16 or 32-bit grayscale");
 			return;
 		}
-		
+
 		// if interactive
 		if (parameterAdjustment.compareTo(paramChoice[1]) == 0) {
 			// here comes the normal work flow
@@ -309,13 +310,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 			// initialize variables for the result
 			ransacPreviewInitialize();
-			
+
 			// TODO: here you want to run the algorithm for every slice without interaction with the image
 			// You need something like apply to stack button here
 			// which you run once without any listeners
 
-			displayManualGUI();
-			
+			displayAdvancedGenericDialog();
+			// 			displayManualGUI();
+
 			// TODO: you don't have to pre calculate anything 
 			// if user clicks apply -- then you are in!
 			// compute first version
@@ -599,6 +601,110 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		imagePlus.updateAndDraw();
 	}
 
+
+
+
+
+	protected void displayAdvancedGenericDialog(){
+		// final String title = "Set Stack Parameters";
+		// final int width = 260, height = 200; 
+
+		GenericDialog gd = new GenericDialog("Set Stack Parameters");
+
+		gd.addNumericField("Sigma:", this.sigma, 2);
+		gd.addNumericField("Threshold:", this.threshold, 2);
+		gd.addNumericField("Support Region Radius:", this.supportRadius, 2);
+		gd.addNumericField("Inlier Ratio:", this.inlierRatio, 2);
+		gd.addNumericField("Max Error:", this.maxError, 2);
+
+
+		gd.showDialog();
+		if (gd.wasCanceled()) return;
+
+		// TODO: if canceled was not clicked perform the processing of the image
+		// apply algorithm to the whole stack or @D image depending on what ever we have here
+
+		runAdvancedVersion();
+
+	}
+
+	// TODO: here should be the algorithm for the 
+	// macro recordable function  
+	protected void runAdvancedVersion(){
+		// try to be as abstract as possible here 
+		// /most of the coed has to be rewritten because it was poorly done before
+
+
+		// test zone 
+		// System.out.println("img stack size" + imp.getImageStackSize());
+
+		Img<FloatType> imghello = ImageJFunctions.wrap(imp);
+		// ImageJFunctions.show(imghello);
+
+		int numDimensions = ImageJFunctions.wrap(imp).numDimensions(); 
+
+		if (numDimensions == 2){
+			run2DAdvancedVersion();
+		}
+		else{
+			if (numDimensions == 3){
+				run3DAdvancedVersion();
+			}
+			else{
+				System.out.println("Only 2D and 3D images are supported");
+			}
+		}		
+		System.out.println(ImageJFunctions.wrap(imp).numDimensions());
+
+
+
+
+		if (true) return;
+
+		// end test zone 
+
+
+	}
+
+
+	protected void run2DAdvancedVersion(){
+		//
+		// Compute the Sigmas for the gaussian folding
+		//
+
+		final float k, K_MIN1_INV;
+		final float[] sigma, sigmaDiff;
+
+		k = (float) DetectionSegmentation.computeK(sensitivity);
+		K_MIN1_INV = DetectionSegmentation.computeKWeight(k);
+		sigma = DetectionSegmentation.computeSigma(k, this.sigma);
+		sigmaDiff = DetectionSegmentation.computeSigmaDiff(sigma, imageSigma);
+
+		// the upper boundary
+		this.sigma2 = sigma[1];
+
+		final DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType> dog = new DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType>(
+				img, new OutOfBoundsStrategyValueFactory<mpicbg.imglib.type.numeric.real.FloatType>(), sigmaDiff[0],
+				sigmaDiff[1], thresholdMin / 4, K_MIN1_INV);
+		dog.setKeepDoGImage(true);
+		dog.process();
+
+		final SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType> subpixel = new SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType>(
+				dog.getDoGImage(), dog.getPeaks());
+		subpixel.process();
+
+		// peaks contain some values that are out of bounds
+		peaks = dog.getPeaks();
+		
+		runRansac();
+	}
+
+	protected void run3DAdvancedVersion(){
+
+	}
+
+	// this one is old fashioned you need a generic dialog to solve this task
+	// it can macro recorded 
 	/**
 	 * Instantiates the panel for adjusting the RANSAC parameters
 	 */
@@ -609,7 +715,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
 		final GridBagConstraints c = new GridBagConstraints();
-		
+
 		// TODO: check if these guys are correct
 		// maybe it is better to use the constructor for this task
 		this.sigma = sigmaInit;
@@ -617,13 +723,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		this.supportRadius = ransacInitSupportRadius;
 		this.inlierRatio = ransacInitInlierRatio;
 		this.maxError  = ransacInitMaxError;
-		
+
 		// --------- 
-		
+
 		final TextField SigmaTextField = new TextField(String.format(java.util.Locale.US, "%.2f", this.sigma)); 
 		SigmaTextField.setEditable(true);
 		SigmaTextField.setCaretPosition(String.format(java.util.Locale.US, "%.2f", this.sigma).length());
-		
+
 		final TextField ThresholdTextField = new TextField(String.format(java.util.Locale.US, "%.2f", this.threshold));
 		ThresholdTextField.setEditable(true);
 		ThresholdTextField.setCaretPosition(String.format(java.util.Locale.US, "%.2f", this.threshold).length());
@@ -631,15 +737,15 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final TextField SupportRegionTextField = new TextField(Integer.toString(this.supportRadius));
 		SupportRegionTextField.setEditable(true);
 		SupportRegionTextField.setCaretPosition(Integer.toString(this.supportRadius).length());
-		
+
 		final TextField InliersTextField = new TextField(String.format(java.util.Locale.US, "%.2f", this.inlierRatio)); 
 		InliersTextField.setEditable(true);
 		InliersTextField.setCaretPosition(String.format(java.util.Locale.US, "%.2f", this.inlierRatio).length());
-		
+
 		final TextField MaxErrorTextField = new TextField(String.format(java.util.Locale.US, "%.2f", this.maxError)); 
 		MaxErrorTextField.setEditable(true);
 		MaxErrorTextField.setCaretPosition(String.format(java.util.Locale.US, "%.2f", this.maxError).length());		
-		
+
 		// --------- 
 		final Label sigmaText = new Label(
 				"Sigma:", Label.CENTER);
@@ -663,9 +769,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		int inRight = 5;
 		int inBottom = 0;
 		int inLeft = inRight;
-		
+
 		c.fill = GridBagConstraints.HORIZONTAL;
-		
+
 		c.gridx = 0;
 		c.gridy = 0;
 		c.weightx = 0.50;
@@ -677,7 +783,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.gridwidth = 1;
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		frame.add(SigmaTextField, c);		
-		
+
 		c.gridx = 0;
 		c.gridy++;
 		c.weightx = 0.50;
@@ -689,7 +795,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.gridwidth = 1;
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		frame.add(ThresholdTextField, c);	
-		
+
 		c.gridx = 0;
 		c.gridy++;
 		c.weightx = 0.50;
@@ -701,7 +807,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.gridwidth = 1;
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		frame.add(SupportRegionTextField, c);	
-		
+
 		c.gridx = 0;
 		c.gridy++;
 		c.weightx = 0.50;
@@ -748,8 +854,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.addWindowListener(new FrameListener(frame));
 		frame.setVisible(true);
 	}
-	
-	
+
+
 	/**
 	 * Instantiates the panel for adjusting the RANSAC parameters
 	 */
@@ -956,6 +1062,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.setVisible(true);
 	}
 
+
+	// this part is out-dated right know
 	/**
 	 * In this dialog user chooses where (s)he wants to use the interactive mode
 	 * or apply transformations with the given parameters
@@ -1167,7 +1275,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			final int extraSize) {
 		final Image<mpicbg.imglib.type.numeric.real.FloatType> img = new ImageFactory<mpicbg.imglib.type.numeric.real.FloatType>(
 				new mpicbg.imglib.type.numeric.real.FloatType(), new ArrayContainerFactory())
-						.createImage(new int[] { rectangle.width + extraSize, rectangle.height + extraSize });
+				.createImage(new int[] { rectangle.width + extraSize, rectangle.height + extraSize });
 
 		final int offsetX = rectangle.x - extraSize / 2;
 		final int offsetY = rectangle.y - extraSize / 2;
@@ -1596,9 +1704,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// SimpleMultiThreading.threadHaltUnClean();
 
 		String pathMac = "/Users/kkolyva/Desktop/latest_desktop/multiple_dots.tif";
-		String pathUbuntu = "/home/milkyklim/eclipse.input/multiple_dots.tif";
+		String pathUbuntu = "/home/milkyklim/eclipse.input/multiple_dots_2D.tif";
 
-		String path = pathMac;
+		String path = pathUbuntu;
 
 		ImagePlus imp = new Opener().openImage(path);
 
@@ -1606,8 +1714,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			System.out.println("image was not loaded");
 
 		imp.show();
-
-		imp.setSlice(20);
+	// 	imp.setSlice(20);
+	
+		
 		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
 		new InteractiveRadialSymmetry().run(null);

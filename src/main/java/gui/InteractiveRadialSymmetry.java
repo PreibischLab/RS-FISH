@@ -3,6 +3,7 @@ package gui;
 import fiji.stacks.Hyperstack_rearranger;
 import fiji.tool.SliceListener;
 import fiji.tool.SliceObserver;
+import fit.PointFunctionMatch;
 import fit.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
@@ -34,6 +35,7 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.util.Util;
 import mpicbg.imglib.wrapper.ImgLib1;
 import mpicbg.imglib.wrapper.ImgLib2;
+import mpicbg.models.Point;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.TextFileAccess;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
@@ -586,11 +588,23 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		for (final FloatType t : ransacPreview)
 			t.setZero();
 
+		// TODO: Automated coloring fails on MAc but works fine on ubuntu
 		Spot.drawRANSACArea(spots, ransacPreview);
-		drawImp.setDisplayRange(0, drawImp.getDisplayRangeMax());
+
+		// TODO: create a separate function for this part
+		double displayMaxError = 0;
+		for ( final Spot spot : spots ){
+			if ( spot.inliers.size() == 0 )
+				continue;
+			for ( final PointFunctionMatch pm : spot.inliers )
+				if (displayMaxError < pm.getDistance())
+					displayMaxError = pm.getDistance();
+		}	
+		
+		drawImp.setDisplayRange(0, displayMaxError);
 		drawImp.updateAndDraw();
 		drawDetectedSpots(spots, imp); 
-		
+			
 		Overlay overlay = drawImp.getOverlay();
 		if (overlay == null) {
 			// System.out.println("If this message pops up probably something
@@ -1818,11 +1832,25 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		//
 		// SimpleMultiThreading.threadHaltUnClean();
-
+		
+		
 		String pathMac = "/Users/kkolyva/Desktop/latest_desktop/multiple_dots.tif";
 		String pathUbuntu = "/home/milkyklim/eclipse.input/multiple_dots_2D.tif";
 
-		String path = pathUbuntu;
+		String path;
+		
+		
+		String osName = System.getProperty("os.name").toLowerCase();
+		boolean isMacOs = osName.startsWith("mac os x");
+		if (isMacOs) 
+		{
+			path = pathMac; 
+		}
+		else{
+			path = pathUbuntu;
+		}
+
+
 
 		ImagePlus imp = new Opener().openImage(path);
 

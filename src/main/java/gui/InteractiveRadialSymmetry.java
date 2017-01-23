@@ -589,8 +589,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		Spot.drawRANSACArea(spots, ransacPreview);
 		drawImp.setDisplayRange(0, drawImp.getDisplayRangeMax());
 		drawImp.updateAndDraw();
-		drawDetectedSpots(spots, imp); // ? TODO: is this part correct?
-
+		drawDetectedSpots(spots, imp); 
+		
 		Overlay overlay = drawImp.getOverlay();
 		if (overlay == null) {
 			// System.out.println("If this message pops up probably something

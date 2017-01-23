@@ -336,8 +336,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	 */
 	protected void ransacPreviewInitialize() {
 		int width = source.getWidth();
-		int height = source.getHeight();
-
+		int height = source.getHeight();		
+		
 		ransacFloatProcessor = new FloatProcessor(width, height);
 		float[] pixels = (float[]) ransacFloatProcessor.getPixels();
 		drawImp = new ImagePlus("RANSAC preview", ransacFloatProcessor);
@@ -546,6 +546,39 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		showRansacResult(spots);
 	}
 
+	protected void runRansac3D() {
+		final ArrayList<long[]> simplifiedPeaks = new ArrayList<long[]>(1);
+		// extract peaks for the roi
+
+		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {		
+			simplifiedPeaks.add(new long[] { Util.round(peak.getPosition(0)), Util.round(peak.getPosition(1)), Util.round(peak.getPosition(2)) });
+		}
+		
+		int numDimensions = img.getNumDimensions();
+		final long[] range = new long[] { supportRadius, supportRadius, supportRadius};
+
+		final long[] min = new long[numDimensions];
+		final long[] max = new long[numDimensions];
+		
+		for (int d = 0; d < numDimensions; ++d) {
+			min[d] = 0;
+			max[d] = img.getDimension(d) - 1;
+		}
+
+		IntervalView<FloatType> extendedRoi = Views
+				.interval(ImgLib1.wrapFloatToImgLib2(img), min, max);
+		
+		final Gradient derivative = new GradientPreCompute(extendedRoi);
+		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, extendedRoi, simplifiedPeaks, derivative, range);
+
+		Spot.ransac(spots, numIterations, maxError, inlierRatio);
+		for (final Spot spot : spots)
+			spot.computeAverageCostInliers();
+		
+		// TODO: make a 3D output engine
+		showRansacResultTable(spots);
+	}
+
 	// draw detected points
 	// TODO: create a table with the results here
 	protected void showRansacResult(final ArrayList<Spot> spots) {
@@ -554,6 +587,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			t.setZero();
 
 		Spot.drawRANSACArea(spots, ransacPreview);
+		drawImp.setDisplayRange(0, drawImp.getDisplayRangeMax());
 		drawImp.updateAndDraw();
 		drawDetectedSpots(spots, imp); // ? TODO: is this part correct?
 
@@ -571,7 +605,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		drawImp.setRoi(imp.getRoi());
 		drawDetectedSpots(spots, drawImp);
 		// showRansacLog(spots);
-		// showRansacResultTable(spots);
+		showRansacResultTable(spots);
 	}
 
 	protected void drawDetectedSpots(final ArrayList<Spot> spots, ImagePlus imagePlus) {
@@ -600,9 +634,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 		imagePlus.updateAndDraw();
 	}
-
-
-
 
 
 	protected void displayAdvancedGenericDialog(){
@@ -649,14 +680,15 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		else{
 			if (numDimensions == 3){
 				run3DAdvancedVersion();
+				// ImageJFunctions.show(source);
+				// Image<mpicbg.imglib.type.numeric.real.FloatType> imglocal = convertImage3D(source);
+				// mpicbg.imglib.image.display.imagej.ImageJFunctions.show(imglocal);
 			}
 			else{
 				System.out.println("Only 2D and 3D images are supported");
 			}
 		}		
 		System.out.println(ImageJFunctions.wrap(imp).numDimensions());
-
-
 
 
 		if (true) return;
@@ -671,6 +703,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		//
 		// Compute the Sigmas for the gaussian folding
 		//
+
+		int [] min = new int[]{(int)source.min(0), (int)source.min(1)};
+		int [] max = new int[]{(int)source.max(0), (int)source.max(1)};
+
+		rectangle = new Rectangle(min[0], min[1], max[0], max[1]);
+		img = extractImage(source, rectangle, extraSize);
 
 		final float k, K_MIN1_INV;
 		final float[] sigma, sigmaDiff;
@@ -695,12 +733,50 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		// peaks contain some values that are out of bounds
 		peaks = dog.getPeaks();
-		
+
 		runRansac();
 	}
 
-	protected void run3DAdvancedVersion(){
 
+	protected void run3DAdvancedVersion(){
+		//
+		// Compute the Sigmas for the gaussian folding
+		//
+
+		int [] min = new int[]{(int)source.min(0), (int)source.min(1), (int) source.min(2)};
+		int [] max = new int[]{(int)source.max(0), (int)source.max(1), (int) source.max(2)};
+
+		rectangle = new Rectangle(min[0], min[1], max[0], max[1]);
+		img = convertImage3D(source);
+
+
+		// 	imp.getImageStack().
+
+		final float k, K_MIN1_INV;
+		final float[] sigma, sigmaDiff;
+
+		k = (float) DetectionSegmentation.computeK(sensitivity);
+		K_MIN1_INV = DetectionSegmentation.computeKWeight(k);
+		sigma = DetectionSegmentation.computeSigma(k, this.sigma);
+		sigmaDiff = DetectionSegmentation.computeSigmaDiff(sigma, imageSigma);
+
+		// the upper boundary
+		this.sigma2 = sigma[1];
+
+		final DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType> dog = new DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType>(
+				img, new OutOfBoundsStrategyValueFactory<mpicbg.imglib.type.numeric.real.FloatType>(), sigmaDiff[0],
+				sigmaDiff[1], thresholdMin / 4, K_MIN1_INV);
+		dog.setKeepDoGImage(true);
+		dog.process();
+
+		final SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType> subpixel = new SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType>(
+				dog.getDoGImage(), dog.getPeaks());
+		subpixel.process();
+
+		// peaks contain some values that are out of bounds
+		peaks = dog.getPeaks();
+
+		runRansac3D();
 	}
 
 	// this one is old fashioned you need a generic dialog to solve this task
@@ -1312,6 +1388,46 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	/**
+	 * Converts 3D image to a user friendly format
+	 * 
+	 * @param source
+	 *            - the source image, a {@link Image} which is a copy of the
+	 *            {@link ImagePlus}
+	 * @param rectangle
+	 *            - the area of interest
+	 * @param extraSize
+	 *            - the extra size around so that detections at the border of
+	 *            the roi are not messed up
+	 * @return
+	 */
+	protected Image<mpicbg.imglib.type.numeric.real.FloatType> convertImage3D(
+			final FloatImagePlus<net.imglib2.type.numeric.real.FloatType> source) {
+
+		long[] dimensions = new long[source.numDimensions()];
+		source.dimensions(dimensions);
+
+		final Image<mpicbg.imglib.type.numeric.real.FloatType> img = new ImageFactory<mpicbg.imglib.type.numeric.real.FloatType>(
+				new mpicbg.imglib.type.numeric.real.FloatType(), new ArrayContainerFactory())
+				.createImage(new int[] {(int)dimensions[0], (int)dimensions[1], (int)dimensions[2]});
+
+		final int[] location = new int[source.numDimensions()];
+
+		final LocalizableCursor<mpicbg.imglib.type.numeric.real.FloatType> cursor = img.createLocalizableCursor();
+		final RandomAccess<net.imglib2.type.numeric.real.FloatType> positionable = source.randomAccess();
+
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			cursor.getPosition(location);
+
+			positionable.setPosition(location);
+
+			cursor.getType().set(positionable.get().get());
+		}
+
+		return img;
+	}
+
+	/**
 	 * Tests whether the ROI was changed and will recompute the preview
 	 * 
 	 * @author Stephan Preibisch
@@ -1714,9 +1830,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			System.out.println("image was not loaded");
 
 		imp.show();
-	// 	imp.setSlice(20);
-	
-		
+		// 	imp.setSlice(20);
+
+
 		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
 		new InteractiveRadialSymmetry().run(null);

@@ -23,6 +23,7 @@ import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import mpicbg.imglib.algorithm.peak.GaussianPeakFitterND;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
@@ -36,9 +37,12 @@ import mpicbg.imglib.util.Util;
 import mpicbg.imglib.wrapper.ImgLib1;
 import mpicbg.imglib.wrapper.ImgLib2;
 import mpicbg.models.Point;
+import mpicbg.models.PointMatch;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.TextFileAccess;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
+
+import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.ImagePlusAdapter;
@@ -50,6 +54,14 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
+
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.DecompositionSolver;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
+
 import spim.process.fusion.FusionHelper;
 
 import java.awt.Color;
@@ -339,7 +351,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	protected void ransacPreviewInitialize() {
 		int width = source.getWidth();
 		int height = source.getHeight();		
-		
+
 		ransacFloatProcessor = new FloatProcessor(width, height);
 		float[] pixels = (float[]) ransacFloatProcessor.getPixels();
 		drawImp = new ImagePlus("RANSAC preview", ransacFloatProcessor);
@@ -518,7 +530,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	protected void runRansac() {
-		final ArrayList<long[]> simplifiedPeaks = new ArrayList<long[]>(1);
+		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 		// extract peaks for the roi
 		copyPeaks(simplifiedPeaks);
 		int numDimensions = img.getNumDimensions();
@@ -542,11 +554,130 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final Gradient derivative = new GradientPreCompute(extendedRoi);
 		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, extendedRoi, simplifiedPeaks, derivative, range);
 
+
+		// add the values for the gauss fit 
+		final double[] peakValues = new double[spots.size()];
+
+		System.out.println("hello: " + peakValues.length);
+
+		// TODO: fix the gaussian fit! not 0 background
+		// 
+
+		backgroundSubtraction(spots.get(0), extendedRoi);
+
 		Spot.ransac(spots, numIterations, maxError, inlierRatio);
 		for (final Spot spot : spots)
 			spot.computeAverageCostInliers();
 		showRansacResult(spots);
 	}
+
+	protected void backgroundSubtraction(Spot spot, IntervalView<FloatType> roi){
+
+		int numDimensions = spot.numDimensions();
+
+		// double [] values = new double[(int)Math.pow(2, numDimensions)];
+		long [] min = new long [numDimensions]; // boundaries for the spot
+		long [] max = new long [numDimensions];
+
+
+		for (int d =0; d < numDimensions; ++d){
+			min[d] = Long.MAX_VALUE;
+			max[d] = Long.MIN_VALUE;
+		}
+
+		for (PointMatch pm : spot.candidates){
+			double [] coordinates = pm.getP1().getL();
+			for (int d = 0; d < coordinates.length; ++d){			 
+				if (min[d] > (long)coordinates[d]){
+					min[d] = (long)coordinates[d];
+				}
+				if (max[d] < (long)coordinates[d]){
+					max[d] = (long)coordinates[d];
+				}	
+			}		 
+		}
+
+
+		Img<FloatType> values =  null;
+
+		// this is a 2x2x..x2 hypercube it stores the values of the corners for plane fitting	
+		if (numDimensions == 2){
+			values = ArrayImgs.floats(new long[]{2, 2});
+		}			
+		if (numDimensions == 3){
+			values = ArrayImgs.floats(new long[]{2, 2, 2});
+		}		
+		if (numDimensions > 3){
+			System.out.println("Backgound Subtraction: the dimensionality is wrong");
+		}
+
+		// assign proper values to the corners)
+		RandomAccess<FloatType> ra = roi.randomAccess();
+		Cursor<FloatType> cursor = values.localizingCursor();
+//		while(cursor.hasNext()){
+//			cursor.fwd();
+//			long[] initialPos = new long[numDimensions];
+//			long[] position = new long[numDimensions];
+//			cursor.localize(position);			
+//
+//			for (int d = 0; d < numDimensions; ++d){
+//				initialPos[d] =  (position[d] == 1 ? max[d] : min[d]);  
+//				System.out.print(initialPos[d] + " ");
+//			}
+//			System.out.println();
+//
+//			ra.setPosition(initialPos);
+//			cursor.get().set(ra.get());		
+//
+//			System.out.println(cursor.get().get());
+//		}
+
+		double [][] A = new double[(int)values.size()][numDimensions + 1];
+		double [] b = new double[(int)values.size()];
+
+//		cursor.reset();
+		int rowCount = 0;
+		while(cursor.hasNext()){
+			cursor.fwd();
+			long[] initialPos = new long[numDimensions];
+			double[] position = new double[numDimensions];
+			cursor.localize(position);
+
+			// z y x 1 order
+			for (int d = 0; d < numDimensions; ++d){
+				initialPos[d] =  (position[d] == 1 ? max[d] : min[d]);
+				A[rowCount][numDimensions - d - 1] = (position[d] == 1 ? max[d] : min[d]);  
+			}
+			A[rowCount][numDimensions] = 1;
+			
+			ra.setPosition(initialPos);
+			b[rowCount] = ra.get().get();
+
+			System.out.println(b[rowCount]);
+			
+			rowCount++;
+		}
+//
+//		RealMatrix mA = new Array2DRowRealMatrix(A, false);
+//		RealVector mb = new ArrayRealVector(b, false);
+//		DecompositionSolver solver = new SingularValueDecomposition(mA).getSolver();
+//		RealVector mX =  solver.solve(mb);
+
+		// fit the plane 
+
+		// Toy example:
+		// have to construct a system of AX = B
+		// RealMatrix coefficients  = new Array2DRowRealMatrix(new double[2][2], false);
+		// DecompositionSolver solver = new SingularValueDecomposition(coefficients).getSolver();
+		// RealVector rhs = new ArrayRealVector(new double[2], false);
+		// RealVector solution =  solver.solve(rhs);
+
+
+		// subtract the values 
+		// return the result
+	}
+
+
 
 	protected void runRansac3D() {
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<long[]>(1);
@@ -555,13 +686,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {		
 			simplifiedPeaks.add(new long[] { Util.round(peak.getPosition(0)), Util.round(peak.getPosition(1)), Util.round(peak.getPosition(2)) });
 		}
-		
+
 		int numDimensions = img.getNumDimensions();
 		final long[] range = new long[] { supportRadius, supportRadius, supportRadius};
 
 		final long[] min = new long[numDimensions];
 		final long[] max = new long[numDimensions];
-		
+
 		for (int d = 0; d < numDimensions; ++d) {
 			min[d] = 0;
 			max[d] = img.getDimension(d) - 1;
@@ -569,14 +700,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		IntervalView<FloatType> extendedRoi = Views
 				.interval(ImgLib1.wrapFloatToImgLib2(img), min, max);
-		
+
 		final Gradient derivative = new GradientPreCompute(extendedRoi);
 		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, extendedRoi, simplifiedPeaks, derivative, range);
 
 		Spot.ransac(spots, numIterations, maxError, inlierRatio);
 		for (final Spot spot : spots)
 			spot.computeAverageCostInliers();
-		
+
 		// TODO: make a 3D output engine
 		showRansacResultTable(spots);
 	}
@@ -600,11 +731,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				if (displayMaxError < pm.getDistance())
 					displayMaxError = pm.getDistance();
 		}	
-		
+
 		drawImp.setDisplayRange(0, displayMaxError);
 		drawImp.updateAndDraw();
 		drawDetectedSpots(spots, imp); 
-			
+
 		Overlay overlay = drawImp.getOverlay();
 		if (overlay == null) {
 			// System.out.println("If this message pops up probably something
@@ -1832,14 +1963,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		//
 		// SimpleMultiThreading.threadHaltUnClean();
-		
-		
-		String pathMac = "/Users/kkolyva/Desktop/latest_desktop/multiple_dots.tif";
-		String pathUbuntu = "/home/milkyklim/eclipse.input/multiple_dots_2D.tif";
+
+
+		String pathMac = "/Users/kkolyva/Desktop/latest_desktop/";
+		String pathUbuntu = "/home/milkyklim/eclipse.input/";
 
 		String path;
-		
-		
+
+
 		String osName = System.getProperty("os.name").toLowerCase();
 		boolean isMacOs = osName.startsWith("mac os x");
 		if (isMacOs) 
@@ -1850,7 +1981,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			path = pathUbuntu;
 		}
 
-
+		path = path.concat("multiple_dots_2D.tif");
+		System.out.println(path);
 
 		ImagePlus imp = new Opener().openImage(path);
 

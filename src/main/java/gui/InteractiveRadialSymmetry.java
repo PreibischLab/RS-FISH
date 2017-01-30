@@ -1,6 +1,5 @@
 package gui;
 
-import fiji.stacks.Hyperstack_rearranger;
 import fiji.tool.SliceListener;
 import fiji.tool.SliceObserver;
 import fit.PointFunctionMatch;
@@ -23,7 +22,6 @@ import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import mpicbg.imglib.algorithm.peak.GaussianPeakFitterND;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
@@ -35,11 +33,8 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.util.Util;
 import mpicbg.imglib.wrapper.ImgLib1;
-import mpicbg.imglib.wrapper.ImgLib2;
-import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.io.TextFileAccess;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
 
 import net.imglib2.Cursor;
@@ -54,6 +49,8 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
+
+import net.imglib2.algorithm.dog.DifferenceOfGaussian;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -77,20 +74,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.awt.Button;
-import java.awt.Checkbox;
 
 public class InteractiveRadialSymmetry implements PlugIn {
 	// RANSAC parameters
@@ -189,7 +180,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	// necessary!
-	public int setup(String arg, ImagePlus imp) {
+	@SuppressWarnings("unused")
+	public int setup( String arg, ImagePlus imp) {
 		return 0;
 	}
 
@@ -315,7 +307,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			standardRectangle = new Rectangle(0, 0, imp.getWidth(), imp.getHeight());
 
 			imp.setRoi(standardRectangle);
-			Roi roi = imp.getRoi();
 
 			// copy the ImagePlus into an ArrayImage<FloatType> for faster access
 			source = convertToFloat(imp, channel, 0, minIntensityImage, maxIntensityImage);
@@ -331,12 +322,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 			displayAdvancedGenericDialog();
 			// 			displayManualGUI();
-
-			// TODO: you don't have to pre calculate anything 
-			// if user clicks apply -- then you are in!
-			// compute first version
-			// updatePreview(ValueChange.ALL);
-			// isStarted = true;
 
 			// check whenever roi is modified to update accordingly
 			// roiListener = new RoiListener();
@@ -357,10 +342,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		drawImp = new ImagePlus("RANSAC preview", ransacFloatProcessor);
 		ransacPreview = ArrayImgs.floats(pixels, width, height);
 		drawImp.show();
-	}
-
-	boolean showDialog(ImageProcessor ip) {
-		return true;
 	}
 
 	/**
@@ -385,7 +366,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final int h = imp.getHeight();
 		final int w = imp.getWidth();
 
-		final ArrayList<float[]> img = new ArrayList<float[]>();
+		final ArrayList<float[]> img = new ArrayList<>();
 
 		if (imp.getProcessor() instanceof FloatProcessor) {
 			for (int z = 0; z < imp.getNSlices(); ++z)
@@ -498,12 +479,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	// extended or shorten the size of the boundaries
-	protected <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> img, long[] size, long[] min,
+	protected <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> inImg, long[] size, long[] min,
 			long[] max, long[] fullImgMax) {
-		final int numDimensions = img.numDimensions();
+		final int numDimensions = inImg.numDimensions();
 		for (int d = 0; d < numDimensions; ++d) {
-			min[d] = img.min(d) - size[d];
-			max[d] = img.max(d) + size[d];
+			min[d] = inImg.min(d) - size[d];
+			max[d] = inImg.max(d) + size[d];
 			// check that it does not exceed bounds of the underlying image
 			min[d] = Math.max(min[d], 0);
 			max[d] = Math.min(max[d], fullImgMax[d]);
@@ -563,22 +544,59 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// TODO: fix the gaussian fit! not 0 background
 		// 
 
-		backgroundSubtraction(spots.get(0), extendedRoi);
+		// FIXME: !!! 
+		// to sub properly and fit this part into the previously writtren
+		// code you sub and add plane here 
+		// the problem is that back-addition is not done!
+		// TODO: CHECKED THE RESULT 
+		// IT IS CORRECT FOR 2D 
+		// THE RESULTS ARE SHOWN IN SOURCE NOT IMP
+		
+	
+		for(int j = 0; j < spots.size(); ++j){
+			double [] coefficients = new double [numDimensions + 1]; // z y x 1
+			double [] position = new double [numDimensions]; // x y z
+			long [] spotMin = new long [numDimensions];
+			long [] spotMax = new long [numDimensions]; 
+			
+ 			backgroundSubtraction(spots.get(j), extendedRoi, coefficients, spotMin, spotMax);
 
+			Cursor <FloatType> cursor = Views.interval(extendedRoi, spotMin, spotMax).localizingCursor();
+			// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
+			
+			while(cursor.hasNext()){
+				cursor.fwd();
+				cursor.localize(position);				
+				double total = coefficients[numDimensions];	
+				for (int d = 0; d < numDimensions; ++d){
+					total += coefficients[d]*position[numDimensions - d - 1]; 
+				}
+				
+				// DEBUG: 
+//				if (j == 0){
+//					System.out.println("before: " + cursor.get().get());
+//				}
+				
+				cursor.get().set(cursor.get().get() - (float)total);
+				// DEBUG:
+//				if (j == 0){
+//					System.out.println("after:  " + cursor.get().get());
+//				}
+				
+			}		
+		}
+		
+		ImageJFunctions.show(source).setTitle("This one is actually modified with background subtraction");
+		
 		Spot.ransac(spots, numIterations, maxError, inlierRatio);
 		for (final Spot spot : spots)
 			spot.computeAverageCostInliers();
 		showRansacResult(spots);
 	}
 
-	protected void backgroundSubtraction(Spot spot, IntervalView<FloatType> roi){
+	protected void backgroundSubtraction(Spot spot, IntervalView<FloatType> roi, double[] coefficients, long[] min, long[] max){
 
 		int numDimensions = spot.numDimensions();
-
-		// double [] values = new double[(int)Math.pow(2, numDimensions)];
-		long [] min = new long [numDimensions]; // boundaries for the spot
-		long [] max = new long [numDimensions];
-
 
 		for (int d =0; d < numDimensions; ++d){
 			min[d] = Long.MAX_VALUE;
@@ -596,17 +614,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				}	
 			}		 
 		}
-
-
-		Img<FloatType> values =  null;
-
-		// this is a 2x2x..x2 hypercube it stores the values of the corners for plane fitting	
-		if (numDimensions == 2){
-			values = ArrayImgs.floats(new long[]{2, 2});
-		}			
-		if (numDimensions == 3){
-			values = ArrayImgs.floats(new long[]{2, 2, 2});
-		}		
+		
+		// this is a 2x2x..x2 hypercube it stores the values of the corners for plane fitting
+		long [] valuesArray = new long[numDimensions];
+		for (int d = 0; d < numDimensions; ++d)
+			valuesArray[d] = 2;
+		
+		Img<FloatType> values = ArrayImgs.floats(valuesArray);			
 		if (numDimensions > 3){
 			System.out.println("Backgound Subtraction: the dimensionality is wrong");
 		}
@@ -614,28 +628,10 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// assign proper values to the corners)
 		RandomAccess<FloatType> ra = roi.randomAccess();
 		Cursor<FloatType> cursor = values.localizingCursor();
-//		while(cursor.hasNext()){
-//			cursor.fwd();
-//			long[] initialPos = new long[numDimensions];
-//			long[] position = new long[numDimensions];
-//			cursor.localize(position);			
-//
-//			for (int d = 0; d < numDimensions; ++d){
-//				initialPos[d] =  (position[d] == 1 ? max[d] : min[d]);  
-//				System.out.print(initialPos[d] + " ");
-//			}
-//			System.out.println();
-//
-//			ra.setPosition(initialPos);
-//			cursor.get().set(ra.get());		
-//
-//			System.out.println(cursor.get().get());
-//		}
-
+		
 		double [][] A = new double[(int)values.size()][numDimensions + 1];
 		double [] b = new double[(int)values.size()];
 
-//		cursor.reset();
 		int rowCount = 0;
 		while(cursor.hasNext()){
 			cursor.fwd();
@@ -653,34 +649,33 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			ra.setPosition(initialPos);
 			b[rowCount] = ra.get().get();
 
-			System.out.println(b[rowCount]);
-			
+			// System.out.println(b[rowCount]);			
 			rowCount++;
 		}
-//
-//		RealMatrix mA = new Array2DRowRealMatrix(A, false);
-//		RealVector mb = new ArrayRealVector(b, false);
-//		DecompositionSolver solver = new SingularValueDecomposition(mA).getSolver();
-//		RealVector mX =  solver.solve(mb);
-
-		// fit the plane 
-
-		// Toy example:
-		// have to construct a system of AX = B
-		// RealMatrix coefficients  = new Array2DRowRealMatrix(new double[2][2], false);
-		// DecompositionSolver solver = new SingularValueDecomposition(coefficients).getSolver();
-		// RealVector rhs = new ArrayRealVector(new double[2], false);
-		// RealVector solution =  solver.solve(rhs);
-
-
-		// subtract the values 
+		
+		RealMatrix mA = new Array2DRowRealMatrix(A, false);
+		RealVector mb = new ArrayRealVector(b, false);
+		DecompositionSolver solver = new SingularValueDecomposition(mA).getSolver();
+		RealVector mX =  solver.solve(mb);
+		
+		// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
+		
+		// FIXME: This part is done outside of the function for now
+		// subtract the values this part 
 		// return the result
+		// TODO: why proper copying is not working here ?! 
+		for (int i  = 0; i < coefficients.length; i++)
+			coefficients[i] = mX.toArray()[i];
+		
+		// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
+		
+		
 	}
 
 
 
 	protected void runRansac3D() {
-		final ArrayList<long[]> simplifiedPeaks = new ArrayList<long[]>(1);
+		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 		// extract peaks for the roi
 
 		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {		
@@ -804,19 +799,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	}
 
-	// TODO: here should be the algorithm for the 
-	// macro recordable function  
 	protected void runAdvancedVersion(){
-		// try to be as abstract as possible here 
-		// /most of the coed has to be rewritten because it was poorly done before
-
-
-		// test zone 
-		// System.out.println("img stack size" + imp.getImageStackSize());
-
-		Img<FloatType> imghello = ImageJFunctions.wrap(imp);
-		// ImageJFunctions.show(imghello);
-
 		int numDimensions = ImageJFunctions.wrap(imp).numDimensions(); 
 
 		if (numDimensions == 2){
@@ -834,16 +817,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			}
 		}		
 		System.out.println(ImageJFunctions.wrap(imp).numDimensions());
-
-
 		if (true) return;
-
-		// end test zone 
-
-
 	}
 
 
+	
+	// URGENT: TODO: FIXME: Rewrite this part using imglib2
 	protected void run2DAdvancedVersion(){
 		//
 		// Compute the Sigmas for the gaussian folding
@@ -866,13 +845,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// the upper boundary
 		this.sigma2 = sigma[1];
 
-		final DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType> dog = new DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType>(
+		final DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType> dog = new DifferenceOfGaussianReal1<>(
 				img, new OutOfBoundsStrategyValueFactory<mpicbg.imglib.type.numeric.real.FloatType>(), sigmaDiff[0],
 				sigmaDiff[1], thresholdMin / 4, K_MIN1_INV);
 		dog.setKeepDoGImage(true);
 		dog.process();
 
-		final SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType> subpixel = new SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType>(
+		final SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType> subpixel = new SubpixelLocalization<>(
 				dog.getDoGImage(), dog.getPeaks());
 		subpixel.process();
 
@@ -908,13 +887,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// the upper boundary
 		this.sigma2 = sigma[1];
 
-		final DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType> dog = new DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType>(
+		final DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType> dog = new DifferenceOfGaussianReal1<>(
 				img, new OutOfBoundsStrategyValueFactory<mpicbg.imglib.type.numeric.real.FloatType>(), sigmaDiff[0],
 				sigmaDiff[1], thresholdMin / 4, K_MIN1_INV);
 		dog.setKeepDoGImage(true);
 		dog.process();
 
-		final SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType> subpixel = new SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType>(
+		final SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType> subpixel = new SubpixelLocalization<>(
 				dog.getDoGImage(), dog.getPeaks());
 		subpixel.process();
 
@@ -1283,87 +1262,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.setVisible(true);
 	}
 
-
-	// this part is out-dated right know
-	/**
-	 * In this dialog user chooses where (s)he wants to use the interactive mode
-	 * or apply transformations with the given parameters
-	 * 
-	 */
-	protected void displayInitialDialog() {
-
-		// get list of image stacks
-		final int[] idList = WindowManager.getIDList();
-
-		if (idList == null || idList.length < 1) {
-			// TODO: Global return
-			IJ.error("You need at least one open image.");
-			return;
-		}
-
-		final String[] imgList = new String[idList.length];
-
-		for (int i = 0; i < idList.length; ++i)
-			imgList[i] = WindowManager.getImage(idList[i]).getTitle();
-
-		/**
-		 * The first dialog for choosing the images
-		 */
-		final GenericDialog gd1 = new GenericDialog("...");
-
-		if (defaultImg >= imgList.length)
-			defaultImg = 0;
-
-		gd1.addChoice("Image for detection", imgList, imgList[defaultImg]);
-		gd1.showDialog();
-
-		if (gd1.wasCanceled())
-			return;
-
-		// TODO: should be your global image
-		ImagePlus imp = WindowManager.getImage(idList[defaultImg = gd1.getNextChoiceIndex()]);
-		//
-		// // if one of the images is rgb or 8-bit color convert them to
-		// hyperstack
-		// imp = Hyperstack_rearranger.convertToHyperStack( imp );
-		//
-		// // test if you can deal with this image (2d? 3d? channels?
-		// timepoints?)
-		// 3d + time should be fine.
-		// right now works with 2d + time
-
-		//
-		// // second dialog for parameters
-		GenericDialog gd = new GenericDialog("Radial Symmetry");
-
-		gd.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
-		gd.addCheckbox("Do_additional_gauss_fit", defaultGauss);
-		gd.showDialog();
-		//
-		if (gd.wasCanceled())
-			return;
-		//
-		// int param = defaultParam = gd.getNextChoiceIndex();
-		// boolean gauss = defaultGauss = gd.getNextBoolean();
-		//
-		// if ( param == 0 )
-		// {
-		// // call your interactive
-		// }
-		// else
-		// {
-		// // another generic dialog that asks for all these number
-		// // Dog, RANSAC
-		// }
-		//
-		// // now run on the whole stack with the parameters
-		//
-		// if ( gauss )
-		// {
-		//
-		// }
-	}
-
 	public static float computeSigma2(final float sigma1, final int sensitivity) {
 		final float k = (float) DetectionSegmentation.computeK(sensitivity);
 		final float[] sigma = DetectionSegmentation.computeSigma(k, sigma1);
@@ -1405,6 +1303,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			return;
 		}
 
+		// TODO: Move DoG to the separate file
 		// compute the Difference Of Gaussian if necessary
 		if (peaks == null || roiChanged || change == ValueChange.SIGMA || change == ValueChange.SLICE
 				|| change == ValueChange.ALL) {
@@ -1423,13 +1322,15 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			// the upper boundary
 			this.sigma2 = sigma[1];
 
-			final DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType> dog = new DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType>(
+			final DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType> dog = new DifferenceOfGaussianReal1<>(
 					img, new OutOfBoundsStrategyValueFactory<mpicbg.imglib.type.numeric.real.FloatType>(), sigmaDiff[0],
 					sigmaDiff[1], thresholdMin / 4, K_MIN1_INV);
 			dog.setKeepDoGImage(true);
 			dog.process();
 
-			final SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType> subpixel = new SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType>(
+			
+			// TODO: FIXME: Change to the new imglib2 // imglib2-algorithm/src/main/java/net/imglib2/algorithm/localextrema/SubpixelLocalization.java
+			final SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType> subpixel = new SubpixelLocalization<>(
 					dog.getDoGImage(), dog.getPeaks());
 			subpixel.process();
 
@@ -1491,6 +1392,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	 *            the roi are not messed up
 	 * @return
 	 */
+	// TODO: you won't need this if you do everything in imglib2
 	protected Image<mpicbg.imglib.type.numeric.real.FloatType> extractImage(
 			final FloatImagePlus<net.imglib2.type.numeric.real.FloatType> source, final Rectangle rectangle,
 			final int extraSize) {
@@ -1872,98 +1774,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	// way the image will be processed
-	public static String[] paramChoice = new String[] { "Interactive", "Manual" };
+	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
 	public static int defaultParam = 0;
 	public static boolean defaultGauss = false;
 
 	public static void main(String[] args) {
 		new ImageJ();
-
-		// /*
-		// PrintWriter out = TextFileAccess.openFileWrite( new
-		// File("test.txt"));
-		// out.println( x + "\t" + y );
-		// out.close();
-		//
-		// BufferedReader in = TextFileAccess.openFileRead( new File("test.txt")
-		// );
-		// while ( in.ready() )
-		// {
-		// String line = in.readLine();
-		// }*/
-		//
-		// // get list of image stacks
-		// final int[] idList = WindowManager.getIDList();
-		//
-		// if ( idList == null || idList.length < 1 )
-		// {
-		// IJ.error( "You need at least one open image." );
-		// return;
-		// }
-		//
-		// final String[] imgList = new String[ idList.length ];
-		// for ( int i = 0; i < idList.length; ++i )
-		// imgList[ i ] = WindowManager.getImage(idList[i]).getTitle();
-		//
-		// /**
-		// * The first dialog for choosing the images
-		// */
-		// final GenericDialog gd1 = new GenericDialog( "..." );
-		//
-		// if ( defaultImg >= imgList.length )
-		// defaultImg = 0;
-		//
-		// gd1.addChoice("Image for detection", imgList, imgList[ defaultImg ]
-		// );
-		//
-		// if ( gd1.wasCanceled() )
-		// return;
-		//
-		// ImagePlus imp = WindowManager.getImage( idList[ defaultImg =
-		// gd1.getNextChoiceIndex() ] );
-		//
-		// // if one of the images is rgb or 8-bit color convert them to
-		// hyperstack
-		// imp = Hyperstack_rearranger.convertToHyperStack( imp );
-		//
-		// // test if you can deal with this image (2d? 3d? channels?
-		// timepoints?)s
-		//
-		// // second dialog for parameters
-		// GenericDialog gd = new GenericDialog( "Radial Symmetry" );
-		//
-		// gd.addChoice( "Define_Parameters", paramChoice, paramChoice[
-		// defaultParam ] );
-		// gd.addCheckbox( "Do_additional_gauss_fit", defaultGauss );
-		// gd.showDialog();
-		//
-		// if ( gd.wasCanceled() )
-		// return;
-		//
-		// int param = defaultParam = gd.getNextChoiceIndex();
-		// boolean gauss = defaultGauss = gd.getNextBoolean();
-		//
-		// if ( param == 0 )
-		// {
-		// // call your interactive
-		// }
-		// else
-		// {
-		// // another generic dialog that asks for all these number
-		// // Dog, RANSAC
-		// }
-		//
-		// // now run on the whole stack with the parameters
-		//
-		// if ( gauss )
-		// {
-		//
-		// }
-
-		//
-		// SimpleMultiThreading.threadHaltUnClean();
-
 
 		String pathMac = "/Users/kkolyva/Desktop/latest_desktop/";
 		String pathUbuntu = "/home/milkyklim/eclipse.input/";

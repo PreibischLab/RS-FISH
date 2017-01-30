@@ -33,11 +33,13 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.util.Util;
 import mpicbg.imglib.wrapper.ImgLib1;
+import mpicbg.imglib.wrapper.ImgLib2;
 import mpicbg.models.PointMatch;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
 
 import net.imglib2.Cursor;
+import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.ImagePlusAdapter;
@@ -82,6 +84,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.awt.Button;
+
+// additional libraries to switch from imglib1 to imglib2
+import 	net.imglib2.algorithm.dog.DogDetection;
 
 public class InteractiveRadialSymmetry implements PlugIn {
 	// RANSAC parameters
@@ -140,6 +145,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	Image<mpicbg.imglib.type.numeric.real.FloatType> img;
 	FloatImagePlus<net.imglib2.type.numeric.real.FloatType> source;
 	ArrayList<DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType>> peaks;
+	
+	ArrayList<Point> peaks2;
+	
 
 	Img<FloatType> img2;
 
@@ -860,6 +868,52 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		runRansac();
 	}
+	
+	
+	protected void run2DAdvancedVersion2(){
+		//
+		// Compute the Sigmas for the gaussian folding
+		//
+
+		int [] min = new int[]{(int)source.min(0), (int)source.min(1)};
+		int [] max = new int[]{(int)source.max(0), (int)source.max(1)};
+
+		// full image
+		rectangle = new Rectangle(min[0], min[1], max[0], max[1]);
+		img = extractImage(source, rectangle, extraSize);
+
+		final float k, K_MIN1_INV;
+		final float[] sigma, sigmaDiff;
+
+		k = (float) DetectionSegmentation.computeK(sensitivity);
+		K_MIN1_INV = DetectionSegmentation.computeKWeight(k);
+		sigma = DetectionSegmentation.computeSigma(k, this.sigma);
+		sigmaDiff = DetectionSegmentation.computeSigmaDiff(sigma, imageSigma);
+
+		// the upper boundary
+		this.sigma2 = sigma[1];
+
+		// TODO: figure out what is the second parameter here
+		// calibration is set to 1.1.1 but might be changed for anysotropic images
+		
+		final DogDetection<FloatType> dog2 = new DogDetection<>(ImgLib1.wrapFloatToImgLib2(img), new double[] {1,1}, sigma[0], sigma[1] , DogDetection.ExtremaType.MAXIMA,  thresholdMin / 4, false);
+		dog2.setKeepDoGImg(true);
+		peaks2 = dog2.getPeaks();
+		// peaks2 = dog2.getSubpixelPeaks();
+		
+		// dog.setKeepDoGImage(true);
+		// dog.process();
+
+		// final SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType> subpixel = new SubpixelLocalization<>(
+		// 		dog.getDoGImage(), dog.getPeaks());
+		// subpixel.process();
+
+		// peaks contain some values that are out of bounds
+		// peaks = dog.getPeaks();
+
+		runRansac();
+	}
+	
 
 
 	protected void run3DAdvancedVersion(){

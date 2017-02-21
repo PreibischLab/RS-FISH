@@ -175,7 +175,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	ArrayList<RefinedPeak<Point>> peaks3;
 
 	// TODO: attempt to move to imglib2? 
-	Img<FloatType> img2;
+	RandomAccessibleInterval<FloatType> img2;
 
 	Color originalColor = new Color(0.8f, 0.8f, 0.8f);
 	Color inactiveColor = new Color(0.95f, 0.95f, 0.95f);
@@ -269,6 +269,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	FloatProcessor ransacFloatProcessor;
 	ImagePlus drawImp;
 	Img<FloatType> ransacPreview;
+	
+	
+	//TODO: Variables for imglib1 to imglib2 conversion
+	RandomAccessibleInterval<FloatType> slice;
+	
 
 	// Img<FloatType> ransacImg;
 	// ImagePlus localImg;
@@ -280,6 +285,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	@Override
 	public void run(String arg) {
+		
+		// TODO: MOVE ALL RETURN STATEMENTS TO THE VARIABLE + ONE RETURN STATEMENT
+		
 
 		/*
 		 * Check if the image is there (+) Interactive/Offline gui if offline
@@ -287,6 +295,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		 * parameters are set run algo for the whole image or concede
 		 */
 		
+		// move this return
 		boolean initialDialogWasCanceled = showInitialDialog(/*imgTitle, parameterAdjustment, */);
 		if (initialDialogWasCanceled)
 			return; 
@@ -306,6 +315,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// 3d + time should be fine.
 		// right now works with 2d + time
 
+		//TODO move this return
 		if (imp.getType() == ImagePlus.COLOR_RGB || imp.getType() == ImagePlus.COLOR_256) {
 			IJ.log("Color images are not supported, please convert to 8, 16 or 32-bit grayscale");
 			return;
@@ -313,12 +323,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		// if interactive
 		if (parameterAdjustment.compareTo(paramChoice[1]) == 0) {
+			// TODO: is this rectangle really necessary
 			// here comes the normal work flow
 			standardRectangle = new Rectangle(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2,
 					imp.getHeight() / 2);
-
+			// TODO: Do I need this ROI?
 			Roi roi = imp.getRoi();
-
 			if (roi == null) {
 				// IJ.log( "A rectangular ROI is required to define the area..." );
 				imp.setRoi(standardRectangle);
@@ -334,6 +344,15 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			source = convertToFloat(imp, channel, 0, minIntensityImage, maxIntensityImage);
 			// TODO: maybe you have to adjust intensities
 			// img2 = ImageJFunctions.wrapFloat(imp);
+			
+
+			// TODO: this convertion looks totally fine!
+			int curSliceIndex = imp.getSlice();
+			imp.setPosition(channel, curSliceIndex, 0);
+			slice = ImageJFunctions.convertFloat(imp);
+			
+			// ImageJFunctions.show(slice).setTitle("slice");
+			// ImageJFunctions.show(slice).setTitle("source");
 
 			// initialize variables for interactive preview
 			// called before updatePreview() !
@@ -367,6 +386,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 			// copy the ImagePlus into an ArrayImage<FloatType> for faster access
 			source = convertToFloat(imp, channel, 0, minIntensityImage, maxIntensityImage);
+			
 			// TODO: maybe you have to adjust intensities
 			// img2 = ImageJFunctions.wrapFloat(imp);
 
@@ -399,6 +419,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		drawImp = new ImagePlus("RANSAC preview", ransacFloatProcessor);
 		ransacPreview = ArrayImgs.floats(pixels, width, height);
 		drawImp.show();
+		
+		// TODO: Remove the code above
+		ImageJFunctions.show(slice);
 	}
 
 	/**
@@ -1498,6 +1521,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	 *            - what did change
 	 */
 	protected void updatePreview(final ValueChange change) {
+		
+		// TODO: do you realyy need to set all these stuff here again?! 
+		
 		// check if Roi changed
 		boolean roiChanged = false;
 		Roi roi = imp.getRoi();
@@ -1508,13 +1534,24 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			roiChanged = true;
 		}
 
-		final Rectangle rect = roi.getBounds();
+		// Do I need this one or it is just the copy of the same thing?
+		// sourceRectangle or rectangle
+		final Rectangle rect = roi.getBounds(); 
 
 		if (roiChanged || img == null || change == ValueChange.SLICE || rect.getMinX() != rectangle.getMinX()
 				|| rect.getMaxX() != rectangle.getMaxX() || rect.getMinY() != rectangle.getMinY()
 				|| rect.getMaxY() != rectangle.getMaxY()) {
 			rectangle = rect;
 			img = extractImage(source, rectangle, extraSize);
+			
+			
+			mpicbg.imglib.image.display.imagej.ImageJFunctions.show(img).setTitle("img after roi changed");
+			
+			// make arrays -- min and max
+			// there is one wrong extra pixel, FIXME
+			img2 = Views.interval(slice, new long[]{rectangle.x - extraSize/2, rectangle.y - extraSize/2}, new long[]{rectangle.width + rectangle.x + extraSize/2, rectangle.height + rectangle.y + extraSize/2});
+			
+			ImageJFunctions.show(img2).setTitle("Fix me");		
 			roiChanged = true;
 		}
 

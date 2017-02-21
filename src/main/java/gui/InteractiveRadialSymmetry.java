@@ -622,7 +622,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			}		
 		}
 
-		ImageJFunctions.show(source).setTitle("This one is actually modified with background subtraction");
+		// ImageJFunctions.show(source).setTitle("This one is actually modified with background subtraction");
 
 		Spot.ransac(spots, numIterations, maxError, inlierRatio);
 		for (final Spot spot : spots)
@@ -706,7 +706,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			}		
 		}
 
-		ImageJFunctions.show(source).setTitle("This one is actually modified with background subtraction");
+		// ImageJFunctions.show(source).setTitle("This one is actually modified with background subtraction");
 
 		Spot.ransac(spots, numIterations, maxError, inlierRatio);
 		for (final Spot spot : spots)
@@ -863,7 +863,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		drawImp.setRoi(imp.getRoi());
 		drawDetectedSpots(spots, drawImp);
 		// showRansacLog(spots);
-		showRansacResultTable(spots);
+		// showRansacResultTable(spots);
 	}
 
 	protected void drawDetectedSpots(final ArrayList<Spot> spots, ImagePlus imagePlus) {
@@ -901,6 +901,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		GenericDialog gd = new GenericDialog("Set Stack Parameters");
 
 		// TODO: ADD LISTENERS FOR VALUES BELOW
+		
+		// gd.add
 		
 		gd.addNumericField("Sigma:", this.sigma, 2);
 		gd.addNumericField("Threshold:", this.threshold, 5);
@@ -1954,7 +1956,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	public static void main(String[] args) {
 		new ImageJ();
 
-		String pathMac = "/Users/kkolyva/Desktop/latest_desktop/";
+		String pathMac = "/Users/kkolyva/Downloads/Dies/IMG_1458gi.tif";// "/Users/kkolyva/Desktop/latest_desktop/";
 		String pathUbuntu = "/home/milkyklim/eclipse.input/";
 
 		String path;
@@ -1970,7 +1972,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			path = pathUbuntu;
 		}
 
-		path = path.concat("multiple_dots_2D.tif");
+		// path = path.concat("multiple_dots_2D.tif");
 		System.out.println(path);
 
 		ImagePlus imp = new Opener().openImage(path);

@@ -123,44 +123,74 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	float sigmaMax = 10f;
 	float thresholdMin = 0.0001f;
 	float thresholdMax = 1f;
-
 	// --------------------------------
+	
+	// Stuff above looks super relevant
+	// Only constants 
+	// keep all for now 
+	
+	
+	// TODO: Stack are necessary? 
 	ImageStack stack = null;
 	ImageStack stackOut = null;
+	
+	// TODO: keep these params
 	final int extraSize = 40;
 	final int scrollbarSize = 1000;
 	float imageSigma = 0.5f;
 
+	// TODO: keep these
 	double minIntensityImage = Double.NaN;
 	double maxIntensityImage = Double.NaN;
+	
+	// TODO: used to choose the image
+	// I really want to make them local!
+	String imgTitle; 
+	String parameterAdjustment;
 
+	
+	// TODO: after moving to imglib2 REMOVE
 	// steps per octave
 	public static int standardSensitivity = 4;
 	int sensitivity = standardSensitivity;
 
+	// TODO: keep observers
 	SliceObserver sliceObserver;
 	RoiListener roiListener;
+	
+	// TODO: you probably need one image plus object 
 	ImagePlus imp;
 	int channel = 0;
 	Rectangle rectangle;
+	
+	// TODO: Artifacts of some ridiculous conversion
+	// remove them when done
 	Image<mpicbg.imglib.type.numeric.real.FloatType> img;
 	FloatImagePlus<net.imglib2.type.numeric.real.FloatType> source;
+	// TODO: use RefinedPeaks instead 
 	ArrayList<DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType>> peaks;
 
+	// TODO: You will use this (both)
 	ArrayList<Point> peaks2;
 	ArrayList<RefinedPeak<Point>> peaks3;
 
-
+	// TODO: attempt to move to imglib2? 
 	Img<FloatType> img2;
 
 	Color originalColor = new Color(0.8f, 0.8f, 0.8f);
 	Color inactiveColor = new Color(0.95f, 0.95f, 0.95f);
+	
+	// TODO: what the fuck is the difference between standardRectangle and Rectangle
 	public Rectangle standardRectangle;
+	// TODO: keep listeners flags
 	boolean isComputing = false;
 	boolean isStarted = false;
 
+	// TODO: might just delete the lookForMaxima
+	// since it is always true
 	// boolean lookForMinima = false;
 	boolean lookForMaxima = true;
+	// TODO: Do you realy need all of the parameters? 
 
 	public static enum ValueChange {
 		SIGMA, THRESHOLD, SLICE, ROI, ALL, SUPPORTREGION, INLIERRATIO, MAXERROR
@@ -189,12 +219,53 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	public InteractiveRadialSymmetry() {
 	}
 
+	
+	protected boolean showInitialDialog(/*String imgTitle, String parameterAdjustment,*/){
+		boolean failed = false;
+		
+		// check that the are images
+		final int[] imgIdList = WindowManager.getIDList();
+		if (imgIdList == null || imgIdList.length < 1) {
+			IJ.error("You need at least one open image.");
+			failed = true;
+		}
+
+		// titles of the images		
+		final String[] imgList = new String[imgIdList.length];
+		for (int i = 0; i < imgIdList.length; ++i)
+			imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
+
+		// choose image to process and method to use
+		GenericDialog initialDialog = new GenericDialog("Initial Setup");
+
+		if (defaultImg >= imgList.length)
+			defaultImg = 0;
+
+		initialDialog.addChoice("Image for detection", imgList, imgList[defaultImg]);
+		initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
+		initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
+		initialDialog.showDialog();
+
+		// TODO: I want ot use these as local varaibles but used as global instead
+		// Save current index and current choice here 
+		imgTitle = initialDialog.getNextChoice();
+		parameterAdjustment = initialDialog.getNextChoice();
+		
+		if (initialDialog.wasCanceled())
+			failed = true;
+		
+		return failed;
+	}
+	
+	
 	// necessary!
 	@SuppressWarnings("unused")
 	public int setup( String arg, ImagePlus imp) {
 		return 0;
 	}
 
+	// TODO: I believe that these processor thing can be avoided
+	// Have a look what results you need and which you can skip
 	FloatProcessor ransacFloatProcessor;
 	ImagePlus drawImp;
 	Img<FloatType> ransacPreview;
@@ -215,38 +286,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		 * run the calcuclation else show dog gui show ransac gui after
 		 * parameters are set run algo for the whole image or concede
 		 */
-
-		// show dialog to choose processing type
-		// displayInitialDialog();
-
-		// check that the are images
-		final int[] imgIdList = WindowManager.getIDList();
-		if (imgIdList == null || imgIdList.length < 1) {
-			IJ.error("You need at least one open image.");
-			return;
-		}
-
-		final String[] imgList = new String[imgIdList.length];
-		for (int i = 0; i < imgIdList.length; ++i)
-			imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
-
-		GenericDialog initialDialog = new GenericDialog("Initial Setup");
-
-		if (defaultImg >= imgList.length)
-			defaultImg = 0;
-
-		initialDialog.addChoice("Image for detection", imgList, imgList[defaultImg]);
-		initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
-		initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
-		initialDialog.showDialog();
-
-		// Save current index and current choice here 
-		String imgTitle = initialDialog.getNextChoice();
-		String parameterAdjustment = initialDialog.getNextChoice();
-
-		if (initialDialog.wasCanceled())
-			return;
-
+		
+		boolean initialDialogWasCanceled = showInitialDialog(/*imgTitle, parameterAdjustment, */);
+		if (initialDialogWasCanceled)
+			return; 
+		
+		System.out.println("Image used : " + imgTitle);
+		System.out.println("Parameters : " + parameterAdjustment);
+		
 		if (imp == null)
 			imp = WindowManager.getImage(imgTitle);
 		// TODO: Check what of the stuff below is necessary
@@ -1956,7 +2003,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	public static void main(String[] args) {
 		new ImageJ();
 
-		String pathMac = "/Users/kkolyva/Downloads/Dies/IMG_1458gi.tif";// "/Users/kkolyva/Desktop/latest_desktop/";
+		String pathMac = "/Users/kkolyva/Desktop/latest_desktop/";// "/Users/kkolyva/Downloads/Dies/IMG_1458gi.tif";// 
 		String pathUbuntu = "/home/milkyklim/eclipse.input/";
 
 		String path;
@@ -1972,7 +2019,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			path = pathUbuntu;
 		}
 
-		// path = path.concat("multiple_dots_2D.tif");
+		path = path.concat("multiple_dots_2D.tif");
 		System.out.println(path);
 
 		ImagePlus imp = new Opener().openImage(path);

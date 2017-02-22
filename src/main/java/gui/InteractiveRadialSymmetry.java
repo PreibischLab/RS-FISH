@@ -590,10 +590,22 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
+
+
+	protected boolean isInside(RefinedPeak<Point> peak){
+		final float x = peak.getFloatPosition(0);
+		final float y = peak.getFloatPosition(1);
+
+		boolean res = (x >= rectangle.x && y >= rectangle.y && 
+				x < rectangle.width + rectangle.x - 1 && y < rectangle.height + rectangle.y - 1);
+
+		return res;
+	}
+
+
 	/**
 	 * Copy peaks found by DoG to lighter ArrayList (!imglib2)
-	 */
-	
+	 */	
 	// TODO: create function isInside()!!!!
 	protected void copyPeaks2(final ArrayList<long[]> simplifiedPeaks) {
 		for (final RefinedPeak<Point> peak : peaks3) {
@@ -604,11 +616,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 			// TODO: Adjust thresholding here 
 			// take only peaks that are inside of the image
-			if (/*Math.abs(peak.getValue().get()) > threshold &&*/ 
-					x >= rectangle.x && y >= rectangle.y && 
-					x < rectangle.width + rectangle.x - 1 && y < rectangle.height + rectangle.y - 1) {
-//				simplifiedPeaks.add(new long[] { Util.round(x) + rectangle.x - extraSize / 2,
-//						Util.round(y) + rectangle.y - extraSize / 2 });
+			//			if (/*Math.abs(peak.getValue().get()) > threshold &&*/ 
+			//					x >= rectangle.x && y >= rectangle.y && 
+			//					x < rectangle.width + rectangle.x - 1 && y < rectangle.height + rectangle.y - 1) {
+
+			if (isInside(peak)){	
+				//				simplifiedPeaks.add(new long[] { Util.round(x) + rectangle.x - extraSize / 2,
+				//						Util.round(y) + rectangle.y - extraSize / 2 });
 				// TODO: You might need to subtract sigma here !
 				simplifiedPeaks.add(new long[] { Util.round(x), Util.round(y)});
 
@@ -1682,15 +1696,18 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				final float y = peak.getFloatPosition(1);
 
 				// TODO: This check criteria is totally wrong!!!
-				
+
 				// take only peaks that are inside of the image
-						
-				if (/*Math.abs(peak.getValue().get()) > threshold &&*/ x >= rectangle.x && y >= rectangle.y
-						&& x < rectangle.x + rectangle.width - 1 && y <  rectangle.y + rectangle.height - 1) {
+
+				//				if (/*Math.abs(peak.getValue().get()) > threshold &&*/ x >= rectangle.x && y >= rectangle.y
+				//						&& x < rectangle.x + rectangle.width - 1 && y <  rectangle.y + rectangle.height - 1) {
+
+				if (isInside(peak)){
+
 					final OvalRoi or = new OvalRoi(Util.round(x - sigma),
 							Util.round(y - sigma), Util.round(sigma + sigma2),
 							Util.round(sigma + sigma2));
-							
+
 					or.setStrokeColor(Color.RED);
 					o.add(or);
 				}

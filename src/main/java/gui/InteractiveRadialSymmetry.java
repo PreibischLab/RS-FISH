@@ -593,6 +593,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	/**
 	 * Copy peaks found by DoG to lighter ArrayList (!imglib2)
 	 */
+	
+	// TODO: create function isInside()!!!!
 	protected void copyPeaks2(final ArrayList<long[]> simplifiedPeaks) {
 		for (final RefinedPeak<Point> peak : peaks3) {
 			// we always search for max peaks
@@ -603,11 +605,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			// TODO: Adjust thresholding here 
 			// take only peaks that are inside of the image
 			if (/*Math.abs(peak.getValue().get()) > threshold &&*/ 
-					x >= extraSize / 2 && y >= extraSize / 2 && 
-					x < rectangle.width + extraSize / 2 && y < rectangle.height + extraSize / 2) {
-				simplifiedPeaks.add(new long[] { Util.round(x) + rectangle.x - extraSize / 2,
-						Util.round(y) + rectangle.y - extraSize / 2 });
-				// simplifiedPeaks.add(new long[] { Util.round(x), Util.round(y)});
+					x >= rectangle.x && y >= rectangle.y && 
+					x < rectangle.width + rectangle.x - 1 && y < rectangle.height + rectangle.y - 1) {
+//				simplifiedPeaks.add(new long[] { Util.round(x) + rectangle.x - extraSize / 2,
+//						Util.round(y) + rectangle.y - extraSize / 2 });
+				// TODO: You might need to subtract sigma here !
+				simplifiedPeaks.add(new long[] { Util.round(x), Util.round(y)});
 
 				// TODO: is this calculation really correct ?! 
 				System.out.println("x : " + x + " vs " + (Util.round(x) + rectangle.x - extraSize / 2));	
@@ -1636,7 +1639,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			// peaks contain some values that are out of bounds
 			peaks = dog.getPeaks();
 
-
 			// TODO: this part is used for imglib2
 			// TODO: remove stuff from above imglib1
 			// TODO: figure out what is the second parameter here
@@ -1658,6 +1660,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	// extract peaks to show
+	// TODO: Check changes: but should be fine now
 	protected void showPeaks2() {
 
 		// TODO: this is imglib2 peaks
@@ -1673,7 +1676,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 
 		o.clear();
-
 		for (final RefinedPeak<Point> peak : peaks3) {
 			if (lookForMaxima) {
 				final float x = peak.getFloatPosition(0);
@@ -1686,12 +1688,10 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				if (/*Math.abs(peak.getValue().get()) > threshold &&*/ x >= rectangle.x && y >= rectangle.y
 						&& x < rectangle.x + rectangle.width - 1 && y <  rectangle.y + rectangle.height - 1) {
 					final OvalRoi or = new OvalRoi(Util.round(x - sigma),
-							Util.round(y -sigma), Util.round(sigma + sigma2),
+							Util.round(y - sigma), Util.round(sigma + sigma2),
 							Util.round(sigma + sigma2));
-					
-					
+							
 					or.setStrokeColor(Color.RED);
-
 					o.add(or);
 				}
 			}

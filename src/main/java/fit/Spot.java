@@ -15,6 +15,7 @@ import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
 import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
@@ -177,6 +178,10 @@ public class Spot implements RealLocalizable
 
 		final ArrayList< Spot > spots = new ArrayList<>();		
 		final RandomAccessible< T > infinite = Views.extendZero( fullImage );
+		
+		
+		ImageJFunctions.show(fullImage).setTitle("from Spot.java");
+		
 
 		for ( final long[] peak : peaks )
 		{	

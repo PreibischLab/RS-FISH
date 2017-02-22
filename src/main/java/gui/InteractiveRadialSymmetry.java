@@ -1682,13 +1682,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				// TODO: This check criteria is totally wrong!!!
 				
 				// take only peaks that are inside of the image
-				if (/*Math.abs(peak.getValue().get()) > threshold &&*/ x >= extraSize / 2 && y >= extraSize / 2
-						&& x < rectangle.width + extraSize / 2 && y < rectangle.height + extraSize / 2) {
-
-
-//					final OvalRoi or = new OvalRoi(Util.round(x - sigma) + rectangle.x - extraSize / 2,
-//							Util.round(y - sigma) + rectangle.y - extraSize / 2, Util.round(sigma + sigma2),
-//							Util.round(sigma + sigma2));
+						
+				if (/*Math.abs(peak.getValue().get()) > threshold &&*/ x >= rectangle.x && y >= rectangle.y
+						&& x < rectangle.x + rectangle.width - 1 && y <  rectangle.y + rectangle.height - 1) {
 					final OvalRoi or = new OvalRoi(Util.round(x - sigma),
 							Util.round(y -sigma), Util.round(sigma + sigma2),
 							Util.round(sigma + sigma2));

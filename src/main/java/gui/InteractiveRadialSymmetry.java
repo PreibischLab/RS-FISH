@@ -145,7 +145,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	RandomAccessibleInterval<FloatType> slice;
 	// TODO: attempt to move to imglib2? 
 	RandomAccessibleInterval<FloatType> img2;
-	
+
 	Color originalColor = new Color(0.8f, 0.8f, 0.8f);
 	Color inactiveColor = new Color(0.95f, 0.95f, 0.95f);
 
@@ -341,7 +341,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 
 	}
-	
+
 	// TODO: I believe that these processor thing can be avoided
 	// Have a look what results you need and which you can skip
 	// Looks like I have to use this for synchronization -- display <==> image
@@ -360,7 +360,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		int height = (int)slice.dimension(1);		
 
 		ransacFloatProcessor = new FloatProcessor(width, height);
-	
+
 		float[] pixels = (float[]) ransacFloatProcessor.getPixels();
 		impRansacError = new ImagePlus("RANSAC preview", ransacFloatProcessor);
 		ransacPreview = ArrayImgs.floats(pixels, width, height);
@@ -387,14 +387,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	}
 
-	
+
 	// TODO: REMOVE WHEN DONE
 	public static <T extends RealType<T>> void printCoordinates(RandomAccessibleInterval<T> img) {
 		for (int d = 0; d < img.numDimensions(); ++d) {
 			System.out.println("[" + img.min(d) + " " + img.max(d) + "] ");
 		}
 	}
-	
+
 
 	// extended or shorten the size of the boundaries
 	protected <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> inImg, long[] size, long[] min,
@@ -409,7 +409,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-	
+
 	// check if peak is inside of the rectangle
 	protected boolean isInside(RefinedPeak<Point> peak){
 		final float x = peak.getFloatPosition(0);
@@ -420,7 +420,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		return res;
 	}
-	
+
 
 	/**
 	 * Copy peaks found by DoG to lighter ArrayList (!imglib2)
@@ -438,7 +438,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-	
+
 	protected void runRansac2() {
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 
@@ -456,7 +456,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// TODO: check if you need this -1 here; comes from the imglib1	
 		for (int d = 0; d < numDimensions; ++d)
 			fullImgMax[d] = slice.dimension(d) - 1;
- 
+
 		IntervalView<FloatType> roi = Views.interval(slice, new long []{rectangle.x, rectangle.y}, new long []{rectangle.width + rectangle.x - 1, rectangle.height + rectangle.y - 1});
 		adjustBoundaries(roi, range, min, max, fullImgMax);
 
@@ -490,38 +490,38 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// FIXME: This part was correct need to uncomment it
 
 
-		//		for(int j = 0; j < spots.size(); ++j){
-		//			double [] coefficients = new double [numDimensions + 1]; // z y x 1
-		//			double [] position = new double [numDimensions]; // x y z
-		//			long [] spotMin = new long [numDimensions];
-		//			long [] spotMax = new long [numDimensions]; 
-		//
-		//			backgroundSubtraction(spots.get(j), extendedRoi, coefficients, spotMin, spotMax);
-		//
-		//			Cursor <FloatType> cursor = Views.interval(extendedRoi, spotMin, spotMax).localizingCursor();
-		//			// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
-		//
-		//			while(cursor.hasNext()){
-		//				cursor.fwd();
-		//				cursor.localize(position);				
-		//				double total = coefficients[numDimensions];	
-		//				for (int d = 0; d < numDimensions; ++d){
-		//					total += coefficients[d]*position[numDimensions - d - 1]; 
-		//				}
-		//
-		//				// DEBUG: 
-		//				//				if (j == 0){
-		//				//					System.out.println("before: " + cursor.get().get());
-		//				//				}
-		//
-		//				cursor.get().set(cursor.get().get() - (float)total);
-		//				// DEBUG:
-		//				//				if (j == 0){
-		//				//					System.out.println("after:  " + cursor.get().get());
-		//				//				}
-		//
-		//			}		
-		//		}
+		for(int j = 0; j < spots.size(); ++j){
+			double [] coefficients = new double [numDimensions + 1]; // z y x 1
+			double [] position = new double [numDimensions]; // x y z
+			long [] spotMin = new long [numDimensions];
+			long [] spotMax = new long [numDimensions]; 
+
+			backgroundSubtraction(spots.get(j), extendedRoi, coefficients, spotMin, spotMax);
+
+			Cursor <FloatType> cursor = Views.interval(extendedRoi, spotMin, spotMax).localizingCursor();
+			// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
+
+			while(cursor.hasNext()){
+				cursor.fwd();
+				cursor.localize(position);				
+				double total = coefficients[numDimensions];	
+				for (int d = 0; d < numDimensions; ++d){
+					total += coefficients[d]*position[numDimensions - d - 1]; 
+				}
+
+				// DEBUG: 
+				//				if (j == 0){
+				//					System.out.println("before: " + cursor.get().get());
+				//				}
+
+				cursor.get().set(cursor.get().get() - (float)total);
+				// DEBUG:
+				//				if (j == 0){
+				//					System.out.println("after:  " + cursor.get().get());
+				//				}
+
+			}		
+		}
 
 		// ImageJFunctions.show(source).setTitle("This one is actually modified with background subtraction");
 
@@ -530,6 +530,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			spot.computeAverageCostInliers();
 		showRansacResult(spots);
 	}
+	
 
 	protected void backgroundSubtraction(Spot spot, IntervalView<FloatType> roi, double[] coefficients, long[] min, long[] max){
 
@@ -613,14 +614,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 		// extract peaks for the roi
 
-//		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {		
-//			simplifiedPeaks.add(new long[] { Util.round(peak.getPosition(0)), Util.round(peak.getPosition(1)), Util.round(peak.getPosition(2)) });
-//		}
-		
+		//		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {		
+		//			simplifiedPeaks.add(new long[] { Util.round(peak.getPosition(0)), Util.round(peak.getPosition(1)), Util.round(peak.getPosition(2)) });
+		//		}
+
 		for (final RefinedPeak<Point> peak : peaks3){
 			simplifiedPeaks.add(new long[] { Util.round(peak.getDoublePosition(0)), Util.round(peak.getDoublePosition(1)), Util.round(peak.getDoublePosition(2)) });
 		}
-		
+
 		int numDimensions = img2.numDimensions();
 		final long[] range = new long[] { supportRadius, supportRadius, supportRadius};
 
@@ -653,7 +654,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// make draw global
 		for (final FloatType t : Views.iterable(ransacPreview))
 			t.setZero();
-		
+
 		// TODO: Automated coloring fails on Mac but works fine on ubuntu
 		Spot.drawRANSACArea(spots, ransacPreview);
 
@@ -671,21 +672,21 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		impRansacError.updateAndDraw();
 		drawDetectedSpots(spots, imp); 
 
-// 		ImageJFunctions.show(ransacPreview).setTitle("2nd fig");
-				
-//		Overlay overlay = drawImp.getOverlay();
-//		if (overlay == null) {
-			// System.out.println("If this message pops up probably something
-			// went wrong.");
-//			overlay = new Overlay();
-//			drawImp.setOverlay(overlay);
-//		}
+		// 		ImageJFunctions.show(ransacPreview).setTitle("2nd fig");
 
-//		overlay.clear();
+		//		Overlay overlay = drawImp.getOverlay();
+		//		if (overlay == null) {
+		// System.out.println("If this message pops up probably something
+		// went wrong.");
+		//			overlay = new Overlay();
+		//			drawImp.setOverlay(overlay);
+		//		}
+
+		//		overlay.clear();
 		// TODO: Figure out if setSlice is necessary at all
 		// drawImp.setSlice(imp.getSlice());
-//		drawImp.setRoi(imp.getRoi());
-//		drawDetectedSpots(spots, drawImp);
+		//		drawImp.setRoi(imp.getRoi());
+		//		drawDetectedSpots(spots, drawImp);
 		// showRansacLog(spots);
 		// showRansacResultTable(spots);
 	}
@@ -805,9 +806,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		//
 		// Compute the Sigmas for the gaussian folding
 		//
-		
+
 		img2 = ImageJFunctions.wrap(imp);
-		
+
 		int [] min = new int[]{(int)img2.min(0), (int)img2.min(1), (int)img2.min(2)};
 		int [] max = new int[]{(int)img2.max(0), (int)img2.max(1), (int)img2.max(2)};
 
@@ -823,7 +824,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		// the upper boundary
 		this.sigma2 = sigma[1];
-		
+
 		final DogDetection<FloatType> dog2 = new DogDetection<>(img2, new double[] {1, 1, 1}, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  thresholdMin / 4, false);
 		dog2.setKeepDoGImg(true);
 		peaks2 = dog2.getPeaks();
@@ -1199,15 +1200,15 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	protected boolean isRoiChanged(final ValueChange change, final Rectangle rect, boolean roiChanged){
 		boolean res = false;
-		
+
 		res = roiChanged || img2 == null || change == ValueChange.SLICE || rect.getMinX() != rectangle.getMinX()
 				|| rect.getMaxX() != rectangle.getMaxX() || rect.getMinY() != rectangle.getMinY()
 				|| rect.getMaxY() != rectangle.getMaxY();
-		
+
 		return res;
 	}
-	
-	
+
+
 	/**
 	 * Updates the Preview with the current parameters (sigma, threshold, roi,
 	 * slice number + RANSAC parameters)
@@ -1319,28 +1320,28 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		o.clear();
 		for (final RefinedPeak<Point> peak : peaks3) {
-		
-				final float x = peak.getFloatPosition(0);
-				final float y = peak.getFloatPosition(1);
 
-				// TODO: This check criteria is totally wrong!!!
+			final float x = peak.getFloatPosition(0);
+			final float y = peak.getFloatPosition(1);
 
-				// take only peaks that are inside of the image
+			// TODO: This check criteria is totally wrong!!!
 
-				//				if (/*Math.abs(peak.getValue().get()) > threshold &&*/ x >= rectangle.x && y >= rectangle.y
-				//						&& x < rectangle.x + rectangle.width - 1 && y <  rectangle.y + rectangle.height - 1) {
+			// take only peaks that are inside of the image
 
-				if (isInside(peak) && peak.getValue() > threshold){ // I guess the peak.getValue function returns the value in scale-space
+			//				if (/*Math.abs(peak.getValue().get()) > threshold &&*/ x >= rectangle.x && y >= rectangle.y
+			//						&& x < rectangle.x + rectangle.width - 1 && y <  rectangle.y + rectangle.height - 1) {
 
-					final OvalRoi or = new OvalRoi(Util.round(x - sigma),
-							Util.round(y - sigma), Util.round(sigma + sigma2),
-							Util.round(sigma + sigma2));
+			if (isInside(peak) && peak.getValue() > threshold){ // I guess the peak.getValue function returns the value in scale-space
 
-					or.setStrokeColor(Color.RED);
-					o.add(or);
-				}
+				final OvalRoi or = new OvalRoi(Util.round(x - sigma),
+						Util.round(y - sigma), Util.round(sigma + sigma2),
+						Util.round(sigma + sigma2));
+
+				or.setStrokeColor(Color.RED);
+				o.add(or);
 			}
-		
+		}
+
 	}
 
 

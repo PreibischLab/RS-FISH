@@ -177,11 +177,7 @@ public class Spot implements RealLocalizable
 			maxDim[ d ] = (int)fullImage.max(d) - 2;
 
 		final ArrayList< Spot > spots = new ArrayList<>();		
-		final RandomAccessible< T > infinite = Views.extendZero( fullImage );
-		
-		
-		ImageJFunctions.show(fullImage).setTitle("from Spot.java");
-		
+		final RandomAccessible< T > infinite = Views.extendZero( fullImage );		
 
 		for ( final long[] peak : peaks )
 		{	

@@ -750,18 +750,20 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	protected void runAdvancedVersion(){
 		int numDimensions = slice.numDimensions(); 
+		
+		unifiedRunAdvancedVersion();
 
-		if (numDimensions == 2){
-			run2DAdvancedVersion2();
-		}
-		else{
-			if (numDimensions == 3){
-				run3DAdvancedVersion();
-			}
-			else{
-				System.out.println("Only 2D and 3D images are supported");
-			}
-		}		
+//		if (numDimensions == 2){
+//			run2DAdvancedVersion2();
+//		}
+//		else{
+//			if (numDimensions == 3){
+//				run3DAdvancedVersion();
+//			}
+//			else{
+//				System.out.println("Only 2D and 3D images are supported");
+//			}
+//		}		
 		if (true) return;
 	}
 
@@ -834,6 +836,54 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		runRansac3D();
 	}
 
+	// unified call for nD cases 
+	// FIXME: now only 2D and 3D  
+	protected void unifiedRunAdvancedVersion(){
+		
+		img2 = ImageJFunctions.wrap(imp);
+		
+		long [] min = new long [img2.numDimensions()]; 
+		long [] max = new long [img2.numDimensions()]; 
+		
+		for (int d = 0; d < img2.numDimensions(); ++d){
+			min[d] = img2.min(d);
+			max[d] = img2.max(d);
+		}
+		
+		// full image
+		rectangle = new Rectangle((int)min[0], (int)min[1], (int)max[0], (int)max[1]);
+		
+		final float k, K_MIN1_INV;
+		final float[] sigma, sigmaDiff;
+		
+		k = (float) DetectionSegmentation.computeK(sensitivity);
+		K_MIN1_INV = DetectionSegmentation.computeKWeight(k);
+		sigma = DetectionSegmentation.computeSigma(k, this.sigma);
+		sigmaDiff = DetectionSegmentation.computeSigmaDiff(sigma, imageSigma);
+		
+		// the upper boundary
+		this.sigma2 = sigma[1];
+		
+		double [] calibration = new double [img2.numDimensions()];
+		for (int d = 0; d < img2.numDimensions(); ++d)
+			calibration[d] = 1;
+		
+		final DogDetection<FloatType> dog2 = new DogDetection<>(img2, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  thresholdMin / 4, false);
+		dog2.setKeepDoGImg(true);
+		peaks2 = dog2.getPeaks();
+		peaks3 = dog2.getSubpixelPeaks();
+		
+		if (img2.numDimensions() == 2)
+			runRansac2();
+		else
+			if(img2.numDimensions() == 3)
+				runRansac3D();
+			else
+				System.out.println("Wrong dimensionality. Currently supported 2D/3D!");
+				
+	}
+	
+	
 	// this one is old fashioned you need a generic dialog to solve this task
 	// it can macro recorded 
 	/**
@@ -1670,7 +1720,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			path = pathUbuntu;
 		}
 
-		path = path.concat("multiple_dots_2D.tif");
+		path = path.concat("multiple_dots.tif");
 		System.out.println(path);
 
 		ImagePlus imp = new Opener().openImage(path);

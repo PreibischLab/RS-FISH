@@ -131,8 +131,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 
 	// TODO: Stack are necessary? 
-	ImageStack stack = null;
-	ImageStack stackOut = null;
+	// ImageStack stack = null;
+	// ImageStack stackOut = null;
 
 	// TODO: keep these params
 	final int extraSize = 40;
@@ -165,15 +165,17 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	// TODO: Artifacts of some ridiculous conversion
 	// remove them when done
-	Image<mpicbg.imglib.type.numeric.real.FloatType> img;
-	FloatImagePlus<net.imglib2.type.numeric.real.FloatType> source;
+	// Image<mpicbg.imglib.type.numeric.real.FloatType> img;
+	// FloatImagePlus<net.imglib2.type.numeric.real.FloatType> source;
 	// TODO: use RefinedPeaks instead 
-	ArrayList<DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType>> peaks;
+	// ArrayList<DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType>> peaks;
 
 	// TODO: You will use this (both)
 	ArrayList<Point> peaks2;
 	ArrayList<RefinedPeak<Point>> peaks3;
 
+	//TODO: Variables for imglib1 to imglib2 conversion
+	RandomAccessibleInterval<FloatType> slice;
 	// TODO: attempt to move to imglib2? 
 	RandomAccessibleInterval<FloatType> img2;
 
@@ -269,10 +271,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	FloatProcessor ransacFloatProcessor;
 	ImagePlus drawImp;
 	Img<FloatType> ransacPreview;
-
-
-	//TODO: Variables for imglib1 to imglib2 conversion
-	RandomAccessibleInterval<FloatType> slice;
 
 
 	// Img<FloatType> ransacImg;
@@ -429,97 +427,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		ImageJFunctions.show(slice);
 	}
 
-	/**
-	 * Normalize and make a copy of the {@link ImagePlus} into an
-	 * {@link Image}&gt;FloatType&lt; for faster access when copying the slices
-	 * 
-	 * @param imp
-	 *            - the {@link ImagePlus} input image
-	 * @return - the normalized copy [0...1]
-	 */
-	public static FloatImagePlus<net.imglib2.type.numeric.real.FloatType> convertToFloat(final ImagePlus imp,
-			int channel, int timepoint) {
-		return convertToFloat(imp, channel, timepoint, Double.NaN, Double.NaN);
-	}
-
-	public static FloatImagePlus<net.imglib2.type.numeric.real.FloatType> convertToFloat(final ImagePlus imp,
-			int channel, int timepoint, final double min, final double max) {
-		// stupid 1-offset of imagej
-		channel++;
-		timepoint++;
-
-		final int h = imp.getHeight();
-		final int w = imp.getWidth();
-
-		final ArrayList<float[]> img = new ArrayList<>();
-
-		if (imp.getProcessor() instanceof FloatProcessor) {
-			for (int z = 0; z < imp.getNSlices(); ++z)
-				img.add(((float[]) imp.getStack().getProcessor(imp.getStackIndex(channel, z + 1, timepoint))
-						.getPixels()).clone());
-		} else if (imp.getProcessor() instanceof ByteProcessor) {
-			for (int z = 0; z < imp.getNSlices(); ++z) {
-				final byte[] pixels = (byte[]) imp.getStack().getProcessor(imp.getStackIndex(channel, z + 1, timepoint))
-						.getPixels();
-				final float[] pixelsF = new float[pixels.length];
-
-				for (int i = 0; i < pixels.length; ++i)
-					pixelsF[i] = pixels[i] & 0xff;
-
-				img.add(pixelsF);
-			}
-		} else if (imp.getProcessor() instanceof ShortProcessor) {
-			for (int z = 0; z < imp.getNSlices(); ++z) {
-				final short[] pixels = (short[]) imp.getStack()
-						.getProcessor(imp.getStackIndex(channel, z + 1, timepoint)).getPixels();
-				final float[] pixelsF = new float[pixels.length];
-
-				for (int i = 0; i < pixels.length; ++i)
-					pixelsF[i] = pixels[i] & 0xffff;
-
-				img.add(pixelsF);
-			}
-		} else // some color stuff or so
-		{
-			for (int z = 0; z < imp.getNSlices(); ++z) {
-				final ImageProcessor ip = imp.getStack().getProcessor(imp.getStackIndex(channel, z + 1, timepoint));
-				final float[] pixelsF = new float[w * h];
-
-				int i = 0;
-
-				for (int y = 0; y < h; ++y)
-					for (int x = 0; x < w; ++x)
-						pixelsF[i++] = ip.getPixelValue(x, y);
-
-				img.add(pixelsF);
-			}
-		}
-
-		final FloatImagePlus<net.imglib2.type.numeric.real.FloatType> i = createImgLib2(img, w, h);
-
-		if (Double.isNaN(min) || Double.isNaN(max) || Double.isInfinite(min) || Double.isInfinite(max) || min == max)
-			FusionHelper.normalizeImage(i);
-		else
-			FusionHelper.normalizeImage(i, (float) min, (float) max);
-		return i;
-	}
-
-	public static FloatImagePlus<net.imglib2.type.numeric.real.FloatType> createImgLib2(final List<float[]> img,
-			final int w, final int h) {
-		final ImagePlus imp;
-
-		if (img.size() > 1) {
-			final ImageStack stack = new ImageStack(w, h);
-			for (int z = 0; z < img.size(); ++z)
-				stack.addSlice(new FloatProcessor(w, h, img.get(z)));
-			imp = new ImagePlus("ImgLib2 FloatImagePlus (3d)", stack);
-		} else {
-			imp = new ImagePlus("ImgLib2 FloatImagePlus (2d)", new FloatProcessor(w, h, img.get(0)));
-		}
-
-		return ImagePlusAdapter.wrapFloat(imp);
-	}
-
 	// this function will show the result of RANSAC
 	// TODO: deprecated / remove
 	protected void showRansacLog(final ArrayList<Spot> spots) {
@@ -576,25 +483,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-	/**
-	 * Copy peaks found by DoG to lighter ArrayList
-	 */
-	protected void copyPeaks(final ArrayList<long[]> simplifiedPeaks) {
-		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {
-			if (peak.isMax() && lookForMaxima) {
-				final float x = peak.getPosition(0);
-				final float y = peak.getPosition(1);
-
-				// take only peaks that are inside of the image
-				if (Math.abs(peak.getValue().get()) > threshold && x >= extraSize / 2 && y >= extraSize / 2
-						&& x < rectangle.width + extraSize / 2 && y < rectangle.height + extraSize / 2) {
-					simplifiedPeaks.add(new long[] { Util.round(x) + rectangle.x - extraSize / 2,
-							Util.round(y) + rectangle.y - extraSize / 2 });
-				}
-			}
-		}
-	}
-
 	protected boolean isInside(RefinedPeak<Point> peak){
 		final float x = peak.getFloatPosition(0);
 		final float y = peak.getFloatPosition(1);
@@ -604,7 +492,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		return res;
 	}
-
 
 	/**
 	 * Copy peaks found by DoG to lighter ArrayList (!imglib2)
@@ -728,91 +615,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			spot.computeAverageCostInliers();
 		showRansacResult(spots);
 	}
-
-//	protected void runRansac() {
-//		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
-//		// extract peaks for the roi
-//		copyPeaks(simplifiedPeaks);
-//		int numDimensions = img.getNumDimensions();
-//
-//		Rectangle sourceRectangle = new Rectangle(0, 0, source.getWidth(), source.getHeight());
-//		final long[] range = new long[] { supportRadius, supportRadius };
-//
-//		final long[] min = new long[numDimensions];
-//		final long[] max = new long[numDimensions];
-//		// hard coded because I there is no better function
-//		final long[] fullImgMax = new long[numDimensions];
-//		fullImgMax[0] = source.getWidth() - 1;
-//		fullImgMax[1] = source.getHeight() - 1;
-//
-//		IntervalView<FloatType> roi = Views.offset(ImgLib1.wrapFloatToImgLib2(extractImage(source, rectangle, 0)),
-//				new long[] { -rectangle.x, -rectangle.y });
-//		adjustBoundaries(roi, range, min, max, fullImgMax);
-//
-//		IntervalView<FloatType> extendedRoi = Views
-//				.interval(ImgLib1.wrapFloatToImgLib2(extractImage(source, sourceRectangle, 0)), min, max);
-//		final Gradient derivative = new GradientPreCompute(extendedRoi);
-//
-//		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, extendedRoi, simplifiedPeaks, derivative, range);
-//
-//
-//		// add the values for the gauss fit 
-//		final double[] peakValues = new double[spots.size()];
-//
-//		System.out.println("hello: " + peakValues.length);
-//
-//		// TODO: fix the gaussian fit! not 0 background
-//		// 
-//
-//		// FIXME: !!! 
-//		// to sub properly and fit this part into the previously writtren
-//		// code you sub and add plane here 
-//		// the problem is that back-addition is not done!
-//		// TODO: CHECKED THE RESULT 
-//		// IT IS CORRECT FOR 2D 
-//		// THE RESULTS ARE SHOWN IN SOURCE NOT IMP
-//
-//
-//		for(int j = 0; j < spots.size(); ++j){
-//			double [] coefficients = new double [numDimensions + 1]; // z y x 1
-//			double [] position = new double [numDimensions]; // x y z
-//			long [] spotMin = new long [numDimensions];
-//			long [] spotMax = new long [numDimensions]; 
-//
-//			backgroundSubtraction(spots.get(j), extendedRoi, coefficients, spotMin, spotMax);
-//
-//			Cursor <FloatType> cursor = Views.interval(extendedRoi, spotMin, spotMax).localizingCursor();
-//			// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
-//
-//			while(cursor.hasNext()){
-//				cursor.fwd();
-//				cursor.localize(position);				
-//				double total = coefficients[numDimensions];	
-//				for (int d = 0; d < numDimensions; ++d){
-//					total += coefficients[d]*position[numDimensions - d - 1]; 
-//				}
-//
-//				// DEBUG: 
-//				//				if (j == 0){
-//				//					System.out.println("before: " + cursor.get().get());
-//				//				}
-//
-//				cursor.get().set(cursor.get().get() - (float)total);
-//				// DEBUG:
-//				//				if (j == 0){
-//				//					System.out.println("after:  " + cursor.get().get());
-//				//				}
-//
-//			}		
-//		}
-//
-//		// ImageJFunctions.show(source).setTitle("This one is actually modified with background subtraction");
-//
-//		Spot.ransac(spots, numIterations, maxError, inlierRatio);
-//		for (final Spot spot : spots)
-//			spot.computeAverageCostInliers();
-//		showRansacResult(spots);
-//	}
 
 	protected void backgroundSubtraction(Spot spot, IntervalView<FloatType> roi, double[] coefficients, long[] min, long[] max){
 
@@ -1048,48 +850,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		if (true) return;
 	}
 
-
-
-	// URGENT: TODO: FIXME: Rewrite this part using imglib2
-//	protected void run2DAdvancedVersion(){
-//		//
-//		// Compute the Sigmas for the gaussian folding
-//		//
-//
-//		int [] min = new int[]{(int)source.min(0), (int)source.min(1)};
-//		int [] max = new int[]{(int)source.max(0), (int)source.max(1)};
-//
-//		rectangle = new Rectangle(min[0], min[1], max[0], max[1]);
-//		img = extractImage(source, rectangle, extraSize);
-//
-//		final float k, K_MIN1_INV;
-//		final float[] sigma, sigmaDiff;
-//
-//		k = (float) DetectionSegmentation.computeK(sensitivity);
-//		K_MIN1_INV = DetectionSegmentation.computeKWeight(k);
-//		sigma = DetectionSegmentation.computeSigma(k, this.sigma);
-//		sigmaDiff = DetectionSegmentation.computeSigmaDiff(sigma, imageSigma);
-//
-//		// the upper boundary
-//		this.sigma2 = sigma[1];
-//
-//		final DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType> dog = new DifferenceOfGaussianReal1<>(
-//				img, new OutOfBoundsStrategyValueFactory<mpicbg.imglib.type.numeric.real.FloatType>(), sigmaDiff[0],
-//				sigmaDiff[1], thresholdMin / 4, K_MIN1_INV);
-//		dog.setKeepDoGImage(true);
-//		dog.process();
-//
-//		final SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType> subpixel = new SubpixelLocalization<>(
-//				dog.getDoGImage(), dog.getPeaks());
-//		subpixel.process();
-//
-//		// peaks contain some values that are out of bounds
-//		peaks = dog.getPeaks();
-//
-//		runRansac();
-//	}
-
-
 	protected void run2DAdvancedVersion2(){
 		//
 		// Compute the Sigmas for the gaussian folding
@@ -1312,7 +1072,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.addWindowListener(new FrameListener(frame));
 		frame.setVisible(true);
 	}
-
 
 	/**
 	 * Instantiates the panel for adjusting the RANSAC parameters
@@ -1665,133 +1424,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-	protected void showPeaks() {
-		Overlay o = imp.getOverlay();
-
-		if (o == null) {
-			o = new Overlay();
-			imp.setOverlay(o);
-		}
-
-		o.clear();
-
-		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {
-			if (peak.isMax() && lookForMaxima) {
-				final float x = peak.getPosition(0);
-				final float y = peak.getPosition(1);
-
-				// take only peaks that are inside of the image
-				if (Math.abs(peak.getValue().get()) > threshold && x >= extraSize / 2 && y >= extraSize / 2
-						&& x < rectangle.width + extraSize / 2 && y < rectangle.height + extraSize / 2) {
-					final OvalRoi or = new OvalRoi(Util.round(x - sigma) + rectangle.x - extraSize / 2,
-							Util.round(y - sigma) + rectangle.y - extraSize / 2, Util.round(sigma + sigma2),
-							Util.round(sigma + sigma2));
-
-					if (peak.isMax())
-						or.setStrokeColor(Color.green);
-					else if (peak.isMin())
-						or.setStrokeColor(Color.red);
-
-					o.add(or);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Extract the current 2d region of interest from the source image
-	 * 
-	 * @param source
-	 *            - the source image, a {@link Image} which is a copy of the
-	 *            {@link ImagePlus}
-	 * @param rectangle
-	 *            - the area of interest
-	 * @param extraSize
-	 *            - the extra size around so that detections at the border of
-	 *            the roi are not messed up
-	 * @return
-	 */
-	// TODO: you won't need this if you do everything in imglib2
-	//	protected Image<mpicbg.imglib.type.numeric.real.FloatType> extractImage(
-	//			final FloatImagePlus<net.imglib2.type.numeric.real.FloatType> source, final Rectangle rectangle,
-	//			final int extraSize) {
-	//		final Image<mpicbg.imglib.type.numeric.real.FloatType> img = new ImageFactory<mpicbg.imglib.type.numeric.real.FloatType>(
-	//				new mpicbg.imglib.type.numeric.real.FloatType(), new ArrayContainerFactory())
-	//				.createImage(new int[] { rectangle.width + extraSize, rectangle.height + extraSize });
-	//
-	//		final int offsetX = rectangle.x - extraSize / 2;
-	//		final int offsetY = rectangle.y - extraSize / 2;
-	//
-	//		final int[] location = new int[source.numDimensions()];
-	//
-	//		if (location.length > 2)
-	//			location[2] = (imp.getCurrentSlice() - 1) / imp.getNChannels();
-	//
-	//		final LocalizableCursor<mpicbg.imglib.type.numeric.real.FloatType> cursor = img.createLocalizableCursor();
-	//		final RandomAccess<net.imglib2.type.numeric.real.FloatType> positionable;
-	//
-	//		if (offsetX >= 0 && offsetY >= 0 && offsetX + img.getDimension(0) < source.dimension(0)
-	//				&& offsetY + img.getDimension(1) < source.dimension(1)) {
-	//			// it is completely inside so we need no outofbounds for copying
-	//			positionable = source.randomAccess();
-	//		} else {
-	//			positionable = Views.extendMirrorSingle(source).randomAccess();
-	//		}
-	//
-	//		while (cursor.hasNext()) {
-	//			cursor.fwd();
-	//			cursor.getPosition(location);
-	//
-	//			location[0] += offsetX;
-	//			location[1] += offsetY;
-	//
-	//			positionable.setPosition(location);
-	//
-	//			cursor.getType().set(positionable.get().get());
-	//		}
-	//
-	//		return img;
-	//	}
-
-	/**
-	 * Converts 3D image to a user friendly format
-	 * 
-	 * @param source
-	 *            - the source image, a {@link Image} which is a copy of the
-	 *            {@link ImagePlus}
-	 * @param rectangle
-	 *            - the area of interest
-	 * @param extraSize
-	 *            - the extra size around so that detections at the border of
-	 *            the roi are not messed up
-	 * @return
-	 */
-	//	protected Image<mpicbg.imglib.type.numeric.real.FloatType> convertImage3D(
-	//			final FloatImagePlus<net.imglib2.type.numeric.real.FloatType> source) {
-	//
-	//		long[] dimensions = new long[source.numDimensions()];
-	//		source.dimensions(dimensions);
-	//
-	//		final Image<mpicbg.imglib.type.numeric.real.FloatType> img = new ImageFactory<mpicbg.imglib.type.numeric.real.FloatType>(
-	//				new mpicbg.imglib.type.numeric.real.FloatType(), new ArrayContainerFactory())
-	//				.createImage(new int[] {(int)dimensions[0], (int)dimensions[1], (int)dimensions[2]});
-	//
-	//		final int[] location = new int[source.numDimensions()];
-	//
-	//		final LocalizableCursor<mpicbg.imglib.type.numeric.real.FloatType> cursor = img.createLocalizableCursor();
-	//		final RandomAccess<net.imglib2.type.numeric.real.FloatType> positionable = source.randomAccess();
-	//
-	//		while (cursor.hasNext()) {
-	//			cursor.fwd();
-	//			cursor.getPosition(location);
-	//
-	//			positionable.setPosition(location);
-	//
-	//			cursor.getType().set(positionable.get().get());
-	//		}
-	//
-	//		return img;
-	//	}
 
 	/**
 	 * Tests whether the ROI was changed and will recompute the preview

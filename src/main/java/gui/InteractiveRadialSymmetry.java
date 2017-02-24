@@ -728,32 +728,30 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		GenericDialog gd = new GenericDialog("Set Stack Parameters");
 
-		// TODO: ADD LISTENERS FOR VALUES BELOW
-
-		// gd.add
-
 		gd.addNumericField("Sigma:", this.sigma, 2);
 		gd.addNumericField("Threshold:", this.threshold, 5);
-		gd.addNumericField("Support Region Radius:", this.supportRadius, 2);
+		gd.addNumericField("Support Region Radius:", this.supportRadius, 0);
 		gd.addNumericField("Inlier Ratio:", this.inlierRatio, 2);
 		gd.addNumericField("Max Error:", this.maxError, 2);
-
 
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
 
 		// TODO: if canceled was not clicked perform the processing of the image
-		// apply algorithm to the whole stack or @D image depending on what ever we have here
-
+		// TODO: Check that the value in the field is not NaN		
+		sigma = (float)gd.getNextNumber();
+		threshold = (float)gd.getNextNumber();
+		supportRadius = (int)Math.round(gd.getNextNumber());
+		inlierRatio = (float)gd.getNextNumber();
+		maxError = (float)gd.getNextNumber();
+		
 		runAdvancedVersion();
-
 	}
 
 	protected void runAdvancedVersion(){
 		int numDimensions = slice.numDimensions(); 
 
 		if (numDimensions == 2){
-
 			run2DAdvancedVersion2();
 		}
 		else{

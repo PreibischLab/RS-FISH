@@ -531,12 +531,15 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		showRansacResult(spots);
 	}
 	
+	
+	// TODO: at this point only uses corner values
+	// TODO: extend to using the boundary values too
 
 	protected void backgroundSubtraction(Spot spot, IntervalView<FloatType> roi, double[] coefficients, long[] min, long[] max){
 
 		int numDimensions = spot.numDimensions();
 
-		for (int d =0; d < numDimensions; ++d){
+		for (int d = 0; d < numDimensions; ++d){
 			min[d] = Long.MAX_VALUE;
 			max[d] = Long.MIN_VALUE;
 		}

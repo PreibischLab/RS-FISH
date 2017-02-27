@@ -110,7 +110,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	// keep all for now 
 
 	// TODO: keep these params
-	final int extraSize = 40;
+	int extraSize = supportRadius;
 	final int scrollbarSize = 1000;
 	float imageSigma = 0.5f;
 
@@ -282,7 +282,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				return;
 			}
 			// TODO: this convertion looks totally fine!
-			imp.setPosition(channel, imp.getSlice(), 0);
+			imp.setPosition(channel, imp.getSlice(), 1);
 			slice = ImageJFunctions.convertFloat(imp);			
 			// initialize variables for interactive preview
 			// called before updatePreview() !
@@ -542,15 +542,16 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		IntervalView<FloatType> roi = Views.interval(img2, new long []{rectangle.x, rectangle.y}, new long []{rectangle.width + rectangle.x - 1, rectangle.height + rectangle.y - 1});
 		adjustBoundaries(roi, range, min, max, fullImgMax);
-		
+
+		System.out.println("Adjusted roi:");
 		for (int d = 0; d < 2; ++d)
 			System.out.println("[" + min[d] + " " + max[d] + "]");
-		
+
 
 		// TODO: some bounding strategy might be necessary
 		final Gradient derivative = new GradientPreCompute(img2);
 		final ArrayList<Spot> spots = Spot.extractSpots(roi, img2, simplifiedPeaks, derivative, range);
-		
+
 		// add the values for the gauss fit 
 		final double[] peakValues = new double[spots.size()];
 
@@ -570,38 +571,38 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// FIXME: This part was correct need to uncomment it
 
 
-		//		for(int j = 0; j < spots.size(); ++j){
-		//			double [] coefficients = new double [numDimensions + 1]; // z y x 1
-		//			double [] position = new double [numDimensions]; // x y z
-		//			long [] spotMin = new long [numDimensions];
-		//			long [] spotMax = new long [numDimensions]; 
-		//
-		//			backgroundSubtraction(spots.get(j), extendedRoi, coefficients, spotMin, spotMax);
-		//
-		//			Cursor <FloatType> cursor = Views.interval(extendedRoi, spotMin, spotMax).localizingCursor();
-		//			// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
-		//
-		//			while(cursor.hasNext()){
-		//				cursor.fwd();
-		//				cursor.localize(position);				
-		//				double total = coefficients[numDimensions];	
-		//				for (int d = 0; d < numDimensions; ++d){
-		//					total += coefficients[d]*position[numDimensions - d - 1]; 
-		//				}
-		//
-		//				// DEBUG: 
-		//				//				if (j == 0){
-		//				//					System.out.println("before: " + cursor.get().get());
-		//				//				}
-		//
-		//				cursor.get().set(cursor.get().get() - (float)total);
-		//				// DEBUG:
-		//				//				if (j == 0){
-		//				//					System.out.println("after:  " + cursor.get().get());
-		//				//				}
-		//
-		//			}		
-		//		}
+		for(int j = 0; j < spots.size(); ++j){
+			double [] coefficients = new double [numDimensions + 1]; // z y x 1
+			double [] position = new double [numDimensions]; // x y z
+			long [] spotMin = new long [numDimensions];
+			long [] spotMax = new long [numDimensions]; 
+
+			backgroundSubtraction(spots.get(j), img2, coefficients, spotMin, spotMax);
+
+			Cursor <FloatType> cursor = Views.interval(img2, spotMin, spotMax).localizingCursor();
+			// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
+
+			while(cursor.hasNext()){
+				cursor.fwd();
+				cursor.localize(position);				
+				double total = coefficients[numDimensions];	
+				for (int d = 0; d < numDimensions; ++d){
+					total += coefficients[d]*position[numDimensions - d - 1]; 
+				}
+
+				// DEBUG: 
+//								if (j == 0){
+//									System.out.println("before: " + cursor.get().get());
+//								}
+
+				cursor.get().set(cursor.get().get() - (float)total);
+				// DEBUG:
+//								if (j == 0){
+//									System.out.println("after:  " + cursor.get().get());
+//								}
+
+			}		
+		}
 
 		// ImageJFunctions.show(source).setTitle("This one is actually modified with background subtraction");
 
@@ -616,7 +617,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	// TODO: at this point only uses corner values
 	// TODO: extend to using the boundary values too
 
-	protected void backgroundSubtraction(Spot spot, IntervalView<FloatType> roi, double[] coefficients, long[] min, long[] max){
+	protected void backgroundSubtraction(Spot spot, RandomAccessibleInterval<FloatType> img22, double[] coefficients, long[] min, long[] max){
 
 		int numDimensions = spot.numDimensions();
 
@@ -648,7 +649,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 
 		// assign proper values to the corners)
-		RandomAccess<FloatType> ra = roi.randomAccess();
+		RandomAccess<FloatType> ra = img22.randomAccess();
 		Cursor<FloatType> cursor = values.localizingCursor();
 
 		double [][] A = new double[(int)values.size()][numDimensions + 1];
@@ -692,44 +693,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
 
 
-	}
-
-	protected void runRansac3D() {
-		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
-		// extract peaks for the roi
-
-		//		for (final DifferenceOfGaussianPeak<mpicbg.imglib.type.numeric.real.FloatType> peak : peaks) {		
-		//			simplifiedPeaks.add(new long[] { Util.round(peak.getPosition(0)), Util.round(peak.getPosition(1)), Util.round(peak.getPosition(2)) });
-		//		}
-
-		for (final RefinedPeak<Point> peak : peaks3){
-			simplifiedPeaks.add(new long[] { Util.round(peak.getDoublePosition(0)), Util.round(peak.getDoublePosition(1)), Util.round(peak.getDoublePosition(2)) });
-		}
-
-		int numDimensions = img2.numDimensions();
-		final long[] range = new long[] { supportRadius, supportRadius, supportRadius};
-
-		final long[] min = new long[numDimensions];
-		final long[] max = new long[numDimensions];
-
-		for (int d = 0; d < numDimensions; ++d) {
-			min[d] = 0;
-			max[d] = img2.dimension(d) - 1;
-		}
-
-		// TODO: MIRROR STRATEGY ?!
-		IntervalView<FloatType> extendedRoi = Views
-				.interval(img2, min, max); 
-
-		final Gradient derivative = new GradientPreCompute(extendedRoi);
-		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, extendedRoi, simplifiedPeaks, derivative, range);
-
-		Spot.ransac(spots, numIterations, maxError, inlierRatio);
-		for (final Spot spot : spots)
-			spot.computeAverageCostInliers();
-
-		// TODO: make a 3D output engine
-		showRansacResultTable(spots);
 	}
 
 	protected void runRansacAdvanced23D(){
@@ -845,7 +808,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		imagePlus.updateAndDraw();
 	}
 
-
 	protected void displayAdvancedGenericDialog(){
 		// final String title = "Set Stack Parameters";
 		// final int width = 260, height = 200; 
@@ -877,25 +839,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		unifiedRunAdvancedVersion();
 
-		//		if (numDimensions == 2){
-		//			run2DAdvancedVersion2();
-		//		}
-		//		else{
-		//			if (numDimensions == 3){
-		//				run3DAdvancedVersion();
-		//			}
-		//			else{
-		//				System.out.println("Only 2D and 3D images are supported");
-		//			}
-		//		}		
 		if (true) return;
 	}
 
 	// TODO: Copy code from here to give some feedback to user
 
-
 	// unified call for nD cases 
-	// FIXME: now only 2D and 3D  
 	protected void unifiedRunAdvancedVersion(){
 
 		img2 = ImageJFunctions.wrap(imp);
@@ -938,7 +887,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			System.out.println("Wrong dimensionality. Currently supported 2D/3D!");
 
 	}
-
 
 	// this one is old fashioned you need a generic dialog to solve this task
 	// it can macro recorded 
@@ -1344,13 +1292,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		if (isRoiChanged(change, rect, roiChanged)) {
 			rectangle = rect;
 
+			long [] min = new long []{rectangle.x - extraSize, rectangle.y - extraSize};
+			long [] max = new long []{rectangle.width + rectangle.x + extraSize - 1, rectangle.height + rectangle.y + extraSize - 1};
 
-			long [] min = new long []{rectangle.x - extraSize/2, rectangle.y - extraSize/2};
-			long [] max = new long []{rectangle.width + rectangle.x + extraSize/2 - 1, rectangle.height + rectangle.y + extraSize/2 - 1};
-
+			System.out.println("Rectangle - extraSize/2");
 			for (int d = 0; d < 2; ++d)
 				System.out.println("[" + min[d] + " " + max[d] + "]");
-
 
 			if (slice.numDimensions() == 3)
 				//TODO: might be +1 or -1
@@ -1414,7 +1361,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		peaks3 = dog2.getSubpixelPeaks();
 
 	}
-
 
 	// extract peaks to show
 	// TODO: Check changes: but should be fine now

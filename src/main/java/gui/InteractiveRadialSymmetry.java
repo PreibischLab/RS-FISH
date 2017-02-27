@@ -232,7 +232,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		// TODO: MOVE ALL RETURN STATEMENTS TO THE VARIABLE + ONE RETURN STATEMENT
 
-
 		/*
 		 * Check if the image is there (+) Interactive/Offline gui if offline
 		 * run the calcuclation else show dog gui show ransac gui after
@@ -278,33 +277,25 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				imp.setRoi(standardRectangle);
 				roi = imp.getRoi();
 			}
-
 			if (roi.getType() != Roi.RECTANGLE) {
 				IJ.log("Only rectangular rois are supported...");
 				return;
 			}
-
 			// TODO: this convertion looks totally fine!
 			imp.setPosition(channel, imp.getSlice(), 0);
 			slice = ImageJFunctions.convertFloat(imp);
-
 			// initialize variables for interactive preview
 			// called before updatePreview() !
 			ransacPreviewInitialize();
-
 			// show the interactive kit
 			displaySliders();
-
 			// show the interactive ransac kit
 			displayRansacSliders();
-
 			// add listener to the imageplus slice slider
 			sliceObserver = new SliceObserver(imp, new ImagePlusListener());
-
 			// compute first version
 			updatePreview(ValueChange.ALL);
 			isStarted = true;
-
 			// check whenever roi is modified to update accordingly
 			roiListener = new RoiListener();
 			imp.getCanvas().addMouseListener(roiListener);
@@ -315,26 +306,19 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			// TODO: another gui window pops up: to set up the parameters
 			// here comes the normal work flow
 			standardRectangle = new Rectangle(0, 0, imp.getWidth(), imp.getHeight());
-
 			imp.setRoi(standardRectangle);
-
 			// TODO: maybe you have to adjust intensities
 			// img2 = ImageJFunctions.wrapFloat(imp);
-
 			int curSliceIndex = imp.getSlice();
 			imp.setPosition(channel, curSliceIndex, 0);
 			slice = ImageJFunctions.convertFloat(imp);
-
 			// initialize variables for the result
 			ransacPreviewInitialize();
-
 			// TODO: here you want to run the algorithm for every slice without interaction with the image
 			// You need something like apply to stack button here
 			// which you run once without any listeners
-
 			displayAdvancedGenericDialog();
 			// 			displayManualGUI();
-
 			// check whenever roi is modified to update accordingly
 			// roiListener = new RoiListener();
 			// imp.getCanvas().addMouseListener(roiListener);
@@ -395,7 +379,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-
 	// extended or shorten the size of the boundaries
 	protected <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> inImg, long[] size, long[] min,
 			long[] max, long[] fullImgMax) {
@@ -409,7 +392,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-
 	// check if peak is inside of the rectangle
 	protected boolean isInside(RefinedPeak<Point> peak){
 		final float x = peak.getFloatPosition(0);
@@ -420,7 +402,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		return res;
 	}
-
 
 	/**
 	 * Copy peaks found by DoG to lighter ArrayList (!imglib2)
@@ -530,7 +511,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			spot.computeAverageCostInliers();
 		showRansacResult(spots);
 	}
-	
 	
 	// TODO: at this point only uses corner values
 	// TODO: extend to using the boundary values too
@@ -1258,7 +1238,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		return res;
 	}
-
+	
 
 	/**
 	 * Updates the Preview with the current parameters (sigma, threshold, roi,
@@ -1320,28 +1300,19 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			// the upper boundary
 			this.sigma2 = sigma[1];
 
-			//			final DifferenceOfGaussianReal1<mpicbg.imglib.type.numeric.real.FloatType> dog = new DifferenceOfGaussianReal1<>(
-			//					img, new OutOfBoundsStrategyValueFactory<mpicbg.imglib.type.numeric.real.FloatType>(), sigmaDiff[0],
-			//					sigmaDiff[1], thresholdMin / 4, K_MIN1_INV);
-			//			dog.setKeepDoGImage(true);
-			//			dog.process();
-			// TODO: FIXME: Change to the new imglib2 // imglib2-algorithm/src/main/java/net/imglib2/algorithm/localextrema/SubpixelLocalization.java
-			//			final SubpixelLocalization<mpicbg.imglib.type.numeric.real.FloatType> subpixel = new SubpixelLocalization<>(
-			//					dog.getDoGImage(), dog.getPeaks());
-			//			subpixel.process();
-			//
-			//			// peaks contain some values that are out of bounds
-			//			peaks = dog.getPeaks();
-
 			// TODO: this part is used for imglib2
-			// TODO: remove stuff from above imglib1
 			// TODO: figure out what is the second parameter here
 			// calibration is set to 1.1.1 but might be changed for anysotropic images
+			
+			ImageJFunctions.show(img2).setTitle("Greetings");
 
 			final DogDetection<FloatType> dog2 = new DogDetection<>(img2, new double[] {1,1}, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  thresholdMin / 4, false);
+			
 			dog2.setKeepDoGImg(true);
 			peaks2 = dog2.getPeaks();
 			peaks3 = dog2.getSubpixelPeaks();
+			
+			// runDogDetection();
 
 		}
 
@@ -1352,14 +1323,37 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		runRansac2();
 		isComputing = false;
 	}
+	
+	protected void runDogDetection(){
+		
+		final float k, K_MIN1_INV;
+		final float[] sigma, sigmaDiff;
+		
+		k = (float) DetectionSegmentation.computeK(sensitivity);
+		K_MIN1_INV = DetectionSegmentation.computeKWeight(k);
+		sigma = DetectionSegmentation.computeSigma(k, this.sigma);
+		sigmaDiff = DetectionSegmentation.computeSigmaDiff(sigma, imageSigma);
+		
+		// the upper boundary
+		this.sigma2 = sigma[1];
+		
+		double [] calibration = new double [img2.numDimensions()];
+		for (int d = 0; d < img2.numDimensions(); ++d)
+			calibration[d] = 1;
+		
+		final DogDetection<FloatType> dog2 = new DogDetection<>(img2, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  thresholdMin / 4, false);
+		dog2.setKeepDoGImg(true);
+		peaks2 = dog2.getPeaks();
+		peaks3 = dog2.getSubpixelPeaks();
+		
+	}
+	
+	
+	
 
 	// extract peaks to show
 	// TODO: Check changes: but should be fine now
 	protected void showPeaks2() {
-
-		// TODO: this is imglib2 peaks
-		// TODO: remove imglib function 
-		// showPeak
 		System.out.println("showPeaks(): imglib2: Done!");
 
 		Overlay o = imp.getOverlay();
@@ -1376,12 +1370,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			final float y = peak.getFloatPosition(1);
 
 			// TODO: This check criteria is totally wrong!!!
-
-			// take only peaks that are inside of the image
-
-			//				if (/*Math.abs(peak.getValue().get()) > threshold &&*/ x >= rectangle.x && y >= rectangle.y
-			//						&& x < rectangle.x + rectangle.width - 1 && y <  rectangle.y + rectangle.height - 1) {
-
 			if (isInside(peak) && peak.getValue() > threshold){ // I guess the peak.getValue function returns the value in scale-space
 
 				final OvalRoi or = new OvalRoi(Util.round(x - sigma),

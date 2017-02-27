@@ -542,18 +542,19 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		IntervalView<FloatType> roi = Views.interval(img2, new long []{rectangle.x, rectangle.y}, new long []{rectangle.width + rectangle.x - 1, rectangle.height + rectangle.y - 1});
 		adjustBoundaries(roi, range, min, max, fullImgMax);
-
-		// ImageJFunctions.show(img2).setTitle("img2");
-		// ImageJFunctions.show(roi).setTitle("roi");
+		
+		for (int d = 0; d < 2; ++d)
+			System.out.println("[" + min[d] + " " + max[d] + "]");
+		
 
 		// TODO: some bounding strategy might be necessary
 		final Gradient derivative = new GradientPreCompute(img2);
 		final ArrayList<Spot> spots = Spot.extractSpots(roi, img2, simplifiedPeaks, derivative, range);
-
+		
 		// add the values for the gauss fit 
 		final double[] peakValues = new double[spots.size()];
 
-		System.out.println("hello: " + peakValues.length);
+		System.out.println("Peaks found: " + peakValues.length);
 
 		// TODO: fix the gaussian fit! not 0 background
 		// 

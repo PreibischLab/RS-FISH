@@ -401,8 +401,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final float x = peak.getFloatPosition(0);
 		final float y = peak.getFloatPosition(1);
 
-		boolean res = (x >= rectangle.x && y >= rectangle.y && 
-				x < rectangle.width + rectangle.x - 1 && y < rectangle.height + rectangle.y - 1);
+		boolean res = (x >= (rectangle.x) && y >= (rectangle.y) && 
+				x < (rectangle.width + rectangle.x - 1) && y < (rectangle.height + rectangle.y - 1));
 
 		return res;
 	}
@@ -416,13 +416,15 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		// TODO: here should be the threshold for the peak values
 		for (final RefinedPeak<Point> peak : peaks3){
-			// TODO: if threshold
-			for (int d = 0; d < peak.numDimensions(); ++d){
-				coordinates[d] = Util.round(peak.getDoublePosition(d));
+			// TODO: add threshold value
+			if (isInside(peak)){
+				for (int d = 0; d < peak.numDimensions(); ++d){
+					coordinates[d] = Util.round(peak.getDoublePosition(d));
+				}
+				simplifiedPeaks.add(coordinates.clone()); // TODO: get rid of clone but we check that it is done correctly
 			}
-			simplifiedPeaks.add(coordinates.clone()); // TODO: get rid of clone but we check that it is done correctly
 		}
-		
+
 	}
 
 
@@ -518,15 +520,15 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		showRansacResult(spots);
 	}
 
-	
+
 	protected void runRansacInteractive() {
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 
 		// extract peaks for the roi
 		copyPeaks2(simplifiedPeaks);
-		
+
 		int numDimensions = img2.numDimensions(); // DEBUG: should always be 2
-			
+
 		final long[] range = new long[numDimensions];
 		final long[] min = new long[numDimensions];
 		final long[] max = new long[numDimensions];
@@ -534,16 +536,16 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		// TODO: check if you need this -1 here; comes from the imglib1	
 		for (int d = 0; d < numDimensions; ++d){
-			fullImgMax[d] = img2.dimension(d) - 1;
+			fullImgMax[d] = slice.dimension(d) - 1; // TODO: slice or img2 ?! 
 			range[d] = supportRadius;
 		}
-		
+
 		IntervalView<FloatType> roi = Views.interval(img2, new long []{rectangle.x, rectangle.y}, new long []{rectangle.width + rectangle.x - 1, rectangle.height + rectangle.y - 1});
 		adjustBoundaries(roi, range, min, max, fullImgMax);
-	
+
 		// ImageJFunctions.show(img2).setTitle("img2");
 		// ImageJFunctions.show(roi).setTitle("roi");
-		
+
 		// TODO: some bounding strategy might be necessary
 		final Gradient derivative = new GradientPreCompute(img2);
 		final ArrayList<Spot> spots = Spot.extractSpots(roi, img2, simplifiedPeaks, derivative, range);
@@ -567,38 +569,38 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// FIXME: This part was correct need to uncomment it
 
 
-//		for(int j = 0; j < spots.size(); ++j){
-//			double [] coefficients = new double [numDimensions + 1]; // z y x 1
-//			double [] position = new double [numDimensions]; // x y z
-//			long [] spotMin = new long [numDimensions];
-//			long [] spotMax = new long [numDimensions]; 
-//
-//			backgroundSubtraction(spots.get(j), extendedRoi, coefficients, spotMin, spotMax);
-//
-//			Cursor <FloatType> cursor = Views.interval(extendedRoi, spotMin, spotMax).localizingCursor();
-//			// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
-//
-//			while(cursor.hasNext()){
-//				cursor.fwd();
-//				cursor.localize(position);				
-//				double total = coefficients[numDimensions];	
-//				for (int d = 0; d < numDimensions; ++d){
-//					total += coefficients[d]*position[numDimensions - d - 1]; 
-//				}
-//
-//				// DEBUG: 
-//				//				if (j == 0){
-//				//					System.out.println("before: " + cursor.get().get());
-//				//				}
-//
-//				cursor.get().set(cursor.get().get() - (float)total);
-//				// DEBUG:
-//				//				if (j == 0){
-//				//					System.out.println("after:  " + cursor.get().get());
-//				//				}
-//
-//			}		
-//		}
+		//		for(int j = 0; j < spots.size(); ++j){
+		//			double [] coefficients = new double [numDimensions + 1]; // z y x 1
+		//			double [] position = new double [numDimensions]; // x y z
+		//			long [] spotMin = new long [numDimensions];
+		//			long [] spotMax = new long [numDimensions]; 
+		//
+		//			backgroundSubtraction(spots.get(j), extendedRoi, coefficients, spotMin, spotMax);
+		//
+		//			Cursor <FloatType> cursor = Views.interval(extendedRoi, spotMin, spotMax).localizingCursor();
+		//			// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
+		//
+		//			while(cursor.hasNext()){
+		//				cursor.fwd();
+		//				cursor.localize(position);				
+		//				double total = coefficients[numDimensions];	
+		//				for (int d = 0; d < numDimensions; ++d){
+		//					total += coefficients[d]*position[numDimensions - d - 1]; 
+		//				}
+		//
+		//				// DEBUG: 
+		//				//				if (j == 0){
+		//				//					System.out.println("before: " + cursor.get().get());
+		//				//				}
+		//
+		//				cursor.get().set(cursor.get().get() - (float)total);
+		//				// DEBUG:
+		//				//				if (j == 0){
+		//				//					System.out.println("after:  " + cursor.get().get());
+		//				//				}
+		//
+		//			}		
+		//		}
 
 		// ImageJFunctions.show(source).setTitle("This one is actually modified with background subtraction");
 
@@ -607,9 +609,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			spot.computeAverageCostInliers();
 		showRansacResult(spots);
 	}
-	
-	
-	
+
+
+
 	// TODO: at this point only uses corner values
 	// TODO: extend to using the boundary values too
 
@@ -744,6 +746,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			System.out.println();
 			simplifiedPeaks.add(coordinates.clone()); // TODO: get rid of clone but we check that it is done correctly
 		}
+
+		// TODO: Do I need the adjustBoundaries function here
 
 		final long[] range = new long[numDimensions];
 		final long[] min = new long[numDimensions];
@@ -886,76 +890,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		if (true) return;
 	}
 
-	
 	// TODO: Copy code from here to give some feedback to user
-	protected void run2DAdvancedVersion2(){
-		//
-		// Compute the Sigmas for the gaussian folding
-		//
 
-		// TODO: is not that better to use 0 and dimension(d)
-		int [] min = new int[]{(int)slice.min(0), (int)slice.min(1)};
-		int [] max = new int[]{(int)slice.max(0), (int)slice.max(1)};
-
-		// full image
-		rectangle = new Rectangle(min[0], min[1], max[0], max[1]);
-
-		final float k, K_MIN1_INV;
-		final float[] sigma, sigmaDiff;
-
-		k = (float) DetectionSegmentation.computeK(sensitivity);
-		K_MIN1_INV = DetectionSegmentation.computeKWeight(k);
-		sigma = DetectionSegmentation.computeSigma(k, this.sigma);
-		sigmaDiff = DetectionSegmentation.computeSigmaDiff(sigma, imageSigma);
-
-		// the upper boundary
-		this.sigma2 = sigma[1];
-
-		// TODO: figure out what is the second parameter here
-		// calibration is set to 1.1.1 but might be changed for anysotropic images
-
-		// this.sigma = 5;
-		// this.sigma2 = this.sigma * k;
-		System.out.println(this.sigma + " " + this.sigma2);
-
-		final DogDetection<FloatType> dog2 = new DogDetection<>(slice, new double[] {1,1}, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  thresholdMin / 4, false);
-		dog2.setKeepDoGImg(true);
-		peaks2 = dog2.getPeaks();
-		peaks3 = dog2.getSubpixelPeaks();
-
-		runRansac2();
-	}
-
-	protected void run3DAdvancedVersion(){
-		//
-		// Compute the Sigmas for the gaussian folding
-		//
-
-		img2 = ImageJFunctions.wrap(imp);
-
-		int [] min = new int[]{(int)img2.min(0), (int)img2.min(1), (int)img2.min(2)};
-		int [] max = new int[]{(int)img2.max(0), (int)img2.max(1), (int)img2.max(2)};
-
-		rectangle = new Rectangle(min[0], min[1], max[0], max[1]);
-
-		final float k, K_MIN1_INV;
-		final float[] sigma, sigmaDiff;
-
-		k = (float) DetectionSegmentation.computeK(sensitivity);
-		K_MIN1_INV = DetectionSegmentation.computeKWeight(k);
-		sigma = DetectionSegmentation.computeSigma(k, this.sigma);
-		sigmaDiff = DetectionSegmentation.computeSigmaDiff(sigma, imageSigma);
-
-		// the upper boundary
-		this.sigma2 = sigma[1];
-
-		final DogDetection<FloatType> dog2 = new DogDetection<>(img2, new double[] {1, 1, 1}, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  thresholdMin / 4, false);
-		dog2.setKeepDoGImg(true);
-		peaks2 = dog2.getPeaks();
-		peaks3 = dog2.getSubpixelPeaks();
-
-		runRansac3D();
-	}
 
 	// unified call for nD cases 
 	// FIXME: now only 2D and 3D  
@@ -1407,11 +1343,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		if (isRoiChanged(change, rect, roiChanged)) {
 			rectangle = rect;
 
-						
+
 			long [] min = new long []{rectangle.x - extraSize/2, rectangle.y - extraSize/2};
 			long [] max = new long []{rectangle.width + rectangle.x + extraSize/2 - 1, rectangle.height + rectangle.y + extraSize/2 - 1};
-			
-			
+
+			for (int d = 0; d < 2; ++d)
+				System.out.println("[" + min[d] + " " + max[d] + "]");
+
+
 			if (slice.numDimensions() == 3)
 				//TODO: might be +1 or -1
 				img2 = Views.interval(Views.extendMirrorSingle( Views.hyperSlice(slice, 2, imp.getCurrentSlice())), min, max);
@@ -1424,7 +1363,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				else
 					System.out.println("updatePreview: This dimensionality is not supported");
 			}
-		
+
 			roiChanged = true;
 		}
 
@@ -1467,6 +1406,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		for (int d = 0; d < img2.numDimensions(); ++d)
 			calibration[d] = 1;
 
+		// TODO: Automatically extended here
 		final DogDetection<FloatType> dog2 = new DogDetection<>(img2, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  thresholdMin / 4, false);
 		dog2.setKeepDoGImg(true);
 		peaks2 = dog2.getPeaks();

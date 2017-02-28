@@ -274,8 +274,8 @@ public class Spot implements RealLocalizable
 		{
 			if ( spot.inliers.size() == 0 )
 				continue;
-
-			final RandomAccess< T > drawRA = draw.randomAccess();
+			// Using extension because sometimes spots are not fully inside of the image
+			final RandomAccess< T > drawRA =  Views.extendMirrorSingle(draw).randomAccess();
 			final double[] scale = spot.scale;
 
 			for ( final PointFunctionMatch pm : spot.inliers )

@@ -21,6 +21,21 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
+import net.imglib2.Cursor;
+import net.imglib2.Point;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
+// additional libraries to switch from imglib1 to imglib2
+import net.imglib2.algorithm.dog.DogDetection;
+import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.IntervalView;
+import net.imglib2.view.Views;
+
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.DecompositionSolver;
@@ -45,29 +60,11 @@ import ij.gui.Roi;
 import ij.io.Opener;
 import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
-import ij.plugin.RoiInterpolator;
 import ij.process.FloatProcessor;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.util.Util;
-import mpicbg.imglib.wrapper.ImgLib2;
 import mpicbg.models.PointMatch;
 import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.registration.detection.DetectionSegmentation;
-import net.imglib2.Cursor;
-import net.imglib2.Point;
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
-// additional libraries to switch from imglib1 to imglib2
-import net.imglib2.algorithm.dog.DogDetection;
-import net.imglib2.algorithm.localextrema.RefinedPeak;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.img.imageplus.ImagePlusImgs;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.IntervalView;
-import net.imglib2.view.Views;
 
 public class InteractiveRadialSymmetry implements PlugIn {
 	// RANSAC parameters
@@ -78,9 +75,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	// current value
 	int numIterations = 100;
 	// important to keep them static here 
-	static float maxError = 0.15f;
-	static float inlierRatio = (float) (20.0 / 100.0);
-	static int supportRadius = 10;
+	float maxError = 0.15f;
+	float inlierRatio = (float) (20.0 / 100.0);
+	int supportRadius = 10;
 	// min/max value
 	int supportRadiusMin = 1;
 	int supportRadiusMax = 50;
@@ -110,7 +107,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	// keep all for now 
 
 	// TODO: keep these params
-	int extraSize = supportRadius;
+	// int extraSize = ransacInitSupportRadius; // deprecated; supportRadius is used instead
 	final int scrollbarSize = 1000;
 	float imageSigma = 0.5f;
 
@@ -122,6 +119,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	// I really want to make them local!
 	String imgTitle; 
 	String parameterAdjustment;
+	boolean gaussFit;
 
 	// TODO: after moving to imglib2 REMOVE
 	// steps per octave
@@ -137,28 +135,24 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	int channel = 0;
 	Rectangle rectangle;
 
-	// TODO: You will use this (both)
-	ArrayList<Point> peaks2;
-	ArrayList<RefinedPeak<Point>> peaks3;
+	ArrayList<RefinedPeak<Point>> peaks;
 
 	// TODO: Variables for imglib1 to imglib2 conversion
 	RandomAccessibleInterval<FloatType> slice;
-	// TODO: attempt to move to imglib2? 
-	RandomAccessibleInterval<FloatType> img2;
+	// TODO: always process only this part of the initial image
+	RandomAccessibleInterval<FloatType> img;
+	
+	FloatProcessor ransacFloatProcessor;
+	ImagePlus impRansacError;
+	// used to show the results -- error for RANSAC
+	RandomAccessibleInterval<FloatType> ransacPreview;
 
-	Color originalColor = new Color(0.8f, 0.8f, 0.8f);
-	Color inactiveColor = new Color(0.95f, 0.95f, 0.95f);
-
-	// TODO: what the fuck is the difference between standardRectangle and Rectangle
-	public Rectangle standardRectangle;
 	// TODO: keep listeners flags
 	boolean isComputing = false;
 	boolean isStarted = false;
 
-	// TODO: Do you realy need all of the parameters? 
-
 	public static enum ValueChange {
-		SIGMA, THRESHOLD, SLICE, ROI, ALL, SUPPORTREGION, INLIERRATIO, MAXERROR
+		SIGMA, THRESHOLD, SLICE, ROI, ALL, SUPPORTRADIUS, INLIERRATIO, MAXERROR
 	}
 
 	boolean isFinished = false;
@@ -184,167 +178,154 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	public InteractiveRadialSymmetry() {
 	}
 
-	protected boolean showInitialDialog(/*String imgTitle, String parameterAdjustment,*/){
-		boolean failed = false;
+	// TODO: Check if you really need this !
+	@SuppressWarnings("unused")
+	public int setup( String arg, ImagePlus imp) {
+		return 0;
+	}
 
+
+	// TODO: POLISH
+	/**
+	 * shows the initial GUI dialog where user has to choose 
+	 * an image and a processing method.
+	 * */
+	protected boolean initialDialog(/*String imgTitle, String parameterAdjustment,*/){
+		boolean failed = false;
 		// check that the are images
 		final int[] imgIdList = WindowManager.getIDList();
 		if (imgIdList == null || imgIdList.length < 1) {
 			IJ.error("You need at least one open image.");
 			failed = true;
 		}
+		else{
+			// titles of the images		
+			final String[] imgList = new String[imgIdList.length];
+			for (int i = 0; i < imgIdList.length; ++i)
+				imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
 
-		// titles of the images		
-		final String[] imgList = new String[imgIdList.length];
-		for (int i = 0; i < imgIdList.length; ++i)
-			imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
+			// choose image to process and method to use
+			GenericDialog initialDialog = new GenericDialog("Initial Setup");
 
-		// choose image to process and method to use
-		GenericDialog initialDialog = new GenericDialog("Initial Setup");
+			if (defaultImg >= imgList.length)
+				defaultImg = 0;
 
-		if (defaultImg >= imgList.length)
-			defaultImg = 0;
+			initialDialog.addChoice("Image for detection", imgList, imgList[defaultImg]);
+			initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
+			initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
+			initialDialog.showDialog();
 
-		initialDialog.addChoice("Image for detection", imgList, imgList[defaultImg]);
-		initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
-		initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
-		initialDialog.showDialog();
+			// Save current index and current choice here 
+			imgTitle = initialDialog.getNextChoice();
+			int tmp = initialDialog.getNextChoiceIndex();
+			parameterAdjustment = paramChoice[tmp];
+			gaussFit = initialDialog.getNextBoolean();
 
-		// TODO: I want ot use these as local varaibles but used as global instead
-		// Save current index and current choice here 
-		imgTitle = initialDialog.getNextChoice();
-		parameterAdjustment = initialDialog.getNextChoice();
+			// keep previous choice 
+			defaultParam = tmp;
+			defaultGauss = gaussFit;
 
-		if (initialDialog.wasCanceled())
-			failed = true;
+			if (initialDialog.wasCanceled())
+				failed = true;			
+		}
 
 		return failed;
 	}
 
-	// necessary!
-	@SuppressWarnings("unused")
-	public int setup( String arg, ImagePlus imp) {
-		return 0;
-	}
-
 	@Override
 	public void run(String arg) {
-
 		// TODO: MOVE ALL RETURN STATEMENTS TO THE VARIABLE + ONE RETURN STATEMENT
 
-		/*
-		 * Check if the image is there (+) Interactive/Offline gui if offline
-		 * run the calcuclation else show dog gui show ransac gui after
-		 * parameters are set run algo for the whole image or concede
-		 */
-
-		// move this return
-		boolean initialDialogWasCanceled = showInitialDialog(/*imgTitle, parameterAdjustment, */);
-		if (initialDialogWasCanceled)
-			return; 
-
-		System.out.println("Image used : " + imgTitle);
-		System.out.println("Parameters : " + parameterAdjustment);
-
-		if (imp == null)
-			imp = WindowManager.getImage(imgTitle);
-		// TODO: Check what of the stuff below is necessary
-		// // if one of the images is rgb or 8-bit color convert them to
-		// hyperstack
-		// imp = Hyperstack_rearranger.convertToHyperStack( imp );
-		//
-		// // test if you can deal with this image (2d? 3d? channels?
-		// timepoints?)
-		// 3d + time should be fine.
-		// right now works with 2d + time
-
-		//TODO move this return
-		if (imp.getType() == ImagePlus.COLOR_RGB || imp.getType() == ImagePlus.COLOR_256) {
-			IJ.log("Color images are not supported, please convert to 8, 16 or 32-bit grayscale");
-			return;
+		// indicator for the broken workflow
+		boolean failed = initialDialog(/*imgTitle, parameterAdjustment, */);
+		if (failed){
+			// nothing 
 		}
+		else{
 
-		// if interactive
-		if (parameterAdjustment.compareTo(paramChoice[1]) == 0) {
-			// TODO: is this rectangle really necessary
-			// here comes the normal work flow
-			standardRectangle = new Rectangle(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2,
-					imp.getHeight() / 2);
-			// TODO: Do I need this ROI?
-			Roi roi = imp.getRoi();
-			if (roi == null) {
-				// IJ.log( "A rectangular ROI is required to define the area..." );
-				imp.setRoi(standardRectangle);
-				roi = imp.getRoi();
+			System.out.println("Image used : " + imgTitle);
+			System.out.println("Parameters : " + parameterAdjustment);
+
+			if (imp == null)
+				imp = WindowManager.getImage(imgTitle);
+			// TODO: Check what of the stuff below is necessary
+			// // if one of the images is rgb or 8-bit color convert them to
+			// hyperstack
+			// imp = Hyperstack_rearranger.convertToHyperStack( imp );
+			//
+			// // test if you can deal with this image (2d? 3d? channels?
+			// timepoints?)
+			// 3d + time should be fine.
+			// right now works with 2d + time
+
+			// TODO move this return
+			if (imp.getType() == ImagePlus.COLOR_RGB || imp.getType() == ImagePlus.COLOR_256) {
+				IJ.log("Color images are not supported, please convert to 8, 16 or 32-bit grayscale");
+				failed = true;
 			}
-			if (roi.getType() != Roi.RECTANGLE) {
-				IJ.log("Only rectangular rois are supported...");
-				return;
+			else{
+				// if interactive
+				if (parameterAdjustment.compareTo(paramChoice[1]) == 0) {
+					// here comes the normal work flow
+					rectangle = new Rectangle(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2,
+							imp.getHeight() / 2);
+					// TODO: Do I need this ROI?
+					Roi roi = imp.getRoi();
+					if (roi == null) {
+						// IJ.log( "A rectangular ROI is required to define the area..." );
+						imp.setRoi(rectangle);
+						roi = imp.getRoi();
+					}
+					if (roi.getType() != Roi.RECTANGLE) {
+						IJ.log("Only rectangular rois are supported...");
+						failed = true;
+					}
+					else{
+						imp.setPosition(channel, imp.getSlice(), 1);
+						slice = ImageJFunctions.convertFloat(imp);			
+						// initialize variables for interactive preview
+						// called before updatePreview() !
+						ransacPreviewInit();
+						// show the interactive kit
+						interactiveDialog();
+						// show the interactive ransac kit
+						interactiveRansacDialog();
+						// add listener to the imageplus slice slider
+						sliceObserver = new SliceObserver(imp, new ImagePlusListener());
+						// compute first version
+						updatePreview(ValueChange.ALL);
+						isStarted = true;
+						// check whenever roi is modified to update accordingly
+						roiListener = new RoiListener();
+						imp.getCanvas().addMouseListener(roiListener);
+					}
+				} 
+				else 
+				{
+					// TODO: Do I need the rectangle here?
+					// here comes the normal work flow
+					rectangle = new Rectangle(0, 0, imp.getWidth(), imp.getHeight());
+					imp.setRoi(rectangle);
+					// img2 = ImageJFunctions.wrapFloat(imp);
+					int curSliceIndex = imp.getSlice();
+					imp.setPosition(channel, curSliceIndex, 0);
+					slice = ImageJFunctions.convertFloat(imp);
+
+					// initialize variables for the result
+					ransacPreviewInit();
+					automaticDialog();
+				}
 			}
-			// TODO: this convertion looks totally fine!
-			imp.setPosition(channel, imp.getSlice(), 1);
-			slice = ImageJFunctions.convertFloat(imp);			
-			// initialize variables for interactive preview
-			// called before updatePreview() !
-			ransacPreviewInitialize();
-			// show the interactive kit
-			displaySliders();
-			// show the interactive ransac kit
-			displayRansacSliders();
-			// add listener to the imageplus slice slider
-			sliceObserver = new SliceObserver(imp, new ImagePlusListener());
 
-			// test of the slice
-
-
-			// compute first version
-			updatePreview(ValueChange.ALL);
-			isStarted = true;
-			// check whenever roi is modified to update accordingly
-			roiListener = new RoiListener();
-			imp.getCanvas().addMouseListener(roiListener);
-		} 
-		else 
-		{
-			// TODO: here we apply algo to the whole image 
-			// TODO: another gui window pops up: to set up the parameters
-			// here comes the normal work flow
-			standardRectangle = new Rectangle(0, 0, imp.getWidth(), imp.getHeight());
-			imp.setRoi(standardRectangle);
-			// TODO: maybe you have to adjust intensities
-			// img2 = ImageJFunctions.wrapFloat(imp);
-			int curSliceIndex = imp.getSlice();
-			imp.setPosition(channel, curSliceIndex, 0);
-			slice = ImageJFunctions.convertFloat(imp);
-
-			// initialize variables for the result
-			ransacPreviewInitialize();
-			// TODO: here you want to run the algorithm for every slice without interaction with the image
-			// You need something like apply to stack button here
-			// which you run once without any listeners
-			displayAdvancedGenericDialog();
-			// 			displayManualGUI();
-			// check whenever roi is modified to update accordingly
-			// roiListener = new RoiListener();
-			// imp.getCanvas().addMouseListener(roiListener);
 		}
-
+		// return failed; // uncomment if necessary 
 	}
-
-	// TODO: I believe that these processor thing can be avoided
-	// Have a look what results you need and which you can skip
-	// Looks like I have to use this for synchronization -- display <==> image
-	FloatProcessor ransacFloatProcessor;
-	ImagePlus impRansacError;
-	// used to show the results -- error for ransac
-	RandomAccessibleInterval<FloatType> ransacPreview;
-
 
 	/**
 	 * Initialize preview variables for RANSAC
 	 */
 	// TODO: might be not necessary
-	protected void ransacPreviewInitialize() {		
+	protected void ransacPreviewInit() {		
 		int width = (int)slice.dimension(0);
 		int height = (int)slice.dimension(1);		
 
@@ -356,10 +337,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		impRansacError.show();
 	}
 
-
 	// this function will show the result of RANSAC
 	// proper window -> dialog view with the columns
-	protected void showRansacResultTable(final ArrayList<Spot> spots) {
+	protected void ransacResultTable(final ArrayList<Spot> spots) {
 		IOFunctions.println("Running RANSAC ... ");
 		IOFunctions.println("Spots found = " + spots.size());
 		// real output
@@ -372,9 +352,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			}
 		}
 		rt.show("Results");
-
 	}
-
 
 	// TODO: REMOVE WHEN DONE
 	public static <T extends RealType<T>> void printCoordinates(RandomAccessibleInterval<T> img) {
@@ -384,15 +362,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	// extended or shorten the size of the boundaries
-	protected <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> inImg, long[] size, long[] min,
+	protected <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> inImg, long[] min,
 			long[] max, long[] fullImgMax) {
 		final int numDimensions = inImg.numDimensions();
 		for (int d = 0; d < numDimensions; ++d) {
-			min[d] = inImg.min(d) - size[d];
-			max[d] = inImg.max(d) + size[d];
 			// check that it does not exceed bounds of the underlying image
-			min[d] = Math.max(min[d], 0);
-			max[d] = Math.min(max[d], fullImgMax[d]);
+			min[d] = Math.max(inImg.min(d), 0);
+			max[d] = Math.min(inImg.max(d), fullImgMax[d]);
 		}
 	}
 
@@ -410,12 +386,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	/**
 	 * Copy peaks found by DoG to lighter ArrayList (!imglib2)
 	 */	
-	protected void copyPeaks2(final ArrayList<long[]> simplifiedPeaks) {		
-		int numDimensions = img2.numDimensions();
+	protected void copyPeaks(final ArrayList<long[]> simplifiedPeaks) {		
+		int numDimensions = img.numDimensions();
 		long[] coordinates = new long[numDimensions];
 
 		// TODO: here should be the threshold for the peak values
-		for (final RefinedPeak<Point> peak : peaks3){
+		for (final RefinedPeak<Point> peak : peaks){
 			// TODO: add threshold value
 			if (isInside(peak)){
 				for (int d = 0; d < peak.numDimensions(); ++d){
@@ -427,107 +403,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	}
 
-
-	protected void runRansac2() {
+	protected void ransacInteractive() {
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 
 		// extract peaks for the roi
-		copyPeaks2(simplifiedPeaks);
-		int numDimensions = slice.numDimensions();
+		copyPeaks(simplifiedPeaks);
 
-		final long[] range = new long[] { supportRadius, supportRadius };
-
-		final long[] min = new long[numDimensions];
-		final long[] max = new long[numDimensions];
-		// hard coded because I there is no better function
-		final long[] fullImgMax = new long[numDimensions];
-
-		// TODO: check if you need this -1 here; comes from the imglib1	
-		for (int d = 0; d < numDimensions; ++d)
-			fullImgMax[d] = slice.dimension(d) - 1;
-
-		IntervalView<FloatType> roi = Views.interval(slice, new long []{rectangle.x, rectangle.y}, new long []{rectangle.width + rectangle.x - 1, rectangle.height + rectangle.y - 1});
-		adjustBoundaries(roi, range, min, max, fullImgMax);
-
-		IntervalView<FloatType> extendedRoi =  Views.interval(slice, min, max); 
-
-		// TODO: some bounding strategy might be necessary
-
-		final Gradient derivative = new GradientPreCompute(extendedRoi);
-
-		System.out.println("Debug: output: runRansac2()");
-
-
-		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, extendedRoi, simplifiedPeaks, derivative, range);
-
-		// add the values for the gauss fit 
-		final double[] peakValues = new double[spots.size()];
-
-		System.out.println("hello: " + peakValues.length);
-
-		// TODO: fix the gaussian fit! not 0 background
-		// 
-
-		// FIXME: !!! 
-		// to sub properly and fit this part into the previously writtren
-		// code you sub and add plane here 
-		// the problem is that back-addition is not done!
-		// TODO: CHECKED THE RESULT 
-		// IT IS CORRECT FOR 2D 
-		// THE RESULTS ARE SHOWN IN SOURCE NOT IMP
-
-		// FIXME: This part was correct need to uncomment it
-
-
-		for(int j = 0; j < spots.size(); ++j){
-			double [] coefficients = new double [numDimensions + 1]; // z y x 1
-			double [] position = new double [numDimensions]; // x y z
-			long [] spotMin = new long [numDimensions];
-			long [] spotMax = new long [numDimensions]; 
-
-			backgroundSubtraction(spots.get(j), extendedRoi, coefficients, spotMin, spotMax);
-
-			Cursor <FloatType> cursor = Views.interval(extendedRoi, spotMin, spotMax).localizingCursor();
-			// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
-
-			while(cursor.hasNext()){
-				cursor.fwd();
-				cursor.localize(position);				
-				double total = coefficients[numDimensions];	
-				for (int d = 0; d < numDimensions; ++d){
-					total += coefficients[d]*position[numDimensions - d - 1]; 
-				}
-
-				// DEBUG: 
-				//				if (j == 0){
-				//					System.out.println("before: " + cursor.get().get());
-				//				}
-
-				cursor.get().set(cursor.get().get() - (float)total);
-				// DEBUG:
-				//				if (j == 0){
-				//					System.out.println("after:  " + cursor.get().get());
-				//				}
-
-			}		
-		}
-
-		// ImageJFunctions.show(source).setTitle("This one is actually modified with background subtraction");
-
-		Spot.ransac(spots, numIterations, maxError, inlierRatio);
-		for (final Spot spot : spots)
-			spot.computeAverageCostInliers();
-		showRansacResult(spots);
-	}
-
-
-	protected void runRansacInteractive() {
-		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
-
-		// extract peaks for the roi
-		copyPeaks2(simplifiedPeaks);
-
-		int numDimensions = img2.numDimensions(); // DEBUG: should always be 2
+		int numDimensions = img.numDimensions(); // DEBUG: should always be 2
 
 		final long[] range = new long[numDimensions];
 		final long[] min = new long[numDimensions];
@@ -540,83 +422,75 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			range[d] = supportRadius;
 		}
 
-		IntervalView<FloatType> roi = Views.interval(img2, new long []{rectangle.x, rectangle.y}, new long []{rectangle.width + rectangle.x - 1, rectangle.height + rectangle.y - 1});
-		adjustBoundaries(roi, range, min, max, fullImgMax);
+		IntervalView<FloatType> roi = Views.interval(img, new long []{rectangle.x, rectangle.y}, new long []{rectangle.width + rectangle.x - 1, rectangle.height + rectangle.y - 1}); // FIXME: -1 -1 ?!
+		adjustBoundaries(roi, min, max, fullImgMax);
 
-		System.out.println("Adjusted roi:");
-		for (int d = 0; d < 2; ++d)
-			System.out.println("[" + min[d] + " " + max[d] + "]");
-
+		//		System.out.println("Adjusted roi:");
+		//		for (int d = 0; d < 2; ++d){
+		//			System.out.println("[" + min[d] + " " + max[d] + "]");
+		//		}
+		//		System.out.println("img2        :");
+		//		for (int d = 0; d < 2; ++d){
+		//			System.out.println("[" + img2.min(d) + " " + img2.max(d) + "]");
+		//		}
+		//		
+		//		System.out.println("Dimensions  :");
+		//		for (int d = 0; d < 2; ++d){
+		//			System.out.println("[" + img2.dimension(d) + " " + roi.dimension(d) + "]");
+		//		}
 
 		// TODO: some bounding strategy might be necessary
-		final Gradient derivative = new GradientPreCompute(img2);
-		final ArrayList<Spot> spots = Spot.extractSpots(roi, img2, simplifiedPeaks, derivative, range);
+		final Gradient derivative = new GradientPreCompute(img);
+		final ArrayList<Spot> spots = Spot.extractSpots(roi, img, simplifiedPeaks, derivative, range);
 
 		// add the values for the gauss fit 
 		final double[] peakValues = new double[spots.size()];
 
-		System.out.println("Peaks found: " + peakValues.length);
+		//		System.out.println("Peaks found: " + peakValues.length);
 
-		// TODO: fix the gaussian fit! not 0 background
-		// 
-
-		// FIXME: !!! 
-		// to sub properly and fit this part into the previously writtren
-		// code you sub and add plane here 
-		// the problem is that back-addition is not done!
-		// TODO: CHECKED THE RESULT 
-		// IT IS CORRECT FOR 2D 
-		// THE RESULTS ARE SHOWN IN SOURCE NOT IMP
-
-		// FIXME: This part was correct need to uncomment it
-
-
-		for(int j = 0; j < spots.size(); ++j){
-			double [] coefficients = new double [numDimensions + 1]; // z y x 1
-			double [] position = new double [numDimensions]; // x y z
-			long [] spotMin = new long [numDimensions];
-			long [] spotMax = new long [numDimensions]; 
-
-			backgroundSubtraction(spots.get(j), img2, coefficients, spotMin, spotMax);
-
-			Cursor <FloatType> cursor = Views.interval(img2, spotMin, spotMax).localizingCursor();
-			// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
-
-			while(cursor.hasNext()){
-				cursor.fwd();
-				cursor.localize(position);				
-				double total = coefficients[numDimensions];	
-				for (int d = 0; d < numDimensions; ++d){
-					total += coefficients[d]*position[numDimensions - d - 1]; 
-				}
-
-				// DEBUG: 
-//								if (j == 0){
-//									System.out.println("before: " + cursor.get().get());
-//								}
-
-				cursor.get().set(cursor.get().get() - (float)total);
-				// DEBUG:
-//								if (j == 0){
-//									System.out.println("after:  " + cursor.get().get());
-//								}
-
-			}		
-		}
+		//		for(int j = 0; j < spots.size(); ++j){
+		//			double [] coefficients = new double [numDimensions + 1]; // z y x 1
+		//			double [] position = new double [numDimensions]; // x y z
+		//			long [] spotMin = new long [numDimensions];
+		//			long [] spotMax = new long [numDimensions]; 
+		//
+		//			backgroundSubtraction(spots.get(j), img2, coefficients, spotMin, spotMax);
+		//
+		//			Cursor <FloatType> cursor = Views.interval(img2, spotMin, spotMax).localizingCursor();
+		//			// System.out.println(coefficients[0] + " " + coefficients[1] + " " + coefficients[2]);
+		//
+		//			while(cursor.hasNext()){
+		//				cursor.fwd();
+		//				cursor.localize(position);				
+		//				double total = coefficients[numDimensions];	
+		//				for (int d = 0; d < numDimensions; ++d){
+		//					total += coefficients[d]*position[numDimensions - d - 1]; 
+		//				}
+		//
+		//				// DEBUG: 
+		////								if (j == 0){
+		////									System.out.println("before: " + cursor.get().get());
+		////								}
+		//
+		//				cursor.get().set(cursor.get().get() - (float)total);
+		//				// DEBUG:
+		////								if (j == 0){
+		////									System.out.println("after:  " + cursor.get().get());
+		////								}
+		//
+		//			}		
+		//		}
 
 		// ImageJFunctions.show(source).setTitle("This one is actually modified with background subtraction");
 
 		Spot.ransac(spots, numIterations, maxError, inlierRatio);
 		for (final Spot spot : spots)
 			spot.computeAverageCostInliers();
-		showRansacResult(spots);
+		ransacResults(spots);
 	}
-
-
 
 	// TODO: at this point only uses corner values
 	// TODO: extend to using the boundary values too
-
 	protected void backgroundSubtraction(Spot spot, RandomAccessibleInterval<FloatType> img22, double[] coefficients, long[] min, long[] max){
 
 		int numDimensions = spot.numDimensions();
@@ -695,52 +569,28 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	}
 
-	protected void runRansacAdvanced23D(){
+	protected void ransacAutomatic(){
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
-		int numDimensions = img2.numDimensions();
-		long[] coordinates = new long[numDimensions];
-
-		// TODO: here should be the threshold for the peak values
-		for (final RefinedPeak<Point> peak : peaks3){
-			// TODO: if threshold
-			for (int d = 0; d < peak.numDimensions(); ++d){
-				coordinates[d] = Util.round(peak.getDoublePosition(d));
-				System.out.print(coordinates[d] + " ");
-			}
-			System.out.println();
-			simplifiedPeaks.add(coordinates.clone()); // TODO: get rid of clone but we check that it is done correctly
-		}
-
-		// TODO: Do I need the adjustBoundaries function here
+		int numDimensions = img.numDimensions();
+		copyPeaks(simplifiedPeaks);
 
 		final long[] range = new long[numDimensions];
-		final long[] min = new long[numDimensions];
-		final long[] max = new long[numDimensions];
-
-		for (int d = 0; d <numDimensions; ++d){
+		for (int d = 0; d <numDimensions; ++d)
 			range[d] = supportRadius;
-			min[d] = 0;
-			max[d] = img2.dimension(d) - 1;
-		}
 
-		// TODO: MIRROR STRATEGY ?!
-		IntervalView<FloatType> extendedRoi = Views
-				.interval(img2, min, max); 
-
-		final Gradient derivative = new GradientPreCompute(extendedRoi);
-		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, extendedRoi, simplifiedPeaks, derivative, range);
+		final Gradient derivative = new GradientPreCompute(img);
+		final ArrayList<Spot> spots = Spot.extractSpots(img, img, simplifiedPeaks, derivative, range);
 
 		Spot.ransac(spots, numIterations, maxError, inlierRatio);
 		for (final Spot spot : spots)
 			spot.computeAverageCostInliers();
 
-		// TODO: make a 3D output engine
-		showRansacResultTable(spots);
+		ransacResultTable(spots);
 	}
 
 	// draw detected points
 	// TODO: create a table with the results here
-	protected void showRansacResult(final ArrayList<Spot> spots) {
+	protected void ransacResults(final ArrayList<Spot> spots) {
 		// make draw global
 		for (final FloatType t : Views.iterable(ransacPreview))
 			t.setZero();
@@ -808,9 +658,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		imagePlus.updateAndDraw();
 	}
 
-	protected void displayAdvancedGenericDialog(){
-		// final String title = "Set Stack Parameters";
-		// final int width = 260, height = 200; 
+	// APPROVED:
+	protected void automaticDialog(){
+		boolean canceled = false;
 
 		GenericDialog gd = new GenericDialog("Set Stack Parameters");
 
@@ -821,235 +671,81 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		gd.addNumericField("Max Error:", this.maxError, 2);
 
 		gd.showDialog();
-		if (gd.wasCanceled()) return;
+		if (gd.wasCanceled()) 
+			canceled = true;
 
-		// TODO: if canceled was not clicked perform the processing of the image
-		// TODO: Check that the value in the field is not NaN		
 		sigma = (float)gd.getNextNumber();
 		threshold = (float)gd.getNextNumber();
 		supportRadius = (int)Math.round(gd.getNextNumber());
 		inlierRatio = (float)gd.getNextNumber();
-		maxError = (float)gd.getNextNumber();
+		maxError = (float)gd.getNextNumber();	
 
-		runAdvancedVersion();
+		// wrong values in the fields
+		if (sigma == Double.NaN || threshold == Double.NaN ||  supportRadius == Double.NaN || inlierRatio == Double.NaN || maxError == Double.NaN )
+			canceled = true;
+
+		if (canceled)
+			return;
+
+		runRansacAutomatic();
 	}
-
-	protected void runAdvancedVersion(){
-		int numDimensions = slice.numDimensions(); 
-
-		unifiedRunAdvancedVersion();
-
-		if (true) return;
-	}
-
-	// TODO: Copy code from here to give some feedback to user
 
 	// unified call for nD cases 
-	protected void unifiedRunAdvancedVersion(){
+	protected void runRansacAutomatic(){
 
-		img2 = ImageJFunctions.wrap(imp);
+		img = ImageJFunctions.wrap(imp); // returns the whole image either 2D or 3D
 
-		long [] min = new long [img2.numDimensions()]; 
-		long [] max = new long [img2.numDimensions()]; 
+		long [] min = new long [img.numDimensions()]; 
+		long [] max = new long [img.numDimensions()]; 
 
-		for (int d = 0; d < img2.numDimensions(); ++d){
-			min[d] = img2.min(d);
-			max[d] = img2.max(d);
+		for (int d = 0; d < img.numDimensions(); ++d){
+			min[d] = img.min(d);
+			max[d] = img.max(d);
 		}
 
 		// full image
 		rectangle = new Rectangle((int)min[0], (int)min[1], (int)max[0], (int)max[1]);
 
-		final float k, K_MIN1_INV;
-		final float[] sigma, sigmaDiff;
+		this.sigma2 = computeSigma2(this.sigma, sensitivity);
 
-		k = (float) DetectionSegmentation.computeK(sensitivity);
-		K_MIN1_INV = DetectionSegmentation.computeKWeight(k);
-		sigma = DetectionSegmentation.computeSigma(k, this.sigma);
-		sigmaDiff = DetectionSegmentation.computeSigmaDiff(sigma, imageSigma);
-
-		// the upper boundary
-		this.sigma2 = sigma[1];
-
-		double [] calibration = new double [img2.numDimensions()];
-		for (int d = 0; d < img2.numDimensions(); ++d)
+		double [] calibration = new double [img.numDimensions()];
+		for (int d = 0; d < img.numDimensions(); ++d)
 			calibration[d] = 1;
+		
+		// TODO: real calibration, adjust the selected threshold to the extra smoothing in z (preview is only 2d)
 
-		final DogDetection<FloatType> dog2 = new DogDetection<>(img2, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  thresholdMin / 4, false);
-		dog2.setKeepDoGImg(true);
-		peaks2 = dog2.getPeaks();
-		peaks3 = dog2.getSubpixelPeaks();
+		//		if ( img2.numDimensions() == 3 )
+		//		{
+		//			// how much will it be smoothed in z, as this means that the blobs will have a lower contrast as a function of sigma(z)
+		//			// since in the preview it was only (x,y)
+		//			final double[][] sigmas = DifferenceOfGaussian.computeSigmas( imageSigma, 2, calibration, this.sigma, sigma2 );
+		//			final double sigma1z = sigmas[ 0 ][ 2 ];
+		//			final double sigma2z = sigmas[ 1 ][ 2 ];	
+		//			this.threshold /= ??;
+		//		}
 
-		if (img2.numDimensions() == 2 || img2.numDimensions() == 3 )
+		final DogDetection<FloatType> dog2 = new DogDetection<>(img, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  threshold / 4, false);
+		peaks = dog2.getSubpixelPeaks();
+
+		if (img.numDimensions() == 2 || img.numDimensions() == 3 )
 			//runRansac2();
-			runRansacAdvanced23D();
+			ransacAutomatic();
 		else
 			System.out.println("Wrong dimensionality. Currently supported 2D/3D!");
 
 	}
 
-	// this one is old fashioned you need a generic dialog to solve this task
-	// it can macro recorded 
+	// APPROVED:
 	/**
 	 * Instantiates the panel for adjusting the RANSAC parameters
 	 */
-	protected void displayManualGUI() {
-		final Frame frame = new Frame("Set Stack Parameters");
-		frame.setSize(260, 200);
-
-		/* Instantiation */
-		final GridBagLayout layout = new GridBagLayout();
-		final GridBagConstraints c = new GridBagConstraints();
-
-		// TODO: check if these guys are correct
-		// maybe it is better to use the constructor for this task
-		this.sigma = sigmaInit;
-		this.threshold = thresholdInit;
-		this.supportRadius = ransacInitSupportRadius;
-		this.inlierRatio = ransacInitInlierRatio;
-		this.maxError  = ransacInitMaxError;
-
-		// --------- 
-
-		final TextField SigmaTextField = new TextField(String.format(java.util.Locale.US, "%.2f", this.sigma)); 
-		SigmaTextField.setEditable(true);
-		SigmaTextField.setCaretPosition(String.format(java.util.Locale.US, "%.2f", this.sigma).length());
-
-		final TextField ThresholdTextField = new TextField(String.format(java.util.Locale.US, "%.2f", this.threshold));
-		ThresholdTextField.setEditable(true);
-		ThresholdTextField.setCaretPosition(String.format(java.util.Locale.US, "%.2f", this.threshold).length());
-
-		final TextField SupportRegionTextField = new TextField(Integer.toString(this.supportRadius));
-		SupportRegionTextField.setEditable(true);
-		SupportRegionTextField.setCaretPosition(Integer.toString(this.supportRadius).length());
-
-		final TextField InliersTextField = new TextField(String.format(java.util.Locale.US, "%.2f", this.inlierRatio)); 
-		InliersTextField.setEditable(true);
-		InliersTextField.setCaretPosition(String.format(java.util.Locale.US, "%.2f", this.inlierRatio).length());
-
-		final TextField MaxErrorTextField = new TextField(String.format(java.util.Locale.US, "%.2f", this.maxError)); 
-		MaxErrorTextField.setEditable(true);
-		MaxErrorTextField.setCaretPosition(String.format(java.util.Locale.US, "%.2f", this.maxError).length());		
-
-		// --------- 
-		final Label sigmaText = new Label(
-				"Sigma:", Label.CENTER);
-		final Label thresholdText = new Label(
-				"Threshold: ", Label.CENTER);
-		final Label supportRegionText = new Label(
-				"Support Region Radius:", Label.CENTER);
-		final Label inlierRatioText = new Label(
-				"Inlier Ratio:", Label.CENTER);
-		final Label maxErrorText = new Label("Max Error:",
-				Label.CENTER);
-
-		final Button button = new Button("Apply");
-		final Button cancel = new Button("Cancel");
-
-		// /* Location */
-		frame.setLayout(layout);
-
-		// insets constants
-		int inTop = 0;
-		int inRight = 5;
-		int inBottom = 0;
-		int inLeft = inRight;
-
-		c.fill = GridBagConstraints.HORIZONTAL;
-
-		c.gridx = 0;
-		c.gridy = 0;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		frame.add(sigmaText, c);
-
-		c.gridx = 1;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(SigmaTextField, c);		
-
-		c.gridx = 0;
-		c.gridy++;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		frame.add(thresholdText, c);
-
-		c.gridx = 1;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(ThresholdTextField, c);	
-
-		c.gridx = 0;
-		c.gridy++;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		frame.add(supportRegionText, c);
-
-		c.gridx = 1;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(SupportRegionTextField, c);	
-
-		c.gridx = 0;
-		c.gridy++;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		frame.add(inlierRatioText, c);
-
-		c.gridx = 1;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(InliersTextField, c);	
-
-		c.gridx = 0;
-		c.gridy++;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		frame.add(maxErrorText, c);
-
-		c.gridx = 1;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(MaxErrorTextField, c);	
-
-		c.gridx = 0;
-		c.gridy++;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		c.insets = new Insets(5, 50, 0, 50);
-		frame.add(button, c);
-
-		c.gridx = 1;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		c.insets = new Insets(0, 50, 0, 50);
-		frame.add(cancel, c);
-
-		// /* Configuration */
-		// TODO: add apply button not the "ok" one
-		button.addActionListener(new FinishedButtonListener(frame, false));
-		cancel.addActionListener(new FinishedButtonListener(frame, true));
-
-		// TODO: Check if you need this part at all
-		frame.addWindowListener(new FrameListener(frame));
-		frame.setVisible(true);
-	}
-
-	/**
-	 * Instantiates the panel for adjusting the RANSAC parameters
-	 */
-	protected void displayRansacSliders() {
+	protected void interactiveRansacDialog() {
 		final Frame frame = new Frame("Adjust RANSAC Values");
 		frame.setSize(260, 200);
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
-		final GridBagConstraints c = new GridBagConstraints();
+		final GridBagConstraints gbc= new GridBagConstraints();
 
 		int scrollbarInitialPosition = computeScrollbarPositionFromValue(ransacInitSupportRadius, supportRadiusMin,
 				supportRadiusMax, scrollbarSize);
@@ -1094,65 +790,65 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		int inBottom = 0;
 		int inLeft = inRight;
 
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 0;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		frame.add(supportRegionText, c);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.weightx = 0.50;
+		gbc.gridwidth = 1;
+		frame.add(supportRegionText, gbc);
 
-		c.gridx = 1;
-		c.weightx = 0.50;
-		c.gridwidth = 1;
-		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(SupportRegionTextField, c);
+		gbc.gridx = 1;
+		gbc.weightx = 0.50;
+		gbc.gridwidth = 1;
+		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
+		frame.add(SupportRegionTextField, gbc);
 
-		c.gridx = 0;
-		c.gridy = 1;
-		c.gridwidth = 2;
-		c.insets = new Insets(5, inLeft, inBottom, inRight);
-		frame.add(supportRegionScrollbar, c);
+		gbc.gridx = 0;
+		gbc.gridy = 1;
+		gbc.gridwidth = 2;
+		gbc.insets = new Insets(5, inLeft, inBottom, inRight);
+		frame.add(supportRegionScrollbar, gbc);
 
-		c.gridx = 0;
-		c.gridy = 2;
-		c.gridwidth = 2;
-		frame.add(inlierRatioText, c);
+		gbc.gridx = 0;
+		gbc.gridy = 2;
+		gbc.gridwidth = 2;
+		frame.add(inlierRatioText, gbc);
 
-		c.gridx = 0;
-		c.gridy = 3;
-		c.gridwidth = 2;
-		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(inlierRatioScrollbar, c);
+		gbc.gridx = 0;
+		gbc.gridy = 3;
+		gbc.gridwidth = 2;
+		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
+		frame.add(inlierRatioScrollbar, gbc);
 
-		c.gridx = 0;
-		c.gridy = 4;
-		c.gridwidth = 2;
-		frame.add(maxErrorText, c);
+		gbc.gridx = 0;
+		gbc.gridy = 4;
+		gbc.gridwidth = 2;
+		frame.add(maxErrorText, gbc);
 
-		c.gridx = 0;
-		c.gridy = 5;
-		c.gridwidth = 2;
-		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(maxErrorScrollbar, c);
+		gbc.gridx = 0;
+		gbc.gridy = 5;
+		gbc.gridwidth = 2;
+		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
+		frame.add(maxErrorScrollbar, gbc);
 
-		++c.gridy;
-		c.insets = new Insets(5, 50, 0, 50);
-		frame.add(button, c);
+		++gbc.gridy;
+		gbc.insets = new Insets(5, 50, 0, 50);
+		frame.add(button, gbc);
 
-		++c.gridy;
-		c.insets = new Insets(0, 50, 0, 50);
-		frame.add(cancel, c);
+		++gbc.gridy;
+		gbc.insets = new Insets(0, 50, 0, 50);
+		frame.add(cancel, gbc);
 
 		// /* Configuration */
 		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(supportRegionText, supportRadiusMin,
-				supportRadiusMax, ValueChange.SUPPORTREGION, SupportRegionTextField));
+				supportRadiusMax, ValueChange.SUPPORTRADIUS, SupportRegionTextField));
 		inlierRatioScrollbar.addAdjustmentListener(new GeneralListener(inlierRatioText, inlierRatioMin, inlierRatioMax,
 				ValueChange.INLIERRATIO, new TextField()));
 		maxErrorScrollbar.addAdjustmentListener(
 				new GeneralListener(maxErrorText, maxErrorMin, maxErrorMax, ValueChange.MAXERROR, new TextField()));
 
 		SupportRegionTextField.addActionListener(new TextFieldListener(supportRegionText, supportRadiusMin,
-				supportRadiusMax, ValueChange.SUPPORTREGION, SupportRegionTextField, supportRegionScrollbar));
+				supportRadiusMax, ValueChange.SUPPORTRADIUS, SupportRegionTextField, supportRegionScrollbar));
 
 		button.addActionListener(new FinishedButtonListener(frame, false));
 		cancel.addActionListener(new FinishedButtonListener(frame, true));
@@ -1162,10 +858,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.setVisible(true);
 	}
 
+	// APPROVED: delete comments
 	/**
 	 * Instantiates the panel for adjusting the parameters
 	 */
-	protected void displaySliders() {
+	protected void interactiveDialog() {
 		final Frame frame = new Frame("Adjust Difference-of-Gaussian Values");
 		frame.setSize(360, 170);
 
@@ -1174,14 +871,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final GridBagConstraints c = new GridBagConstraints();
 
 		int scrollbarInitialPosition = computeScrollbarPositionFromValue(sigmaInit, sigmaMin, sigmaMax, scrollbarSize);
-		final Scrollbar sigma1 = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
+		final Scrollbar sigma1Bar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + scrollbarSize);
 		this.sigma = sigmaInit;
 
 		final float log1001 = (float) Math.log10(scrollbarSize + 1);
 		scrollbarInitialPosition = (int) Math
 				.round(1001 - Math.pow(10, (thresholdMax - thresholdInit) / (thresholdMax - thresholdMin) * log1001));
-		final Scrollbar threshold = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
+		final Scrollbar thresholdBar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + scrollbarSize);
 		this.threshold = thresholdInit;
 
@@ -1214,13 +911,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		++c.gridy;
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(sigma1, c);
+		frame.add(sigma1Bar, c);
 
 		++c.gridy;
 		frame.add(thresholdText, c);
 
 		++c.gridy;
-		frame.add(threshold, c);
+		frame.add(thresholdBar, c);
 
 		// insets for buttons
 		int bInTop = 0;
@@ -1237,8 +934,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.add(cancel, c);
 
 		/* Configuration */
-		sigma1.addAdjustmentListener(new SigmaListener(sigmaText1, sigmaMin, sigmaMax, scrollbarSize, sigma1));
-		threshold.addAdjustmentListener(new ThresholdListener(thresholdText, thresholdMin, thresholdMax));
+		sigma1Bar.addAdjustmentListener(new SigmaListener(sigmaText1, sigmaMin, sigmaMax, scrollbarSize, sigma1Bar));
+		thresholdBar.addAdjustmentListener(new ThresholdListener(thresholdText, thresholdMin, thresholdMax));
 		button.addActionListener(new FinishedButtonListener(frame, false));
 		cancel.addActionListener(new FinishedButtonListener(frame, true));
 		frame.addWindowListener(new FrameListener(frame));
@@ -1246,20 +943,18 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.setVisible(true);
 	}
 
-	public static float computeSigma2(final float sigma1, final int sensitivity) {
-		final float k = (float) DetectionSegmentation.computeK(sensitivity);
-		final float[] sigma = DetectionSegmentation.computeSigma(k, sigma1);
-
-		return sigma[1];
+	// APPROVED: 
+	private float computeSigma2(final float sigma1, final int stepsPerOctave) {
+		final float k = (float) Math.pow( 2f, 1f / stepsPerOctave );
+		return sigma1 * k;
 	}
 
+	// APPROVED:
 	protected boolean isRoiChanged(final ValueChange change, final Rectangle rect, boolean roiChanged){
 		boolean res = false;
-
-		res = roiChanged || img2 == null || change == ValueChange.SLICE || rect.getMinX() != rectangle.getMinX()
+		res = (roiChanged || img == null || change == ValueChange.SLICE || rect.getMinX() != rectangle.getMinX()
 				|| rect.getMaxX() != rectangle.getMaxX() || rect.getMinY() != rectangle.getMinY()
-				|| rect.getMaxY() != rectangle.getMaxY();
-
+				|| rect.getMaxY() != rectangle.getMaxY());
 		return res;
 	}
 
@@ -1273,40 +968,43 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	 */
 	protected void updatePreview(final ValueChange change) {
 
-		// TODO: do you realy need to set all these stuff here again?! 
-		// check if Roi changed
+		//		System.out.println("DEBUG         :  -------------");
+		//		System.out.println("maxError      : " + maxError);
+		//		System.out.println("supportRadius : " + supportRadius);
+		//		System.out.println("inlierRatio   : " + inlierRatio);
+
+		// DEBUG: REMOVE after you are done
+
+
+		// ---------------------------------
+
+
+		// set up roi 
 		boolean roiChanged = false;
 		Roi roi = imp.getRoi();
 
 		if (roi == null || roi.getType() != Roi.RECTANGLE) {
-			imp.setRoi(new Rectangle(standardRectangle));
+			imp.setRoi(new Rectangle(rectangle));
 			roi = imp.getRoi();
 			roiChanged = true;
 		}
 
 		// Do I need this one or it is just the copy of the same thing?
 		// sourceRectangle or rectangle
-		final Rectangle rect = roi.getBounds(); 
+		final Rectangle roiBounds = roi.getBounds(); 
 
-		// TODO: fix bad float comparison! use epsilon
-		if (isRoiChanged(change, rect, roiChanged)) {
-			rectangle = rect;
+		// change the img2 size if the roi or the support radius size was changed
+		if (isRoiChanged(change, roiBounds, roiChanged) || change == ValueChange.SUPPORTRADIUS) {
+			rectangle = roiBounds;
 
-			long [] min = new long []{rectangle.x - extraSize, rectangle.y - extraSize};
-			long [] max = new long []{rectangle.width + rectangle.x + extraSize - 1, rectangle.height + rectangle.y + extraSize - 1};
-
-			System.out.println("Rectangle - extraSize/2");
-			for (int d = 0; d < 2; ++d)
-				System.out.println("[" + min[d] + " " + max[d] + "]");
+			long [] min = new long []{rectangle.x - supportRadius, rectangle.y - supportRadius};
+			long [] max = new long []{rectangle.width + rectangle.x + supportRadius, rectangle.height + rectangle.y + supportRadius}; // FIXME: -1 -1 ?!
 
 			if (slice.numDimensions() == 3)
-				//TODO: might be +1 or -1
-				img2 = Views.interval(Views.extendMirrorSingle( Views.hyperSlice(slice, 2, imp.getCurrentSlice())), min, max);
+				img = Views.interval(Views.extendMirrorSingle( Views.hyperSlice(slice, 2, imp.getCurrentSlice())), min, max);
 			else{
 				if(slice.numDimensions() == 2){
-					img2 = Views.interval(Views.extendMirrorSingle(slice), min, max);
-					// img2 = slice; //TODO: might be +1 or -1
-					// nothing
+					img = Views.interval(Views.extendMirrorSingle(slice), min, max);
 				}
 				else
 					System.out.println("updatePreview: This dimensionality is not supported");
@@ -1321,52 +1019,35 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			return;
 		}
 
-		// TODO: Move DoG to the separate file
 		// compute the Difference Of Gaussian if necessary
-		if (roiChanged || change == ValueChange.SIGMA || change == ValueChange.SLICE
-				|| change == ValueChange.ALL || peaks3 == null) {
-			runDogDetection();
+		if (roiChanged || peaks == null || change == ValueChange.SIGMA || change == ValueChange.SLICE
+				|| change == ValueChange.ALL || change == ValueChange.SUPPORTRADIUS || change == ValueChange.THRESHOLD || change == ValueChange.MAXERROR 
+				|| change == ValueChange.INLIERRATIO) {
+			dogDetection();
 
 		}
 
-		// showPeaks();
-		showPeaks2();
+		showPeaks();
 		imp.updateAndDraw();
 
-		runRansacInteractive();
+		ransacInteractive();
 		isComputing = false;
 	}
 
-	protected void runDogDetection(){
+	protected void dogDetection(){
 
-		final float k, K_MIN1_INV;
-		final float[] sigma, sigmaDiff;
-
-		k = (float) DetectionSegmentation.computeK(sensitivity);
-		K_MIN1_INV = DetectionSegmentation.computeKWeight(k);
-		sigma = DetectionSegmentation.computeSigma(k, this.sigma);
-		sigmaDiff = DetectionSegmentation.computeSigmaDiff(sigma, imageSigma);
-
-		// the upper boundary
-		this.sigma2 = sigma[1];
-
-		double [] calibration = new double [img2.numDimensions()];
-		for (int d = 0; d < img2.numDimensions(); ++d)
+		double [] calibration = new double [img.numDimensions()];
+		for (int d = 0; d < img.numDimensions(); ++d)
 			calibration[d] = 1;
 
-		// TODO: Automatically extended here
-		final DogDetection<FloatType> dog2 = new DogDetection<>(img2, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  thresholdMin / 4, false);
-		dog2.setKeepDoGImg(true);
-		peaks2 = dog2.getPeaks();
-		peaks3 = dog2.getSubpixelPeaks();
+		final DogDetection<FloatType> dog2 = new DogDetection<>(img, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  threshold / 4, false);
+		peaks = dog2.getSubpixelPeaks(); // calls .getPeaks() internally
 
 	}
 
 	// extract peaks to show
 	// TODO: Check changes: but should be fine now
-	protected void showPeaks2() {
-		System.out.println("showPeaks(): imglib2: Done!");
-
+	protected void showPeaks() {
 		Overlay o = imp.getOverlay();
 
 		if (o == null) {
@@ -1375,7 +1056,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 
 		o.clear();
-		for (final RefinedPeak<Point> peak : peaks3) {
+		for (final RefinedPeak<Point> peak : peaks) {
 
 			final float x = peak.getFloatPosition(0);
 			final float y = peak.getFloatPosition(1);
@@ -1391,9 +1072,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				o.add(or);
 			}
 		}
-
 	}
 
+	// APPROVED:
 
 	/**
 	 * Tests whether the ROI was changed and will recompute the preview
@@ -1506,7 +1187,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		@Override
 		public void adjustmentValueChanged(final AdjustmentEvent event) {
 			sigma = computeValueFromScrollbarPosition(event.getValue(), min, max, scrollbarSize);
+			sigma2 = computeSigma2(sigma, sensitivity);
 
+			// TODO: this might never be the case
 			if (sigma > sigma2) {
 				sigma = sigma2 - 0.001f;
 				sigmaScrollbar1.setValue(computeScrollbarPositionFromValue(sigma, min, max, scrollbarSize));
@@ -1623,7 +1306,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			// System.out.println("value in the text field = " + value);
 			String labelText = "";
 
-			if (valueAdjust == ValueChange.SUPPORTREGION) {
+			if (valueAdjust == ValueChange.SUPPORTRADIUS) {
 				// set the value for the support region
 				supportRadius = value;
 				// set label
@@ -1641,7 +1324,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			while (isComputing) {
 				SimpleMultiThreading.threadWait(10);
 			}
-			updatePreview(ValueChange.SUPPORTREGION);
+			updatePreview(ValueChange.SUPPORTRADIUS);
 		}
 	}
 
@@ -1666,7 +1349,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			float value = computeValueFromScrollbarPosition(event.getValue(), min, max, scrollbarSize);
 			String labelText = "";
 
-			if (valueAdjust == ValueChange.SUPPORTREGION) {
+			if (valueAdjust == ValueChange.SUPPORTRADIUS) {
 				supportRadius = (int) value;
 				labelText = "Support Region Radius:"; // = " + supportRegion ;
 				textField.setText(Integer.toString(supportRadius));

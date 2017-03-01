@@ -265,8 +265,8 @@ public class Spot implements RealLocalizable
 		if ( spot.inliers.size() >= spot.center.getMinNumPoints() )
 			spot.center.fit( spot.inliers );
 	}
-	
-	public static <T extends RealType<T> > void drawRANSACArea( final ArrayList< Spot > spots, final RandomAccessibleInterval< T > draw )
+
+	public static <T extends RealType<T> > void drawRANSACArea( final ArrayList< Spot > spots, final RandomAccessibleInterval< T > draw)
 	{
 		final int numDimensions = draw.numDimensions();
 

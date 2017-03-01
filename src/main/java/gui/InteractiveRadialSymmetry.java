@@ -100,6 +100,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	float sigmaMax = 10f;
 	float thresholdMin = 0.0001f;
 	float thresholdMax = 1f;
+	// defines the resolution in x y z dimensions
+	double [] calibration;
 	// --------------------------------
 
 	// Stuff above looks super relevant
@@ -141,7 +143,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	RandomAccessibleInterval<FloatType> slice;
 	// TODO: always process only this part of the initial image
 	RandomAccessibleInterval<FloatType> img;
-	
+
 	FloatProcessor ransacFloatProcessor;
 	ImagePlus impRansacError;
 	// used to show the results -- error for RANSAC
@@ -156,7 +158,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	boolean isFinished = false;
-	boolean wasCanceled = false;
+	boolean wasCanceled = false;	
+
+
+	// used to save previous values of the fields
+	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
+	public static int defaultImg = 0;
+	public static int defaultParam = 0;
+	public static boolean defaultGauss = false;
 
 	public boolean isFinished() {
 		return isFinished;
@@ -183,7 +192,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	public int setup( String arg, ImagePlus imp) {
 		return 0;
 	}
-
 
 	// TODO: POLISH
 	/**
@@ -281,8 +289,10 @@ public class InteractiveRadialSymmetry implements PlugIn {
 						failed = true;
 					}
 					else{
-						imp.setPosition(channel, imp.getSlice(), 1);
-						slice = ImageJFunctions.convertFloat(imp);			
+						imp.setPosition(channel, imp.getSlice(), 1);						
+						slice = ImageJFunctions.convertFloat(imp);	
+						// should be called after slice inititalization
+						setCalibration();
 						// initialize variables for interactive preview
 						// called before updatePreview() !
 						ransacPreviewInit();
@@ -310,7 +320,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 					int curSliceIndex = imp.getSlice();
 					imp.setPosition(channel, curSliceIndex, 0);
 					slice = ImageJFunctions.convertFloat(imp);
-
+					// should be called after slice inititalization
+					setCalibration();
 					// initialize variables for the result
 					ransacPreviewInit();
 					automaticDialog();
@@ -320,6 +331,28 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 		// return failed; // uncomment if necessary 
 	}
+
+	/**
+	 * sets the calibration for the initial image. Only the relative value matters.
+	 * normalize everything with respect to the 1-st coordinate.
+	 * */
+	protected void setCalibration(){
+		calibration = new double[slice.numDimensions()]; // should always be 2 for the interactive mode
+
+		// if there is something reasonable in x-axis calibration use this value
+		if ((imp.getCalibration().pixelWidth >= 1e-13) && imp.getCalibration().pixelWidth != Double.NaN){
+			calibration[0] = imp.getCalibration().pixelWidth/imp.getCalibration().pixelWidth;
+			calibration[1] = imp.getCalibration().pixelHeight/imp.getCalibration().pixelWidth;		
+			if (slice.numDimensions() == 3)
+				calibration[2] = imp.getCalibration().pixelDepth/imp.getCalibration().pixelWidth;
+		}
+		else{
+			// otherwise set everything to 1.0 trying to fix calibration
+			for (int i = 0; i < slice.numDimensions(); ++i)
+				calibration[i] = 1.0;
+		}
+	}
+
 
 	/**
 	 * Initialize preview variables for RANSAC
@@ -335,6 +368,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		impRansacError = new ImagePlus("RANSAC preview", ransacFloatProcessor);
 		ransacPreview = ArrayImgs.floats(pixels, width, height);
 		impRansacError.show();
+
+		// set same roi for rahsac error image
+		Roi roi = imp.getRoi();
+		if (roi != null) {
+			impRansacError.setRoi(roi);
+		}
+
 	}
 
 	// this function will show the result of RANSAC
@@ -362,7 +402,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	// extended or shorten the size of the boundaries
-	protected <T extends RealType<T>> void adjustBoundaries(RandomAccessibleInterval<T> inImg, long[] min,
+	protected <T extends RealType<T>> void setBoundaries(RandomAccessibleInterval<T> inImg, long[] min,
 			long[] max, long[] fullImgMax) {
 		final int numDimensions = inImg.numDimensions();
 		for (int d = 0; d < numDimensions; ++d) {
@@ -423,7 +463,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 
 		IntervalView<FloatType> roi = Views.interval(img, new long []{rectangle.x, rectangle.y}, new long []{rectangle.width + rectangle.x - 1, rectangle.height + rectangle.y - 1}); // FIXME: -1 -1 ?!
-		adjustBoundaries(roi, min, max, fullImgMax);
+		setBoundaries(roi, min, max, fullImgMax);
 
 		//		System.out.println("Adjusted roi:");
 		//		for (int d = 0; d < 2; ++d){
@@ -588,56 +628,53 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		ransacResultTable(spots);
 	}
 
-	// draw detected points
-	// TODO: create a table with the results here
+	// APPROVED:
+	/**
+	 * shows the results (circles) of the detection. 
+	 * */
 	protected void ransacResults(final ArrayList<Spot> spots) {
-		// make draw global
+		// reset the image
 		for (final FloatType t : Views.iterable(ransacPreview))
 			t.setZero();
 
-		// TODO: Automated coloring fails on Mac but works fine on ubuntu
 		Spot.drawRANSACArea(spots, ransacPreview);
 
 		// TODO: create a separate function for this part
-		double displayMaxError = 0;
+		double displayMaxError = 0;		
 		for ( final Spot spot : spots ){
 			if ( spot.inliers.size() == 0 )
 				continue;
-			for ( final PointFunctionMatch pm : spot.inliers )
+			for ( final PointFunctionMatch pm : spot.inliers ){
 				if (displayMaxError < pm.getDistance())
 					displayMaxError = pm.getDistance();
-		}	
+			}
+		}
 
-		impRansacError.setDisplayRange(0, displayMaxError);
+		// (displayMaxError/4) instead of displayMaxError to have better contrast
+		impRansacError.setDisplayRange(0, displayMaxError/4);
 		impRansacError.updateAndDraw();
-		drawDetectedSpots(spots, imp); 
 
-		// 		ImageJFunctions.show(ransacPreview).setTitle("2nd fig");
+		// show circles in the RANSAC image 
+		Overlay ransacErrorOverlay = impRansacError.getOverlay();
+		if (ransacErrorOverlay != null)
+			ransacErrorOverlay.clear();
+		drawDetectedSpots(spots, impRansacError); 
 
-		//		Overlay overlay = drawImp.getOverlay();
-		//		if (overlay == null) {
-		// System.out.println("If this message pops up probably something
-		// went wrong.");
-		//			overlay = new Overlay();
-		//			drawImp.setOverlay(overlay);
-		//		}
-
-		//		overlay.clear();
-		// TODO: Figure out if setSlice is necessary at all
-		// drawImp.setSlice(imp.getSlice());
-		//		drawImp.setRoi(imp.getRoi());
-		//		drawDetectedSpots(spots, drawImp);
-		// showRansacLog(spots);
-		// showRansacResultTable(spots);
+		// show circles in the initial image
+		drawDetectedSpots(spots, imp);
 	}
 
+	/**
+	 * adds new spots to the overlay. IMPORTANT: the overlay is not overwritten since 
+	 * it might be useful for initial Difference-of-Gaussians detection
+	 * */
 	protected void drawDetectedSpots(final ArrayList<Spot> spots, ImagePlus imagePlus) {
 		// extract peaks to show
 		// we will overlay them with RANSAC result
 		Overlay overlay = imagePlus.getOverlay();
 
 		if (overlay == null) {
-			System.out.println("If this message pops up probably something went wrong.");
+			// System.out.println("If this message pops up probably something went wrong.");
 			overlay = new Overlay();
 			imagePlus.setOverlay(overlay);
 		}
@@ -692,7 +729,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	// unified call for nD cases 
 	protected void runRansacAutomatic(){
-
 		img = ImageJFunctions.wrap(imp); // returns the whole image either 2D or 3D
 
 		long [] min = new long [img.numDimensions()]; 
@@ -703,32 +739,25 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			max[d] = img.max(d);
 		}
 
+		// TODO: Why do we need this ?! 
 		// full image
 		rectangle = new Rectangle((int)min[0], (int)min[1], (int)max[0], (int)max[1]);
 
 		this.sigma2 = computeSigma2(this.sigma, sensitivity);
 
-		double [] calibration = new double [img.numDimensions()];
-		for (int d = 0; d < img.numDimensions(); ++d)
-			calibration[d] = 1;
-		
-		// TODO: real calibration, adjust the selected threshold to the extra smoothing in z (preview is only 2d)
+//		double [] calibration = new double [img.numDimensions()];
+//		for (int d = 0; d < img.numDimensions(); ++d)
+//			calibration[d] = 1;
 
-		//		if ( img2.numDimensions() == 3 )
-		//		{
-		//			// how much will it be smoothed in z, as this means that the blobs will have a lower contrast as a function of sigma(z)
-		//			// since in the preview it was only (x,y)
-		//			final double[][] sigmas = DifferenceOfGaussian.computeSigmas( imageSigma, 2, calibration, this.sigma, sigma2 );
-		//			final double sigma1z = sigmas[ 0 ][ 2 ];
-		//			final double sigma2z = sigmas[ 1 ][ 2 ];	
-		//			this.threshold /= ??;
-		//		}
+		// IMP: in the 3D case the blobs will have lower contrast as a function of sigma(z) therefore we have to adjust the threshold;
+		// to fix the problem we use an extra factor =0.5 which will decrease the threshold value; this might help in some cases but z-extrasmoothing
+		// is image depended
 
-		final DogDetection<FloatType> dog2 = new DogDetection<>(img, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  threshold / 4, false);
+		final float tFactor = img.numDimensions() == 3 ? 0.5f : 1.0f;	
+		final DogDetection<FloatType> dog2 = new DogDetection<>(img, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  tFactor*threshold / 4, false);
 		peaks = dog2.getSubpixelPeaks();
 
 		if (img.numDimensions() == 2 || img.numDimensions() == 3 )
-			//runRansac2();
 			ransacAutomatic();
 		else
 			System.out.println("Wrong dimensionality. Currently supported 2D/3D!");
@@ -949,10 +978,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		return sigma1 * k;
 	}
 
+	// TODO: fix the check: "==" must not be used with floats
 	// APPROVED:
 	protected boolean isRoiChanged(final ValueChange change, final Rectangle rect, boolean roiChanged){
 		boolean res = false;
-		res = (roiChanged || img == null || change == ValueChange.SLICE || rect.getMinX() != rectangle.getMinX()
+		res = (roiChanged || img == null || change == ValueChange.SLICE ||rect.getMinX() != rectangle.getMinX()
 				|| rect.getMaxX() != rectangle.getMaxX() || rect.getMinY() != rectangle.getMinY()
 				|| rect.getMaxY() != rectangle.getMaxY());
 		return res;
@@ -1009,7 +1039,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				else
 					System.out.println("updatePreview: This dimensionality is not supported");
 			}
-
 			roiChanged = true;
 		}
 
@@ -1024,7 +1053,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				|| change == ValueChange.ALL || change == ValueChange.SUPPORTRADIUS || change == ValueChange.THRESHOLD || change == ValueChange.MAXERROR 
 				|| change == ValueChange.INLIERRATIO) {
 			dogDetection();
-
 		}
 
 		showPeaks();
@@ -1034,15 +1062,15 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		isComputing = false;
 	}
 
+	// APPROVED:
+	/**
+	 * this function is used for Difference-of-Gaussian calculation in the 
+	 * interactive case. No calibration adjustment is needed.
+	 * (threshold/4) - because some peaks might be skipped.
+	 * */
 	protected void dogDetection(){
-
-		double [] calibration = new double [img.numDimensions()];
-		for (int d = 0; d < img.numDimensions(); ++d)
-			calibration[d] = 1;
-
-		final DogDetection<FloatType> dog2 = new DogDetection<>(img, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  threshold / 4, false);
-		peaks = dog2.getSubpixelPeaks(); // calls .getPeaks() internally
-
+		final DogDetection<FloatType> dog2 = new DogDetection<>(img, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  threshold/4, false);
+		peaks = dog2.getSubpixelPeaks(); 
 	}
 
 	// extract peaks to show
@@ -1377,11 +1405,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-	// way the image will be processed
-	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
-	public static int defaultImg = 0;
-	public static int defaultParam = 0;
-	public static boolean defaultGauss = false;
 
 	public static void main(String[] args) {
 		new ImageJ();
@@ -1390,7 +1413,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		String pathUbuntu = "/home/milkyklim/eclipse.input/";
 
 		String path;
-
 
 		String osName = System.getProperty("os.name").toLowerCase();
 		boolean isMacOs = osName.startsWith("mac os x");
@@ -1402,15 +1424,17 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			path = pathUbuntu;
 		}
 
-		path = path.concat("multiple_dots.tif");
+		path = path.concat("multiple_dots_2D.tif");
 		System.out.println(path);
 
 		ImagePlus imp = new Opener().openImage(path);
 
 		if (imp == null)
 			System.out.println("image was not loaded");
-
-		imp.show();
+		else{
+			imp.show();
+		}
+		
 		// 	imp.setSlice(20);
 
 

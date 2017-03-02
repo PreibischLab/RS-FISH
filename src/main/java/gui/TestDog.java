@@ -2,6 +2,7 @@ package gui;
 
 import java.util.concurrent.Executors;
 
+import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.algorithm.dog.DifferenceOfGaussian;
 import net.imglib2.algorithm.dog.DogDetection;
@@ -87,17 +88,27 @@ public class TestDog {
 	}
 	
 	
+	public static void testRAI(Img<FloatType> img){
+		Cursor<FloatType> cursor = img.cursor();
+		
+		while(cursor.hasNext()){
+			cursor.fwd();
+			System.out.println(cursor.getLongPosition(0) + " " + cursor.getLongPosition(1));
+		}
+	}
+	
 	public static void main (String[] args) throws IncompatibleTypeException{
 		new ImageJ();
-		Img<FloatType> img = ArrayImgs.floats(new long[]{50, 50, 50});	
+		Img<FloatType> img = ArrayImgs.floats(new long[]{50, 50});	
 
-		long [] iPos = new long []{20, 20, 20}; 
+		long [] iPos = new long []{20, 20}; 
 		RandomAccess<FloatType> ra = img.randomAccess();
 		ra.setPosition(iPos);
 		ra.get().set(255);
 
 		ImageJFunctions.show(img);
 		
-		testDog(img, iPos);
+		testRAI(img);
+		// testDog(img, iPos);
 	}
 }

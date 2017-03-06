@@ -415,7 +415,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	// check if peak is inside of the rectangle
-	protected boolean isInside(RefinedPeak<Point> peak){
+	protected static boolean isInside( final RefinedPeak<Point> peak, final Rectangle rectangle )
+	{
 		final float x = peak.getFloatPosition(0);
 		final float y = peak.getFloatPosition(1);
 
@@ -427,22 +428,21 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	/**
 	 * Copy peaks found by DoG to lighter ArrayList (!imglib2)
-	 */	
-	protected void copyPeaks(final ArrayList<long[]> simplifiedPeaks) {		
-		int numDimensions = img.numDimensions();
-		long[] coordinates = new long[numDimensions];
+	 */
+	protected void copyPeaks(final ArrayList<long[]> simplifiedPeaks) {
+		final int numDimensions = img.numDimensions();
 
 		// TODO: here should be the threshold for the peak values
 		for (final RefinedPeak<Point> peak : peaks){
 			// TODO: add threshold value
-			if (isInside(peak)){
+			if (isInside( peak, rectangle ) ){
+				final long[] coordinates = new long[numDimensions];
 				for (int d = 0; d < peak.numDimensions(); ++d){
 					coordinates[d] = Util.round(peak.getDoublePosition(d));
 				}
-				simplifiedPeaks.add(coordinates.clone()); // TODO: get rid of clone but check that it is done correctly
+				simplifiedPeaks.add(coordinates);
 			}
 		}
-
 	}
 
 	protected void ransacInteractive() {
@@ -458,7 +458,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final long[] max = new long[numDimensions];
 		final long[] fullImgMax = new long[numDimensions];
 
-		// TODO: check if you need this -1 here; comes from the imglib1	
 		for (int d = 0; d < numDimensions; ++d){
 			fullImgMax[d] = slice.dimension(d) - 1; 
 			range[d] = 2*supportRadius;

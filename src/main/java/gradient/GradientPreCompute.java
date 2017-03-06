@@ -6,6 +6,7 @@ import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
@@ -74,7 +75,7 @@ public class GradientPreCompute extends Gradient
 		
 		// where to store the precomputed derivatives
 		final Img< FloatType > derivatives = new ArrayImgFactory<FloatType>().create( dim, new FloatType() );
-		
+			
 		// we use a local derivative on demand so that we do not need to duplicate code
 		final GradientOnDemand derivativeOnDemand = new GradientOnDemand( source );
 		
@@ -120,6 +121,7 @@ public class GradientPreCompute extends Gradient
 		
 		tmp[ n1 ] = 0;
 		randomAccess.setPosition( tmp );
+		
 		derivativeVector[ 0 ] = randomAccess.get().get();
 		
 		for ( int d = 1; d < n1; ++d )

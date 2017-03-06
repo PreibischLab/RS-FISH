@@ -11,6 +11,9 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Random;
 
+import background.NormalizedGradient;
+import background.NormalizedGradientAverage;
+import background.NormalizedGradientRANSAC;
 import localmaxima.LocalMaxima;
 import localmaxima.LocalMaximaDoG;
 import mpicbg.models.IllDefinedDataPointsException;
@@ -98,8 +101,13 @@ public class TestGauss3d
 		
 		//derivative = new DerivativeOnDemand( image );
 		derivative = new GradientPreCompute( image );
-		
-		final ArrayList< Spot > spots = Spot.extractSpots( image, TestGauss2d.int2long( peaks ), derivative, range );
+
+		NormalizedGradient ng = null;
+		ng = new NormalizedGradientRANSAC( derivative );
+		//ng = new NormalizedGradientMedian( derivative );
+		//ng = new NormalizedGradientAverage( derivative );
+
+		final ArrayList< Spot > spots = Spot.extractSpots( image, TestGauss2d.int2long( peaks ), derivative, ng, range );
 		
 //		System.out.println("peaks size = " + peaks.size());
 //		System.out.println("spots size = " + spots.size());

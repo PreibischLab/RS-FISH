@@ -88,13 +88,13 @@ public class TestGauss2d
 		final ArrayList< int[] > peaks = candiateSearch.estimateLocalMaxima();
 
 		// adding a global gradient for testing
-
+		/*
 		final Cursor< FloatType > cu = image.localizingCursor();
 		while ( cu.hasNext() )
 		{
 			cu.fwd();
 			cu.get().set( cu.get().get() + cu.getIntPosition( 0 )/50.0f + cu.getIntPosition( 1 )/100.0f );
-		}
+		}*/
 
 		// we need something to compute the derivatives
 		final Gradient derivative;

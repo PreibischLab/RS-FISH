@@ -446,6 +446,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	protected void ransacInteractive() {
+		
+		// make sure the size is not 0 (is possible in ImageJ when making the Rectangle, not when changing it ... yeah)
+		rectangle.width = Math.max( 1, rectangle.width );
+		rectangle.height = Math.max( 1, rectangle.height );
+		
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 
 		// extract peaks for the roi
@@ -459,11 +464,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final long[] fullImgMax = new long[numDimensions];
 
 		for (int d = 0; d < numDimensions; ++d){
-			fullImgMax[d] = slice.dimension(d) - 1; 
+			fullImgMax[d] = slice.dimension(d) - 1; // max = min + size - 1
 			range[d] = 2*supportRadius;
 		}
 
-		IntervalView<FloatType> roi = Views.interval(img, new long []{rectangle.x, rectangle.y}, new long []{rectangle.width + rectangle.x, rectangle.height + rectangle.y}); 
+		// max = min + size - 1
+		
+		IntervalView<FloatType> roi = Views.interval(img, new long []{rectangle.x, rectangle.y}, new long []{rectangle.width + rectangle.x - 1, rectangle.height + rectangle.y - 1}); 
 		setBoundaries(roi, min, max, fullImgMax);
 
 		// Apply background should be here I think! 

@@ -11,6 +11,7 @@ import localmaxima.LocalMaximaDoG;
 import localmaxima.LocalMaximaNeighborhood;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
+import net.imglib2.Cursor;
 import net.imglib2.RealLocalizable;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -46,7 +47,7 @@ public class TestGauss2d
 	{
 		// size around the detection to use
 		// we detect at 0.5, 0.5, 0.5 - so we need an even size
-		final int[] range = new int[]{ 10, 10 };
+		final long[] range = new long[]{ 10, 10 };
 		
 		final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 256, 256 }, new FloatType() );
 		final ArrayList< double[] > points = new ArrayList<double[]>();
@@ -60,7 +61,7 @@ public class TestGauss2d
 			TestGauss3d.addGaussian( image, location, sigma );
 			points.add( location );
 		}
-		
+
 		/*
 		TestGauss3d.addGaussian( image, new double[]{ 10.6, 10 }, new double[]{ 2, 2 } );
 		TestGauss3d.addGaussian( image, new double[]{ 100.3, 100.1 }, new double[]{ 2, 2 } );
@@ -86,14 +87,26 @@ public class TestGauss2d
 		//candiateSearch = new LocalMaximaAll( image );
 		
 		final ArrayList< int[] > peaks = candiateSearch.estimateLocalMaxima();
-		
+
+		final Cursor< FloatType > cu = image.localizingCursor();
+		while ( cu.hasNext() )
+		{
+			cu.fwd();
+			cu.get().set( cu.get().get() + cu.getIntPosition( 0 )/50.0f + cu.getIntPosition( 1 )/100.0f );
+		}
+
 		// we need something to compute the derivatives
 		final Gradient derivative;
 		
 		//derivative = new DerivativeOnDemand( image );
 		derivative = new GradientPreCompute( image );
 		
-		final ArrayList< Spot > spots = Spot.extractSpots( image, peaks, derivative, range );
+		
+		
+		ImageJFunctions.show( new GradientPreCompute( image ).preCompute( image ) );
+		//SimpleMultiThreading.threadHaltUnClean();
+		
+		final ArrayList< Spot > spots = Spot.extractSpots( image, int2long( peaks ), derivative, range );
 		
 		//GradientDescent.testGradientDescent( spots, new boolean[]{ false, false, true } );
 		//SimpleMultiThreading.threadHaltUnClean();
@@ -119,8 +132,22 @@ public class TestGauss2d
 		Spot.drawRANSACArea( goodspots, ransacarea );
 		ImageJFunctions.show( ransacarea );
 	}
-	
-	public static double dist( final double[] p1, final int[] p2 )
+
+	public static ArrayList< long[] > int2long( final ArrayList< int[] > a )
+	{
+		final ArrayList< long[] > b = new ArrayList<>();
+
+		for ( final int[] ai : a )
+		{
+			final long[] bi = new long[ ai.length ];
+			for ( int i = 0; i < bi.length; ++i )
+				bi[ i ] = ai[ i ];
+			b.add( bi );
+		}
+		return b;
+	}
+
+	public static double dist( final double[] p1, final long[] p2 )
 	{
 		double dist = 0;
 		

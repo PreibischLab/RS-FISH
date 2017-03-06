@@ -6,7 +6,6 @@ import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
@@ -36,29 +35,36 @@ import net.imglib2.view.Views;
 public class GradientPreCompute extends Gradient
 {
 	final RandomAccess< FloatType > randomAccess;
-	final long[] tmp;
 	final int n1, n2;
 	
 	// we need this to iterate the correct area for pre-computation
+	final long[] tmp;
 	final long[] minIterate; 
 	final long[] maxIterate; 
 
 	public GradientPreCompute( final RandomAccessibleInterval<FloatType> source )
 	{
 		super( source.numDimensions() );
-		
+
 		this.n1 = source.numDimensions();
 		this.n2 = n1 + 1;
-		this.tmp = new long[ n2 ];
 		this.minIterate = new long[ n1 ];
 		this.maxIterate = new long[ n1 ];
-		
+		this.tmp  = new long[ n2 ];
+
 		final Img< FloatType > d = preCompute( source );
 		this.randomAccess = d.randomAccess();
 	}
-	
-	protected Img< FloatType > preCompute( final RandomAccessibleInterval<FloatType> source )
+
+	public Img< FloatType > preCompute( final RandomAccessibleInterval<FloatType> source )
 	{
+		return preCompute( source, minIterate, maxIterate, n1, n2 );
+	}
+
+	public static Img< FloatType > preCompute( final RandomAccessibleInterval<FloatType> source, final long[] minIterate, final long[] maxIterate, final int n1, final int n2 )
+	{
+		final long[] tmp  = new long[ n2 ];
+
 		// we need the extra dimension to store "n" values (except it would be one-dimensional)
 		final long[] dim = new long[ n2 ];
 				

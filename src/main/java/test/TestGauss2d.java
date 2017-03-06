@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import background.NormalizedGradient;
+import background.NormalizedGradientAverage;
+import background.NormalizedGradientMedian;
+import background.NormalizedGradientRANSAC;
 import fit.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
@@ -104,7 +107,9 @@ public class TestGauss2d
 
 		// normalize gradient?
 		NormalizedGradient ng = null;
-		ng = new NormalizedGradient( derivative );
+		//ng = new NormalizedGradientRANSAC( derivative );
+		//ng = new NormalizedGradientMedian( derivative );
+		ng = new NormalizedGradientAverage( derivative );
 
 		final ArrayList< Spot > spots = Spot.extractSpots( image, int2long( peaks ), derivative, ng, range );
 		

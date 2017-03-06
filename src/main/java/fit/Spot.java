@@ -188,15 +188,14 @@ public class Spot implements RealLocalizable
 		for ( int d = 0; d < numDimensions; ++d)
 			maxDim[ d ] = (int)image.dimension(d) - 2; // -1 would be image, -2 is gradient image as we loose one value computing the gradient
 
-		final ArrayList< Spot > spots = new ArrayList<>();		
-		//final RandomAccessible< T > infinite = Views.extendZero( image );		
+		final ArrayList< Spot > spots = new ArrayList<>();
 
 		final Gradient gradient;
 
 		if ( normalizer == null )
 			gradient = derivative;
 		else
-			gradient = new NormalizedGradient( derivative );
+			gradient = normalizer;
 
 		int i = 0;
 

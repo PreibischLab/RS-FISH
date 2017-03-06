@@ -1,27 +1,23 @@
 package test;
 
-import ij.ImageJ;
-
 import java.util.ArrayList;
 import java.util.Random;
 
+import background.NormalizedGradient;
+import fit.Spot;
+import gradient.Gradient;
+import gradient.GradientPreCompute;
+import ij.ImageJ;
 import localmaxima.LocalMaxima;
-import localmaxima.LocalMaximaAll;
-import localmaxima.LocalMaximaDoG;
 import localmaxima.LocalMaximaNeighborhood;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import net.imglib2.Cursor;
-import net.imglib2.RealLocalizable;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
-import fit.Spot;
-import gradient.Gradient;
-import gradient.GradientPreCompute;
 
 /**
  * Radial Symmetry Package
@@ -85,8 +81,10 @@ public class TestGauss2d
 		candiateSearch = new LocalMaximaNeighborhood( image );
 		//candiateSearch = new LocalMaximaSmoothNeighborhood( image, new double[]{ 1, 1 } );
 		//candiateSearch = new LocalMaximaAll( image );
-		
+
 		final ArrayList< int[] > peaks = candiateSearch.estimateLocalMaxima();
+
+		// adding a global gradient for testing
 
 		final Cursor< FloatType > cu = image.localizingCursor();
 		while ( cu.hasNext() )
@@ -101,12 +99,14 @@ public class TestGauss2d
 		//derivative = new DerivativeOnDemand( image );
 		derivative = new GradientPreCompute( image );
 		
-		
-		
 		ImageJFunctions.show( new GradientPreCompute( image ).preCompute( image ) );
 		//SimpleMultiThreading.threadHaltUnClean();
-		
-		final ArrayList< Spot > spots = Spot.extractSpots( image, int2long( peaks ), derivative, range );
+
+		// normalize gradient?
+		NormalizedGradient ng = null;
+		ng = new NormalizedGradient( derivative );
+
+		final ArrayList< Spot > spots = Spot.extractSpots( image, int2long( peaks ), derivative, ng, range );
 		
 		//GradientDescent.testGradientDescent( spots, new boolean[]{ false, false, true } );
 		//SimpleMultiThreading.threadHaltUnClean();

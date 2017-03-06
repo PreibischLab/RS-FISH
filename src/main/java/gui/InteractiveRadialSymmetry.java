@@ -403,17 +403,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-	// extended or shorten the size of the boundaries
-	protected <T extends RealType<T>> void setBoundaries(RandomAccessibleInterval<T> inImg, long[] min,
-			long[] max, long[] fullImgMax) {
-		final int numDimensions = inImg.numDimensions();
-		for (int d = 0; d < numDimensions; ++d) {
-			// check that it does not exceed bounds of the underlying image
-			min[d] = Math.max(inImg.min(d), 0);
-			max[d] = Math.min(inImg.max(d), fullImgMax[d]);
-		}
-	}
-
 	// check if peak is inside of the rectangle
 	protected static boolean isInside( final RefinedPeak<Point> peak, final Rectangle rectangle )
 	{
@@ -446,7 +435,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	}
 
 	protected void ransacInteractive() {
-		
 		// make sure the size is not 0 (is possible in ImageJ when making the Rectangle, not when changing it ... yeah)
 		rectangle.width = Math.max( 1, rectangle.width );
 		rectangle.height = Math.max( 1, rectangle.height );
@@ -458,20 +446,23 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		int numDimensions = img.numDimensions(); // DEBUG: should always be 2 // imgOut should be also fine
 
+		// the size of the RANSAC area
 		final long[] range = new long[numDimensions];
+
+		// the min/max of the user-selected rectangle, adjusted to not exceed slice boundaries
 		final long[] min = new long[numDimensions];
 		final long[] max = new long[numDimensions];
-		final long[] fullImgMax = new long[numDimensions];
 
-		for (int d = 0; d < numDimensions; ++d){
-			fullImgMax[d] = slice.dimension(d) - 1; // max = min + size - 1
-			range[d] = 2*supportRadius;
-		}
+		min[ 0 ] = Math.max( rectangle.x, 0 );
+		min[ 1 ] = Math.max( rectangle.y, 0 );
+
+		max[ 0 ] = Math.min( rectangle.width + rectangle.x - 1, slice.dimension( 0 ) - 1 );
+		max[ 1 ] = Math.min( rectangle.height + rectangle.y - 1, slice.dimension( 1 ) - 1 );
+
+		range[ 0 ] = range[ 1 ] = 2*supportRadius;
 
 		// max = min + size - 1
-		
-		IntervalView<FloatType> roi = Views.interval(img, new long []{rectangle.x, rectangle.y}, new long []{rectangle.width + rectangle.x - 1, rectangle.height + rectangle.y - 1}); 
-		setBoundaries(roi, min, max, fullImgMax);
+		IntervalView<FloatType> roi = Views.interval( img, min, max );
 
 		// Apply background should be here I think! 
 		applyBackgroundSubtraction(simplifiedPeaks, imgOut, fullImgMax);

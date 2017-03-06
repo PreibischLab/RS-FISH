@@ -52,7 +52,7 @@ public class TestGauss3d
 	{
 		// size around the detection to use
 		// we detect at 0.5, 0.5, 0.5 - so we need an even size
-		final int[] range = new int[]{ 10, 10, 10 };
+		final long[] range = new long[]{ 10, 10, 10 };
 		
 		final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 256, 256, 256 }, new FloatType() );
 		final ArrayList< double[] > points = new ArrayList<double[]>();
@@ -99,7 +99,7 @@ public class TestGauss3d
 		//derivative = new DerivativeOnDemand( image );
 		derivative = new GradientPreCompute( image );
 		
-		final ArrayList< Spot > spots = Spot.extractSpots( image, peaks, derivative, range );
+		final ArrayList< Spot > spots = Spot.extractSpots( image, TestGauss2d.int2long( peaks ), derivative, range );
 		
 //		System.out.println("peaks size = " + peaks.size());
 //		System.out.println("spots size = " + spots.size());

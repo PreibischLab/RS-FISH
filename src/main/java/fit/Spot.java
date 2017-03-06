@@ -5,17 +5,21 @@ import gradient.Gradient;
 import java.util.ArrayList;
 import java.util.Random;
 
+import background.NormalizedGradient;
 import mpicbg.models.AbstractModel;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
 import net.imglib2.Cursor;
+import net.imglib2.FinalInterval;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.iterator.IntervalIterator;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
@@ -153,14 +157,22 @@ public class Spot implements RealLocalizable
 			this.scale[ d ] = scale[ d ];
 	}
 
-	
-	// use this one when there is no information about underlying image 
-	public static <T extends RealType<T>> ArrayList< Spot > extractSpots ( final RandomAccessibleInterval<T> image, final ArrayList< long[] > peaks, final Gradient derivative, final long[] size) {
-		return extractSpots(image, image, peaks, derivative, size );
+	public static <T extends RealType<T> > ArrayList< Spot > extractSpots(
+			final Interval image,
+			final ArrayList< long[] > peaks,
+			final Gradient derivative,
+			final long[] size )
+	{
+		return extractSpots( image, peaks, derivative, null, size );
 	}
-	
+
 	// searches for spots in the image which is the part of the fullImage
-	public static <T extends RealType<T> > ArrayList< Spot > extractSpots( final RandomAccessibleInterval<T> image, final RandomAccessibleInterval<T> fullImage, final ArrayList< long[] > peaks, final Gradient derivative, final long[] size )
+	public static <T extends RealType<T> > ArrayList< Spot > extractSpots(
+			final Interval image,
+			final ArrayList< long[] > peaks,
+			final Gradient derivative,
+			final NormalizedGradient normalizer,
+			final long[] size )
 	{
 		final int numDimensions = image.numDimensions();
 
@@ -174,13 +186,22 @@ public class Spot implements RealLocalizable
 		final int[] maxDim = new int[ numDimensions ];
 		
 		for ( int d = 0; d < numDimensions; ++d)
-			maxDim[ d ] = (int)fullImage.max(d) - 2;
+			maxDim[ d ] = (int)image.dimension(d) - 2; // -1 would be image, -2 is gradient image as we loose one value computing the gradient
 
 		final ArrayList< Spot > spots = new ArrayList<>();		
-		final RandomAccessible< T > infinite = Views.extendZero( fullImage );		
+		//final RandomAccessible< T > infinite = Views.extendZero( image );		
+
+		final Gradient gradient;
+
+		if ( normalizer == null )
+			gradient = derivative;
+		else
+			gradient = new NormalizedGradient( derivative );
+
+		int i = 0;
 
 		for ( final long[] peak : peaks )
-		{	
+		{
 			final Spot spot = new Spot( numDimensions );
 			spot.setOriginalLocation( peak );
 
@@ -194,15 +215,24 @@ public class Spot implements RealLocalizable
 				max[ e ] = Math.min( max[ e ], maxDim[ e ] );
 			}
 
-			// define a local region to iterate around the potential detection
-			final Cursor< T > cursor = Views.iterable( Views.interval( infinite, min, max ) ).localizingCursor();
+			final FinalInterval spotInterval = new FinalInterval( min, max );
+
+			if ( normalizer != null )
+			{
+				((NormalizedGradient)gradient).normalize( spotInterval );
+				if ( i < 5 )
+					System.out.println( i++ + ": " + Util.printCoordinates( ((NormalizedGradient)gradient).getBackground() ));
+			}
 			
+			// define a local region to iterate around the potential detection
+			final IntervalIterator cursor = new IntervalIterator( spotInterval );
+
 			while ( cursor.hasNext() )
 			{
 				cursor.fwd();
 
 				final double[] v = new double[ numDimensions ];
-				derivative.gradientAt( cursor, v );
+				gradient.gradientAt( cursor, v );
 				
 				if ( length( v ) != 0 )
 				{

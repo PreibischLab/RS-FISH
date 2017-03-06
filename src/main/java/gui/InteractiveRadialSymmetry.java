@@ -465,11 +465,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		IntervalView<FloatType> roi = Views.interval( img, min, max );
 
 		// Apply background should be here I think! 
-		applyBackgroundSubtraction(simplifiedPeaks, imgOut, fullImgMax);
+		//applyBackgroundSubtraction(simplifiedPeaks, imgOut, fullImgMax);
 		
 		// TODO: some bounding strategy might be necessary
-		final Gradient derivative = new GradientPreCompute(imgOut);
-		final ArrayList<Spot> spots = Spot.extractSpots(roi, imgOut, simplifiedPeaks, derivative, range);
+		final Gradient derivative = new GradientPreCompute( img );
+		final ArrayList<Spot> spots = Spot.extractSpots(roi, img, simplifiedPeaks, derivative, range);
 
 		// TODO: where this part should be applied
 		// applyBackgroundSubtraction(spots, imgOut);

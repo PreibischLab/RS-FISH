@@ -75,7 +75,7 @@ public class OrientedPoint extends Point
 	 * @param p
 	 * @return angle in radians [0, pi]
 	 */
-	public float angleTo( Point p )
+	public double angleTo( Point p )
 	{
 		double len = 0;
 		for ( int d = 0; d < ow.length; ++d )
@@ -90,6 +90,6 @@ public class OrientedPoint extends Point
 		{
 			dot += ow[ d ] * tmp[ d ] / len;
 		}
-		return (float) Math.acos( dot );
+		return Math.acos( dot );
 	}
 }

@@ -101,6 +101,7 @@ public class GradientPreCompute extends Gradient
 			derivativeOnDemand.gradientAt( cursor, derivativeVector );
 			
 			// where to put the computed derivatives
+			// PROBLEM: we translate [min_x, min_y, ...] to [0,0,...] because we save it in an Img
 			for ( int d = 0; d < n1; ++d )
 				tmp[ d ] = cursor.getLongPosition( d ) - minIterate[ d ];
 			
@@ -122,6 +123,7 @@ public class GradientPreCompute extends Gradient
 	public void gradientAt( final Localizable location, final double[] derivativeVector )
 	{
 		// where to read the computed derivatives
+		// PROLBEM SOLVED: also correct for the introduced offset when returning the gradients
 		for ( int d = 0; d < n1; ++d )
 			tmp[ d ] = location.getLongPosition( d ) - minIterate[ d ];
 		

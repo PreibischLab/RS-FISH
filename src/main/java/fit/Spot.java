@@ -167,26 +167,31 @@ public class Spot implements RealLocalizable
 	}
 
 	// searches for spots in the image which is the part of the fullImage
+	/**
+	 * 
+	 * @param interval - where to extract the spots from (must be the interval from which the gradient was computed)
+	 * @param peaks - the peaks for which to extract a spot (that includes the gradients)
+	 * @param derivative - the derivative image
+	 * @param normalizer - potential per-spot normalization of the derivative image (can be null)
+	 * @param spotSize - the support region for each spot
+	 * 
+	 * @return
+	 */
 	public static <T extends RealType<T> > ArrayList< Spot > extractSpots(
-			final Interval image,
+			final Interval interval,
 			final ArrayList< long[] > peaks,
 			final Gradient derivative,
 			final NormalizedGradient normalizer,
-			final long[] size )
+			final long[] spotSize )
 	{
-		final int numDimensions = image.numDimensions();
+		// size around the detection to use (spotSize)
+		// we detect at 0.5, 0.5, 0.5 - so we need an even size (as 2 pixels have been condensed into 1 when computing the gradient)
+		// no gradient: 0-1-2 (to compute something for 1 we need three pixels)
+		// gradient: 0,5-1,5 (to compute something for 1 we need two pixels, because pixel 0 is actually at position 0,5 and pixel 1 at position 1,5 --- 0,5-pixel-shift)
 
-		// size around the detection to use
-		// we detect at 0.5, 0.5, 0.5 - so we need an even size
-
+		final int numDimensions = derivative.numDimensions();
 		final long[] min = new long[ numDimensions ];
 		final long[] max = new long[ numDimensions ];
-
-		// we always compute the location at 0.5, 0.5, 0.5 - so we cannot compute it at the last entry of each dimension
-		final int[] maxDim = new int[ numDimensions ];
-		
-		for ( int d = 0; d < numDimensions; ++d)
-			maxDim[ d ] = (int)image.dimension(d) - 2; // -1 would be image, -2 is gradient image as we loose one value computing the gradient
 
 		final ArrayList< Spot > spots = new ArrayList<>();
 
@@ -207,11 +212,15 @@ public class Spot implements RealLocalizable
 			// this part defines the possible values		
 			for ( int e = 0; e < numDimensions; ++e )
 			{
-				min[ e ] = peak[ e ] - size[ e ] / 2;
-				max[ e ] = min[ e ] + size[ e ] - 1;
+				min[ e ] = peak[ e ] - spotSize[ e ] / 2;
+				max[ e ] = min[ e ] + spotSize[ e ] - 1;
+
 				// check that it does not exceed bounds of the underlying image
-				min[ e ] = Math.max( min[ e ], 0 ); 			
-				max[ e ] = Math.min( max[ e ], maxDim[ e ] );
+				min[ e ] = Math.max( min[ e ], interval.min( e ) );
+				
+				// we always compute the location at 0.5, 0.5, 0.5 - so we cannot compute it at the last entry of each dimension
+				// 0 would be the image, -1 is the gradient image as we loose one value computing the gradient
+				max[ e ] = Math.min( max[ e ], interval.max( e ) - 1 ); 
 			}
 
 			final FinalInterval spotInterval = new FinalInterval( min, max );
@@ -238,7 +247,7 @@ public class Spot implements RealLocalizable
 					final double[] p = new double[ numDimensions ];
 
 					for ( int e = 0; e < numDimensions; ++e )
-						p[ e ] = cursor.getIntPosition( e ) + 0.5f;
+						p[ e ] = cursor.getIntPosition( e ) + 0.5f; // we add 0,5 to correct for the half-pixel-shift of the gradient image (because pixel 0 is actually at position 0,5 and pixel 1 at position 1,5)
 					
 					spot.candidates.add( new PointFunctionMatch( new OrientedPoint( p, v, 1 ) ) );
 				}

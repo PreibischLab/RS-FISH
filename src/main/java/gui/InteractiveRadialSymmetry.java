@@ -333,7 +333,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 						imagePlus.setPosition(channel, imagePlus.getSlice(), 1);
 						slice = ImageJFunctions.convertFloat(imagePlus);	
 						// should be called after slice inititalization
-						calibration = setCalibration(imagePlus, slice.numDimensions());
+						calibration = HelperFunctions.setCalibration(imagePlus, slice.numDimensions());
 						// initialize variables for interactive preview
 						// called before updatePreview() !
 						ransacPreviewInit();
@@ -366,7 +366,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 					imagePlus.setPosition(channel, curSliceIndex, 0);
 					slice = ImageJFunctions.convertFloat(imagePlus);
 					// should be called after slice inititalization
-					calibration = setCalibration(imagePlus, slice.numDimensions());
+					calibration = HelperFunctions.setCalibration(imagePlus, slice.numDimensions());
 					// initialize variables for the result
 					ransacPreviewInit();
 					automaticDialog();
@@ -375,27 +375,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		}
 		// return failed; // uncomment if necessary 
-	}
-
-	/**
-	 * sets the calibration for the initial image. Only the relative value matters.
-	 * normalize everything with respect to the 1-st coordinate.
-	 * */
-	protected double [] setCalibration(ImagePlus imagePlus, int numDimensions){
-		 double [] calibration = new double[numDimensions]; // should always be 2 for the interactive mode
-		// if there is something reasonable in x-axis calibration use this value
-		if ((imagePlus.getCalibration().pixelWidth >= 1e-13) && imagePlus.getCalibration().pixelWidth != Double.NaN){
-			calibration[0] = imagePlus.getCalibration().pixelWidth/imagePlus.getCalibration().pixelWidth;
-			calibration[1] = imagePlus.getCalibration().pixelHeight/imagePlus.getCalibration().pixelWidth;		
-			if (numDimensions == 3)
-				calibration[2] = imagePlus.getCalibration().pixelDepth/imagePlus.getCalibration().pixelWidth;
-		}
-		else{
-			// otherwise set everything to 1.0 trying to fix calibration
-			for (int i = 0; i < numDimensions; ++i)
-				calibration[i] = 1.0;
-		}
-		return calibration;
 	}
 
 
@@ -439,12 +418,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		rt.show("Results");
 	}
 
-	// TODO: REMOVE WHEN DONE
-	public static <T extends RealType<T>> void printCoordinates(RandomAccessibleInterval<T> img) {
-		for (int d = 0; d < img.numDimensions(); ++d) {
-			System.out.println("[" + img.min(d) + " " + img.max(d) + "] ");
-		}
-	}
 
 	/**
 	 * Shows dialog to choose method for background subtraction
@@ -461,9 +434,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// Should I move this to the return statement
 		bsMethod = gd.getNextRadioButton();
 		defaultMethodBS = bsMethod;
-
-		System.out.println(bsMethod);
-
 
 		if (gd.wasCanceled()) 
 			canceled = true;
@@ -554,36 +524,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		frame.setVisible(true);
 	}
 
-
-	// check if peak is inside of the rectangle
-	protected static boolean isInside( final RefinedPeak<Point> peak, final Rectangle rectangle )
-	{
-		final float x = peak.getFloatPosition(0);
-		final float y = peak.getFloatPosition(1);
-
-		boolean res = (x >= (rectangle.x) && y >= (rectangle.y) && 
-				x < (rectangle.width + rectangle.x - 1) && y < (rectangle.height + rectangle.y - 1));
-
-		return res;
-	}
-
-	/**
-	 * Copy peaks found by DoG to lighter ArrayList (!imglib2)
-	 */
-	public void copyPeaks(ArrayList<RefinedPeak<Point>> peaks, final ArrayList<long[]> simplifiedPeaks, final int numDimensions, Rectangle rectangle) {
-		// TODO: here should be the threshold for the peak values
-		for (final RefinedPeak<Point> peak : peaks){
-			// TODO: add threshold value
-			if (isInside( peak, rectangle ) ){
-				final long[] coordinates = new long[numDimensions];
-				for (int d = 0; d < peak.numDimensions(); ++d){
-					coordinates[d] = Util.round(peak.getDoublePosition(d));
-				}
-				simplifiedPeaks.add(coordinates);
-			}
-		}
-	}
-
 	protected void ransacInteractive() {
 		// make sure the size is not 0 (is possible in ImageJ when making the Rectangle, not when changing it ... yeah)
 		rectangle.width = Math.max( 1, rectangle.width );
@@ -592,38 +532,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 		int numDimensions = extendedRoi.numDimensions(); // DEBUG: should always be 2 
 		// extract peaks for the roi
-		copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle);
+		HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle);
 
 		// the size of the RANSAC area
 		final long[] range = new long[numDimensions];
 
-		// the min/max of the user-selected rectangle, adjusted to not exceed slice boundaries
-		// final long[] min = new long[numDimensions];
-		// final long[] max = new long[numDimensions];
-
-		// min[ 0 ] = Math.max( rectangle.x, 0 );
-		// min[ 1 ] = Math.max( rectangle.y, 0 );
-
-		// max[ 0 ] = Math.min( rectangle.width + rectangle.x - 1, slice.dimension( 0 ) - 1 );
-		// max[ 1 ] = Math.min( rectangle.height + rectangle.y - 1, slice.dimension( 1 ) - 1 );
-
 		range[ 0 ] = range[ 1 ] = 2*supportRadius;
 
-		//		System.out.println(rectangle.x + " "  + (rectangle.x + rectangle.width));
-		//		System.out.println(rectangle.y + " "  + (rectangle.y + rectangle.height));
-		//		System.out.println(min[0] + " "  + max[0]);
-		//		System.out.println(min[1] + " "  + max[1]);		
-
-		// max = min + size - 1
-		// IntervalView<FloatType> roi = Views.interval( extendedRoi, min, max );
-
-		// Apply background should be here I think! 
-		// applyBackgroundSubtraction(simplifiedPeaks, imgOut, fullImgMax);
-
-		// TODO: some bounding strategy might be necessary
-		// TODO: why not calculating derivative on roi?
-		final Gradient derivative = new GradientPreCompute( extendedRoi );
-		
+		final Gradient derivative = new GradientPreCompute( extendedRoi );		
 		NormalizedGradient ng = null;
 		// depending on user choice we use different method
 		if (backgroundSubtraction)
@@ -632,7 +548,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// ImageJFunctions.show(new NormalizedGradientRANSAC(derivative).);
 
 		// ImageJFunctions.show(new GradientPreCompute(extendedRoi).preCompute(extendedRoi));			
-		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng,  range);
+		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
 
 		// TODO: where this part should be applied
 		// applyBackgroundSubtraction(spots, imgOut);
@@ -651,10 +567,10 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		} else if (method.equals(methods[1])){ // median
 			ng = new NormalizedGradientMedian( derivative );
 		} else if (method.equals(methods[2])){
-			// TODO: Add passing the arguments here
-			ng = new NormalizedGradientRANSAC( derivative );
+			// TODO: Add BETTER passing the arguments here
+			ng = new NormalizedGradientRANSAC(derivative, bsMaxError, bsInlierRatio);
 		} else {
-			System.out.println("Wrong backgound subtraction method. Setting ng to null");
+			System.out.println("Wrong background subtraction method. Setting ng to null");
 		}
 		
 		return ng;
@@ -700,23 +616,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// ImageJFunctions.show(source).setTitle("This one is actually modified with background subtraction");
 	}
 
-
-	/**
-	 * used by background subtraction to calculate
-	 * the boundaries of the spot 
-	 * */
-	// FIXME: Actually wrong! check 0 should interval.min(d)
-	protected void getBoundaries(long[] peak, long[] min, long [] max, long [] fullImgMax){
-		for (int d = 0; d < peak.length; ++d){
-			// check that it does not exceed bounds of the underlying image
-			min[d] = Math.max(peak[d] - supportRadius, 0);
-			max[d] = Math.min(peak[d] + supportRadius, fullImgMax[d]);
-
-		}
-	}
-
 	protected void backgroundSubtractionCorners(long [] peak, RandomAccessibleInterval<FloatType> img22, double[] coefficients, long[] min, long[] max, long [] fullImgMax){	
-		getBoundaries(peak, min, max, fullImgMax);
+		HelperFunctions.getBoundaries(peak, min, max, fullImgMax, supportRadius);
 
 		int numDimensions = peak.length;
 
@@ -877,17 +778,22 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	protected void ransacAutomatic(){
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
+		
 		int numDimensions = extendedRoi.numDimensions();
-		copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle);
+		HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle);
 		
 		final long[] range = new long[numDimensions];
 		for (int d = 0; d <numDimensions; ++d)
 			range[d] = 2*supportRadius;
 
 		final Gradient derivative = new GradientPreCompute(extendedRoi);
-		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, range);
-
-		// applyBackgroundSubtraction(spots);
+		
+		NormalizedGradient ng = null;
+		// depending on user choice we use different method
+		if (backgroundSubtraction)
+			ng = chooseNormalizeGradientMethod(bsMethods, bsMethod, derivative);
+		
+		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
 
 		Spot.ransac(spots, numIterations, maxError, inlierRatio);
 		for (final Spot spot : spots)
@@ -963,17 +869,20 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		imagePlus.updateAndDraw();
 	}
 
-	// APPROVED:
+	/**
+	 * shows 2 dialogs!
+	 * */
 	protected void automaticDialog(){
+		// TODO: add caching for variables
 		boolean canceled = false;
 
 		GenericDialog gd = new GenericDialog("Set Stack Parameters");
 
 		gd.addNumericField("Sigma:", this.sigma, 2);
 		gd.addNumericField("Threshold:", this.threshold, 5);
-		gd.addNumericField("Support Region Radius:", this.supportRadius, 0);
-		gd.addNumericField("Inlier Ratio:", this.inlierRatio, 2);
-		gd.addNumericField("Max Error:", this.maxError, 2);
+		gd.addNumericField("Support_Region_Radius:", this.supportRadius, 0);
+		gd.addNumericField("Inlier_Ratio:", this.inlierRatio, 2);
+		gd.addNumericField("Max_Error:", this.maxError, 2);
 
 		gd.showDialog();
 		if (gd.wasCanceled()) 
@@ -984,14 +893,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		supportRadius = (int)Math.round(gd.getNextNumber());
 		inlierRatio = (float)gd.getNextNumber();
 		maxError = (float)gd.getNextNumber();	
-
+		
 		// wrong values in the fields
 		if (sigma == Double.NaN || threshold == Double.NaN ||  supportRadius == Double.NaN || inlierRatio == Double.NaN || maxError == Double.NaN )
 			canceled = true;
-
+		
 		if (canceled)
 			return;
-
+		
 		runRansacAutomatic();
 	}
 
@@ -999,13 +908,13 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	protected void runRansacAutomatic(){
 		extendedRoi = ImageJFunctions.wrap(imagePlus); // returns the whole image either 2D or 3D
 
-		long [] min = new long [extendedRoi.numDimensions()]; 
-		long [] max = new long [extendedRoi.numDimensions()]; 
+		// long [] min = new long [extendedRoi.numDimensions()]; 
+		// long [] max = new long [extendedRoi.numDimensions()]; 
 
-		for (int d = 0; d < extendedRoi.numDimensions(); ++d){
-			min[d] = extendedRoi.min(d);
-			max[d] = extendedRoi.max(d);
-		}
+		// for (int d = 0; d < extendedRoi.numDimensions(); ++d){
+		// 	min[d] = extendedRoi.min(d);
+		// 	max[d] = extendedRoi.max(d);
+		// }
 
 		this.sigma2 = computeSigma2(this.sigma, sensitivity);
 		// IMP: in the 3D case the blobs will have lower contrast as a function of sigma(z) therefore we have to adjust the threshold;
@@ -1370,7 +1279,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			final float y = peak.getFloatPosition(1);
 
 			// TODO: This check criteria is totally wrong!!!
-			if (isInside(peak, rectangle) && peak.getValue() > threshold){ // I guess the peak.getValue function returns the value in scale-space
+			if (HelperFunctions.isInside(peak, rectangle) && peak.getValue() > threshold){ // I guess the peak.getValue function returns the value in scale-space
 
 				final OvalRoi or = new OvalRoi(Util.round(x - sigma),
 						Util.round(y - sigma), Util.round(sigma + sigma2),
@@ -1759,7 +1668,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			path = pathUbuntu;
 		}
 
-		path = path.concat("multiple_dots_2D.tif");
+		path = path.concat("multiple_dots.tif");
 		// path = path.concat("test_background.tif");
 		System.out.println(path);
 

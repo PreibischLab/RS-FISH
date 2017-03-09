@@ -30,35 +30,32 @@ public class RANSACWindow
 		final GridBagConstraints gbc= new GridBagConstraints();
 
 		int scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(
-				parent.ransacInitSupportRadius,
+				parent.supportRadius,
 				parent.supportRadiusMin,
 				parent.supportRadiusMax,
 				parent.scrollbarSize);
 
 		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + parent.scrollbarSize);
-		parent.supportRadius = parent.ransacInitSupportRadius;
 
 		final TextField SupportRegionTextField = new TextField(Integer.toString(parent.supportRadius));
 		SupportRegionTextField.setEditable(true);
 		SupportRegionTextField.setCaretPosition(Integer.toString(parent.supportRadius).length());
 
 		scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(
-				parent.ransacInitInlierRatio,
+				parent.inlierRatio,
 				parent.inlierRatioMin,
 				parent.inlierRatioMax,
 				parent.scrollbarSize);
 		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + parent.scrollbarSize);
-		parent.inlierRatio = parent.ransacInitInlierRatio;
 
 		final float log1001 = (float) Math.log10(parent.scrollbarSize + 1);
 		scrollbarInitialPosition = 1001
-				- (int) Math.pow(10, (parent.maxErrorMax - parent.ransacInitMaxError) / (parent.maxErrorMax - parent.maxErrorMin) * log1001);
+				- (int) Math.pow(10, (parent.maxErrorMax - parent.maxError) / (parent.maxErrorMax - parent.maxErrorMin) * log1001);
 
 		final Scrollbar maxErrorScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + parent.scrollbarSize);
-		parent.maxError = parent.ransacInitMaxError;
 
 		final Label supportRegionText = new Label(
 				"Support Region Radius:" /* = " + this.supportRegion */, Label.CENTER);

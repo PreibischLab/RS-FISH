@@ -51,15 +51,11 @@ public class InteractiveRadialSymmetry
 	final double[] calibration = new double[]{ 1, 1 };
 
 	// RANSAC parameters
-	// initial values
-	final int ransacInitSupportRadius = 5;
-	final float ransacInitInlierRatio = 0.75f;
-	final float ransacInitMaxError = 3;
 	// current value
 	int numIterations = 100;
-	float maxError = 0.15f;
-	float inlierRatio = (float) (20.0 / 100.0);
-	int supportRadius = 10;
+	float maxError = 3.0f;
+	float inlierRatio = (float) (75.0 / 100.0);
+	int supportRadius = 5;
 
 	// min/max value
 	int supportRadiusMin = 1;

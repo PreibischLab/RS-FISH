@@ -2,8 +2,6 @@ package gui.interactive;
 
 import java.awt.Color;
 import java.awt.Rectangle;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -31,9 +29,7 @@ import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.io.Opener;
 import ij.measure.ResultsTable;
-import ij.plugin.PlugIn;
 import ij.process.FloatProcessor;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.util.Util;
 import mpicbg.models.PointMatch;
 import mpicbg.spim.io.IOFunctions;
@@ -46,7 +42,6 @@ import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
@@ -132,14 +127,13 @@ public class InteractiveRadialSymmetry
 	FixROIListener fixROIListener;
 
 	// TODO: you probably need one image plus object 
-	ImagePlus imagePlus;
-	int channel = 0;
+	final ImagePlus imagePlus;
+	final long[] dim;
+	final int type;
 	Rectangle rectangle;
 
 	ArrayList<RefinedPeak<Point>> peaks;
 
-	// TODO: Variables for imglib1 to imglib2 conversion
-	RandomAccessibleInterval<FloatType> slice;
 	// TODO: always process only this part of the initial image READ ONLY
 	RandomAccessibleInterval<FloatType> extendedRoi;
 	// the pre-computed gradient
@@ -180,6 +174,19 @@ public class InteractiveRadialSymmetry
 	{
 		this.imagePlus = imp;
 
+		// which type of imageplus image is it?
+		final Object pixels = imp.getProcessor().getPixels();
+		if ( pixels instanceof byte[] )
+			this.type = 0;
+		else if ( pixels instanceof short[] )
+			this.type = 1;
+		else if ( pixels instanceof float[] )
+			this.type = 2;
+		else
+			throw new RuntimeException( "Pixels of this type are not supported: " + pixels.getClass().getSimpleName() );
+
+		this.dim = new long[]{ imp.getWidth(), imp.getHeight() };
+
 		final Roi roi = imagePlus.getRoi();
 
 		if ( roi != null && roi.getType() == Roi.RECTANGLE  )
@@ -199,14 +206,9 @@ public class InteractiveRadialSymmetry
 			imagePlus.setRoi( rectangle );
 		}
 
-		//imagePlus.setPosition(channel, imagePlus.getStack().ge, 1);
-
-		slice = ImageJFunctions.convertFloat( imagePlus );
-		//SimpleMultiThreading.threadHaltUnClean();
-
 		// initialize variables for interactive preview
 		// called before updatePreview() !
-		ransacPreviewInit();
+		ransacPreviewInit( imagePlus );
 
 		// show the interactive kit
 		this.dogWindow = new DoGWindow( this );
@@ -233,9 +235,10 @@ public class InteractiveRadialSymmetry
 	 * Initialize preview variables for RANSAC
 	 */
 	// TODO: might be not necessary
-	protected void ransacPreviewInit() {		
-		int width = (int)slice.dimension(0);
-		int height = (int)slice.dimension(1);		
+	protected void ransacPreviewInit( final ImagePlus imp )
+	{
+		int width = imp.getWidth();
+		int height = imp.getHeight();
 
 		ransacFloatProcessor = new FloatProcessor(width, height);
 
@@ -564,10 +567,10 @@ public class InteractiveRadialSymmetry
 			if (spot.inliers.size() == 0)
 				continue;
 
-			final double[] location = new double[slice.numDimensions()];
-
-			spot.center.getSymmetryCenter(location);
-			final OvalRoi or = new OvalRoi(location[0] - sigma, location[1] - sigma, Util.round(sigma + sigma2),
+			final OvalRoi or = new OvalRoi(
+					spot.center.getSymmetryCenter( 0 ) - sigma,
+					spot.center.getSymmetryCenter( 1 ) - sigma,
+					Util.round(sigma + sigma2),
 					Util.round(sigma + sigma2));
 
 			or.setStrokeColor(Color.ORANGE);
@@ -648,16 +651,11 @@ public class InteractiveRadialSymmetry
 			long [] min = new long []{rectangle.x - supportRadius, rectangle.y - supportRadius};
 			long [] max = new long []{rectangle.width + rectangle.x + supportRadius - 1, rectangle.height + rectangle.y + supportRadius - 1};
 
-			if (slice.numDimensions() == 3){
-				extendedRoi = Views.interval(Views.extendMirrorSingle( Views.hyperSlice(slice, 2, imagePlus.getCurrentSlice())), min, max);
-			}
-			else{
-				if(slice.numDimensions() == 2){
-					extendedRoi = Views.interval(Views.extendMirrorSingle(slice), min, max); // TODO: don't extend
-				}
-				else
-					System.out.println("updatePreview: This dimensionality is not supported");
-			}
+			// get the currently selected slice
+			final Img< FloatType > imgTmp = HelperFunctions.toImg( imagePlus, dim, type );
+
+			extendedRoi = Views.interval( imgTmp, min, max);
+
 			roiChanged = true;
 		}
 

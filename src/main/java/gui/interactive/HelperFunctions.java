@@ -6,12 +6,52 @@ import java.util.ArrayList;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.RealType;
-
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.FloatType;
 import ij.ImagePlus;
+import ij.process.ImageProcessor;
 import mpicbg.imglib.util.Util;
 
 public class HelperFunctions {
+
+	public static Img< FloatType > toImg( final ImagePlus imagePlus, final long[] dim, final int type )
+	{
+		System.out.println(  imagePlus.getCurrentSlice() );
+		final ImageProcessor ip = imagePlus.getStack().getProcessor( imagePlus.getCurrentSlice() );
+		final Object pixels = ip.getPixels();
+
+		final Img< FloatType > imgTmp;
+
+		if ( type == 0 )
+		{
+			imgTmp = ArrayImgs.floats( dim );
+			final byte[] p = (byte[])pixels;
+
+			int i = 0;
+			for ( final FloatType t : imgTmp )
+				t.set( UnsignedByteType.getUnsignedByte( p[ i++ ] ) );
+				
+		}
+		else if ( type == 1 )
+		{
+			imgTmp = ArrayImgs.floats( dim );
+			final short[] p = (short[])pixels;
+
+			int i = 0;
+			for ( final FloatType t : imgTmp )
+				t.set( UnsignedShortType.getUnsignedShort( p[ i++ ] ) );
+		}
+		else
+		{
+			imgTmp = ArrayImgs.floats( (float[])pixels, dim );
+		}
+
+		return imgTmp;
+	}
 
 	// APPROVED: 
 	public static float computeSigma2(final float sigma1, final int stepsPerOctave) {

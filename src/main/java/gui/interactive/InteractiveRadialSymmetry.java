@@ -142,8 +142,8 @@ public class InteractiveRadialSymmetry
 	RandomAccessibleInterval<FloatType> slice;
 	// TODO: always process only this part of the initial image READ ONLY
 	RandomAccessibleInterval<FloatType> extendedRoi;
-	// TODO: READ/WRITE  image to proress;
-	/*Img*/ RandomAccessibleInterval <FloatType> imgOut;
+	// the pre-computed gradient
+	Gradient derivative;
 
 	FloatProcessor ransacFloatProcessor;
 	ImagePlus impRansacError;
@@ -269,7 +269,7 @@ public class InteractiveRadialSymmetry
 		rt.show("Results");
 	}
 
-	protected void ransacInteractive() {
+	protected void ransacInteractive( final Gradient derivative ) {
 		// make sure the size is not 0 (is possible in ImageJ when making the Rectangle, not when changing it ... yeah)
 		rectangle.width = Math.max( 1, rectangle.width );
 		rectangle.height = Math.max( 1, rectangle.height );
@@ -283,8 +283,6 @@ public class InteractiveRadialSymmetry
 		final long[] range = new long[numDimensions];
 
 		range[ 0 ] = range[ 1 ] = 2*supportRadius;
-
-		final Gradient derivative = new GradientPreCompute( extendedRoi );		
 
 		// ImageJFunctions.show(new GradientPreCompute(extendedRoi).preCompute(extendedRoi));
 		final NormalizedGradient ng;
@@ -304,9 +302,6 @@ public class InteractiveRadialSymmetry
 			throw new RuntimeException( "Unknown bsMethod: " + bsMethod );
 
 		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
-
-		// TODO: where this part should be applied
-		// applyBackgroundSubtraction(spots, imgOut);
 
 		Spot.ransac(spots, numIterations, maxError, inlierRatio);
 		for (final Spot spot : spots)
@@ -658,7 +653,7 @@ public class InteractiveRadialSymmetry
 			}
 			else{
 				if(slice.numDimensions() == 2){
-					extendedRoi = Views.interval(Views.extendMirrorSingle(slice), min, max);
+					extendedRoi = Views.interval(Views.extendMirrorSingle(slice), min, max); // TODO: don't extend
 				}
 				else
 					System.out.println("updatePreview: This dimensionality is not supported");
@@ -666,18 +661,19 @@ public class InteractiveRadialSymmetry
 			roiChanged = true;
 		}
 
-		// only recalculate DOG if: sigma, roi (also through support region), slider
+		// only recalculate DOG & gradient image if: sigma, roi (also through support region), slider
 		if (roiChanged || peaks == null || change == ValueChange.SIGMA || change == ValueChange.SLICE || change == ValueChange.ALL )
 		{
 			System.out.println( "recalc" );
 
-			dogDetection( extendedRoi ); 
+			dogDetection( extendedRoi );
+			derivative = new GradientPreCompute( extendedRoi );
 		}
 
 		showPeaks( imagePlus, rectangle, threshold );
 		imagePlus.updateAndDraw();
 
-		ransacInteractive();
+		ransacInteractive( derivative );
 		isComputing = false;
 	}
 

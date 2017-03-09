@@ -11,37 +11,12 @@ import java.awt.Label;
 import java.awt.Rectangle;
 import java.awt.Scrollbar;
 import java.awt.TextField;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.regex.Pattern;
-
-import net.imglib2.Cursor;
-import net.imglib2.Point;
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
-// additional libraries to switch from imglib1 to imglib2
-import net.imglib2.algorithm.dog.DogDetection;
-import net.imglib2.algorithm.localextrema.RefinedPeak;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImg;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.IntervalView;
-import net.imglib2.view.Views;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -54,8 +29,8 @@ import background.NormalizedGradient;
 import background.NormalizedGradientAverage;
 import background.NormalizedGradientMedian;
 import background.NormalizedGradientRANSAC;
-import fiji.tool.SliceListener;
 import fiji.tool.SliceObserver;
+import fit.Center.CenterMethod;
 import fit.PointFunctionMatch;
 import fit.Spot;
 import gradient.Gradient;
@@ -76,6 +51,18 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.util.Util;
 import mpicbg.models.PointMatch;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Cursor;
+import net.imglib2.Point;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
+// additional libraries to switch from imglib1 to imglib2
+import net.imglib2.algorithm.dog.DogDetection;
+import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 
 public class InteractiveRadialSymmetry implements PlugIn {
 	// RANSAC parameters
@@ -88,6 +75,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	float maxError = 0.15f;
 	float inlierRatio = (float) (20.0 / 100.0);
 	int supportRadius = 10;
+
 	// min/max value
 	int supportRadiusMin = 1;
 	int supportRadiusMax = 25;
@@ -97,15 +85,17 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	float maxErrorMax = 10.00f;
 	// ----------------------------------------
 
+	// Frames that are potentially open
+	BackgroundRANSAC bkWindow;
+	Frame doGFrame, ransacFrame;
+
 	// Background Subtraction parameters 
-	// initial values 
-	final float bsRansacInitInlierRatio = 0.75f;
-	final float bsRansacInitMaxError = 3;
 	// current values 
-	float bsMaxError = 0.15f;
-	float bsInlierRatio = (float) (20.0 / 100.0);
-	
+	float bsMaxError = 0.05f;
+	float bsInlierRatio = 75.0f / 100.0f;
 	int bsNumIterations = 100;
+	int bsMethod = 0;
+
 	// min/max value
 	float bsInlierRatioMin = (float) (0.0 / 100.0); // 0%
 	float bsInlierRatioMax = 1; // 100%
@@ -149,8 +139,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	boolean gaussFit;
 
 	boolean backgroundSubtraction;
-	String [] bsMethods = new String []{ "No background subtraction", "Mean", "Median", "RANSAC on Mean"};
-	String bsMethod;
+	final static String [] bsMethods = new String []{ "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
 
 	// TODO: after moving to imglib2 REMOVE
 	// steps per octave
@@ -188,11 +177,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		SIGMA, THRESHOLD, SLICE, ROI, ALL, SUPPORTRADIUS, INLIERRATIO, MAXERROR, BSINLIERRATIO, BSMAXERROR
 	}
 
-	// TODO: switch from the String[] to the enumerator
-	public static enum BsMethods {
-		MEAN, MEDIAN, RANSAC
-	}
-	
 	boolean isFinished = false;
 	boolean wasCanceled = false;	
 
@@ -203,7 +187,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	public static boolean defaultGauss = false;
 
 	public static boolean defaultBackgroundSubtraction = false;
-	public static String defaultMethodBS;
+	public static int defaultMethodBS;
 
 	public boolean isFinished() {
 		return isFinished;
@@ -346,7 +330,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 						// show the interactive ransac kit
 						interactiveRansacDialog();
 						// add listener to the imageplus slice slider
-						sliceObserver = new SliceObserver(imagePlus, new ImagePlusListener());
+						sliceObserver = new SliceObserver(imagePlus, new ImagePlusListener( this ));
 						// compute first version
 						updatePreview(ValueChange.ALL);
 						isStarted = true;
@@ -421,106 +405,22 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	/**
 	 * Shows dialog to choose method for background subtraction
 	 * */
-	protected void fittingDialog(){
+	private void fittingDialog(){
 		boolean canceled = false;
 
 		GenericDialog gd = new GenericDialog("Background Subtraction Method");
-		int numColumns = 1;
-		gd.addRadioButtonGroup("Method :", bsMethods, bsMethods.length, numColumns, defaultMethodBS);
+		gd.addChoice( "Method :", bsMethods, bsMethods[ defaultMethodBS ] );
 
 		gd.showDialog();
 
 		// Should I move this to the return statement
-		bsMethod = gd.getNextRadioButton();
-		defaultMethodBS = bsMethod;
+		bsMethod = defaultMethodBS = gd.getNextChoiceIndex();
 
 		if (gd.wasCanceled()) 
 			canceled = true;
 
 		if (canceled)
 			return;
-	}
-
-	/**
-	 * shows dialog to adjust parameters for the RANSAC background subtraction
-	 * */
-	protected void interactiveRansacBSDialog() {
-		final Frame frame = new Frame("Adjust RANSAC Background Subtraction Values");
-		frame.setSize(260, 200);
-
-		/* Instantiation */
-		final GridBagLayout layout = new GridBagLayout();
-		final GridBagConstraints gbc = new GridBagConstraints();
-
-		int scrollbarBSInitialPosition = computeScrollbarPositionFromValue(bsRansacInitInlierRatio, bsInlierRatioMin,
-				bsInlierRatioMax, scrollbarSize);
-		
-		final Scrollbar bsInlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarBSInitialPosition, 10, 0,
-				10 + scrollbarSize);
-		this.bsInlierRatio = bsRansacInitInlierRatio;
-
-		final float log1001 = (float) Math.log10(scrollbarSize + 1);
-		scrollbarBSInitialPosition = 1001
-				- (int) Math.pow(10, (bsMaxErrorMax - bsRansacInitMaxError) / (bsMaxErrorMax - bsMaxErrorMin) * log1001);
-
-		final Scrollbar maxErrorScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarBSInitialPosition, 10, 0,
-				10 + scrollbarSize);
-		this.bsMaxError = bsRansacInitMaxError;
-
-		final Label bsInlierRatioText = new Label(
-				"Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", this.bsInlierRatio), Label.CENTER);
-		final Label bsMaxErrorText = new Label("Max Error = " + String.format(java.util.Locale.US, "%.4f", this.bsMaxError),
-				Label.CENTER);
-
-		final Button button = new Button("Done");
-		final Button cancel = new Button("Cancel");
-
-		// /* Location */
-		frame.setLayout(layout);
-
-		// insets constants
-		int inTop = 0;
-		int inRight = 5;
-		int inBottom = 0;
-		int inLeft = inRight;
-
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.weightx = 1;
-		frame.add(bsInlierRatioText, gbc);
-
-		++gbc.gridy;
-		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(bsInlierRatioScrollbar, gbc);
-		
-		++gbc.gridy;
-		frame.add(bsMaxErrorText, gbc);
-
-		++gbc.gridy;
-		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(maxErrorScrollbar, gbc);
-
-		++gbc.gridy;
-		gbc.insets = new Insets(5, 50, 0, 50);
-		frame.add(button, gbc);
-
-		++gbc.gridy;
-		gbc.insets = new Insets(0, 50, 0, 50);
-		frame.add(cancel, gbc);
-
-		// /* Configuration */
-		bsInlierRatioScrollbar.addAdjustmentListener(new GeneralListener(bsInlierRatioText, bsInlierRatioMin, bsInlierRatioMax,
-				ValueChange.BSINLIERRATIO, new TextField()));
-		maxErrorScrollbar.addAdjustmentListener(
-				new GeneralListener(bsMaxErrorText, bsMaxErrorMin, bsMaxErrorMax, ValueChange.BSMAXERROR, new TextField()));
-
-		button.addActionListener(new FinishedButtonListener(frame, false));
-		cancel.addActionListener(new FinishedButtonListener(frame, true));
-
-		frame.addWindowListener(new FrameListener(frame));
-
-		frame.setVisible(true);
 	}
 
 	protected void ransacInteractive() {
@@ -539,14 +439,24 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		range[ 0 ] = range[ 1 ] = 2*supportRadius;
 
 		final Gradient derivative = new GradientPreCompute( extendedRoi );		
-		NormalizedGradient ng = null;
-		// depending on user choice we use different method
-		if (backgroundSubtraction)
-			ng = chooseNormalizeGradientMethod(bsMethods, bsMethod, derivative);
-				
-		// ImageJFunctions.show(new NormalizedGradientRANSAC(derivative).);
 
-		// ImageJFunctions.show(new GradientPreCompute(extendedRoi).preCompute(extendedRoi));			
+		// ImageJFunctions.show(new GradientPreCompute(extendedRoi).preCompute(extendedRoi));
+		final NormalizedGradient ng;
+
+		// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median"
+		if ( bsMethod == 0 )
+			ng = null;
+		else if ( bsMethod == 1 )
+			ng = new NormalizedGradientAverage( derivative );
+		else if ( bsMethod == 2 )
+			ng = new NormalizedGradientMedian( derivative );
+		else if ( bsMethod == 3 )
+			ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEAN, bsMaxError, bsInlierRatio );
+		else if ( bsMethod == 4 )
+			ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEDIAN, bsMaxError, bsInlierRatio );
+		else
+			throw new RuntimeException( "Unknown bsMethod: " + bsMethod );
+
 		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
 
 		// TODO: where this part should be applied
@@ -557,24 +467,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			spot.computeAverageCostInliers();
 		ransacResults(spots);
 	}
-	
-	// mean, median, ransac
-	protected NormalizedGradient chooseNormalizeGradientMethod(String[] methods, String method, Gradient derivative){
-		NormalizedGradient ng = null;
-		if (method.equals(methods[0])){ // if mean
-			ng = new NormalizedGradientAverage( derivative );
-		} else if (method.equals(methods[1])){ // median
-			ng = new NormalizedGradientMedian( derivative );
-		} else if (method.equals(methods[2])){
-			// TODO: Add BETTER passing the arguments here
-			ng = new NormalizedGradientRANSAC(derivative, bsMaxError, bsInlierRatio);
-		} else {
-			System.out.println("Wrong background subtraction method. Setting ng to null");
-		}
-		
-		return ng;
-	}
-	
+
 	protected void applyBackgroundSubtraction(ArrayList<long[]> peaksLocal, RandomAccessibleInterval <FloatType> image, long [] fullImgMax){
 		int numDimensions = image.numDimensions();
 
@@ -789,8 +682,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		
 		NormalizedGradient ng = null;
 		// depending on user choice we use different method
-		if (backgroundSubtraction)
-			ng = chooseNormalizeGradientMethod(bsMethods, bsMethod, derivative);
+		SimpleMultiThreading.threadHaltUnClean();
+		//throw new RuntimeException( "backgroundsubt. missing" );
 		
 		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
 
@@ -915,7 +808,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		// 	max[d] = extendedRoi.max(d);
 		// }
 
-		this.sigma2 = computeSigma2(this.sigma, sensitivity);
+		this.sigma2 = HelperFunctions.computeSigma2(this.sigma, sensitivity);
 		// IMP: in the 3D case the blobs will have lower contrast as a function of sigma(z) therefore we have to adjust the threshold;
 		// to fix the problem we use an extra factor =0.5 which will decrease the threshold value; this might help in some cases but z-extrasmoothing
 		// is image depended
@@ -936,14 +829,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	 * Instantiates the panel for adjusting the RANSAC parameters
 	 */
 	protected void interactiveRansacDialog() {
-		final Frame frame = new Frame("Adjust RANSAC Values");
-		frame.setSize(260, 200);
+		ransacFrame = new Frame("Adjust RANSAC Values");
+		ransacFrame.setSize(260, 260);
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
 		final GridBagConstraints gbc= new GridBagConstraints();
 
-		int scrollbarInitialPosition = computeScrollbarPositionFromValue(ransacInitSupportRadius, supportRadiusMin,
+		int scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(ransacInitSupportRadius, supportRadiusMin,
 				supportRadiusMax, scrollbarSize);
 		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + scrollbarSize);
@@ -953,7 +846,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		SupportRegionTextField.setEditable(true);
 		SupportRegionTextField.setCaretPosition(Integer.toString(this.supportRadius).length());
 
-		scrollbarInitialPosition = computeScrollbarPositionFromValue(ransacInitInlierRatio, inlierRatioMin,
+		scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(ransacInitInlierRatio, inlierRatioMin,
 				inlierRatioMax, scrollbarSize);
 		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + scrollbarSize);
@@ -974,17 +867,16 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final Label maxErrorText = new Label("Max Error = " + String.format(java.util.Locale.US, "%.4f", this.maxError),
 				Label.CENTER);
 
-		final Label bsText = new Label("Local Background Subtraction Method:", Label.CENTER);
-		final Choice bsMethod = new Choice();
-		bsMethod.add( "No background subtraction" );
+		final Label bsText = new Label("Local Background Subtraction:", Label.CENTER);
+		final Choice bsMethodChoice = new Choice();
 		for ( final String s : bsMethods )
-			bsMethod.add( s );
-		
+			bsMethodChoice.add( s );
+
 		final Button button = new Button("Done");
 		final Button cancel = new Button("Cancel");
 
 		// /* Location */
-		frame.setLayout(layout);
+		ransacFrame.setLayout(layout);
 
 		// insets constants
 		int inTop = 0;
@@ -997,73 +889,79 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		gbc.gridy = 0;
 		gbc.weightx = 0.50;
 		gbc.gridwidth = 1;
-		frame.add(supportRegionText, gbc);
+		ransacFrame.add(supportRegionText, gbc);
 
 		gbc.gridx = 1;
 		gbc.weightx = 0.50;
 		gbc.gridwidth = 1;
 		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(SupportRegionTextField, gbc);
+		ransacFrame.add(SupportRegionTextField, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 1;
 		gbc.gridwidth = 2;
 		gbc.insets = new Insets(5, inLeft, inBottom, inRight);
-		frame.add(supportRegionScrollbar, gbc);
+		ransacFrame.add(supportRegionScrollbar, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 2;
 		gbc.gridwidth = 2;
-		frame.add(inlierRatioText, gbc);
+		ransacFrame.add(inlierRatioText, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 3;
 		gbc.gridwidth = 2;
 		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(inlierRatioScrollbar, gbc);
+		ransacFrame.add(inlierRatioScrollbar, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 4;
 		gbc.gridwidth = 2;
-		frame.add(maxErrorText, gbc);
+		ransacFrame.add(maxErrorText, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 5;
 		gbc.gridwidth = 2;
 		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(maxErrorScrollbar, gbc);
+		ransacFrame.add(maxErrorScrollbar, gbc);
 
-		gbc.gridx = 0;
+		++gbc.gridy;
+		gbc.gridwidth = 2;
+		gbc.insets = new Insets(inTop+5, inLeft, inBottom, inRight);
+		ransacFrame.add(bsText, gbc);
+
 		++gbc.gridy;
 		gbc.gridwidth = 2;
 		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(bsMethod, gbc);
+		ransacFrame.add(bsMethodChoice, gbc);
 
 		++gbc.gridy;
 		gbc.insets = new Insets(5, 50, 0, 50);
-		frame.add(button, gbc);
+		ransacFrame.add(button, gbc);
 
 		++gbc.gridy;
 		gbc.insets = new Insets(0, 50, 0, 50);
-		frame.add(cancel, gbc);
+		ransacFrame.add(cancel, gbc);
 
 		// /* Configuration */
-		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(supportRegionText, supportRadiusMin,
+		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(this,supportRegionText, supportRadiusMin,
 				supportRadiusMax, ValueChange.SUPPORTRADIUS, SupportRegionTextField));
-		inlierRatioScrollbar.addAdjustmentListener(new GeneralListener(inlierRatioText, inlierRatioMin, inlierRatioMax,
+		inlierRatioScrollbar.addAdjustmentListener(new GeneralListener(this,inlierRatioText, inlierRatioMin, inlierRatioMax,
 				ValueChange.INLIERRATIO, new TextField()));
 		maxErrorScrollbar.addAdjustmentListener(
-				new GeneralListener(maxErrorText, maxErrorMin, maxErrorMax, ValueChange.MAXERROR, new TextField()));
+				new GeneralListener(this,maxErrorText, maxErrorMin, maxErrorMax, ValueChange.MAXERROR, new TextField()));
 
-		SupportRegionTextField.addActionListener(new TextFieldListener(supportRegionText, supportRadiusMin,
+		SupportRegionTextField.addActionListener(new TextFieldListener(this,supportRegionText, supportRadiusMin,
 				supportRadiusMax, ValueChange.SUPPORTRADIUS, SupportRegionTextField, supportRegionScrollbar));
 
-		button.addActionListener(new FinishedButtonListener(frame, false));
-		cancel.addActionListener(new FinishedButtonListener(frame, true));
+		bsMethodChoice.addItemListener( new BackgroundRANSACListener( this ) );
 
-		frame.addWindowListener(new FrameListener(frame));
+		button.addActionListener(new FinishedButtonListener(this, false));
+		cancel.addActionListener(new FinishedButtonListener(this, true));
 
-		frame.setVisible(true);
+		ransacFrame.addWindowListener(new FrameListener(this));
+
+		ransacFrame.setVisible(true);
 	}
 
 	// APPROVED: delete comments
@@ -1071,14 +969,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	 * Instantiates the panel for adjusting the parameters
 	 */
 	protected void interactiveDogDialog() {
-		final Frame frame = new Frame("Adjust Difference-of-Gaussian Values");
-		frame.setSize(360, 170);
+		doGFrame = new Frame( "Adjust Difference-of-Gaussian Values" );
+		doGFrame.setSize(360, 170);
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
 		final GridBagConstraints c = new GridBagConstraints();
 
-		int scrollbarInitialPosition = computeScrollbarPositionFromValue(sigmaInit, sigmaMin, sigmaMax, scrollbarSize);
+		int scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(sigmaInit, sigmaMin, sigmaMax, scrollbarSize);
 		final Scrollbar sigma1Bar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + scrollbarSize);
 		this.sigma = sigmaInit;
@@ -1090,7 +988,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 				10 + scrollbarSize);
 		this.threshold = thresholdInit;
 
-		this.sigma2 = computeSigma2(this.sigma, this.sensitivity);
+		this.sigma2 = HelperFunctions.computeSigma2(this.sigma, this.sensitivity);
 		// final int sigma2init = computeScrollbarPositionFromValue(this.sigma2,
 		// sigmaMin, sigmaMax, scrollbarSize);
 
@@ -1103,7 +1001,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final Button cancel = new Button("Cancel");
 
 		/* Location */
-		frame.setLayout(layout);
+		doGFrame.setLayout(layout);
 
 		// insets constants
 		int inTop = 0;
@@ -1115,17 +1013,17 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		c.gridx = 0;
 		c.gridy = 0;
 		c.weightx = 1;
-		frame.add(sigmaText1, c);
+		doGFrame.add(sigmaText1, c);
 
 		++c.gridy;
 		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		frame.add(sigma1Bar, c);
+		doGFrame.add(sigma1Bar, c);
 
 		++c.gridy;
-		frame.add(thresholdText, c);
+		doGFrame.add(thresholdText, c);
 
 		++c.gridy;
-		frame.add(thresholdBar, c);
+		doGFrame.add(thresholdBar, c);
 
 		// insets for buttons
 		int bInTop = 0;
@@ -1135,26 +1033,20 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		++c.gridy;
 		c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);
-		frame.add(button, c);
+		doGFrame.add(button, c);
 
 		++c.gridy;
 		c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);
-		frame.add(cancel, c);
+		doGFrame.add(cancel, c);
 
 		/* Configuration */
-		sigma1Bar.addAdjustmentListener(new SigmaListener(sigmaText1, sigmaMin, sigmaMax, scrollbarSize, sigma1Bar));
-		thresholdBar.addAdjustmentListener(new ThresholdListener(thresholdText, thresholdMin, thresholdMax));
-		button.addActionListener(new FinishedButtonListener(frame, false));
-		cancel.addActionListener(new FinishedButtonListener(frame, true));
-		frame.addWindowListener(new FrameListener(frame));
+		sigma1Bar.addAdjustmentListener(new SigmaListener(this,sigmaText1, sigmaMin, sigmaMax, scrollbarSize, sigma1Bar));
+		thresholdBar.addAdjustmentListener(new ThresholdListener(this,thresholdText, thresholdMin, thresholdMax));
+		button.addActionListener(new FinishedButtonListener(this, false));
+		cancel.addActionListener(new FinishedButtonListener(this, true));
+		doGFrame.addWindowListener(new FrameListener(this));
 
-		frame.setVisible(true);
-	}
-
-	// APPROVED: 
-	public float computeSigma2(final float sigma1, final int stepsPerOctave) {
-		final float k = (float) Math.pow( 2f, 1f / stepsPerOctave );
-		return sigma1 * k;
+		doGFrame.setVisible(true);
 	}
 
 	// TODO: fix the check: "==" must not be used with floats
@@ -1386,279 +1278,29 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-	protected class FinishedButtonListener implements ActionListener {
-		final Frame parent;
-		final boolean cancel;
+	protected final void dispose()
+	{
+		if ( doGFrame != null)
+			doGFrame.dispose();
 
-		public FinishedButtonListener(Frame parent, final boolean cancel) {
-			this.parent = parent;
-			this.cancel = cancel;
-		}
+		if ( ransacFrame != null)
+			ransacFrame.dispose();
 
-		@Override
-		public void actionPerformed(final ActionEvent arg0) {
-			wasCanceled = cancel;
-			close(parent, sliceObserver, imagePlus, roiListener);
-		}
-	}
-
-	protected class FrameListener extends WindowAdapter {
-		final Frame parent;
-
-		public FrameListener(Frame parent) {
-			super();
-			this.parent = parent;
-		}
-
-		@Override
-		public void windowClosing(WindowEvent e) {
-			close(parent, sliceObserver, imagePlus, roiListener);
-		}
-	}
-
-	protected final void close(final Frame parent, final SliceObserver sliceObserver, final ImagePlus imp,
-			final RoiListener roiListener) {
-		if (parent != null)
-			parent.dispose();
+		if ( bkWindow != null )
+			bkWindow.getFrame().dispose();
 
 		if (sliceObserver != null)
 			sliceObserver.unregister();
 
-		if (imp != null) {
+		if ( imagePlus != null) {
 			if (roiListener != null)
-				imp.getCanvas().removeMouseListener(roiListener);
+				imagePlus.getCanvas().removeMouseListener(roiListener);
 
-			imp.getOverlay().clear();
-			imp.updateAndDraw();
+			imagePlus.getOverlay().clear();
+			imagePlus.updateAndDraw();
 		}
 
 		isFinished = true;
-	}
-
-	protected class SigmaListener implements AdjustmentListener {
-		final Label label;
-		final float min, max;
-		final int scrollbarSize;
-
-		final Scrollbar sigmaScrollbar1;
-		// final Scrollbar sigmaScrollbar2;
-		// final Label sigmaText2;
-
-		public SigmaListener(final Label label, final float min, final float max, final int scrollbarSize,
-				final Scrollbar sigmaScrollbar1) {
-			this.label = label;
-			this.min = min;
-			this.max = max;
-			this.scrollbarSize = scrollbarSize;
-
-			this.sigmaScrollbar1 = sigmaScrollbar1;
-			// this.sigmaScrollbar2 = sigmaScrollbar2;
-			// this.sigmaText2 = sigmaText2;
-		}
-
-		@Override
-		public void adjustmentValueChanged(final AdjustmentEvent event) {
-			sigma = computeValueFromScrollbarPosition(event.getValue(), min, max, scrollbarSize);
-			sigma2 = computeSigma2(sigma, sensitivity);
-
-			// TODO: this might never be the case
-			if (sigma > sigma2) {
-				sigma = sigma2 - 0.001f;
-				sigmaScrollbar1.setValue(computeScrollbarPositionFromValue(sigma, min, max, scrollbarSize));
-			}
-
-			label.setText("Sigma 1 = " + String.format(java.util.Locale.US, "%.2f", sigma));
-
-			// Real time change of the radius
-			// if ( !event.getValueIsAdjusting() )
-			{
-				while (isComputing) {
-					SimpleMultiThreading.threadWait(10);
-				}
-				updatePreview(ValueChange.SIGMA);
-			}
-		}
-	}
-
-	protected static float computeValueFromScrollbarPosition(final int scrollbarPosition, final float min,
-			final float max, final int scrollbarSize) {
-		return min + (scrollbarPosition / (float) scrollbarSize) * (max - min);
-	}
-
-	protected static int computeScrollbarPositionFromValue(final float sigma, final float min, final float max,
-			final int scrollbarSize) {
-		return Util.round(((sigma - min) / (max - min)) * scrollbarSize);
-	}
-
-	protected class ThresholdListener implements AdjustmentListener {
-		final Label label;
-		final float min, max;
-		final float log1001 = (float) Math.log10(1001);
-
-		public ThresholdListener(final Label label, final float min, final float max) {
-			this.label = label;
-			this.min = min;
-			this.max = max;
-		}
-
-		@Override
-		public void adjustmentValueChanged(final AdjustmentEvent event) {
-			threshold = min + ((log1001 - (float) Math.log10(1001 - event.getValue())) / log1001) * (max - min);
-			label.setText("Threshold = " + String.format(java.util.Locale.US, "%.4f", threshold));
-
-			if (!isComputing) {
-				updatePreview(ValueChange.THRESHOLD);
-			} else if (!event.getValueIsAdjusting()) {
-				while (isComputing) {
-					SimpleMultiThreading.threadWait(10);
-				}
-				updatePreview(ValueChange.THRESHOLD);
-			}
-		}
-	}
-
-	protected class ImagePlusListener implements SliceListener {
-		@Override
-		public void sliceChanged(ImagePlus arg0) {
-			if (isStarted) {
-				// System.out.println("Slice changed!");
-				while (isComputing) {
-					SimpleMultiThreading.threadWait(10);
-				}
-				updatePreview(ValueChange.SLICE);
-			}
-		}
-	}
-
-	// changes value of the scroller so that it is the same as in the text field
-	protected class TextFieldListener implements ActionListener {
-		final Label label;
-		final TextField textField;
-		final int min, max;
-		final ValueChange valueAdjust;
-		final Scrollbar scrollbar;
-
-		public TextFieldListener(final Label label, final int min, final int max, ValueChange valueAdjust,
-				TextField textField, Scrollbar scrollbar) {
-			this.label = label;
-			this.min = min;
-			this.max = max;
-			this.valueAdjust = valueAdjust;
-			this.textField = textField;
-			this.scrollbar = scrollbar;
-		}
-
-		// function checks that the textfield contains number
-		// add ensures that the number is inside region [min, max]
-		public int ensureNumber(String number, int min, int max) {
-			boolean isInteger = Pattern.matches("^\\d*$", number);
-			int res = -1;
-			// TODO: instead of if/else write full try/catch block
-			if (isInteger) {
-				res = Integer.parseInt(number);
-				if (res > max)
-					res = max;
-				if (res < min)
-					res = min;
-			} else {
-				System.out.println("Not a valid number. Radius set to 10.");
-				res = 10;
-				// idle
-			}
-			return res;
-		}
-
-		@Override
-		public void actionPerformed(final ActionEvent event) {
-			// check that the value is in (min, max)
-			// adjust and grab value
-
-			int value = ensureNumber(textField.getText(), min, max);
-
-			// System.out.println("value in the text field = " + value);
-			String labelText = "";
-
-			if (valueAdjust == ValueChange.SUPPORTRADIUS) {
-				// set the value for the support region
-				supportRadius = value;
-				// set label
-				labelText = "Support Region Radius:"; // = " + supportRegion;
-				// calculate new position of the scrollbar
-				int newScrollbarPosition = computeScrollbarPositionFromValue(supportRadius, min, max, scrollbarSize);
-				// adjust the scrollbar position!
-				scrollbar.setValue(newScrollbarPosition);
-				// set new value for text label
-				label.setText(labelText);
-			} else {
-				System.out.println("There is error in the support region adjustment");
-			}
-
-			while (isComputing) {
-				SimpleMultiThreading.threadWait(10);
-			}
-			updatePreview(ValueChange.SUPPORTRADIUS);
-		}
-	}
-
-	// general listener used by ransac
-	protected class GeneralListener implements AdjustmentListener {
-		final Label label;
-		final TextField textField;
-		final float min, max;
-		final ValueChange valueAdjust;
-
-		public GeneralListener(final Label label, final float min, final float max, ValueChange valueAdjust,
-				TextField textField) {
-			this.label = label;
-			this.min = min;
-			this.max = max;
-			this.valueAdjust = valueAdjust;
-			this.textField = textField;
-		}
-
-		@Override
-		public void adjustmentValueChanged(final AdjustmentEvent event) {
-			float value = computeValueFromScrollbarPosition(event.getValue(), min, max, scrollbarSize);
-			String labelText = "";
-			if (valueAdjust == ValueChange.SUPPORTRADIUS) {
-				supportRadius = (int) value;
-				labelText = "Support Region Radius:"; // = " + supportRegion ;
-				textField.setText(Integer.toString(supportRadius));
-			} else if (valueAdjust == ValueChange.INLIERRATIO) {
-				inlierRatio = value;
-				// this is ugly fix of the problem when inlier's ratio is 1.0
-				if (inlierRatio >= 0.999)
-					inlierRatio = 0.99999f;
-				labelText = "Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", inlierRatio);
-			} else if (valueAdjust == ValueChange.MAXERROR) { // MAXERROR
-				final float log1001 = (float) Math.log10(1001);
-				value = min + ((log1001 - (float) Math.log10(1001 - event.getValue())) / log1001) * (max - min);
-				maxError = value;
-				labelText = "Max Error = " + String.format(java.util.Locale.US, "%.4f", maxError);
-			} else if (valueAdjust == ValueChange.BSMAXERROR) { // BACKGROUND MAXERROR
-				final float log1001 = (float) Math.log10(1001);
-				value = min + ((log1001 - (float) Math.log10(1001 - event.getValue())) / log1001) * (max - min);
-				bsMaxError = value;
-				labelText = "Max Error = " + String.format(java.util.Locale.US, "%.4f", bsMaxError);
-			} else if (valueAdjust == ValueChange.BSINLIERRATIO){ // BACKGROUND INLIER RATIO
-				bsInlierRatio = value;
-				// this is ugly fix of the problem when inlier's ratio is 1.0
-				if (bsInlierRatio >= 0.999)
-					bsInlierRatio = 0.99999f;
-				labelText = "Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", bsInlierRatio);
-			} else {
-				System.out.println("Attached GeneralListener to the wrong scrollbar");
-			}
-			label.setText(labelText);
-			if (!isComputing) {
-				updatePreview(valueAdjust);
-			} else if (!event.getValueIsAdjusting()) {
-				while (isComputing) {
-					SimpleMultiThreading.threadWait(10);
-				}
-				updatePreview(valueAdjust);
-			}
-		}
 	}
 
 	public static void main(String[] args)

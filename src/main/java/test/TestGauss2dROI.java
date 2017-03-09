@@ -101,7 +101,7 @@ public class TestGauss2dROI
 		float sigma1 = 5.0f;
 		int stepsPerOctave = 4;
 		float threshold = 0.3f;
-		float sigma2 = new InteractiveRadialSymmetry().computeSigma2(sigma1, stepsPerOctave);
+		float sigma2 = HelperFunctions.computeSigma2(sigma1, stepsPerOctave);
 		double [] calibration = new double[]{1, 1};
 	
 		long [] min = new long []{rectangle.x - supportRadius, rectangle.y - supportRadius};

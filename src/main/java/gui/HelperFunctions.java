@@ -12,6 +12,23 @@ import ij.ImagePlus;
 import mpicbg.imglib.util.Util;
 
 public class HelperFunctions {
+
+	// APPROVED: 
+	public static float computeSigma2(final float sigma1, final int stepsPerOctave) {
+		final float k = (float) Math.pow( 2f, 1f / stepsPerOctave );
+		return sigma1 * k;
+	}
+
+	public static float computeValueFromScrollbarPosition(final int scrollbarPosition, final float min,
+			final float max, final int scrollbarSize) {
+		return min + (scrollbarPosition / (float) scrollbarSize) * (max - min);
+	}
+
+	public static int computeScrollbarPositionFromValue(final float sigma, final float min, final float max,
+			final int scrollbarSize) {
+		return Util.round(((sigma - min) / (max - min)) * scrollbarSize);
+	}
+
 	/**
 	 * sets the calibration for the initial image. Only the relative value matters.
 	 * normalize everything with respect to the 1-st coordinate.

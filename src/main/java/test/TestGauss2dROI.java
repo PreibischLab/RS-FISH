@@ -5,23 +5,16 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import background.NormalizedGradient;
-import background.NormalizedGradientAverage;
-import background.NormalizedGradientMedian;
-import background.NormalizedGradientRANSAC;
 import fit.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
+import gui.HelperFunctions;
 import gui.InteractiveRadialSymmetry;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.PolygonRoi;
-import ij.gui.Roi;
-import localmaxima.LocalMaxima;
-import localmaxima.LocalMaximaNeighborhood;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
-import net.imglib2.Cursor;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
@@ -129,7 +122,7 @@ public class TestGauss2dROI
 
 		// copy peaks to ArrayList<long[]> to use Spot interface	
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
-		new InteractiveRadialSymmetry().copyPeaks(dogPeaks, simplifiedPeaks, extendedRoi.numDimensions(), rectangle);
+		HelperFunctions.copyPeaks(dogPeaks, simplifiedPeaks, extendedRoi.numDimensions(), rectangle);
 	
 		// 155,74 -- (155.06198848551116, 73.87444439259127)
 

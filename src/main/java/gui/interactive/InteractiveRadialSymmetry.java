@@ -666,21 +666,12 @@ public class InteractiveRadialSymmetry
 			roiChanged = true;
 		}
 
-		// TODO: only recalculate DOG if:
-		// sigma, roi (also through support region), slider
+		// only recalculate DOG if: sigma, roi (also through support region), slider
 		if (roiChanged || peaks == null || change == ValueChange.SIGMA || change == ValueChange.SLICE || change == ValueChange.ALL )
 		{
 			System.out.println( "recalc" );
 
-			// refill output image in case anything was changed
-			long [] dimensions = new long [extendedRoi.numDimensions()];	
-			extendedRoi.dimensions(dimensions);
-			
-			dogDetection(extendedRoi); 
-		}
-		else if ( change == ValueChange.THRESHOLD )
-		{
-			// TODO: update peaks
+			dogDetection( extendedRoi ); 
 		}
 
 		showPeaks( imagePlus, rectangle, threshold );

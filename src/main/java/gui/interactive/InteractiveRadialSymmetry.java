@@ -45,6 +45,22 @@ import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
+import static gui.Radial_Symmetry.defaultImg;
+import static gui.Radial_Symmetry.defaultParam;
+import static gui.Radial_Symmetry.defaultGauss;
+
+import static gui.Radial_Symmetry.defaultSigma;
+import static gui.Radial_Symmetry.defaultSigma2;
+import static gui.Radial_Symmetry.defaultThreshold;
+
+import static gui.Radial_Symmetry.defaultMaxError;
+import static gui.Radial_Symmetry.defaultInlierRatio;
+import static gui.Radial_Symmetry.defaultSupportRadius;
+
+import static gui.Radial_Symmetry.defaultBSInlierRatio;
+import static gui.Radial_Symmetry.defaultBSMaxError;
+import static gui.Radial_Symmetry.defaultBSMethod;
+
 public class InteractiveRadialSymmetry
 {
 	// TODO: fake 2d-calibration
@@ -198,10 +214,13 @@ public class InteractiveRadialSymmetry
 			// IJ.log( "A rectangular ROI is required to define the area..." );
 			imagePlus.setRoi( rectangle );
 		}
+		
+		// initialize parameters using defaults
+		initParameters();
 
 		// initialize variables for interactive preview
 		// called before updatePreview() !
-		ransacPreviewInit( imagePlus );
+		initRansacPreview( imagePlus );
 
 		// show the interactive kit
 		this.dogWindow = new DoGWindow( this );
@@ -222,13 +241,36 @@ public class InteractiveRadialSymmetry
 		fixROIListener = new FixROIListener( imagePlus, impRansacError );
 		impRansacError.getCanvas().addMouseListener( fixROIListener );
 	}
+	
+	/**
+	 * initialize all parameters with the default values
+	 * */
+	protected void initParameters(){
+		
+		// TODO: how to initialize image and gauss fit ? ]
+		// defaultImg;
+		// defaultParam;
+		// defaultGauss;
+
+		sigma = defaultSigma;
+		sigma2 = defaultSigma2;
+		threshold = defaultThreshold;
+
+		maxError = defaultMaxError;
+		inlierRatio = defaultInlierRatio;
+		supportRadius = defaultSupportRadius;
+
+		bsInlierRatio = defaultBSInlierRatio;
+		bsMaxError = defaultBSMaxError;
+		bsMethod = defaultBSMethod;
+	}
 
 
 	/**
 	 * Initialize preview variables for RANSAC
 	 */
 	// TODO: might be not necessary
-	protected void ransacPreviewInit( final ImagePlus imp )
+	protected void initRansacPreview( final ImagePlus imp )
 	{
 		int width = imp.getWidth();
 		int height = imp.getHeight();
@@ -573,7 +615,6 @@ public class InteractiveRadialSymmetry
 	}
 
 	// TODO: fix the check: "==" must not be used with floats
-	// APPROVED:
 	protected boolean isRoiChanged(final ValueChange change, final Rectangle rect, boolean roiChanged){
 		boolean res = false;
 		res = (roiChanged || extendedRoi == null || change == ValueChange.SLICE ||rect.getMinX() != rectangle.getMinX()

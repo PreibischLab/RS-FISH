@@ -10,7 +10,6 @@ import ij.plugin.PlugIn;
 public class Radial_Symmetry implements PlugIn
 {
 	final public static String [] bsMethods = new String []{ "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
-	public static int defaultMethodBS = 0;
 
 	// used to save previous values of the fields
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
@@ -18,19 +17,17 @@ public class Radial_Symmetry implements PlugIn
 	public static int defaultParam = 1;
 	public static boolean defaultGauss = false;
 	
-	
-	// TODO: backup the values entered by user 
 	public static float defaultSigma;
 	public static float defaultSigma2;
 	public static float defaultThreshold;
 	
-	public static float defaultMaxError;
-	public static float defaultInlierRatio;
-	public static int defaultSupportRadius;
+	public static float defaultMaxError = 3.0f;
+	public static float defaultInlierRatio = (float) (75.0 / 100.0);
+	public static int defaultSupportRadius = 5;
 	
-	public static float defaultBSInlierRatio;
-	public static float defaultBSMaxError;
-	public static int defaultBSMethod;
+	public static float defaultBSInlierRatio = (float) (75.0 / 100.0);
+	public static float defaultBSMaxError = 0.05f;
+	public static int defaultBSMethod = 0;
 	
     /////////////////////////////////////
 

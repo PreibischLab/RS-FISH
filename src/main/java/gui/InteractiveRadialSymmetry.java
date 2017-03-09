@@ -355,15 +355,14 @@ public class InteractiveRadialSymmetry implements PlugIn {
 						imagePlus.getCanvas().addMouseListener(roiListener);
 					}
 				} 
-				else 
+				else // automatic 
 				{
 					// TODO: Do I need the rectangle here?
 					// here comes the normal work flow
 					rectangle = new Rectangle(0, 0, imagePlus.getWidth(), imagePlus.getHeight());
 					imagePlus.setRoi(rectangle);
 					// img2 = ImageJFunctions.wrapFloat(imp);
-					int curSliceIndex = imagePlus.getSlice();
-					imagePlus.setPosition(channel, curSliceIndex, 0);
+					imagePlus.setPosition(channel, imagePlus.getSlice(), 0);
 					slice = ImageJFunctions.convertFloat(imagePlus);
 					// should be called after slice inititalization
 					calibration = HelperFunctions.setCalibration(imagePlus, slice.numDimensions());
@@ -878,11 +877,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 		GenericDialog gd = new GenericDialog("Set Stack Parameters");
 
-		gd.addNumericField("Sigma:", this.sigma, 2);
-		gd.addNumericField("Threshold:", this.threshold, 5);
-		gd.addNumericField("Support_Region_Radius:", this.supportRadius, 0);
-		gd.addNumericField("Inlier_Ratio:", this.inlierRatio, 2);
-		gd.addNumericField("Max_Error:", this.maxError, 2);
+		gd.addNumericField("Sigma:", this.sigmaInit, 2);
+		gd.addNumericField("Threshold:", this.thresholdInit, 4);
+		gd.addNumericField("Support_Region_Radius:", this.ransacInitSupportRadius, 0);
+		gd.addNumericField("Inlier_Ratio:", this.ransacInitInlierRatio, 2);
+		gd.addNumericField("Max_Error:", this.ransacInitMaxError, 2);
 
 		gd.showDialog();
 		if (gd.wasCanceled()) 

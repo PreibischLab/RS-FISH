@@ -654,7 +654,7 @@ public class InteractiveRadialSymmetry
 			// get the currently selected slice
 			final Img< FloatType > imgTmp = HelperFunctions.toImg( imagePlus, dim, type );
 
-			extendedRoi = Views.interval( imgTmp, min, max);
+			extendedRoi = Views.interval( Views.extendMirrorSingle( imgTmp ), min, max);
 
 			roiChanged = true;
 		}

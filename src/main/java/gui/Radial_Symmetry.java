@@ -17,9 +17,9 @@ public class Radial_Symmetry implements PlugIn
 	public static int defaultParam = 1;
 	public static boolean defaultGauss = false;
 	
-	public static float defaultSigma;
-	public static float defaultSigma2;
-	public static float defaultThreshold;
+	public static float defaultSigma = 5.0f;
+	public static float defaultSigma2 = 0.5f;
+	public static float defaultThreshold = 0.03f;
 	
 	public static float defaultMaxError = 3.0f;
 	public static float defaultInlierRatio = (float) (75.0 / 100.0);
@@ -28,8 +28,6 @@ public class Radial_Symmetry implements PlugIn
 	public static float defaultBSInlierRatio = (float) (75.0 / 100.0);
 	public static float defaultBSMaxError = 0.05f;
 	public static int defaultBSMethod = 0;
-	
-    /////////////////////////////////////
 
 	// TODO: used to choose the image
 	ImagePlus imp;
@@ -38,7 +36,7 @@ public class Radial_Symmetry implements PlugIn
 
 	// defines the resolution in x y z dimensions
 	double [] calibration;
-
+	
 	@Override
 	public void run( String arg )
 	{	

@@ -73,15 +73,6 @@ public class InteractiveRadialSymmetry
 	float inlierRatio = (float) (75.0 / 100.0);
 	int supportRadius = 5;
 
-	// min/max value
-	int supportRadiusMin = 1;
-	int supportRadiusMax = 25;
-	float inlierRatioMin = (float) (0.0 / 100.0); // 0%
-	float inlierRatioMax = 1; // 100%
-	float maxErrorMin = 0.0001f;
-	float maxErrorMax = 10.00f;
-	// ----------------------------------------
-
 	// Frames that are potentially open
 	BackgroundRANSACWindow bkWindow;
 	DoGWindow dogWindow;
@@ -94,38 +85,13 @@ public class InteractiveRadialSymmetry
 	int bsNumIterations = 100;
 	int bsMethod = 0;
 
-	// min/max value
-	float bsInlierRatioMin = (float) (0.0 / 100.0); // 0%
-	float bsInlierRatioMax = 1; // 100%
-	float bsMaxErrorMin = 0.0001f;
-	float bsMaxErrorMax = 10.00f;
-
 	// DoG parameters
 	// current
 	float sigma = 5.0f;
 	float sigma2 = 0.5f;
 	float threshold = 0.03f;
-	// min/max value
-	float sigmaMin = 0.5f;
-	float sigmaMax = 10f;
-	float thresholdMin = 0.0001f;
-	float thresholdMax = 1f;
 	// --------------------------------
 
-	// Stuff above looks super relevant
-	// Only constants 
-	// keep all for now 
-
-	// TODO: keep these params
-	// int extraSize = ransacInitSupportRadius; // deprecated; supportRadius is used instead
-	final int scrollbarSize = 1000;
-	// float imageSigma = 0.5f;
-
-	// TODO: keep these
-	double minIntensityImage = Double.NaN;
-	double maxIntensityImage = Double.NaN;
-
-	// TODO: after moving to imglib2 REMOVE
 	// steps per octave
 	public static int standardSensitivity = 4;
 	int sensitivity = standardSensitivity;
@@ -153,14 +119,37 @@ public class InteractiveRadialSymmetry
 	// used to show the results -- error for RANSAC
 	RandomAccessibleInterval<FloatType> ransacPreview;
 
-	// TODO: keep listeners flags
 	boolean isComputing = false;
 	boolean isStarted = false;
 
 	public static enum ValueChange {
 		SIGMA, THRESHOLD, SLICE, ROI, ALL, SUPPORTRADIUS, INLIERRATIO, MAXERROR, BSINLIERRATIO, BSMAXERROR
 	}
-
+	
+	// TODO: MOVE TO GUI: 
+	// min/max value
+	int supportRadiusMin = 1;
+	int supportRadiusMax = 25;
+	float inlierRatioMin = (float) (0.0 / 100.0); // 0%
+	float inlierRatioMax = 1; // 100%
+	float maxErrorMin = 0.0001f;
+	float maxErrorMax = 10.00f;
+	
+	// min/max value
+	float bsInlierRatioMin = (float) (0.0 / 100.0); // 0%
+	float bsInlierRatioMax = 1; // 100%
+	float bsMaxErrorMin = 0.0001f;
+	float bsMaxErrorMax = 10.00f;
+	
+	// min/max value
+	float sigmaMin = 0.5f;
+	float sigmaMax = 10f;
+	float thresholdMin = 0.0001f;
+	float thresholdMax = 1f;
+	
+	final int scrollbarSize = 1000;
+	// ----------------------------------------
+	
 	boolean isFinished = false;
 	boolean wasCanceled = false;	
 
@@ -247,7 +236,7 @@ public class InteractiveRadialSymmetry
 	 * */
 	protected void initParameters(){
 		
-		// TODO: how to initialize image and gauss fit ? ]
+		// TODO: how to initialize image and gauss fit ?
 		// defaultImg;
 		// defaultParam;
 		// defaultGauss;

@@ -20,7 +20,6 @@ public class HelperFunctions {
 
 	public static Img< FloatType > toImg( final ImagePlus imagePlus, final long[] dim, final int type )
 	{
-		System.out.println(  imagePlus.getCurrentSlice() );
 		final ImageProcessor ip = imagePlus.getStack().getProcessor( imagePlus.getCurrentSlice() );
 		final Object pixels = ip.getPixels();
 

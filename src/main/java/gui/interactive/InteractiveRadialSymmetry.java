@@ -662,8 +662,6 @@ public class InteractiveRadialSymmetry
 		// only recalculate DOG & gradient image if: sigma, roi (also through support region), slider
 		if (roiChanged || peaks == null || change == ValueChange.SIGMA || change == ValueChange.SLICE || change == ValueChange.ALL )
 		{
-			System.out.println( "recalc" );
-
 			dogDetection( extendedRoi );
 			derivative = new GradientPreCompute( extendedRoi );
 		}

@@ -10,12 +10,12 @@ import java.awt.TextField;
 
 import gui.InteractiveRadialSymmetry.ValueChange;
 
-public class BackgroundRANSAC
+public class BackgroundRANSACWindow
 {
 	final InteractiveRadialSymmetry parent;
 	final Frame frame;
 
-	public BackgroundRANSAC( final InteractiveRadialSymmetry parent )
+	public BackgroundRANSACWindow( final InteractiveRadialSymmetry parent )
 	{
 		this.parent = parent;
 

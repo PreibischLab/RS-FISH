@@ -33,7 +33,7 @@ public class BackgroundRANSACListener implements ItemListener
 			// RANSAC based, open window?
 			if ( parent.bkWindow == null )
 			{
-				parent.bkWindow = new BackgroundRANSAC( parent );
+				parent.bkWindow = new BackgroundRANSACWindow( parent );
 				System.out.println( parent.bkWindow.getFrame().isVisible() );
 			}
 

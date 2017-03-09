@@ -86,7 +86,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	// ----------------------------------------
 
 	// Frames that are potentially open
-	BackgroundRANSAC bkWindow;
+	BackgroundRANSACWindow bkWindow;
 	Frame doGFrame, ransacFrame;
 
 	// Background Subtraction parameters 
@@ -148,7 +148,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	// TODO: keep observers
 	SliceObserver sliceObserver;
-	RoiListener roiListener;
+	ROIListener roiListener;
+	FixROIListener fixROIListener;
 
 	// TODO: you probably need one image plus object 
 	ImagePlus imagePlus;
@@ -335,8 +336,10 @@ public class InteractiveRadialSymmetry implements PlugIn {
 						updatePreview(ValueChange.ALL);
 						isStarted = true;
 						// check whenever roi is modified to update accordingly
-						roiListener = new RoiListener(imagePlus, impRansacError);
-						imagePlus.getCanvas().addMouseListener(roiListener);
+						roiListener = new ROIListener( this, imagePlus, impRansacError );
+						imagePlus.getCanvas().addMouseListener( roiListener );
+						fixROIListener = new FixROIListener( imagePlus, impRansacError );
+						impRansacError.getCanvas().addMouseListener( fixROIListener );
 					}
 				} 
 				else // automatic 
@@ -1095,9 +1098,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		boolean roiChanged = false;
 		Roi roi = imagePlus.getRoi();
 
-		if (roi == null || roi.getType() != Roi.RECTANGLE) {
-			// Rectangle dummyRectangle = new Rectangle(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2,
-			//		imp.getHeight() / 2);
+		if ( roi == null || roi.getType() != Roi.RECTANGLE )
+		{
 			imagePlus.setRoi(rectangle);
 			impRansacError.setRoi(rectangle);
 			roi = imagePlus.getRoi();
@@ -1218,66 +1220,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	// APPROVED:
 
-	/**
-	 * Tests whether the ROI was changed and will recompute the preview
-	 * 
-	 * @author Stephan Preibisch
-	 */
-	protected class RoiListener implements MouseListener {
-
-		final ImagePlus source, target;
-
-		public RoiListener(final ImagePlus s, final ImagePlus t){
-			this.source = s;
-			this.target = t;
-		}
-
-		@Override
-		public void mouseClicked(MouseEvent e) {
-		}
-
-		@Override
-		public void mouseEntered(MouseEvent e) {
-		}
-
-		@Override
-		public void mouseExited(MouseEvent e) {
-		}
-
-		@Override
-		public void mousePressed(MouseEvent e) {
-		}
-
-		@Override
-		public void mouseReleased(final MouseEvent e) {		
-			// here the ROI might have been modified, let's test for that
-			final Roi roi = source.getRoi();
-
-			// roi is wrong, clear the screen 
-			if (roi == null || roi.getType() != Roi.RECTANGLE){
-				if (source.getOverlay() != null){
-					source.getOverlay().clear();
-				}
-				if (target.getRoi() != null)
-					target.deleteRoi();
-				if (target.getOverlay() != null){
-					target.getOverlay().clear();
-				}				
-
-				// target.updateAndDraw();
-				// return;
-			}
-			else{
-				// TODO: might put the update part for the roi here instead of the updatePreview
-				while (isComputing)
-					SimpleMultiThreading.threadWait(10);
-
-				updatePreview(ValueChange.ROI);
-			}
-
-		}
-	}
-
 	protected final void dispose()
 	{
 		if ( doGFrame != null)
@@ -1299,6 +1241,9 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			imagePlus.getOverlay().clear();
 			imagePlus.updateAndDraw();
 		}
+
+		if ( impRansacError != null )
+			impRansacError.close();
 
 		isFinished = true;
 	}

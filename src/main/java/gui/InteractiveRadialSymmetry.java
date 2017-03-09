@@ -1,20 +1,9 @@
 package gui;
 
-import java.awt.Button;
-import java.awt.Choice;
 import java.awt.Color;
-import java.awt.Frame;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.Label;
 import java.awt.Rectangle;
-import java.awt.Scrollbar;
-import java.awt.TextField;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -87,7 +76,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	// Frames that are potentially open
 	BackgroundRANSACWindow bkWindow;
-	Frame doGFrame, ransacFrame;
+	DoGWindow dogWindow;
+	RANSACWindow ransacWindow;
 
 	// Background Subtraction parameters 
 	// current values 
@@ -321,15 +311,15 @@ public class InteractiveRadialSymmetry implements PlugIn {
 						// initialize variables for interactive preview
 						// called before updatePreview() !
 						ransacPreviewInit();
+
 						// show the interactive kit
-						interactiveDogDialog();
-						/*
-						if (backgroundSubtraction && bsMethod.equals("RANSAC") ){ // if RANSAC
-							interactiveRansacBSDialog();
-						}*/
+						this.dogWindow = new DoGWindow( this );
+						this.dogWindow.getFrame().setVisible( true );
 
 						// show the interactive ransac kit
-						interactiveRansacDialog();
+						this.ransacWindow = new RANSACWindow( this );
+						this.ransacWindow.getFrame().setVisible( true );
+
 						// add listener to the imageplus slice slider
 						sliceObserver = new SliceObserver(imagePlus, new ImagePlusListener( this ));
 						// compute first version
@@ -827,231 +817,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	}
 
-	// APPROVED:
-	/**
-	 * Instantiates the panel for adjusting the RANSAC parameters
-	 */
-	protected void interactiveRansacDialog() {
-		ransacFrame = new Frame("Adjust RANSAC Values");
-		ransacFrame.setSize(260, 260);
-
-		/* Instantiation */
-		final GridBagLayout layout = new GridBagLayout();
-		final GridBagConstraints gbc= new GridBagConstraints();
-
-		int scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(ransacInitSupportRadius, supportRadiusMin,
-				supportRadiusMax, scrollbarSize);
-		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
-				10 + scrollbarSize);
-		this.supportRadius = ransacInitSupportRadius;
-
-		final TextField SupportRegionTextField = new TextField(Integer.toString(this.supportRadius));
-		SupportRegionTextField.setEditable(true);
-		SupportRegionTextField.setCaretPosition(Integer.toString(this.supportRadius).length());
-
-		scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(ransacInitInlierRatio, inlierRatioMin,
-				inlierRatioMax, scrollbarSize);
-		final Scrollbar inlierRatioScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
-				10 + scrollbarSize);
-		this.inlierRatio = ransacInitInlierRatio;
-
-		final float log1001 = (float) Math.log10(scrollbarSize + 1);
-		scrollbarInitialPosition = 1001
-				- (int) Math.pow(10, (maxErrorMax - ransacInitMaxError) / (maxErrorMax - maxErrorMin) * log1001);
-
-		final Scrollbar maxErrorScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
-				10 + scrollbarSize);
-		this.maxError = ransacInitMaxError;
-
-		final Label supportRegionText = new Label(
-				"Support Region Radius:" /* = " + this.supportRegion */, Label.CENTER);
-		final Label inlierRatioText = new Label(
-				"Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", this.inlierRatio), Label.CENTER);
-		final Label maxErrorText = new Label("Max Error = " + String.format(java.util.Locale.US, "%.4f", this.maxError),
-				Label.CENTER);
-
-		final Label bsText = new Label("Local Background Subtraction:", Label.CENTER);
-		final Choice bsMethodChoice = new Choice();
-		for ( final String s : bsMethods )
-			bsMethodChoice.add( s );
-
-		final Button button = new Button("Done");
-		final Button cancel = new Button("Cancel");
-
-		// /* Location */
-		ransacFrame.setLayout(layout);
-
-		// insets constants
-		int inTop = 0;
-		int inRight = 5;
-		int inBottom = 0;
-		int inLeft = inRight;
-
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.weightx = 0.50;
-		gbc.gridwidth = 1;
-		ransacFrame.add(supportRegionText, gbc);
-
-		gbc.gridx = 1;
-		gbc.weightx = 0.50;
-		gbc.gridwidth = 1;
-		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		ransacFrame.add(SupportRegionTextField, gbc);
-
-		gbc.gridx = 0;
-		gbc.gridy = 1;
-		gbc.gridwidth = 2;
-		gbc.insets = new Insets(5, inLeft, inBottom, inRight);
-		ransacFrame.add(supportRegionScrollbar, gbc);
-
-		gbc.gridx = 0;
-		gbc.gridy = 2;
-		gbc.gridwidth = 2;
-		ransacFrame.add(inlierRatioText, gbc);
-
-		gbc.gridx = 0;
-		gbc.gridy = 3;
-		gbc.gridwidth = 2;
-		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		ransacFrame.add(inlierRatioScrollbar, gbc);
-
-		gbc.gridx = 0;
-		gbc.gridy = 4;
-		gbc.gridwidth = 2;
-		ransacFrame.add(maxErrorText, gbc);
-
-		gbc.gridx = 0;
-		gbc.gridy = 5;
-		gbc.gridwidth = 2;
-		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		ransacFrame.add(maxErrorScrollbar, gbc);
-
-		++gbc.gridy;
-		gbc.gridwidth = 2;
-		gbc.insets = new Insets(inTop+5, inLeft, inBottom, inRight);
-		ransacFrame.add(bsText, gbc);
-
-		++gbc.gridy;
-		gbc.gridwidth = 2;
-		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		ransacFrame.add(bsMethodChoice, gbc);
-
-		++gbc.gridy;
-		gbc.insets = new Insets(5, 50, 0, 50);
-		ransacFrame.add(button, gbc);
-
-		++gbc.gridy;
-		gbc.insets = new Insets(0, 50, 0, 50);
-		ransacFrame.add(cancel, gbc);
-
-		// /* Configuration */
-		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(this,supportRegionText, supportRadiusMin,
-				supportRadiusMax, ValueChange.SUPPORTRADIUS, SupportRegionTextField));
-		inlierRatioScrollbar.addAdjustmentListener(new GeneralListener(this,inlierRatioText, inlierRatioMin, inlierRatioMax,
-				ValueChange.INLIERRATIO, new TextField()));
-		maxErrorScrollbar.addAdjustmentListener(
-				new GeneralListener(this,maxErrorText, maxErrorMin, maxErrorMax, ValueChange.MAXERROR, new TextField()));
-
-		SupportRegionTextField.addActionListener(new TextFieldListener(this,supportRegionText, supportRadiusMin,
-				supportRadiusMax, ValueChange.SUPPORTRADIUS, SupportRegionTextField, supportRegionScrollbar));
-
-		bsMethodChoice.addItemListener( new BackgroundRANSACListener( this ) );
-
-		button.addActionListener(new FinishedButtonListener(this, false));
-		cancel.addActionListener(new FinishedButtonListener(this, true));
-
-		ransacFrame.addWindowListener(new FrameListener(this));
-
-		ransacFrame.setVisible(true);
-	}
-
-	// APPROVED: delete comments
-	/**
-	 * Instantiates the panel for adjusting the parameters
-	 */
-	protected void interactiveDogDialog() {
-		doGFrame = new Frame( "Adjust Difference-of-Gaussian Values" );
-		doGFrame.setSize(360, 170);
-
-		/* Instantiation */
-		final GridBagLayout layout = new GridBagLayout();
-		final GridBagConstraints c = new GridBagConstraints();
-
-		int scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(sigmaInit, sigmaMin, sigmaMax, scrollbarSize);
-		final Scrollbar sigma1Bar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
-				10 + scrollbarSize);
-		this.sigma = sigmaInit;
-
-		final float log1001 = (float) Math.log10(scrollbarSize + 1);
-		scrollbarInitialPosition = (int) Math
-				.round(1001 - Math.pow(10, (thresholdMax - thresholdInit) / (thresholdMax - thresholdMin) * log1001));
-		final Scrollbar thresholdBar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
-				10 + scrollbarSize);
-		this.threshold = thresholdInit;
-
-		this.sigma2 = HelperFunctions.computeSigma2(this.sigma, this.sensitivity);
-		// final int sigma2init = computeScrollbarPositionFromValue(this.sigma2,
-		// sigmaMin, sigmaMax, scrollbarSize);
-
-		final Label sigmaText1 = new Label("Sigma 1 = " + String.format(java.util.Locale.US, "%.2f", this.sigma),
-				Label.CENTER);
-
-		final Label thresholdText = new Label(
-				"Threshold = " + String.format(java.util.Locale.US, "%.4f", this.threshold), Label.CENTER);
-		final Button button = new Button("Done");
-		final Button cancel = new Button("Cancel");
-
-		/* Location */
-		doGFrame.setLayout(layout);
-
-		// insets constants
-		int inTop = 0;
-		int inRight = 5;
-		int inBottom = 0;
-		int inLeft = inRight;
-
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 0;
-		c.weightx = 1;
-		doGFrame.add(sigmaText1, c);
-
-		++c.gridy;
-		c.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		doGFrame.add(sigma1Bar, c);
-
-		++c.gridy;
-		doGFrame.add(thresholdText, c);
-
-		++c.gridy;
-		doGFrame.add(thresholdBar, c);
-
-		// insets for buttons
-		int bInTop = 0;
-		int bInRight = 120;
-		int bInBottom = 0;
-		int bInLeft = bInRight;
-
-		++c.gridy;
-		c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);
-		doGFrame.add(button, c);
-
-		++c.gridy;
-		c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);
-		doGFrame.add(cancel, c);
-
-		/* Configuration */
-		sigma1Bar.addAdjustmentListener(new SigmaListener(this,sigmaText1, sigmaMin, sigmaMax, scrollbarSize, sigma1Bar));
-		thresholdBar.addAdjustmentListener(new ThresholdListener(this,thresholdText, thresholdMin, thresholdMax));
-		button.addActionListener(new FinishedButtonListener(this, false));
-		cancel.addActionListener(new FinishedButtonListener(this, true));
-		doGFrame.addWindowListener(new FrameListener(this));
-
-		doGFrame.setVisible(true);
-	}
-
 	// TODO: fix the check: "==" must not be used with floats
 	// APPROVED:
 	protected boolean isRoiChanged(final ValueChange change, final Rectangle rect, boolean roiChanged){
@@ -1222,11 +987,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	protected final void dispose()
 	{
-		if ( doGFrame != null)
-			doGFrame.dispose();
+		if ( dogWindow.getFrame() != null)
+			dogWindow.getFrame().dispose();
 
-		if ( ransacFrame != null)
-			ransacFrame.dispose();
+		if ( ransacWindow.getFrame() != null)
+			ransacWindow.getFrame().dispose();
 
 		if ( bkWindow != null )
 			bkWindow.getFrame().dispose();

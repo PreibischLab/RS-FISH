@@ -1,9 +1,9 @@
-package gui;
+package gui.interactive;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-import gui.InteractiveRadialSymmetry.ValueChange;
+import gui.interactive.InteractiveRadialSymmetry.ValueChange;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;

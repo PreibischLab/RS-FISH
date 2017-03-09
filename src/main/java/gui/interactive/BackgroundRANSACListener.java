@@ -1,9 +1,9 @@
-package gui;
+package gui.interactive;
+
+import static gui.Radial_Symmetry.bsMethods;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-
-import static gui.InteractiveRadialSymmetry.bsMethods;
 
 public class BackgroundRANSACListener implements ItemListener
 {

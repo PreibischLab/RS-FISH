@@ -1,4 +1,4 @@
-package gui;
+package gui.interactive;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -60,6 +60,9 @@ public class HelperFunctions {
 	// check if peak is inside of the rectangle
 	protected static boolean isInside( final RefinedPeak<Point> peak, final Rectangle rectangle )
 	{
+		if ( rectangle == null )
+			return true;
+
 		final float x = peak.getFloatPosition(0);
 		final float y = peak.getFloatPosition(1);
 
@@ -72,15 +75,21 @@ public class HelperFunctions {
 	/**
 	 * Copy peaks found by DoG to lighter ArrayList (!imglib2)
 	 */
-	public static void copyPeaks(ArrayList<RefinedPeak<Point>> peaks, final ArrayList<long[]> simplifiedPeaks, final int numDimensions, Rectangle rectangle) {
+	public static void copyPeaks(
+			final ArrayList<RefinedPeak<Point>> peaks,
+			final ArrayList<long[]> simplifiedPeaks,
+			final int numDimensions,
+			final Rectangle rectangle,
+			final double threshold ) {
 		// TODO: here should be the threshold for the peak values
 		for (final RefinedPeak<Point> peak : peaks){
 			// TODO: add threshold value
-			if (HelperFunctions.isInside( peak, rectangle ) ){
+			if (HelperFunctions.isInside( peak, rectangle ) && (-peak.getValue() > threshold))
+			{
 				final long[] coordinates = new long[numDimensions];
-				for (int d = 0; d < peak.numDimensions(); ++d){
+				for (int d = 0; d < peak.numDimensions(); ++d)
 					coordinates[d] = Util.round(peak.getDoublePosition(d));
-				}
+
 				simplifiedPeaks.add(coordinates);
 			}
 		}

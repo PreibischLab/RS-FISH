@@ -1,4 +1,6 @@
-package gui;
+package gui.interactive;
+
+import static gui.Radial_Symmetry.bsMethods;
 
 import java.awt.Button;
 import java.awt.Choice;
@@ -10,9 +12,7 @@ import java.awt.Label;
 import java.awt.Scrollbar;
 import java.awt.TextField;
 
-import gui.InteractiveRadialSymmetry.ValueChange;
-
-import static gui.InteractiveRadialSymmetry.bsMethods;
+import gui.interactive.InteractiveRadialSymmetry.ValueChange;
 
 public class RANSACWindow
 {

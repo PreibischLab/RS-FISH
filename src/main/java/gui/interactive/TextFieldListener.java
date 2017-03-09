@@ -1,4 +1,4 @@
-package gui;
+package gui.interactive;
 
 import java.awt.Label;
 import java.awt.Scrollbar;
@@ -7,7 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.regex.Pattern;
 
-import gui.InteractiveRadialSymmetry.ValueChange;
+import gui.interactive.InteractiveRadialSymmetry.ValueChange;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 // changes value of the scroller so that it is the same as in the text field

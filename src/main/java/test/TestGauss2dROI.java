@@ -8,8 +8,8 @@ import background.NormalizedGradient;
 import fit.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
-import gui.HelperFunctions;
-import gui.InteractiveRadialSymmetry;
+import gui.interactive.HelperFunctions;
+import gui.interactive.InteractiveRadialSymmetry;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -122,7 +122,7 @@ public class TestGauss2dROI
 
 		// copy peaks to ArrayList<long[]> to use Spot interface	
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
-		HelperFunctions.copyPeaks(dogPeaks, simplifiedPeaks, extendedRoi.numDimensions(), rectangle);
+		HelperFunctions.copyPeaks(dogPeaks, simplifiedPeaks, extendedRoi.numDimensions(), null, 0 );
 	
 		// 155,74 -- (155.06198848551116, 73.87444439259127)
 

@@ -1,4 +1,4 @@
-package gui;
+package gui.interactive;
 
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -8,7 +8,7 @@ import java.awt.Label;
 import java.awt.Scrollbar;
 import java.awt.TextField;
 
-import gui.InteractiveRadialSymmetry.ValueChange;
+import gui.interactive.InteractiveRadialSymmetry.ValueChange;
 
 public class BackgroundRANSACWindow
 {

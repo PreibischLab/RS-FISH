@@ -1,4 +1,4 @@
-package gui;
+package gui.interactive;
 
 import java.awt.Color;
 import java.awt.Rectangle;
@@ -24,11 +24,8 @@ import fit.PointFunctionMatch;
 import fit.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
-import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.gui.OvalRoi;
 import ij.gui.Overlay;
 import ij.gui.Roi;
@@ -53,7 +50,11 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
-public class InteractiveRadialSymmetry implements PlugIn {
+public class InteractiveRadialSymmetry
+{
+	// fake 2d-calibration
+	final double[] calibration = new double[]{ 1, 1 };
+
 	// RANSAC parameters
 	// initial values
 	final int ransacInitSupportRadius = 5;
@@ -105,8 +106,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	float sigmaMax = 10f;
 	float thresholdMin = 0.0001f;
 	float thresholdMax = 1f;
-	// defines the resolution in x y z dimensions
-	double [] calibration;
 	// --------------------------------
 
 	// Stuff above looks super relevant
@@ -121,15 +120,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	// TODO: keep these
 	double minIntensityImage = Double.NaN;
 	double maxIntensityImage = Double.NaN;
-
-	// TODO: used to choose the image
-	// I really want to make them local!
-	String imgTitle; 
-	String parameterAdjustment;
-	boolean gaussFit;
-
-	boolean backgroundSubtraction;
-	final static String [] bsMethods = new String []{ "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
 
 	// TODO: after moving to imglib2 REMOVE
 	// steps per octave
@@ -171,15 +161,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	boolean isFinished = false;
 	boolean wasCanceled = false;	
 
-	// used to save previous values of the fields
-	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
-	public static int defaultImg = 0;
-	public static int defaultParam = 1;
-	public static boolean defaultGauss = false;
-
-	public static boolean defaultBackgroundSubtraction = false;
-	public static int defaultMethodBS;
-
 	public boolean isFinished() {
 		return isFinished;
 	}
@@ -188,169 +169,63 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		return wasCanceled;
 	}
 
-	public InteractiveRadialSymmetry(final ImagePlus imp, final int channel) {
-		this.imagePlus = imp;
-		this.channel = channel;
-	}
-
-	public InteractiveRadialSymmetry(final ImagePlus imp) {
-		this.imagePlus = imp;
-	}
-
-	public InteractiveRadialSymmetry() {
-	}
-
-	// TODO: POLISH
 	/**
-	 * shows the initial GUI dialog where user has to choose 
-	 * an image and a processing method.
-	 * */
-	protected boolean initialDialog(/*String imgTitle, String parameterAdjustment,*/){
-		boolean failed = false;
-		// check that the are images
-		final int[] imgIdList = WindowManager.getIDList();
-		if (imgIdList == null || imgIdList.length < 1) {
-			IJ.error("You need at least one open image.");
-			failed = true;
-		}
-		else{
-			// titles of the images		
-			final String[] imgList = new String[imgIdList.length];
-			for (int i = 0; i < imgIdList.length; ++i)
-				imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
+	 * Single-channel imageplus, 2d or 3d or 4d
+	 * 
+	 * TODO: 4d!
+	 * 
+	 * @param imp
+	 */
+	public InteractiveRadialSymmetry( final ImagePlus imp )
+	{
+		this.imagePlus = imp;
 
-			// choose image to process and method to use
-			GenericDialog initialDialog = new GenericDialog("Initial Setup");
+		final Roi roi = imagePlus.getRoi();
 
-			if (defaultImg >= imgList.length)
-				defaultImg = 0;
-
-			initialDialog.addChoice("Image_for_detection", imgList, imgList[defaultImg]);
-			initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
-			initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
-			initialDialog.addCheckbox("Do_background_subtraction", defaultBackgroundSubtraction);
-			initialDialog.showDialog();
-
-			// Save current index and current choice here 
-			imgTitle = initialDialog.getNextChoice();
-			int tmp = initialDialog.getNextChoiceIndex();
-			parameterAdjustment = paramChoice[tmp];
-			gaussFit = initialDialog.getNextBoolean();
-
-			// keep previous choice 
-			defaultParam = tmp;
-			defaultGauss = gaussFit;
-
-			// save the state for the background subtraction
-			backgroundSubtraction = initialDialog.getNextBoolean();
-			defaultBackgroundSubtraction = backgroundSubtraction;	
-
-			if (initialDialog.wasCanceled())
-				failed = true;			
-		}
-
-		return failed;
-	}
-
-	@Override
-	public void run(String arg) {  
-		// indicator for the broken workflow
-		boolean failed = initialDialog(/*imgTitle, parameterAdjustment, */);
-		
-		if (!failed && backgroundSubtraction){
-			fittingDialog();
-		}
-
-		if (!failed)
+		if ( roi != null && roi.getType() == Roi.RECTANGLE  )
 		{
-			System.out.println("Image used     : " + imgTitle);
-			System.out.println("Parameters     : " + parameterAdjustment);
-			System.out.println("Background Sub : " + bsMethod);
-
-			if (imagePlus == null)
-				imagePlus = WindowManager.getImage(imgTitle);
-			// TODO: Check what of the stuff below is necessary
-			// // if one of the images is rgb or 8-bit color convert them to
-			// hyperstack
-			// imp = Hyperstack_rearranger.convertToHyperStack( imp );
-			//
-			// // test if you can deal with this image (2d? 3d? channels?
-			// timepoints?)
-			// 3d + time should be fine.
-			// right now works with 2d + time
-
-			// TODO move this return
-			if (imagePlus.getType() == ImagePlus.COLOR_RGB || imagePlus.getType() == ImagePlus.COLOR_256) {
-				IJ.log("Color images are not supported, please convert to 8, 16 or 32-bit grayscale");
-				failed = true;
-			}
-			else{
-				// if interactive
-				if (parameterAdjustment.equals(paramChoice[1])){
-					// here comes the normal work flow
-					// initial rectangle
-					rectangle = new Rectangle(imagePlus.getWidth() / 4, imagePlus.getHeight() / 4, imagePlus.getWidth() / 2,
-							imagePlus.getHeight() / 2);
-					// TODO: Do I need this ROI?
-					Roi roi = imagePlus.getRoi();
-					if (roi == null) {
-						// IJ.log( "A rectangular ROI is required to define the area..." );
-						imagePlus.setRoi(rectangle);
-						roi = imagePlus.getRoi();
-					}
-					
-					if (roi.getType() != Roi.RECTANGLE) {
-						IJ.log("Only rectangular rois are supported...");
-						failed = true;
-					}
-					else{
-						imagePlus.setPosition(channel, imagePlus.getSlice(), 1);
-						slice = ImageJFunctions.convertFloat(imagePlus);	
-						// should be called after slice inititalization
-						calibration = HelperFunctions.setCalibration(imagePlus, slice.numDimensions());
-						// initialize variables for interactive preview
-						// called before updatePreview() !
-						ransacPreviewInit();
-
-						// show the interactive kit
-						this.dogWindow = new DoGWindow( this );
-						this.dogWindow.getFrame().setVisible( true );
-
-						// show the interactive ransac kit
-						this.ransacWindow = new RANSACWindow( this );
-						this.ransacWindow.getFrame().setVisible( true );
-
-						// add listener to the imageplus slice slider
-						sliceObserver = new SliceObserver(imagePlus, new ImagePlusListener( this ));
-						// compute first version
-						updatePreview(ValueChange.ALL);
-						isStarted = true;
-						// check whenever roi is modified to update accordingly
-						roiListener = new ROIListener( this, imagePlus, impRansacError );
-						imagePlus.getCanvas().addMouseListener( roiListener );
-						fixROIListener = new FixROIListener( imagePlus, impRansacError );
-						impRansacError.getCanvas().addMouseListener( fixROIListener );
-					}
-				} 
-				else // automatic 
-				{
-					// TODO: Do I need the rectangle here?
-					// here comes the normal work flow
-					rectangle = new Rectangle(0, 0, imagePlus.getWidth(), imagePlus.getHeight());
-					imagePlus.setRoi(rectangle);
-					// img2 = ImageJFunctions.wrapFloat(imp);
-					imagePlus.setPosition(channel, imagePlus.getSlice(), 0);
-					slice = ImageJFunctions.convertFloat(imagePlus);
-					// should be called after slice inititalization
-					calibration = HelperFunctions.setCalibration(imagePlus, slice.numDimensions());
-					// initialize variables for the result
-					ransacPreviewInit();
-					automaticDialog();
-				}
-			}
-
+			rectangle = roi.getBounds();
 		}
-		// return failed; // uncomment if necessary 
+		else
+		{
+			// initial rectangle
+			rectangle = new Rectangle(
+					imagePlus.getWidth() / 4,
+					imagePlus.getHeight() / 4,
+					imagePlus.getWidth() / 2,
+					imagePlus.getHeight() / 2);
+
+			// IJ.log( "A rectangular ROI is required to define the area..." );
+			imagePlus.setRoi( rectangle );
+		}
+
+		//imagePlus.setPosition(channel, imagePlus.getStack().ge, 1);
+
+		slice = ImageJFunctions.convertFloat( imagePlus );
+		//SimpleMultiThreading.threadHaltUnClean();
+
+		// initialize variables for interactive preview
+		// called before updatePreview() !
+		ransacPreviewInit();
+
+		// show the interactive kit
+		this.dogWindow = new DoGWindow( this );
+		this.dogWindow.getFrame().setVisible( true );
+
+		// show the interactive ransac kit
+		this.ransacWindow = new RANSACWindow( this );
+		this.ransacWindow.getFrame().setVisible( true );
+
+		// add listener to the imageplus slice slider
+		sliceObserver = new SliceObserver(imagePlus, new ImagePlusListener( this ));
+		// compute first version
+		updatePreview(ValueChange.ALL);
+		isStarted = true;
+		// check whenever roi is modified to update accordingly
+		roiListener = new ROIListener( this, imagePlus, impRansacError );
+		imagePlus.getCanvas().addMouseListener( roiListener );
+		fixROIListener = new FixROIListener( imagePlus, impRansacError );
+		impRansacError.getCanvas().addMouseListener( fixROIListener );
 	}
 
 
@@ -394,28 +269,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		rt.show("Results");
 	}
 
-
-	/**
-	 * Shows dialog to choose method for background subtraction
-	 * */
-	private void fittingDialog(){
-		boolean canceled = false;
-
-		GenericDialog gd = new GenericDialog("Background Subtraction Method");
-		gd.addChoice( "Method :", bsMethods, bsMethods[ defaultMethodBS ] );
-
-		gd.showDialog();
-
-		// Should I move this to the return statement
-		bsMethod = defaultMethodBS = gd.getNextChoiceIndex();
-
-		if (gd.wasCanceled()) 
-			canceled = true;
-
-		if (canceled)
-			return;
-	}
-
 	protected void ransacInteractive() {
 		// make sure the size is not 0 (is possible in ImageJ when making the Rectangle, not when changing it ... yeah)
 		rectangle.width = Math.max( 1, rectangle.width );
@@ -424,7 +277,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 		int numDimensions = extendedRoi.numDimensions(); // DEBUG: should always be 2 
 		// extract peaks for the roi
-		HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle);
+		HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle, threshold );
 
 		// the size of the RANSAC area
 		final long[] range = new long[numDimensions];
@@ -661,32 +514,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 
 	}
 
-	protected void ransacAutomatic(){
-		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
-		
-		int numDimensions = extendedRoi.numDimensions();
-		HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle);
-		
-		final long[] range = new long[numDimensions];
-		for (int d = 0; d <numDimensions; ++d)
-			range[d] = 2*supportRadius;
-
-		final Gradient derivative = new GradientPreCompute(extendedRoi);
-		
-		NormalizedGradient ng = null;
-		// depending on user choice we use different method
-		SimpleMultiThreading.threadHaltUnClean();
-		//throw new RuntimeException( "backgroundsubt. missing" );
-		
-		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
-
-		Spot.ransac(spots, numIterations, maxError, inlierRatio);
-		for (final Spot spot : spots)
-			spot.computeAverageCostInliers();
-
-		ransacResultTable(spots);
-	}
-
 	// APPROVED:
 	/**
 	 * shows the results (circles) of the detection. 
@@ -752,69 +579,6 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			overlay.add(or);
 		}
 		imagePlus.updateAndDraw();
-	}
-
-	/**
-	 * shows 2 dialogs!
-	 * */
-	protected void automaticDialog(){
-		// TODO: add caching for variables
-		boolean canceled = false;
-
-		GenericDialog gd = new GenericDialog("Set Stack Parameters");
-
-		gd.addNumericField("Sigma:", this.sigmaInit, 2);
-		gd.addNumericField("Threshold:", this.thresholdInit, 4);
-		gd.addNumericField("Support_Region_Radius:", this.ransacInitSupportRadius, 0);
-		gd.addNumericField("Inlier_Ratio:", this.ransacInitInlierRatio, 2);
-		gd.addNumericField("Max_Error:", this.ransacInitMaxError, 2);
-
-		gd.showDialog();
-		if (gd.wasCanceled()) 
-			canceled = true;
-
-		sigma = (float)gd.getNextNumber();
-		threshold = (float)gd.getNextNumber();
-		supportRadius = (int)Math.round(gd.getNextNumber());
-		inlierRatio = (float)gd.getNextNumber();
-		maxError = (float)gd.getNextNumber();	
-		
-		// wrong values in the fields
-		if (sigma == Double.NaN || threshold == Double.NaN ||  supportRadius == Double.NaN || inlierRatio == Double.NaN || maxError == Double.NaN )
-			canceled = true;
-		
-		if (canceled)
-			return;
-		
-		runRansacAutomatic();
-	}
-
-	// unified call for nD cases 
-	protected void runRansacAutomatic(){
-		extendedRoi = ImageJFunctions.wrap(imagePlus); // returns the whole image either 2D or 3D
-
-		// long [] min = new long [extendedRoi.numDimensions()]; 
-		// long [] max = new long [extendedRoi.numDimensions()]; 
-
-		// for (int d = 0; d < extendedRoi.numDimensions(); ++d){
-		// 	min[d] = extendedRoi.min(d);
-		// 	max[d] = extendedRoi.max(d);
-		// }
-
-		this.sigma2 = HelperFunctions.computeSigma2(this.sigma, sensitivity);
-		// IMP: in the 3D case the blobs will have lower contrast as a function of sigma(z) therefore we have to adjust the threshold;
-		// to fix the problem we use an extra factor =0.5 which will decrease the threshold value; this might help in some cases but z-extrasmoothing
-		// is image depended
-
-		final float tFactor = extendedRoi.numDimensions() == 3 ? 0.5f : 1.0f;	
-		final DogDetection<FloatType> dog2 = new DogDetection<>(extendedRoi, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  tFactor*threshold / 4, false);
-		peaks = dog2.getSubpixelPeaks();
-
-		if (extendedRoi.numDimensions() == 2 || extendedRoi.numDimensions() == 3 )
-			ransacAutomatic();
-		else
-			System.out.println("Wrong dimensionality. Currently supported 2D/3D!");
-
 	}
 
 	// TODO: fix the check: "==" must not be used with floats
@@ -902,10 +666,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			roiChanged = true;
 		}
 
-		// compute the Difference Of Gaussian if necessary
-		if (roiChanged || peaks == null || change == ValueChange.SIGMA || change == ValueChange.SLICE
-				|| change == ValueChange.ALL || change == ValueChange.SUPPORTRADIUS || change == ValueChange.THRESHOLD || change == ValueChange.MAXERROR 
-				|| change == ValueChange.INLIERRATIO) {
+		// TODO: only recalculate DOG if:
+		// sigma, roi (also through support region), slider
+		if (roiChanged || peaks == null || change == ValueChange.SIGMA || change == ValueChange.SLICE || change == ValueChange.ALL )
+		{
+			System.out.println( "recalc" );
 
 			// refill output image in case anything was changed
 			long [] dimensions = new long [extendedRoi.numDimensions()];	
@@ -913,8 +678,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			
 			dogDetection(extendedRoi); 
 		}
+		else if ( change == ValueChange.THRESHOLD )
+		{
+			// TODO: update peaks
+		}
 
-		showPeaks(imagePlus, rectangle);
+		showPeaks( imagePlus, rectangle, threshold );
 		imagePlus.updateAndDraw();
 
 		ransacInteractive();
@@ -925,16 +694,17 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	/**
 	 * this function is used for Difference-of-Gaussian calculation in the 
 	 * interactive case. No calibration adjustment is needed.
-	 * (threshold/4) - because some peaks might be skipped.
+	 * (thresholdMin/2) - because some peaks might be skipped - always compute all spots, select later
 	 * */
 	protected void dogDetection(RandomAccessibleInterval <FloatType> image){
-		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  threshold/4, false);
+		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  this.thresholdMin/2, false);
 		peaks = dog2.getSubpixelPeaks(); 
 	}
 
 	// extract peaks to show
 	// TODO: Check changes: but should be fine now
-	protected void showPeaks(ImagePlus imp, Rectangle rectangle) {
+	protected void showPeaks( final ImagePlus imp, final Rectangle rectangle, final double threshold )
+	{
 		Overlay o = imp.getOverlay();
 
 		if (o == null) {
@@ -948,8 +718,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			final float x = peak.getFloatPosition(0);
 			final float y = peak.getFloatPosition(1);
 
-			// TODO: This check criteria is totally wrong!!!
-			if (HelperFunctions.isInside(peak, rectangle) && peak.getValue() > threshold){ // I guess the peak.getValue function returns the value in scale-space
+			// TODO: This check criteria is totally wrong!!! - should be fixed
+			if (HelperFunctions.isInside( peak, rectangle ) && (-peak.getValue() > threshold)){ // I guess the peak.getValue function returns the value in scale-space
 
 				final OvalRoi or = new OvalRoi(Util.round(x - sigma),
 						Util.round(y - sigma), Util.round(sigma + sigma2),
@@ -961,30 +731,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-	// TODO: REMOVE THIS? 
-	// item listener to choose the type of the method to use
-	protected class CheckboxListener implements ItemListener {
-		final String[] items;
-		final String item;
-
-		public CheckboxListener(final String[] items, final String item){
-			this.items = items;
-			this.item = item;
-		}
-
-		@Override
-		public void itemStateChanged(final ItemEvent event) {
-			// the last item in the list is the one with extra parameters
-			if (item.equals(items[items.length - 1])){
-
-			}
-
-		}
-	}
-
-
 	// APPROVED:
-
 	protected final void dispose()
 	{
 		if ( dogWindow.getFrame() != null)
@@ -1031,12 +778,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		else
 			imp.show();
 
-		// 	imp.setSlice(20);
+		imp.setSlice(20);
 
 
 		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
-		new InteractiveRadialSymmetry().run(null);
+		new InteractiveRadialSymmetry( imp );
 
 		System.out.println("DOGE!");
 	}

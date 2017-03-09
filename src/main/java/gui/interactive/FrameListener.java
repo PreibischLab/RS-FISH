@@ -1,4 +1,4 @@
-package gui;
+package gui.interactive;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;

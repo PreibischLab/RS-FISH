@@ -1,7 +1,7 @@
-package gui;
+package gui.interactive;
 
 import fiji.tool.SliceListener;
-import gui.InteractiveRadialSymmetry.ValueChange;
+import gui.interactive.InteractiveRadialSymmetry.ValueChange;
 import ij.ImagePlus;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 

@@ -1,11 +1,11 @@
-package gui;
+package gui.interactive;
 
 import java.awt.Label;
 import java.awt.TextField;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 
-import gui.InteractiveRadialSymmetry.ValueChange;
+import gui.interactive.InteractiveRadialSymmetry.ValueChange;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 // general listener used by ransac

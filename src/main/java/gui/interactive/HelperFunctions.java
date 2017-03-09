@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealLocalizable;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
@@ -97,7 +98,7 @@ public class HelperFunctions {
 	}
 	
 	// check if peak is inside of the rectangle
-	protected static boolean isInside( final RefinedPeak<Point> peak, final Rectangle rectangle )
+	protected static < P extends RealLocalizable > boolean isInside( final P peak, final Rectangle rectangle )
 	{
 		if ( rectangle == null )
 			return true;

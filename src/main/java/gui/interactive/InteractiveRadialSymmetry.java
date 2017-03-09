@@ -47,7 +47,7 @@ import net.imglib2.view.Views;
 
 public class InteractiveRadialSymmetry
 {
-	// fake 2d-calibration
+	// TODO: fake 2d-calibration
 	final double[] calibration = new double[]{ 1, 1 };
 
 	// RANSAC parameters
@@ -103,7 +103,7 @@ public class InteractiveRadialSymmetry
 	// TODO: keep these params
 	// int extraSize = ransacInitSupportRadius; // deprecated; supportRadius is used instead
 	final int scrollbarSize = 1000;
-	float imageSigma = 0.5f;
+	// float imageSigma = 0.5f;
 
 	// TODO: keep these
 	double minIntensityImage = Double.NaN;

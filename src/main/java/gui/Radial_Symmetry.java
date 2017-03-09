@@ -1,15 +1,11 @@
 package gui;
 
-import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
-import net.imglib2.algorithm.dog.DogDetection;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
 
 public class Radial_Symmetry implements PlugIn
 {
@@ -21,9 +17,24 @@ public class Radial_Symmetry implements PlugIn
 	public static int defaultImg = 0;
 	public static int defaultParam = 1;
 	public static boolean defaultGauss = false;
+	
+	
+	// TODO: backup the values entered by user 
+	public static float defaultSigma;
+	public static float defaultSigma2;
+	public static float defaultThreshold;
+	
+	public static float defaultMaxError;
+	public static float defaultInlierRatio;
+	public static int defaultSupportRadius;
+	
+	public static float defaultBSInlierRatio;
+	public static float defaultBSMaxError;
+	public static int defaultBSMethod;
+	
+    /////////////////////////////////////
 
 	// TODO: used to choose the image
-	// I really want to make them local!
 	ImagePlus imp;
 	int parameterType;
 	boolean gaussFit;
@@ -33,7 +44,7 @@ public class Radial_Symmetry implements PlugIn
 
 	@Override
 	public void run( String arg )
-	{
+	{	
 		if ( initialDialog() )
 		{
 			// TODO: Check what of the stuff below is necessary

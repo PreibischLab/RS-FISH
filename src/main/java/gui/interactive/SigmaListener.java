@@ -8,6 +8,9 @@ import java.awt.event.AdjustmentListener;
 import gui.interactive.InteractiveRadialSymmetry.ValueChange;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
+import static gui.Radial_Symmetry.defaultSigma;
+import static gui.Radial_Symmetry.defaultSigma2;
+
 public class SigmaListener implements AdjustmentListener {
 	final InteractiveRadialSymmetry parent;
 	final Label label;
@@ -36,12 +39,12 @@ public class SigmaListener implements AdjustmentListener {
 
 	@Override
 	public void adjustmentValueChanged(final AdjustmentEvent event) {
-		parent.sigma = HelperFunctions.computeValueFromScrollbarPosition(event.getValue(), min, max, scrollbarSize);
-		parent.sigma2 = HelperFunctions.computeSigma2(parent.sigma, parent.sensitivity);
+		defaultSigma = parent.sigma = HelperFunctions.computeValueFromScrollbarPosition(event.getValue(), min, max, scrollbarSize);
+		defaultSigma2 = parent.sigma2 = HelperFunctions.computeSigma2(parent.sigma, parent.sensitivity);
 
 		// TODO: this might never be the case
 		if (parent.sigma > parent.sigma2) {
-			parent.sigma = parent.sigma2 - 0.001f;
+			defaultSigma = parent.sigma = parent.sigma2 - 0.001f;
 			sigmaScrollbar1.setValue(HelperFunctions.computeScrollbarPositionFromValue(parent.sigma, min, max, scrollbarSize));
 		}
 

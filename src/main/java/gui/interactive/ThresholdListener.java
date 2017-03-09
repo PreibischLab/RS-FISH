@@ -7,6 +7,8 @@ import java.awt.event.AdjustmentListener;
 import gui.interactive.InteractiveRadialSymmetry.ValueChange;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
+import static gui.Radial_Symmetry.defaultThreshold;
+
 public class ThresholdListener implements AdjustmentListener {
 	final InteractiveRadialSymmetry parent;
 	final Label label;
@@ -24,7 +26,7 @@ public class ThresholdListener implements AdjustmentListener {
 
 	@Override
 	public void adjustmentValueChanged(final AdjustmentEvent event) {
-		parent.threshold = min + ((log1001 - (float) Math.log10(1001 - event.getValue())) / log1001) * (max - min);
+		defaultThreshold = parent.threshold = min + ((log1001 - (float) Math.log10(1001 - event.getValue())) / log1001) * (max - min);
 		label.setText("Threshold = " + String.format(java.util.Locale.US, "%.4f", parent.threshold));
 
 		if (!parent.isComputing) {

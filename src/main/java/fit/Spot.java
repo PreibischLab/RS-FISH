@@ -1,28 +1,19 @@
 package fit;
 
-import gradient.Gradient;
-
 import java.util.ArrayList;
-import java.util.Random;
 
 import background.NormalizedGradient;
-import mpicbg.models.AbstractModel;
+import gradient.Gradient;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
-import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.iterator.IntervalIterator;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
 /**
@@ -228,8 +219,8 @@ public class Spot implements RealLocalizable
 			if ( normalizer != null )
 			{
 				((NormalizedGradient)gradient).normalize( spotInterval );
-				if ( i < 5 )
-					System.out.println( i++ + ": " + Util.printCoordinates( ((NormalizedGradient)gradient).getBackground() ));
+				//if ( i < 5 )
+				//	System.out.println( i++ + ": " + Util.printCoordinates( ((NormalizedGradient)gradient).getBackground() ));
 			}
 			
 			// define a local region to iterate around the potential detection

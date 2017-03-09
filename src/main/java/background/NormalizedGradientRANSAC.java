@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 
 import fit.Center;
+import fit.Center.CenterMethod;
 import fit.PointFunctionMatch;
 import gradient.Gradient;
 import mpicbg.models.Point;
@@ -12,23 +13,27 @@ import mpicbg.models.Point;
 public class NormalizedGradientRANSAC extends NormalizedGradient
 {
 	double maxError, minInlierRatio;
+	CenterMethod centerMethod;
 
-	public NormalizedGradientRANSAC( final Gradient gradient, final double maxError, final double minInlierRatio )
+	public NormalizedGradientRANSAC( final Gradient gradient, final CenterMethod centerMethod, final double maxError, final double minInlierRatio )
 	{
 		super( gradient );
 
 		this.maxError = maxError;
 		this.minInlierRatio = minInlierRatio;
+		this.centerMethod = centerMethod;
 	}
 
-	public NormalizedGradientRANSAC( final Gradient gradient )
+	public NormalizedGradientRANSAC( final Gradient gradient, final CenterMethod centerMethod )
 	{
-		this( gradient, 0.05, 0.3 );
+		this( gradient, centerMethod, 0.05, 0.3 );
 	}
 
+	public void setCenterMethod( final CenterMethod method ) { this.centerMethod = method; }
 	public void setMaxError( final double maxError ) { this.maxError = maxError; }
 	public void setMinInlierRatio( final double minInlierRatio ) { this.minInlierRatio = minInlierRatio; }
 
+	public CenterMethod getCenterMethod() { return centerMethod; }
 	public double getMaxError() { return maxError; }
 	public double getMinInlierRatio() { return minInlierRatio; }
 
@@ -39,10 +44,10 @@ public class NormalizedGradientRANSAC extends NormalizedGradient
 	{
 		// TODO: Parameters in GUI: 0.05, 0.3
 		for ( int d = 0; d < n; ++d )
-			bkgrnd[ d ] = runRANSAC( gradientsPerDim.get( d ), maxError, minInlierRatio );
+			bkgrnd[ d ] = runRANSAC( gradientsPerDim.get( d ), centerMethod, maxError, minInlierRatio );
 	}
 
-	public static double runRANSAC( final Collection< Double > values, final double maxError, final double minInlierRatio )
+	public static double runRANSAC( final Collection< Double > values, final CenterMethod centerMethod, final double maxError, final double minInlierRatio )
 	{
 		final ArrayList< PointFunctionMatch > candidates = new ArrayList<PointFunctionMatch>();
 		final ArrayList< PointFunctionMatch > inliers = new ArrayList<PointFunctionMatch>();
@@ -50,7 +55,7 @@ public class NormalizedGradientRANSAC extends NormalizedGradient
 		for ( final double d : values )
 			candidates.add( new PointFunctionMatch( new Point( new double[]{ d } ) ) );
 		
-		final Center l = new Center();
+		final Center l = new Center( centerMethod );
 
 		try
 		{

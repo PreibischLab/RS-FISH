@@ -1,6 +1,7 @@
 package gui;
 
 import java.awt.Button;
+import java.awt.Choice;
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -20,6 +21,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.regex.Pattern;
@@ -147,7 +149,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	boolean gaussFit;
 
 	boolean backgroundSubtraction;
-	String [] bsMethods = new String []{"Mean", "Median", "RANSAC"};
+	String [] bsMethods = new String []{ "No background subtraction", "Mean", "Median", "RANSAC on Mean"};
 	String bsMethod;
 
 	// TODO: after moving to imglib2 REMOVE
@@ -197,7 +199,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	// used to save previous values of the fields
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
-	public static int defaultParam = 0;
+	public static int defaultParam = 1;
 	public static boolean defaultGauss = false;
 
 	public static boolean defaultBackgroundSubtraction = false;
@@ -284,11 +286,8 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			fittingDialog();
 		}
 
-		if (failed){
-			// nothing 
-		}
-		else{
-
+		if (!failed)
+		{
 			System.out.println("Image used     : " + imgTitle);
 			System.out.println("Parameters     : " + parameterAdjustment);
 			System.out.println("Background Sub : " + bsMethod);
@@ -312,7 +311,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 			}
 			else{
 				// if interactive
-				if (parameterAdjustment.compareTo(paramChoice[1]) == 0) {
+				if (parameterAdjustment.equals(paramChoice[1])){
 					// here comes the normal work flow
 					// initial rectangle
 					rectangle = new Rectangle(imagePlus.getWidth() / 4, imagePlus.getHeight() / 4, imagePlus.getWidth() / 2,
@@ -338,10 +337,11 @@ public class InteractiveRadialSymmetry implements PlugIn {
 						// called before updatePreview() !
 						ransacPreviewInit();
 						// show the interactive kit
-						interactiveDialog();
+						interactiveDogDialog();
+						/*
 						if (backgroundSubtraction && bsMethod.equals("RANSAC") ){ // if RANSAC
 							interactiveRansacBSDialog();
-						}
+						}*/
 
 						// show the interactive ransac kit
 						interactiveRansacDialog();
@@ -974,6 +974,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		final Label maxErrorText = new Label("Max Error = " + String.format(java.util.Locale.US, "%.4f", this.maxError),
 				Label.CENTER);
 
+		final Label bsText = new Label("Local Background Subtraction Method:", Label.CENTER);
+		final Choice bsMethod = new Choice();
+		bsMethod.add( "No background subtraction" );
+		for ( final String s : bsMethods )
+			bsMethod.add( s );
+		
 		final Button button = new Button("Done");
 		final Button cancel = new Button("Cancel");
 
@@ -1027,6 +1033,12 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		frame.add(maxErrorScrollbar, gbc);
 
+		gbc.gridx = 0;
+		++gbc.gridy;
+		gbc.gridwidth = 2;
+		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
+		frame.add(bsMethod, gbc);
+
 		++gbc.gridy;
 		gbc.insets = new Insets(5, 50, 0, 50);
 		frame.add(button, gbc);
@@ -1058,7 +1070,7 @@ public class InteractiveRadialSymmetry implements PlugIn {
 	/**
 	 * Instantiates the panel for adjusting the parameters
 	 */
-	protected void interactiveDialog() {
+	protected void interactiveDogDialog() {
 		final Frame frame = new Frame("Adjust Difference-of-Gaussian Values");
 		frame.setSize(360, 170);
 
@@ -1649,35 +1661,23 @@ public class InteractiveRadialSymmetry implements PlugIn {
 		}
 	}
 
-	public static void main(String[] args) {
-		new ImageJ();
-
-		String pathMac = "/Users/kkolyva/Desktop/latest_desktop/";// "/Users/kkolyva/Downloads/Dies/IMG_1458gi.tif";// 
-		String pathUbuntu = "/home/milkyklim/eclipse.input/";
-
-		String path;
-
-		String osName = System.getProperty("os.name").toLowerCase();
-		boolean isMacOs = osName.startsWith("mac os x");
-		if (isMacOs) 
-		{
-			path = pathMac; 
-		}
-		else{
-			path = pathUbuntu;
-		}
-
-		path = path.concat("multiple_dots.tif");
+	public static void main(String[] args)
+	{
+		File path = new File( "src/main/resources/multiple_dots.tif" );
 		// path = path.concat("test_background.tif");
-		System.out.println(path);
 
-		ImagePlus imp = new Opener().openImage(path);
+		if ( !path.exists() )
+			throw new RuntimeException( "'" + path.getAbsolutePath() + "' doesn't exist." );
+
+		new ImageJ();
+		System.out.println( "Opening '" + path + "'");
+
+		ImagePlus imp = new Opener().openImage( path.getAbsolutePath() );
 
 		if (imp == null)
-			System.out.println("image was not loaded");
-		else{
+			throw new RuntimeException( "image was not loaded" );
+		else
 			imp.show();
-		}
 
 		// 	imp.setSlice(20);
 

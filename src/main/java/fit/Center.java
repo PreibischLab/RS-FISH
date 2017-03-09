@@ -6,11 +6,26 @@ import java.util.Collection;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
+import net.imglib2.util.Util;
 
 public class Center extends AbstractFunction< Center >
 {
+	private static final long serialVersionUID = 1L;
+
+	public enum CenterMethod { MEAN, MEDIAN };
+
 	final int minNumPoints = 1;
 	double p = 0;
+
+	final boolean mean;
+
+	public Center( final CenterMethod method )
+	{
+		if ( method == CenterMethod.MEAN )
+			mean = true;
+		else
+			mean = false;
+	}
 
 	public double getP() { return p; }
 
@@ -25,13 +40,27 @@ public class Center extends AbstractFunction< Center >
 		if ( numPoints < minNumPoints )
 			throw new NotEnoughDataPointsException( "Not enough points, at least " + minNumPoints + " are necessary." );
 
-		double sum = 0;
-		
-		for ( final Point p : points )
-			sum += p.getW()[ 0 ];
+		// could be an interface instead of an if
+		if ( mean )
+		{
+			double sum = 0;
 
-		this.p = sum / (double)points.size();
+			for ( final Point p : points )
+				sum += p.getW()[ 0 ];
 
+			this.p = sum / (double)points.size();
+		}
+		else
+		{
+			final double[] values = new double[ points.size() ];
+
+			int i = 0;
+
+			for ( final Point p : points )
+				values[ i++ ] = p.getW()[ 0 ];
+
+			this.p = Util.median( values );
+		}
 	}
 
 	@Override
@@ -52,8 +81,12 @@ public class Center extends AbstractFunction< Center >
 	@Override
 	public Center copy()
 	{
-		Center c = new Center();
-		
+		Center c;
+		if ( mean )
+			c = new Center( CenterMethod.MEAN );
+		else
+			c = new Center( CenterMethod.MEDIAN );
+
 		c.p = getP();
 		c.setCost( getCost() );
 		
@@ -75,7 +108,7 @@ public class Center extends AbstractFunction< Center >
 		for ( final Point p : points )
 			candidates.add( new PointFunctionMatch( p ) );
 		
-		final Center l = new Center();
+		final Center l = new Center( CenterMethod.MEAN );
 		
 		l.ransac( candidates, inliers, 100, 1, 0.1 );
 		

@@ -2,6 +2,7 @@ package test;
 
 import fit.OrientedPoint;
 import fit.Spot;
+import fit.Center.CenterMethod;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
 import ij.ImageJ;
@@ -103,7 +104,7 @@ public class TestGauss3d
 		derivative = new GradientPreCompute( image );
 
 		NormalizedGradient ng = null;
-		ng = new NormalizedGradientRANSAC( derivative );
+		ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEAN );
 		//ng = new NormalizedGradientMedian( derivative );
 		//ng = new NormalizedGradientAverage( derivative );
 

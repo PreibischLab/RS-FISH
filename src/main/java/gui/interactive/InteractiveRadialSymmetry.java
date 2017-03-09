@@ -85,13 +85,10 @@ public class InteractiveRadialSymmetry
 	float bsMaxErrorMax = 10.00f;
 
 	// DoG parameters
-	// initial
-	final int sigmaInit = 5;
-	final float thresholdInit = 0.03f;
 	// current
-	float sigma = 0.5f;
+	float sigma = 5.0f;
 	float sigma2 = 0.5f;
-	float threshold = 0.0001f;
+	float threshold = 0.03f;
 	// min/max value
 	float sigmaMin = 0.5f;
 	float sigmaMax = 10f;

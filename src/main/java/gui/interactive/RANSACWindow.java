@@ -1,7 +1,5 @@
 package gui.interactive;
 
-import static gui.Radial_Symmetry.bsMethods;
-
 import java.awt.Button;
 import java.awt.Choice;
 import java.awt.Frame;
@@ -13,6 +11,7 @@ import java.awt.Scrollbar;
 import java.awt.TextField;
 
 import gui.interactive.InteractiveRadialSymmetry.ValueChange;
+import parameters.GUIParams;
 
 public class RANSACWindow
 {
@@ -66,7 +65,7 @@ public class RANSACWindow
 
 		final Label bsText = new Label("Local Background Subtraction:", Label.CENTER);
 		final Choice bsMethodChoice = new Choice();
-		for ( final String s : bsMethods )
+		for ( final String s : GUIParams.bsMethods )
 			bsMethodChoice.add( s );
 
 		final Button button = new Button("Done");

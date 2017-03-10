@@ -55,7 +55,7 @@ import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import parameters.GUIParams;
 
-public class InteractiveRadialSymmetry implements GUIParams
+public class InteractiveRadialSymmetry extends GUIParams
 {
 	public static int bsNumIterations = 100; // not a parameter, can be changed through Beanshell
 	public static int numIterations = 100; // not a parameter, can be changed through Beanshell
@@ -156,8 +156,6 @@ public class InteractiveRadialSymmetry implements GUIParams
 
 	/**
 	 * Single-channel imageplus, 2d or 3d or 4d
-	 * 
-	 * TODO: 4d!
 	 * 
 	 * @param imp
 	 */

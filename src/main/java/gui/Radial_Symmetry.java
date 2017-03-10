@@ -15,24 +15,11 @@ import parameters.RadialSymmetryParameters;
 
 public class Radial_Symmetry implements PlugIn
 {
-	final public static String [] bsMethods = new String []{ "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
-
 	// used to save previous values of the fields
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
 	public static int defaultParam = 1;
 	public static boolean defaultGauss = false;
-	
-	public static float defaultSigma = 5.0f;
-	public static float defaultThreshold = 0.03f;
-	
-	public static float defaultMaxError = 3.0f;
-	public static float defaultInlierRatio = (float) (75.0 / 100.0);
-	public static int defaultSupportRadius = 5;
-	
-	public static float defaultBSInlierRatio = (float) (75.0 / 100.0);
-	public static float defaultBSMaxError = 0.05f;
-	public static int defaultBSMethod = 0;
 
 	// TODO: used to choose the image
 	ImagePlus imp;

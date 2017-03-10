@@ -1,8 +1,11 @@
 package gui.interactive;
 
+import java.awt.Color;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.Collection;
 
+import fit.Spot;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
@@ -14,10 +17,64 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import ij.ImagePlus;
+import ij.gui.OvalRoi;
+import ij.gui.Overlay;
 import ij.process.ImageProcessor;
 import mpicbg.imglib.util.Util;
 
 public class HelperFunctions {
+
+	public static ArrayList< RefinedPeak< Point > > filterPeaks( final ArrayList< RefinedPeak< Point > > peaks, final Rectangle rectangle, final double threshold )
+	{
+		final ArrayList< RefinedPeak< Point > > filtered = new ArrayList<>();
+
+		for ( final RefinedPeak< Point > peak : peaks )
+			if ( HelperFunctions.isInside( peak, rectangle ) && ( -peak.getValue() > threshold) ) // I guess the peak.getValue function returns the value in scale-space
+				filtered.add( peak );
+
+		return filtered;
+	}
+
+	public static ArrayList< Spot > filterSpots( final ArrayList< Spot > spots, final int minInliers )
+	{
+		final ArrayList< Spot > filtered = new ArrayList<>();
+
+		for ( final Spot spot : spots )
+			if ( spot.inliers.size() >= minInliers )
+				filtered.add( spot );
+
+		return filtered;
+	}
+
+	public static < L extends RealLocalizable > void drawRealLocalizable( final Collection< L > peaks, final ImagePlus imp, final double radius, final Color col, final boolean clearFirst )
+	{
+		// extract peaks to show
+		// we will overlay them with RANSAC result
+		Overlay overlay = imp.getOverlay();
+
+		if ( overlay == null )
+		{
+			// System.out.println("If this message pops up probably something went wrong.");
+			overlay = new Overlay();
+			imp.setOverlay( overlay );
+		}
+
+		if ( clearFirst )
+			overlay.clear();
+
+		for ( final L peak : peaks )
+		{
+			final float x = peak.getFloatPosition(0);
+			final float y = peak.getFloatPosition(1);
+
+			final OvalRoi or = new OvalRoi( x - radius, y - radius, radius * 2, radius * 2);
+
+			or.setStrokeColor( col );
+			overlay.add(or);
+		}
+
+		imp.updateAndDraw();
+	}
 
 	public static Img< FloatType > toImg( final ImagePlus imagePlus, final long[] dim, final int type )
 	{

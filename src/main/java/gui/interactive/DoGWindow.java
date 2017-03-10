@@ -33,8 +33,6 @@ public class DoGWindow
 		final Scrollbar thresholdBar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + parent.scrollbarSize);
 
-		parent.sigma2 = HelperFunctions.computeSigma2(parent.sigma, parent.sensitivity);
-
 		final Label sigmaText1 = new Label("Sigma 1 = " + String.format(java.util.Locale.US, "%.2f", parent.sigma),
 				Label.CENTER);
 

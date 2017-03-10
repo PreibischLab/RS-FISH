@@ -1,5 +1,14 @@
 package gui.interactive;
 
+import static gui.Radial_Symmetry.defaultBSInlierRatio;
+import static gui.Radial_Symmetry.defaultBSMaxError;
+import static gui.Radial_Symmetry.defaultBSMethod;
+import static gui.Radial_Symmetry.defaultInlierRatio;
+import static gui.Radial_Symmetry.defaultMaxError;
+import static gui.Radial_Symmetry.defaultSigma;
+import static gui.Radial_Symmetry.defaultSupportRadius;
+import static gui.Radial_Symmetry.defaultThreshold;
+
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.io.File;
@@ -22,15 +31,14 @@ import fit.PointFunctionMatch;
 import fit.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
+import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
-import ij.gui.OvalRoi;
-import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.io.Opener;
+import ij.measure.Calibration;
 import ij.measure.ResultsTable;
 import ij.process.FloatProcessor;
-import mpicbg.imglib.util.Util;
 import mpicbg.models.PointMatch;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
@@ -43,58 +51,43 @@ import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 import net.imglib2.view.Views;
-
-import static gui.Radial_Symmetry.defaultImg;
-import static gui.Radial_Symmetry.defaultParam;
-import static gui.Radial_Symmetry.defaultGauss;
-
-import static gui.Radial_Symmetry.defaultSigma;
-import static gui.Radial_Symmetry.defaultSigma2;
-import static gui.Radial_Symmetry.defaultThreshold;
-
-import static gui.Radial_Symmetry.defaultMaxError;
-import static gui.Radial_Symmetry.defaultInlierRatio;
-import static gui.Radial_Symmetry.defaultSupportRadius;
-
-import static gui.Radial_Symmetry.defaultBSInlierRatio;
-import static gui.Radial_Symmetry.defaultBSMaxError;
-import static gui.Radial_Symmetry.defaultBSMethod;
 
 public class InteractiveRadialSymmetry
 {
-	// TODO: fake 2d-calibration
-	final double[] calibration = new double[]{ 1, 1 };
+	public static int bsNumIterations = 100; // not a parameter, can be changed through Beanshell
+	public static int numIterations = 100; // not a parameter, can be changed through Beanshell
+
+	// --------------------------------
+	// all values here are initialized in initParameters()
+
+	// calibration in xy, usually [1, 1], will be read from ImagePlus upon initialization
+	double[] calibration;
 
 	// RANSAC parameters
 	// current value
-	int numIterations = 100;
-	float maxError = 3.0f;
-	float inlierRatio = (float) (75.0 / 100.0);
-	int supportRadius = 5;
-
-	// Frames that are potentially open
-	BackgroundRANSACWindow bkWindow;
-	DoGWindow dogWindow;
-	RANSACWindow ransacWindow;
+	float maxError, inlierRatio;
+	int supportRadius;
 
 	// Background Subtraction parameters 
 	// current values 
-	float bsMaxError = 0.05f;
-	float bsInlierRatio = 75.0f / 100.0f;
-	int bsNumIterations = 100;
-	int bsMethod = 0;
+	float bsMaxError, bsInlierRatio;
+	int bsMethod;
 
 	// DoG parameters
 	// current
-	float sigma = 5.0f;
-	float sigma2 = 0.5f;
-	float threshold = 0.03f;
+	float sigma, threshold;
 	// --------------------------------
 
 	// steps per octave
 	public static int standardSensitivity = 4;
 	int sensitivity = standardSensitivity;
+
+	// Frames that are potentially open
+	BackgroundRANSACWindow bkWindow;
+	DoGWindow dogWindow;
+	RANSACWindow ransacWindow;
 
 	// TODO: keep observers
 	SliceObserver sliceObserver;
@@ -205,7 +198,7 @@ public class InteractiveRadialSymmetry
 		}
 		
 		// initialize parameters using defaults
-		initParameters();
+		initParameters( imagePlus );
 
 		// initialize variables for interactive preview
 		// called before updatePreview() !
@@ -234,15 +227,42 @@ public class InteractiveRadialSymmetry
 	/**
 	 * initialize all parameters with the default values
 	 * */
-	protected void initParameters(){
-		
-		// TODO: how to initialize image and gauss fit ?
-		// defaultImg;
-		// defaultParam;
-		// defaultGauss;
+	protected void initParameters( final ImagePlus imp )
+	{
+		try
+		{
+			final Calibration cal = imp.getCalibration();
+	
+			if (
+					cal == null ||
+					Double.isNaN( cal.pixelWidth ) ||
+					Double.isNaN( cal.pixelHeight ) ||
+					Double.isInfinite( cal.pixelWidth ) ||
+					Double.isInfinite( cal.pixelHeight ) ||
+					cal.pixelHeight <= 0 ||
+					cal.pixelHeight <= 0 ||
+					cal.pixelWidth == cal.pixelHeight
+					)
+			{
+				this.calibration = new double[]{ 1, 1 };
+			}
+			else
+			{
+				IJ.log( "WARNING: Pixel calibration is not symmetric in XY! Please check this (Image > Properties)" );
+				IJ.log( "x: " + cal.pixelWidth ); // 0.7
+				IJ.log( "y: " + cal.pixelHeight ); // 1.2
+	
+				if ( cal.pixelWidth < cal.pixelHeight ) // x has a higher resolution than y
+					this.calibration = new double[]{ 1, cal.pixelHeight / cal.pixelWidth };
+				else
+					this.calibration = new double[]{ cal.pixelHeight / cal.pixelWidth, 1 };
+			}
+		}
+		catch ( Exception e ) { this.calibration = new double[]{ 1, 1 }; }
+
+		IJ.log( "Using relative [x, y] calibration: " + Util.printCoordinates( this.calibration ) );
 
 		sigma = defaultSigma;
-		sigma2 = defaultSigma2;
 		threshold = defaultThreshold;
 
 		maxError = defaultMaxError;
@@ -562,45 +582,14 @@ public class InteractiveRadialSymmetry
 		impRansacError.setDisplayRange(0, displayMaxError/4);
 		impRansacError.updateAndDraw();
 
-		// show circles in the RANSAC image 
-		Overlay ransacErrorOverlay = impRansacError.getOverlay();
-		if (ransacErrorOverlay != null)
-			ransacErrorOverlay.clear();
-		drawDetectedSpots(spots, impRansacError); 
+		final double radius = ( sigma + HelperFunctions.computeSigma2( sigma, sensitivity  ) ) / 2.0;
+		final ArrayList< Spot > filteredSpots = HelperFunctions.filterSpots( spots, 1 );
 
-		// show circles in the initial image
-		drawDetectedSpots(spots, imagePlus);
-	}
+		// draw the result of radialsymetry
+		HelperFunctions.drawRealLocalizable( filteredSpots, impRansacError, radius, Color.ORANGE, true );
 
-	/**
-	 * adds new spots to the overlay. IMPORTANT: the overlay is not overwritten since 
-	 * it might be useful for initial Difference-of-Gaussians detection
-	 * */
-	protected void drawDetectedSpots(final ArrayList<Spot> spots, ImagePlus imagePlus) {
-		// extract peaks to show
-		// we will overlay them with RANSAC result
-		Overlay overlay = imagePlus.getOverlay();
-
-		if (overlay == null) {
-			// System.out.println("If this message pops up probably something went wrong.");
-			overlay = new Overlay();
-			imagePlus.setOverlay(overlay);
-		}
-
-		for (final Spot spot : spots) {
-			if (spot.inliers.size() == 0)
-				continue;
-
-			final OvalRoi or = new OvalRoi(
-					spot.center.getSymmetryCenter( 0 ) - sigma,
-					spot.center.getSymmetryCenter( 1 ) - sigma,
-					Util.round(sigma + sigma2),
-					Util.round(sigma + sigma2));
-
-			or.setStrokeColor(Color.ORANGE);
-			overlay.add(or);
-		}
-		imagePlus.updateAndDraw();
+		// draw the result of radialsymetry in the initial image
+		HelperFunctions.drawRealLocalizable( filteredSpots, imagePlus, radius, Color.ORANGE, false );
 	}
 
 	// TODO: fix the check: "==" must not be used with floats
@@ -689,8 +678,10 @@ public class InteractiveRadialSymmetry
 			derivative = new GradientPreCompute( extendedRoi );
 		}
 
-		showPeaks( imagePlus, rectangle, threshold );
-		imagePlus.updateAndDraw();
+		final double radius = ( sigma + HelperFunctions.computeSigma2( sigma, sensitivity  ) ) / 2.0;
+		final ArrayList< RefinedPeak< Point > > filteredPeaks = HelperFunctions.filterPeaks( peaks, rectangle, threshold );
+
+		HelperFunctions.drawRealLocalizable( filteredPeaks, imagePlus, radius, Color.RED, true );
 
 		ransacInteractive( derivative );
 		isComputing = false;
@@ -702,39 +693,11 @@ public class InteractiveRadialSymmetry
 	 * interactive case. No calibration adjustment is needed.
 	 * (thresholdMin/2) - because some peaks might be skipped - always compute all spots, select later
 	 * */
-	protected void dogDetection(RandomAccessibleInterval <FloatType> image){
-		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  this.thresholdMin/2, false);
-		peaks = dog2.getSubpixelPeaks(); 
-	}
-
-	// extract peaks to show
-	// TODO: Check changes: but should be fine now
-	protected void showPeaks( final ImagePlus imp, final Rectangle rectangle, final double threshold )
+	protected void dogDetection( final RandomAccessibleInterval <FloatType> image )
 	{
-		Overlay o = imp.getOverlay();
-
-		if (o == null) {
-			o = new Overlay();
-			imp.setOverlay(o);
-		}
-
-		o.clear();
-		for (final RefinedPeak<Point> peak : peaks) {
-
-			final float x = peak.getFloatPosition(0);
-			final float y = peak.getFloatPosition(1);
-
-			// TODO: This check criteria is totally wrong!!! - should be fixed
-			if (HelperFunctions.isInside( peak, rectangle ) && (-peak.getValue() > threshold)){ // I guess the peak.getValue function returns the value in scale-space
-
-				final OvalRoi or = new OvalRoi(Util.round(x - sigma),
-						Util.round(y - sigma), Util.round(sigma + sigma2),
-						Util.round(sigma + sigma2));
-
-				or.setStrokeColor(Color.RED);
-				o.add(or);
-			}
-		}
+		final double sigma2 = HelperFunctions.computeSigma2( sigma, sensitivity );
+		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, this.sigma, sigma2 , DogDetection.ExtremaType.MINIMA,  this.thresholdMin/2, false);
+		peaks = dog2.getSubpixelPeaks(); 
 	}
 
 	// APPROVED:

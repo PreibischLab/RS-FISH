@@ -18,7 +18,6 @@ public class Radial_Symmetry implements PlugIn
 	public static boolean defaultGauss = false;
 	
 	public static float defaultSigma = 5.0f;
-	public static float defaultSigma2 = 0.5f;
 	public static float defaultThreshold = 0.03f;
 	
 	public static float defaultMaxError = 3.0f;

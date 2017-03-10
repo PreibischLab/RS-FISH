@@ -8,9 +8,6 @@ import java.awt.event.AdjustmentListener;
 import gui.interactive.InteractiveRadialSymmetry.ValueChange;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
-import static gui.Radial_Symmetry.defaultSigma;
-import static gui.Radial_Symmetry.defaultSigma2;
-
 public class SigmaListener implements AdjustmentListener {
 	final InteractiveRadialSymmetry parent;
 	final Label label;
@@ -18,8 +15,6 @@ public class SigmaListener implements AdjustmentListener {
 	final int scrollbarSize;
 
 	final Scrollbar sigmaScrollbar1;
-	// final Scrollbar sigmaScrollbar2;
-	// final Label sigmaText2;
 
 	public SigmaListener(
 			final InteractiveRadialSymmetry parent,
@@ -33,20 +28,11 @@ public class SigmaListener implements AdjustmentListener {
 		this.scrollbarSize = scrollbarSize;
 
 		this.sigmaScrollbar1 = sigmaScrollbar1;
-		// this.sigmaScrollbar2 = sigmaScrollbar2;
-		// this.sigmaText2 = sigmaText2;
 	}
 
 	@Override
 	public void adjustmentValueChanged(final AdjustmentEvent event) {
-		defaultSigma = parent.sigma = HelperFunctions.computeValueFromScrollbarPosition(event.getValue(), min, max, scrollbarSize);
-		defaultSigma2 = parent.sigma2 = HelperFunctions.computeSigma2(parent.sigma, parent.sensitivity);
-
-		// TODO: this might never be the case
-		if (parent.sigma > parent.sigma2) {
-			defaultSigma = parent.sigma = parent.sigma2 - 0.001f;
-			sigmaScrollbar1.setValue(HelperFunctions.computeScrollbarPositionFromValue(parent.sigma, min, max, scrollbarSize));
-		}
+		parent.sigma = HelperFunctions.computeValueFromScrollbarPosition(event.getValue(), min, max, scrollbarSize);
 
 		label.setText("Sigma 1 = " + String.format(java.util.Locale.US, "%.2f", parent.sigma));
 

@@ -119,26 +119,25 @@ public class InteractiveRadialSymmetry
 		SIGMA, THRESHOLD, SLICE, ROI, ALL, SUPPORTRADIUS, INLIERRATIO, MAXERROR, BSINLIERRATIO, BSMAXERROR
 	}
 	
-	// TODO: MOVE TO GUI: 
-	// min/max value
-	int supportRadiusMin = 1;
-	int supportRadiusMax = 25;
-	float inlierRatioMin = (float) (0.0 / 100.0); // 0%
-	float inlierRatioMax = 1; // 100%
-	float maxErrorMin = 0.0001f;
-	float maxErrorMax = 10.00f;
+	// min/max values for GUI
+	final int supportRadiusMin = 1;
+	final int supportRadiusMax = 25;
+	final float inlierRatioMin = (float) (0.0 / 100.0); // 0%
+	final float inlierRatioMax = 1; // 100%
+	final float maxErrorMin = 0.0001f;
+	final float maxErrorMax = 10.00f;
 	
 	// min/max value
-	float bsInlierRatioMin = (float) (0.0 / 100.0); // 0%
-	float bsInlierRatioMax = 1; // 100%
-	float bsMaxErrorMin = 0.0001f;
-	float bsMaxErrorMax = 10.00f;
+	final float bsInlierRatioMin = (float) (0.0 / 100.0); // 0%
+	final float bsInlierRatioMax = 1; // 100%
+	final float bsMaxErrorMin = 0.0001f;
+	final float bsMaxErrorMax = 10.00f;
 	
 	// min/max value
-	float sigmaMin = 0.5f;
-	float sigmaMax = 10f;
-	float thresholdMin = 0.0001f;
-	float thresholdMax = 1f;
+	final float sigmaMin = 0.5f;
+	final float sigmaMax = 10f;
+	final float thresholdMin = 0.0001f;
+	final float thresholdMax = 1f;
 	
 	final int scrollbarSize = 1000;
 	// ----------------------------------------

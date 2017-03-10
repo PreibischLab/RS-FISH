@@ -6,6 +6,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import fit.Spot;
+import ij.ImagePlus;
+import ij.gui.OvalRoi;
+import ij.gui.Overlay;
+import ij.process.ImageProcessor;
+import mpicbg.imglib.util.Util;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
@@ -16,11 +21,6 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
-import ij.ImagePlus;
-import ij.gui.OvalRoi;
-import ij.gui.Overlay;
-import ij.process.ImageProcessor;
-import mpicbg.imglib.util.Util;
 
 public class HelperFunctions {
 
@@ -67,7 +67,8 @@ public class HelperFunctions {
 			final float x = peak.getFloatPosition(0);
 			final float y = peak.getFloatPosition(1);
 
-			final OvalRoi or = new OvalRoi( x - radius, y - radius, radius * 2, radius * 2);
+			// +0.5 is to center in on the middle of the detection pixel
+			final OvalRoi or = new OvalRoi( x - radius + 0.5, y - radius + 0.5, radius * 2, radius * 2);
 
 			or.setStrokeColor( col );
 			overlay.add(or);

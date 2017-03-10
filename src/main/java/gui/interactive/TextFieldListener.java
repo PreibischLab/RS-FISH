@@ -10,8 +10,6 @@ import java.util.regex.Pattern;
 import gui.interactive.InteractiveRadialSymmetry.ValueChange;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
-import static gui.Radial_Symmetry.defaultSupportRadius;
-
 // changes value of the scroller so that it is the same as in the text field
 public class TextFieldListener implements ActionListener {
 	final InteractiveRadialSymmetry parent;
@@ -66,7 +64,7 @@ public class TextFieldListener implements ActionListener {
 
 		if (valueAdjust == ValueChange.SUPPORTRADIUS) {
 			// set the value for the support region
-			defaultSupportRadius = parent.supportRadius = value;
+			parent.supportRadius = value;
 			// set label
 			labelText = "Support Region Radius:"; // = " + supportRegion;
 			// calculate new position of the scrollbar

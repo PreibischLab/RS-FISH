@@ -23,21 +23,17 @@ public class DoGWindow
 		final GridBagLayout layout = new GridBagLayout();
 		final GridBagConstraints c = new GridBagConstraints();
 
-		int scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(parent.sigmaInit, parent.sigmaMin, parent.sigmaMax, parent.scrollbarSize);
+		int scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(parent.sigma, parent.sigmaMin, parent.sigmaMax, parent.scrollbarSize);
 		final Scrollbar sigma1Bar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + parent.scrollbarSize);
-		parent.sigma = parent.sigmaInit;
 
 		final float log1001 = (float) Math.log10(parent.scrollbarSize + 1);
 		scrollbarInitialPosition = (int) Math
-				.round(1001 - Math.pow(10, (parent.thresholdMax - parent.thresholdInit) / (parent.thresholdMax - parent.thresholdMin) * log1001));
+				.round(1001 - Math.pow(10, (parent.thresholdMax - parent.threshold) / (parent.thresholdMax - parent.thresholdMin) * log1001));
 		final Scrollbar thresholdBar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + parent.scrollbarSize);
-		parent.threshold = parent.thresholdInit;
 
 		parent.sigma2 = HelperFunctions.computeSigma2(parent.sigma, parent.sensitivity);
-		// final int sigma2init = computeScrollbarPositionFromValue(this.sigma2,
-		// sigmaMin, sigmaMax, scrollbarSize);
 
 		final Label sigmaText1 = new Label("Sigma 1 = " + String.format(java.util.Locale.US, "%.2f", parent.sigma),
 				Label.CENTER);

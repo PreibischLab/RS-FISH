@@ -45,30 +45,33 @@ import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
+import static gui.Radial_Symmetry.defaultImg;
+import static gui.Radial_Symmetry.defaultParam;
+import static gui.Radial_Symmetry.defaultGauss;
+
+import static gui.Radial_Symmetry.defaultSigma;
+import static gui.Radial_Symmetry.defaultSigma2;
+import static gui.Radial_Symmetry.defaultThreshold;
+
+import static gui.Radial_Symmetry.defaultMaxError;
+import static gui.Radial_Symmetry.defaultInlierRatio;
+import static gui.Radial_Symmetry.defaultSupportRadius;
+
+import static gui.Radial_Symmetry.defaultBSInlierRatio;
+import static gui.Radial_Symmetry.defaultBSMaxError;
+import static gui.Radial_Symmetry.defaultBSMethod;
+
 public class InteractiveRadialSymmetry
 {
-	// fake 2d-calibration
+	// TODO: fake 2d-calibration
 	final double[] calibration = new double[]{ 1, 1 };
 
 	// RANSAC parameters
-	// initial values
-	final int ransacInitSupportRadius = 5;
-	final float ransacInitInlierRatio = 0.75f;
-	final float ransacInitMaxError = 3;
 	// current value
 	int numIterations = 100;
-	float maxError = 0.15f;
-	float inlierRatio = (float) (20.0 / 100.0);
-	int supportRadius = 10;
-
-	// min/max value
-	int supportRadiusMin = 1;
-	int supportRadiusMax = 25;
-	float inlierRatioMin = (float) (0.0 / 100.0); // 0%
-	float inlierRatioMax = 1; // 100%
-	float maxErrorMin = 0.0001f;
-	float maxErrorMax = 10.00f;
-	// ----------------------------------------
+	float maxError = 3.0f;
+	float inlierRatio = (float) (75.0 / 100.0);
+	int supportRadius = 5;
 
 	// Frames that are potentially open
 	BackgroundRANSACWindow bkWindow;
@@ -82,41 +85,13 @@ public class InteractiveRadialSymmetry
 	int bsNumIterations = 100;
 	int bsMethod = 0;
 
-	// min/max value
-	float bsInlierRatioMin = (float) (0.0 / 100.0); // 0%
-	float bsInlierRatioMax = 1; // 100%
-	float bsMaxErrorMin = 0.0001f;
-	float bsMaxErrorMax = 10.00f;
-
 	// DoG parameters
-	// initial
-	final int sigmaInit = 5;
-	final float thresholdInit = 0.03f;
 	// current
-	float sigma = 0.5f;
+	float sigma = 5.0f;
 	float sigma2 = 0.5f;
-	float threshold = 0.0001f;
-	// min/max value
-	float sigmaMin = 0.5f;
-	float sigmaMax = 10f;
-	float thresholdMin = 0.0001f;
-	float thresholdMax = 1f;
+	float threshold = 0.03f;
 	// --------------------------------
 
-	// Stuff above looks super relevant
-	// Only constants 
-	// keep all for now 
-
-	// TODO: keep these params
-	// int extraSize = ransacInitSupportRadius; // deprecated; supportRadius is used instead
-	final int scrollbarSize = 1000;
-	float imageSigma = 0.5f;
-
-	// TODO: keep these
-	double minIntensityImage = Double.NaN;
-	double maxIntensityImage = Double.NaN;
-
-	// TODO: after moving to imglib2 REMOVE
 	// steps per octave
 	public static int standardSensitivity = 4;
 	int sensitivity = standardSensitivity;
@@ -144,14 +119,37 @@ public class InteractiveRadialSymmetry
 	// used to show the results -- error for RANSAC
 	RandomAccessibleInterval<FloatType> ransacPreview;
 
-	// TODO: keep listeners flags
 	boolean isComputing = false;
 	boolean isStarted = false;
 
 	public static enum ValueChange {
 		SIGMA, THRESHOLD, SLICE, ROI, ALL, SUPPORTRADIUS, INLIERRATIO, MAXERROR, BSINLIERRATIO, BSMAXERROR
 	}
-
+	
+	// TODO: MOVE TO GUI: 
+	// min/max value
+	int supportRadiusMin = 1;
+	int supportRadiusMax = 25;
+	float inlierRatioMin = (float) (0.0 / 100.0); // 0%
+	float inlierRatioMax = 1; // 100%
+	float maxErrorMin = 0.0001f;
+	float maxErrorMax = 10.00f;
+	
+	// min/max value
+	float bsInlierRatioMin = (float) (0.0 / 100.0); // 0%
+	float bsInlierRatioMax = 1; // 100%
+	float bsMaxErrorMin = 0.0001f;
+	float bsMaxErrorMax = 10.00f;
+	
+	// min/max value
+	float sigmaMin = 0.5f;
+	float sigmaMax = 10f;
+	float thresholdMin = 0.0001f;
+	float thresholdMax = 1f;
+	
+	final int scrollbarSize = 1000;
+	// ----------------------------------------
+	
 	boolean isFinished = false;
 	boolean wasCanceled = false;	
 
@@ -205,10 +203,13 @@ public class InteractiveRadialSymmetry
 			// IJ.log( "A rectangular ROI is required to define the area..." );
 			imagePlus.setRoi( rectangle );
 		}
+		
+		// initialize parameters using defaults
+		initParameters();
 
 		// initialize variables for interactive preview
 		// called before updatePreview() !
-		ransacPreviewInit( imagePlus );
+		initRansacPreview( imagePlus );
 
 		// show the interactive kit
 		this.dogWindow = new DoGWindow( this );
@@ -229,13 +230,36 @@ public class InteractiveRadialSymmetry
 		fixROIListener = new FixROIListener( imagePlus, impRansacError );
 		impRansacError.getCanvas().addMouseListener( fixROIListener );
 	}
+	
+	/**
+	 * initialize all parameters with the default values
+	 * */
+	protected void initParameters(){
+		
+		// TODO: how to initialize image and gauss fit ?
+		// defaultImg;
+		// defaultParam;
+		// defaultGauss;
+
+		sigma = defaultSigma;
+		sigma2 = defaultSigma2;
+		threshold = defaultThreshold;
+
+		maxError = defaultMaxError;
+		inlierRatio = defaultInlierRatio;
+		supportRadius = defaultSupportRadius;
+
+		bsInlierRatio = defaultBSInlierRatio;
+		bsMaxError = defaultBSMaxError;
+		bsMethod = defaultBSMethod;
+	}
 
 
 	/**
 	 * Initialize preview variables for RANSAC
 	 */
 	// TODO: might be not necessary
-	protected void ransacPreviewInit( final ImagePlus imp )
+	protected void initRansacPreview( final ImagePlus imp )
 	{
 		int width = imp.getWidth();
 		int height = imp.getHeight();
@@ -580,7 +604,6 @@ public class InteractiveRadialSymmetry
 	}
 
 	// TODO: fix the check: "==" must not be used with floats
-	// APPROVED:
 	protected boolean isRoiChanged(final ValueChange change, final Rectangle rect, boolean roiChanged){
 		boolean res = false;
 		res = (roiChanged || extendedRoi == null || change == ValueChange.SLICE ||rect.getMinX() != rectangle.getMinX()

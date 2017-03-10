@@ -1,39 +1,45 @@
 package gui;
 
-import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
-import net.imglib2.algorithm.dog.DogDetection;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
 
 public class Radial_Symmetry implements PlugIn
 {
 	final public static String [] bsMethods = new String []{ "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
-	public static int defaultMethodBS = 0;
 
 	// used to save previous values of the fields
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
 	public static int defaultParam = 1;
 	public static boolean defaultGauss = false;
+	
+	public static float defaultSigma = 5.0f;
+	public static float defaultSigma2 = 0.5f;
+	public static float defaultThreshold = 0.03f;
+	
+	public static float defaultMaxError = 3.0f;
+	public static float defaultInlierRatio = (float) (75.0 / 100.0);
+	public static int defaultSupportRadius = 5;
+	
+	public static float defaultBSInlierRatio = (float) (75.0 / 100.0);
+	public static float defaultBSMaxError = 0.05f;
+	public static int defaultBSMethod = 0;
 
 	// TODO: used to choose the image
-	// I really want to make them local!
 	ImagePlus imp;
 	int parameterType;
 	boolean gaussFit;
 
 	// defines the resolution in x y z dimensions
 	double [] calibration;
-
+	
 	@Override
 	public void run( String arg )
-	{
+	{	
 		if ( initialDialog() )
 		{
 			// TODO: Check what of the stuff below is necessary

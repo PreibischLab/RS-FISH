@@ -5,6 +5,8 @@ import static gui.Radial_Symmetry.bsMethods;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
+import static gui.Radial_Symmetry.defaultBSMethod;
+
 public class BackgroundRANSACListener implements ItemListener
 {
 	final InteractiveRadialSymmetry parent;
@@ -27,6 +29,8 @@ public class BackgroundRANSACListener implements ItemListener
 		if ( parent.bsMethod == -1 )
 			throw new RuntimeException( "Unkown method: " + c  );
 
+		defaultBSMethod = parent.bsMethod;
+		
 		// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" ;
 		if ( parent.bsMethod == 3 || parent.bsMethod == 4 )
 		{

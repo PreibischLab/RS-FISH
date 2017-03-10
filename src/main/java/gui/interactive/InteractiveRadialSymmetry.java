@@ -53,8 +53,9 @@ import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
+import parameters.GUIParams;
 
-public class InteractiveRadialSymmetry
+public class InteractiveRadialSymmetry implements GUIParams
 {
 	public static int bsNumIterations = 100; // not a parameter, can be changed through Beanshell
 	public static int numIterations = 100; // not a parameter, can be changed through Beanshell
@@ -754,5 +755,53 @@ public class InteractiveRadialSymmetry
 		new InteractiveRadialSymmetry( imp );
 
 		System.out.println("DOGE!");
+	}
+
+	@Override
+	public float sigmaDoG() { return sigma; }
+
+	@Override
+	public float thresholdDoG() { return threshold; }
+
+	@Override
+	public int bsMethod()
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public float bsMaxErrorRANSAC()
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public float bsInlierRatioRANSAC()
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public float maxErrorRANSAC()
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public float inlierRationRANSAC()
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public int supportRadiusRANSAC()
+	{
+		// TODO Auto-generated method stub
+		return 0;
 	}
 }

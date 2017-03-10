@@ -1,11 +1,17 @@
 package gui;
 
+import compute.RadialSymmetry;
+import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.InteractiveRadialSymmetry;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
+import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.real.FloatType;
+import parameters.GUIParams;
+import parameters.RadialSymmetryParameters;
 
 public class Radial_Symmetry implements PlugIn
 {
@@ -64,14 +70,40 @@ public class Radial_Symmetry implements PlugIn
 				return;
 			}
 
+			final GUIParams params;
 			if ( parameterType == 0 )
 			{
 				// imagej stuff
+				params = new GenericDialogGUIParams();
 			}
 			else
 			{
 				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry( imp );
+				
+				do
+				{
+					SimpleMultiThreading.threadWait( 100 );;
+				}
+				while ( !irs.isFinished() );
+				
+				if ( irs.wasCanceled() )
+					return;
+	
+				params = irs;
 			}
+
+			// ask for more?
+			RadialSymmetryParameters allParams;
+		
+			// might have imagej-specific parameters (what to do with channels?)
+
+			// compute on the whole dataset with params
+			for ( c = 0; c < numChannels; ++c )
+				for ( t = 0; t < numTimePoints; ++t )
+				{
+					rai = wrapImagePlus( t, c );
+					new RadialSymmetry< FloatType >( allParams, rai );
+				}
 		}
 
 

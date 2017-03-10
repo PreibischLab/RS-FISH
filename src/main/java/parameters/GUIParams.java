@@ -1,4 +1,4 @@
-package gui;
+package parameters;
 
 public interface GUIParams
 {
@@ -12,6 +12,4 @@ public interface GUIParams
 	public float maxErrorRANSAC();
 	public float inlierRationRANSAC();
 	public int supportRadiusRANSAC();
-
-	
 }

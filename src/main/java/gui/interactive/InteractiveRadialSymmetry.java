@@ -46,7 +46,7 @@ import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import parameters.GUIParams;
 
-public class InteractiveRadialSymmetry extends GUIParams
+public class InteractiveRadialSymmetry// extends GUIParams
 {
 	public static int bsNumIterations = 100; // not a parameter, can be changed through Beanshell
 	public static int numIterations = 100; // not a parameter, can be changed through Beanshell
@@ -57,19 +57,6 @@ public class InteractiveRadialSymmetry extends GUIParams
 	// calibration in xy, usually [1, 1], will be read from ImagePlus upon initialization
 	double[] calibration;
 
-	// RANSAC parameters
-	// current value
-	float maxError, inlierRatio;
-	int supportRadius;
-
-	// Background Subtraction parameters 
-	// current values 
-	float bsMaxError, bsInlierRatio;
-	int bsMethod;
-
-	// DoG parameters
-	// current
-	float sigma, threshold;
 	// --------------------------------
 
 	// steps per octave
@@ -81,7 +68,7 @@ public class InteractiveRadialSymmetry extends GUIParams
 	DoGWindow dogWindow;
 	RANSACWindow ransacWindow;
 
-	// TODO: keep observers
+	// TODO: Pass them or their values
 	SliceObserver sliceObserver;
 	ROIListener roiListener;
 	FixROIListener fixROIListener;
@@ -150,7 +137,7 @@ public class InteractiveRadialSymmetry extends GUIParams
 	 * 
 	 * @param imp
 	 */
-	public InteractiveRadialSymmetry( final ImagePlus imp )
+	public InteractiveRadialSymmetry( final ImagePlus imp, final GUIParams params )
 	{
 		this.imagePlus = imp;
 
@@ -193,6 +180,9 @@ public class InteractiveRadialSymmetry extends GUIParams
 		// called before updatePreview() !
 		initRansacPreview( imagePlus );
 
+		// TODO: <1010> should this part be moved out this .java file
+		// so that only parameters of the listeners are passed 
+		
 		// show the interactive kit
 		this.dogWindow = new DoGWindow( this );
 		this.dogWindow.getFrame().setVisible( true );
@@ -211,6 +201,8 @@ public class InteractiveRadialSymmetry extends GUIParams
 		imagePlus.getCanvas().addMouseListener( roiListener );
 		fixROIListener = new FixROIListener( imagePlus, impRansacError );
 		impRansacError.getCanvas().addMouseListener( fixROIListener );
+		
+		// END:  <1010> -----
 	}
 	
 	/**
@@ -306,6 +298,7 @@ public class InteractiveRadialSymmetry extends GUIParams
 	}
 
 	protected void ransacInteractive( final Gradient derivative ) {
+		// TODO: I think this problem with the rectangle was previously fixed
 		// make sure the size is not 0 (is possible in ImageJ when making the Rectangle, not when changing it ... yeah)
 		rectangle.width = Math.max( 1, rectangle.width );
 		rectangle.height = Math.max( 1, rectangle.height );
@@ -324,7 +317,7 @@ public class InteractiveRadialSymmetry extends GUIParams
 		final NormalizedGradient ng;
 
 		// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median"
-		if ( bsMethod == 0 )
+		if ( params.getBsMethod == 0 )
 			ng = null;
 		else if ( bsMethod == 1 )
 			ng = new NormalizedGradientAverage( derivative );
@@ -590,6 +583,7 @@ public class InteractiveRadialSymmetry extends GUIParams
 		return res;
 	}
 
+	// TODO: NEVER USED
 	/**
 	 * copy data from one image to another 
 	 * */
@@ -733,64 +727,16 @@ public class InteractiveRadialSymmetry extends GUIParams
 
 		if (imp == null)
 			throw new RuntimeException( "image was not loaded" );
-		else
-			imp.show();
+
+		imp.show();
 
 		imp.setSlice(20);
 
 
 		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
-		new InteractiveRadialSymmetry( imp );
+		new InteractiveRadialSymmetry( imp, new GUIParams() );
 
 		System.out.println("DOGE!");
-	}
-
-	@Override
-	public float sigmaDoG() { return sigma; }
-
-	@Override
-	public float thresholdDoG() { return threshold; }
-
-	@Override
-	public int bsMethod()
-	{
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public float bsMaxErrorRANSAC()
-	{
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public float bsInlierRatioRANSAC()
-	{
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public float maxErrorRANSAC()
-	{
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public float inlierRationRANSAC()
-	{
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public int supportRadiusRANSAC()
-	{
-		// TODO Auto-generated method stub
-		return 0;
 	}
 }

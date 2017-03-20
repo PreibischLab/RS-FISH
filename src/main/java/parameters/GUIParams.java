@@ -1,6 +1,6 @@
 package parameters;
 
-public abstract class GUIParams
+public class GUIParams
 {
 	final public static String [] bsMethods = new String []{ "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
 
@@ -15,6 +15,26 @@ public abstract class GUIParams
 	public static float defaultBSMaxError = 0.05f;
 	public static int defaultBSMethod = 0;
 
+	// RANSAC parameters
+	// current value
+	float maxError, inlierRatio;
+	int supportRadius;
+
+	// Background Subtraction parameters 
+	// current values 
+	float bsMaxError, bsInlierRatio;
+	int bsMethod;
+
+	// DoG parameters
+	// current
+	float sigma, threshold;
+
+	public GUIParams()
+	{
+		//setSigmaDoG( defaultSigma );
+		// ...
+	}
+
 	public float sigmaDoG();
 	public float thresholdDoG();
 
@@ -25,4 +45,14 @@ public abstract class GUIParams
 	public float maxErrorRANSAC();
 	public float inlierRationRANSAC();
 	public int supportRadiusRANSAC();
+
+	public void setDefaultValues() {
+		// TODO Auto-generated method stub
+		defaultSigma = sigma;
+		//...
+	}
+
+	// set methods (to be used by the listeners)
+	// public void setSigmaDog()
+	// ...
 }

@@ -3,67 +3,42 @@ package gui.imagej;
 import ij.gui.GenericDialog;
 import parameters.GUIParams;
 
-public class GenericDialogGUIParams implements GUIParams
-{
-	public GenericDialogGUIParams()
-	{
+public class GenericDialogGUIParams extends GUIParams {
+	public GenericDialogGUIParams() {
 		GenericDialog gui;
 	}
 
-	@Override
-	public float sigmaDoG()
-	{
-		// TODO Auto-generated method stub
-		return 0;
+	public float sigmaDoG() {
+		return defaultSigma;
 	}
 
-	@Override
-	public float thresholdDoG()
-	{
-		// TODO Auto-generated method stub
-		return 0;
+	public float thresholdDoG() {
+		return defaultThreshold;
 	}
 
-	@Override
-	public int bsMethod()
-	{
-		// TODO Auto-generated method stub
-		return 0;
+	public int bsMethod() {
+		return defaultBSMethod;
 	}
 
-	@Override
-	public float bsMaxErrorRANSAC()
-	{
-		// TODO Auto-generated method stub
-		return 0;
+	public float bsMaxErrorRANSAC() {
+		return defaultBSMaxError;
 	}
 
-	@Override
-	public float bsInlierRatioRANSAC()
-	{
-		// TODO Auto-generated method stub
-		return 0;
+	public float bsInlierRatioRANSAC() {
+		return defaultBSInlierRatio;
 	}
 
-	@Override
-	public float maxErrorRANSAC()
-	{
-		// TODO Auto-generated method stub
-		return 0;
+	public float maxErrorRANSAC() {
+		return defaultMaxError;
 	}
 
-	@Override
-	public float inlierRationRANSAC()
-	{
-		// TODO Auto-generated method stub
-		return 0;
+	public float inlierRatioRANSAC() {
+		return defaultInlierRatio;
 	}
 
-	@Override
-	public int supportRadiusRANSAC()
-	{
-		// TODO Auto-generated method stub
-		return 0;
+	public int supportRadiusRANSAC() {
+
+		return defaultSupportRadius;
 	}
 
 }

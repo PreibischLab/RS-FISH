@@ -11,9 +11,9 @@ public class GUIParams
 	public static float defaultInlierRatio = (float) (75.0 / 100.0);
 	public static int defaultSupportRadius = 5;
 	
-	public static float defaultBSInlierRatio = (float) (75.0 / 100.0);
-	public static float defaultBSMaxError = 0.05f;
-	public static int defaultBSMethod = 0;
+	public static float defaultBsInlierRatio = (float) (75.0 / 100.0);
+	public static float defaultBsMaxError = 0.05f;
+	public static int defaultBsMethod = 0;
 
 	// RANSAC parameters
 	// current value
@@ -31,28 +31,105 @@ public class GUIParams
 
 	public GUIParams()
 	{
-		//setSigmaDoG( defaultSigma );
-		// ...
+		setSigmaDog(sigma);
+		setThresholdDoG(threshold);
+		setMaxError(maxError);		
+		setInlierRatio(inlierRatio);
+		setSupportRadius(supportRadius);
+		// what do you do with this values here
+		setBsMethod(bsMethod);
+		setBsMaxError(bsMaxError);
+		setBsInlierRatio(bsInlierRatio);
 	}
 
-	public float sigmaDoG();
-	public float thresholdDoG();
+	
+	// getters
+	// Difference of Gaussians
+	public float getSigmaDoG(){
+		return sigma;
+	}
 
-	public int bsMethod(); //  "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
-	public float bsMaxErrorRANSAC();
-	public float bsInlierRatioRANSAC();
+	public float getThresholdDoG(){
+		return threshold;
+	}
 
-	public float maxErrorRANSAC();
-	public float inlierRationRANSAC();
-	public int supportRadiusRANSAC();
-
+	// RANSAC 
+	public float getMaxError(){
+		return maxError;
+	}
+	public float getInlierRatio(){
+		return inlierRatio;
+	}
+	public int getSupportRadius(){
+		return supportRadius;
+	}
+	
+	// background subtraction 
+	// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
+	public int getBsMethod(){
+		return bsMethod;
+	}
+	
+	public float getBsMaxError(){
+		return bsMaxError;
+	}
+	
+	public float getBsInlierRatio(){
+		return bsInlierRatio;	
+	}
+	
 	public void setDefaultValues() {
-		// TODO Auto-generated method stub
-		defaultSigma = sigma;
-		//...
+		defaultSigma = sigma;	
+		defaultThreshold = threshold;
+		
+		defaultMaxError = maxError;
+		defaultInlierRatio = inlierRatio;
+		defaultSupportRadius = supportRadius;
+		
+		defaultBsInlierRatio = bsInlierRatio;
+		defaultBsMaxError = bsMaxError;
+		defaultBsMethod = bsMethod;
 	}
 
-	// set methods (to be used by the listeners)
-	// public void setSigmaDog()
-	// ...
+	// to be used by the listeners
+	public void setSigmaDog(float sigmaDog){
+		this.sigma = sigmaDog;
+	}
+	
+	public void setThresholdDoG(float threshold){
+		this.threshold = threshold;
+	}
+
+	// RANSAC 
+	public void setMaxError(float maxError){
+		this.maxError = maxError;
+	}
+	
+	public void setInlierRatio(float inlierRatio){
+		this.inlierRatio = inlierRatio;
+	}
+	public void setSupportRadius(int supportRadius){
+		this.supportRadius = supportRadius;
+	}
+	
+	// background subtraction 
+	// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
+	public void setBsMethod(int bsMethod){
+		this.bsMethod = bsMethod;
+	}
+	
+	public void setBsMaxError(float bsMaxError){
+		this.bsMaxError = bsMaxError;
+	}
+	
+	public void setBsInlierRatio(float bsInlierRatio){
+		this.bsInlierRatio = bsInlierRatio;	
+	}
+	
+	
+	
+	
+	
+	
+	
 }

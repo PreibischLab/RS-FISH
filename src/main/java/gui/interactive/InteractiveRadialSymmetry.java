@@ -1,14 +1,5 @@
 package gui.interactive;
 
-import static gui.Radial_Symmetry.defaultBSInlierRatio;
-import static gui.Radial_Symmetry.defaultBSMaxError;
-import static gui.Radial_Symmetry.defaultBSMethod;
-import static gui.Radial_Symmetry.defaultInlierRatio;
-import static gui.Radial_Symmetry.defaultMaxError;
-import static gui.Radial_Symmetry.defaultSigma;
-import static gui.Radial_Symmetry.defaultSupportRadius;
-import static gui.Radial_Symmetry.defaultThreshold;
-
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.io.File;
@@ -45,7 +36,7 @@ import net.imglib2.Cursor;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
-// additional libraries to switch from imglib1 to imglib2
+
 import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.Img;
@@ -247,8 +238,8 @@ public class InteractiveRadialSymmetry extends GUIParams
 			else
 			{
 				IJ.log( "WARNING: Pixel calibration is not symmetric in XY! Please check this (Image > Properties)" );
-				IJ.log( "x: " + cal.pixelWidth ); // 0.7
-				IJ.log( "y: " + cal.pixelHeight ); // 1.2
+				IJ.log( "x: " + cal.pixelWidth ); 
+				IJ.log( "y: " + cal.pixelHeight );
 	
 				if ( cal.pixelWidth < cal.pixelHeight ) // x has a higher resolution than y
 					this.calibration = new double[]{ 1, cal.pixelHeight / cal.pixelWidth };

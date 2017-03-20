@@ -1,6 +1,7 @@
 package gui.interactive;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,7 +47,7 @@ public class HelperFunctions {
 		return filtered;
 	}
 
-	public static < L extends RealLocalizable > void drawRealLocalizable( final Collection< L > peaks, final ImagePlus imp, final double radius, final Color col, final boolean clearFirst )
+	public static < L extends RealLocalizable > void drawRealLocalizable( final Collection< L > peaks, final ImagePlus imp, final double radius, final Color col, final boolean clearFirst)
 	{
 		// extract peaks to show
 		// we will overlay them with RANSAC result
@@ -73,6 +74,41 @@ public class HelperFunctions {
 			or.setStrokeColor( col );
 			overlay.add(or);
 		}
+		
+		// this part might be useful for debugging
+		// for lab meeting to show the parameters
+//		final OvalRoi sigmaRoi = new OvalRoi(50, 10, 0, 0);
+//		sigmaRoi.setStrokeWidth(1);
+//		sigmaRoi.setStrokeColor(new Color(255, 255, 255));
+//		sigmaRoi.setName("sigma : " + String.format(java.util.Locale.US, "%.2f", sigma));
+//		
+//		final OvalRoi srRoi = new OvalRoi(72, 26, 0, 0);
+//		srRoi.setStrokeWidth(1);
+//		srRoi.setStrokeColor(new Color(255, 255, 255));
+//		srRoi.setName("support radius : " + supportRadius);
+//		
+//		final OvalRoi irRoi = new OvalRoi(68, 42, 0, 0);
+//		irRoi.setStrokeWidth(1);
+//		irRoi.setStrokeColor(new Color(255, 255, 255));
+//		irRoi.setName("inlier ratio : " + String.format(java.util.Locale.US, "%.2f", inlierRatio));
+//		
+//		final OvalRoi meRoi = new OvalRoi(76, 58, 0, 0);
+//		meRoi.setStrokeWidth(1);
+//		meRoi.setStrokeColor(new Color(255, 255, 255));
+//		meRoi.setName("max error : " + String.format(java.util.Locale.US, "%.4f", maxError));
+//		
+//		// output sigma
+//		// Support radius
+//		// inlier ratio
+//		// Max error			
+//		overlay.add(sigmaRoi);
+//		overlay.add(srRoi);
+//		overlay.add(irRoi);
+//		overlay.add(meRoi);
+//		
+//		overlay.setLabelFont(new Font("SansSerif", Font.PLAIN, 16));
+//		overlay.drawLabels(true); // allow labels 
+//		overlay.drawNames(true);  // replace numbers with name
 
 		imp.updateAndDraw();
 	}

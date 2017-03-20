@@ -45,11 +45,7 @@ public class Radial_Symmetry implements PlugIn
 			// right now works with 2d + time
 
 			// TODO move this return
-			if ( imp.getType() == ImagePlus.COLOR_RGB || imp.getType() == ImagePlus.COLOR_256 )
-			{
-				IJ.log("Color images are not supported, please convert to 8, 16 or 32-bit grayscale");
-				return;
-			}
+ 
 
 			if ( imp.getNChannels() > 1 )
 			{
@@ -58,14 +54,21 @@ public class Radial_Symmetry implements PlugIn
 			}
 
 			final GUIParams params = new GUIParams();
-			if ( parameterType == 0 )
+			// TODO: call new GenericDialogGUIParams( params );
+			// to choose 
+			// extra parameters are 
+			// = image imp
+			// = type of the detection either manual or interactive
+			// = do additional gauss fit
+			
+			if ( parameterType == 0 ) // Manual
 			{
 				// imagej stuff
 				new GenericDialogGUIParams( params );
 			}
-			else
+			else // interactive
 			{
-				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry( imp, params );
+				  irs = new InteractiveRadialSymmetry( imp, params );
 				
 				do
 				{

@@ -11,4 +11,12 @@ public class GenericDialogGUIParams
 		this.guiParams = guiParams;
 		GenericDialog gui;
 	}
+	
+	// TODO: this one should should show the 
+	// initial dialog ! 
+	
+	// extra parameters are 
+	// = image imp
+	// = type of the detection either manual or interactive
+	// = do additional gauss fit
 }

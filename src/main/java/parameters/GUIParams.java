@@ -31,15 +31,15 @@ public class GUIParams
 
 	public GUIParams()
 	{
-		setSigmaDog(sigma);
-		setThresholdDoG(threshold);
-		setMaxError(maxError);		
-		setInlierRatio(inlierRatio);
-		setSupportRadius(supportRadius);
+		setSigmaDog(defaultSigma);
+		setThresholdDoG(defaultThreshold);
+		setMaxError(defaultMaxError);		
+		setInlierRatio(defaultInlierRatio);
+		setSupportRadius(defaultSupportRadius);
 		// what do you do with this values here
-		setBsMethod(bsMethod);
-		setBsMaxError(bsMaxError);
-		setBsInlierRatio(bsInlierRatio);
+		setBsMethod(defaultBsMethod);
+		setBsMaxError(defaultBsMaxError);
+		setBsInlierRatio(defaultBsInlierRatio);
 	}
 
 	

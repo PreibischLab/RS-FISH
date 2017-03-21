@@ -27,7 +27,7 @@ public class BackgroundRANSACWindow
 		final GridBagConstraints gbc = new GridBagConstraints();
 
 		int scrollbarBSInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(
-				parent.bsInlierRatio,
+				parent.params.getBsInlierRatio(),
 				parent.bsInlierRatioMin,
 				parent.bsInlierRatioMax,
 				parent.scrollbarSize );
@@ -40,7 +40,7 @@ public class BackgroundRANSACWindow
 		final float log1001 = (float) Math.log10( parent.scrollbarSize + 1 );
 		scrollbarBSInitialPosition = 1001
 				- (int) Math.pow(10, 
-						(parent.bsMaxErrorMax - parent.bsMaxError) /
+						(parent.bsMaxErrorMax - parent.params.getBsMaxError()) /
 						(parent.bsMaxErrorMax - parent.bsMaxErrorMin) * log1001);
 
 		final Scrollbar maxErrorScrollbar = new Scrollbar(
@@ -49,9 +49,9 @@ public class BackgroundRANSACWindow
 				10 + parent.scrollbarSize);
 
 		final Label bsInlierRatioText = new Label(
-				"Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", parent.bsInlierRatio), Label.CENTER);
+				"Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", parent.params.getBsInlierRatio()), Label.CENTER);
 
-		final Label bsMaxErrorText = new Label("Max Error = " + String.format(java.util.Locale.US, "%.4f", parent.bsMaxError),
+		final Label bsMaxErrorText = new Label("Max Error = " + String.format(java.util.Locale.US, "%.4f", parent.params.getBsMaxError()),
 				Label.CENTER);
 
 		// /* Location */

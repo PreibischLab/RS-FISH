@@ -64,12 +64,12 @@ public class TextFieldListener implements ActionListener {
 
 		if (valueAdjust == ValueChange.SUPPORTRADIUS) {
 			// set the value for the support region
-			parent.supportRadius = value;
+			parent.params.setSupportRadius(value);
 			// set label
 			labelText = "Support Region Radius:"; // = " + supportRegion;
 			// calculate new position of the scrollbar
 			int newScrollbarPosition = HelperFunctions.computeScrollbarPositionFromValue(
-					parent.supportRadius, min, max, parent.scrollbarSize);
+					parent.params.getSupportRadius(), min, max, parent.scrollbarSize);
 			// adjust the scrollbar position!
 			scrollbar.setValue(newScrollbarPosition);
 			// set new value for text label

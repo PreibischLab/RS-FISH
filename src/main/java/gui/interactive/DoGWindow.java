@@ -23,21 +23,21 @@ public class DoGWindow
 		final GridBagLayout layout = new GridBagLayout();
 		final GridBagConstraints c = new GridBagConstraints();
 
-		int scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(parent.sigma, parent.sigmaMin, parent.sigmaMax, parent.scrollbarSize);
+		int scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(parent.params.getSigmaDoG(), parent.sigmaMin, parent.sigmaMax, parent.scrollbarSize);
 		final Scrollbar sigma1Bar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + parent.scrollbarSize);
 
 		final float log1001 = (float) Math.log10(parent.scrollbarSize + 1);
 		scrollbarInitialPosition = (int) Math
-				.round(1001 - Math.pow(10, (parent.thresholdMax - parent.threshold) / (parent.thresholdMax - parent.thresholdMin) * log1001));
+				.round(1001 - Math.pow(10, (parent.thresholdMax - parent.params.getThresholdDoG()) / (parent.thresholdMax - parent.thresholdMin) * log1001));
 		final Scrollbar thresholdBar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + parent.scrollbarSize);
 
-		final Label sigmaText1 = new Label("Sigma 1 = " + String.format(java.util.Locale.US, "%.2f", parent.sigma),
+		final Label sigmaText1 = new Label("Sigma 1 = " + String.format(java.util.Locale.US, "%.2f", parent.params.getSigmaDoG()),
 				Label.CENTER);
 
 		final Label thresholdText = new Label(
-				"Threshold = " + String.format(java.util.Locale.US, "%.4f", parent.threshold), Label.CENTER);
+				"Threshold = " + String.format(java.util.Locale.US, "%.4f", parent.params.getThresholdDoG()), Label.CENTER);
 		final Button button = new Button("Done");
 		final Button cancel = new Button("Cancel");
 

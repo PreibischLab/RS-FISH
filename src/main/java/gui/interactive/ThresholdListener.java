@@ -24,8 +24,10 @@ public class ThresholdListener implements AdjustmentListener {
 
 	@Override
 	public void adjustmentValueChanged(final AdjustmentEvent event) {
-		parent.threshold = min + ((log1001 - (float) Math.log10(1001 - event.getValue())) / log1001) * (max - min);
-		label.setText("Threshold = " + String.format(java.util.Locale.US, "%.4f", parent.threshold));
+		float threshold = min + ((log1001 - (float) Math.log10(1001 - event.getValue())) / log1001) * (max - min);
+		parent.params.setThresholdDoG(threshold); 
+				
+		label.setText("Threshold = " + String.format(java.util.Locale.US, "%.4f", parent.params.getThresholdDoG()));
 
 		if (!parent.isComputing) {
 			parent.updatePreview(ValueChange.THRESHOLD);

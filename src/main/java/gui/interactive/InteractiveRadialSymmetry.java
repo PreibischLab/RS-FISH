@@ -98,6 +98,9 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		SIGMA, THRESHOLD, SLICE, ROI, ALL, SUPPORTRADIUS, INLIERRATIO, MAXERROR, BSINLIERRATIO, BSMAXERROR
 	}
 	
+	// stores all the parameters 
+	final GUIParams params;
+	
 	// min/max values for GUI
 	final int supportRadiusMin = 1;
 	final int supportRadiusMax = 25;
@@ -140,6 +143,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	public InteractiveRadialSymmetry( final ImagePlus imp, final GUIParams params )
 	{
 		this.imagePlus = imp;
+		this.params = params;
 
 		// which type of imageplus image is it?
 		final Object pixels = imp.getProcessor().getPixels();
@@ -243,16 +247,17 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		IJ.log( "Using relative [x, y] calibration: " + Util.printCoordinates( this.calibration ) );
 
-		sigma = defaultSigma;
-		threshold = defaultThreshold;
-
-		maxError = defaultMaxError;
-		inlierRatio = defaultInlierRatio;
-		supportRadius = defaultSupportRadius;
-
-		bsInlierRatio = defaultBSInlierRatio;
-		bsMaxError = defaultBSMaxError;
-		bsMethod = defaultBSMethod;
+		// these values are initially initialized with defaults
+//		sigma = defaultSigma;
+//		threshold = defaultThreshold;
+//
+//		maxError = defaultMaxError;
+//		inlierRatio = defaultInlierRatio;
+//		supportRadius = defaultSupportRadius;
+//
+//		bsInlierRatio = defaultBSInlierRatio;
+//		bsMaxError = defaultBSMaxError;
+//		bsMethod = defaultBSMethod;
 	}
 
 
@@ -306,33 +311,33 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 		int numDimensions = extendedRoi.numDimensions(); // DEBUG: should always be 2 
 		// extract peaks for the roi
-		HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle, threshold );
+		HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle, params.getThresholdDoG() );
 
 		// the size of the RANSAC area
 		final long[] range = new long[numDimensions];
 
-		range[ 0 ] = range[ 1 ] = 2*supportRadius;
+		range[ 0 ] = range[ 1 ] = 2*params.getSupportRadius();
 
 		// ImageJFunctions.show(new GradientPreCompute(extendedRoi).preCompute(extendedRoi));
 		final NormalizedGradient ng;
 
 		// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median"
-		if ( params.getBsMethod == 0 )
+		if ( params.getBsMethod() == 0 )
 			ng = null;
-		else if ( bsMethod == 1 )
+		else if ( params.getBsMethod() == 1 )
 			ng = new NormalizedGradientAverage( derivative );
-		else if ( bsMethod == 2 )
+		else if ( params.getBsMethod() == 2 )
 			ng = new NormalizedGradientMedian( derivative );
-		else if ( bsMethod == 3 )
-			ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEAN, bsMaxError, bsInlierRatio );
-		else if ( bsMethod == 4 )
-			ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEDIAN, bsMaxError, bsInlierRatio );
+		else if ( params.getBsMethod() == 3 )
+			ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEAN, params.getBsMaxError(), params.getBsInlierRatio() );
+		else if ( params.getBsMethod() == 4 )
+			ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEDIAN, params.getBsMaxError(), params.getBsInlierRatio() );
 		else
-			throw new RuntimeException( "Unknown bsMethod: " + bsMethod );
+			throw new RuntimeException( "Unknown bsMethod: " + params.getBsMethod() );
 
 		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
 
-		Spot.ransac(spots, numIterations, maxError, inlierRatio);
+		Spot.ransac(spots, numIterations, params.getMaxError(), params.getInlierRatio());
 		for (final Spot spot : spots)
 			spot.computeAverageCostInliers();
 		ransacResults(spots);
@@ -379,7 +384,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	}
 
 	protected void backgroundSubtractionCorners(long [] peak, RandomAccessibleInterval<FloatType> img22, double[] coefficients, long[] min, long[] max, long [] fullImgMax){	
-		HelperFunctions.getBoundaries(peak, min, max, fullImgMax, supportRadius);
+		HelperFunctions.getBoundaries(peak, min, max, fullImgMax, params.getSupportRadius());
 
 		int numDimensions = peak.length;
 
@@ -564,7 +569,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		impRansacError.setDisplayRange(0, displayMaxError/4);
 		impRansacError.updateAndDraw();
 
-		final double radius = ( sigma + HelperFunctions.computeSigma2( sigma, sensitivity  ) ) / 2.0;
+		final double radius = ( params.getSigmaDoG() + HelperFunctions.computeSigma2(  params.getSigmaDoG(), sensitivity  ) ) / 2.0;
 		final ArrayList< Spot > filteredSpots = HelperFunctions.filterSpots( spots, 1 );
 
 		// draw the result of radialsymetry
@@ -643,8 +648,8 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			// one direction solution 
 			impRansacError.setRoi(rectangle);
 
-			long [] min = new long []{rectangle.x - supportRadius, rectangle.y - supportRadius};
-			long [] max = new long []{rectangle.width + rectangle.x + supportRadius - 1, rectangle.height + rectangle.y + supportRadius - 1};
+			long [] min = new long []{rectangle.x - params.getSupportRadius(), rectangle.y - params.getSupportRadius()};
+			long [] max = new long []{rectangle.width + rectangle.x + params.getSupportRadius() - 1, rectangle.height + rectangle.y + params.getSupportRadius() - 1};
 
 			// get the currently selected slice
 			final Img< FloatType > imgTmp = HelperFunctions.toImg( imagePlus, dim, type );
@@ -661,8 +666,8 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			derivative = new GradientPreCompute( extendedRoi );
 		}
 
-		final double radius = ( sigma + HelperFunctions.computeSigma2( sigma, sensitivity  ) ) / 2.0;
-		final ArrayList< RefinedPeak< Point > > filteredPeaks = HelperFunctions.filterPeaks( peaks, rectangle, threshold );
+		final double radius = ( params.getSigmaDoG() + HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity  ) ) / 2.0;
+		final ArrayList< RefinedPeak< Point > > filteredPeaks = HelperFunctions.filterPeaks( peaks, rectangle, params.getThresholdDoG() );
 
 		HelperFunctions.drawRealLocalizable( filteredPeaks, imagePlus, radius, Color.RED, true );
 
@@ -678,8 +683,8 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	 * */
 	protected void dogDetection( final RandomAccessibleInterval <FloatType> image )
 	{
-		final double sigma2 = HelperFunctions.computeSigma2( sigma, sensitivity );
-		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, this.sigma, sigma2 , DogDetection.ExtremaType.MINIMA,  this.thresholdMin/2, false);
+		final double sigma2 = HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity );
+		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA,  params.getThresholdDoG()/2, false);
 		peaks = dog2.getSubpixelPeaks(); 
 	}
 

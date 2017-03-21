@@ -33,31 +33,31 @@ public class GeneralListener implements AdjustmentListener {
 		float value = HelperFunctions.computeValueFromScrollbarPosition(event.getValue(), min, max, parent.scrollbarSize);
 		String labelText = "";
 		if (valueAdjust == ValueChange.SUPPORTRADIUS) {
-			parent.supportRadius = (int) value;
+			parent.params.setSupportRadius((int) value);
 			labelText = "Support Region Radius:"; // = " + supportRegion ;
-			textField.setText(Integer.toString( parent.supportRadius ));
+			textField.setText(Integer.toString( parent.params.getSupportRadius() ));
 		} else if (valueAdjust == ValueChange.INLIERRATIO) {
-			parent.inlierRatio = value;
+			parent.params.setInlierRatio(value);
 			// this is ugly fix of the problem when inlier's ratio is 1.0
-			if (parent.inlierRatio >= 0.999)
-				parent.inlierRatio = 0.99999f;
-			labelText = "Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", parent.inlierRatio);
+			if (parent.params.getInlierRatio() >= 0.999)
+				parent.params.setInlierRatio(0.99999f);
+			labelText = "Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", parent.params.getInlierRatio());
 		} else if (valueAdjust == ValueChange.MAXERROR) { // MAXERROR
 			final float log1001 = (float) Math.log10(1001);
 			value = min + ((log1001 - (float) Math.log10(1001 - event.getValue())) / log1001) * (max - min);
-			parent.maxError = value;
-			labelText = "Max Error = " + String.format(java.util.Locale.US, "%.4f", parent.maxError);
+			parent.params.setMaxError(value);
+			labelText = "Max Error = " + String.format(java.util.Locale.US, "%.4f", parent.params.getMaxError());
 		} else if (valueAdjust == ValueChange.BSMAXERROR) { // BACKGROUND MAXERROR
 			final float log1001 = (float) Math.log10(1001);
 			value = min + ((log1001 - (float) Math.log10(1001 - event.getValue())) / log1001) * (max - min);
-			parent.bsMaxError = value;
-			labelText = "Max Error = " + String.format(java.util.Locale.US, "%.4f", parent.bsMaxError);
+			parent.params.setBsMaxError(value);
+			labelText = "Max Error = " + String.format(java.util.Locale.US, "%.4f", parent.params.getBsMaxError());
 		} else if (valueAdjust == ValueChange.BSINLIERRATIO){ // BACKGROUND INLIER RATIO
-			parent.bsInlierRatio = value;
+			parent.params.setBsInlierRatio(value);
 			// this is ugly fix of the problem when inlier's ratio is 1.0
-			if (parent.bsInlierRatio >= 0.999)
-				parent.bsInlierRatio = 0.99999f;
-			labelText = "Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", parent.bsInlierRatio);
+			if (parent.params.getBsInlierRatio() >= 0.999)
+				parent.params.setBsInlierRatio(0.99999f);
+			labelText = "Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", parent.params.getBsInlierRatio());
 		} else {
 			System.out.println("Attached GeneralListener to the wrong scrollbar");
 		}

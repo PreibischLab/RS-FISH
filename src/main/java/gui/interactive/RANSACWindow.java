@@ -29,7 +29,7 @@ public class RANSACWindow
 		final GridBagConstraints gbc= new GridBagConstraints();
 
 		int scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(
-				parent.supportRadius,
+				parent.params.getSupportRadius(),
 				parent.supportRadiusMin,
 				parent.supportRadiusMax,
 				parent.scrollbarSize);
@@ -37,12 +37,12 @@ public class RANSACWindow
 		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + parent.scrollbarSize);
 
-		final TextField SupportRegionTextField = new TextField(Integer.toString(parent.supportRadius));
+		final TextField SupportRegionTextField = new TextField(Integer.toString(parent.params.getSupportRadius()));
 		SupportRegionTextField.setEditable(true);
-		SupportRegionTextField.setCaretPosition(Integer.toString(parent.supportRadius).length());
+		SupportRegionTextField.setCaretPosition(Integer.toString(parent.params.getSupportRadius()).length());
 
 		scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(
-				parent.inlierRatio,
+				parent.params.getInlierRatio(),
 				parent.inlierRatioMin,
 				parent.inlierRatioMax,
 				parent.scrollbarSize);
@@ -51,7 +51,7 @@ public class RANSACWindow
 
 		final float log1001 = (float) Math.log10(parent.scrollbarSize + 1);
 		scrollbarInitialPosition = 1001
-				- (int) Math.pow(10, (parent.maxErrorMax - parent.maxError) / (parent.maxErrorMax - parent.maxErrorMin) * log1001);
+				- (int) Math.pow(10, (parent.maxErrorMax - parent.params.getMaxError()) / (parent.maxErrorMax - parent.maxErrorMin) * log1001);
 
 		final Scrollbar maxErrorScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + parent.scrollbarSize);
@@ -59,8 +59,8 @@ public class RANSACWindow
 		final Label supportRegionText = new Label(
 				"Support Region Radius:" /* = " + this.supportRegion */, Label.CENTER);
 		final Label inlierRatioText = new Label(
-				"Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", parent.inlierRatio), Label.CENTER);
-		final Label maxErrorText = new Label("Max Error = " + String.format(java.util.Locale.US, "%.4f", parent.maxError),
+				"Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", parent.params.getInlierRatio()), Label.CENTER);
+		final Label maxErrorText = new Label("Max Error = " + String.format(java.util.Locale.US, "%.4f", parent.params.getMaxError()),
 				Label.CENTER);
 
 		final Label bsText = new Label("Local Background Subtraction:", Label.CENTER);

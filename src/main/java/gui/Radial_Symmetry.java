@@ -53,18 +53,25 @@ public class Radial_Symmetry implements PlugIn
 				return;
 			}
 
+			// set all defaults + initialize the parameters with default values
 			final GUIParams params = new GUIParams();
+			
+			// gui that ask for *** pops up here
+			// * image imp
+			// * type of the detection either manual or interactive
+			// * do additional gauss fit
+			// initialDialog();
+			
 			// TODO: call new GenericDialogGUIParams( params );
 			// to choose 
 			// extra parameters are 
-			// = image imp
-			// = type of the detection either manual or interactive
-			// = do additional gauss fit
+
 			
 			if ( parameterType == 0 ) // Manual
 			{
 				// imagej stuff
 				new GenericDialogGUIParams( params );
+				// automaticDialog();
 			}
 			else // interactive
 			{

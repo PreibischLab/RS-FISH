@@ -78,6 +78,9 @@ public class GUIParams
 		return bsInlierRatio;	
 	}
 	
+	/**
+	 * back up the default values
+	 * */
 	public void setDefaultValues() {
 		defaultSigma = sigma;	
 		defaultThreshold = threshold;

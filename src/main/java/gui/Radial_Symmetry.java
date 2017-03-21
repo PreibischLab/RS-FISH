@@ -1,15 +1,17 @@
 package gui;
 
-import compute.RadialSymmetry;
+import java.io.File;
+
 import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.InteractiveRadialSymmetry;
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.io.Opener;
 import ij.plugin.PlugIn;
 import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.numeric.real.FloatType;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 
@@ -32,7 +34,7 @@ public class Radial_Symmetry implements PlugIn
 	@Override
 	public void run( String arg )
 	{	
-		if ( initialDialog() )
+		if ( !initialDialog() ) // if user didn't cancel
 		{
 			// TODO: Check what of the stuff below is necessary
 			// // if one of the images is rgb or 8-bit color convert them to
@@ -60,6 +62,7 @@ public class Radial_Symmetry implements PlugIn
 			// * image imp
 			// * type of the detection either manual or interactive
 			// * do additional gauss fit
+			// TODO: Remove called earlier
 			// initialDialog();
 			
 			// TODO: call new GenericDialogGUIParams( params );
@@ -75,22 +78,26 @@ public class Radial_Symmetry implements PlugIn
 			}
 			else // interactive
 			{
-				  irs = new InteractiveRadialSymmetry( imp, params );
+				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry( imp, params );
 				
-				do
-				{
-					SimpleMultiThreading.threadWait( 100 );
-				}
-				while ( !irs.isFinished() );
+				 do
+				 {
+				 	SimpleMultiThreading.threadWait( 100 );
+				 	
+				 }
+				 while ( !irs.isFinished() );
 				
-				if ( irs.wasCanceled() )
+				 if ( irs.wasCanceled() )
 					return;
 			}
 
+			// back up the parameter values to the default variables
 			params.setDefaultValues();
 
 			// ask for more?
 			RadialSymmetryParameters allParams;
+			
+			// TODO: run the processing on the whole image if the user clicked okay 
 		
 			// might have imagej-specific parameters (what to do with channels?)
 
@@ -108,8 +115,10 @@ public class Radial_Symmetry implements PlugIn
 
 	// TODO: POLISH
 	/**
-	 * shows the initial GUI dialog where user has to choose 
-	 * an image and a processing method.
+	 * shows the initial GUI dialog 
+	 * user has to choose 
+	 * an image 
+	 * a processing method -- advanced/interactive
 	 * */
 	protected boolean initialDialog(){
 		boolean failed = false;
@@ -236,4 +245,28 @@ public class Radial_Symmetry implements PlugIn
 	}
 
 	*/
+	
+	public static void main(String[] args){
+		
+		File path = new File( "src/main/resources/multiple_dots.tif" );
+		// path = path.concat("test_background.tif");
+
+		if ( !path.exists() )
+			throw new RuntimeException( "'" + path.getAbsolutePath() + "' doesn't exist." );
+
+		new ImageJ();
+		System.out.println( "Opening '" + path + "'");
+
+		ImagePlus imp = new Opener().openImage( path.getAbsolutePath() );
+
+		if (imp == null)
+			throw new RuntimeException( "image was not loaded" );
+
+		imp.show();
+
+		imp.setSlice(20);
+	
+		new Radial_Symmetry().run( new String() ); 
+		System.out.println("Doge!");
+	}
 }

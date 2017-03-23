@@ -7,11 +7,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import fit.Spot;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Overlay;
+import ij.measure.Calibration;
 import ij.process.ImageProcessor;
-import mpicbg.imglib.util.Util;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
@@ -22,6 +23,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 
 public class HelperFunctions {
 
@@ -184,6 +186,50 @@ public class HelperFunctions {
 		return calibration;
 	}
 	
+	
+	/**
+	 * initialize calibration
+	 * */
+	public static  double[] initCalibration( final ImagePlus imp)
+	{
+		 double [] calibration = new double[imp.getNDimensions()];
+		
+		try
+		{
+			final Calibration cal = imp.getCalibration();
+	
+			if (
+					cal == null ||
+					Double.isNaN( cal.pixelWidth ) ||
+					Double.isNaN( cal.pixelHeight ) ||
+					Double.isInfinite( cal.pixelWidth ) ||
+					Double.isInfinite( cal.pixelHeight ) ||
+					cal.pixelHeight <= 0 ||
+					cal.pixelHeight <= 0 ||
+					cal.pixelWidth == cal.pixelHeight
+					)
+			{
+				calibration = new double[]{ 1, 1 };
+			}
+			else
+			{
+				IJ.log( "WARNING: Pixel calibration is not symmetric in XY! Please check this (Image > Properties)" );
+				IJ.log( "x: " + cal.pixelWidth ); 
+				IJ.log( "y: " + cal.pixelHeight );
+	
+				if ( cal.pixelWidth < cal.pixelHeight ) // x has a higher resolution than y
+					calibration = new double[]{ 1, cal.pixelHeight / cal.pixelWidth };
+				else
+					calibration = new double[]{ cal.pixelHeight / cal.pixelWidth, 1 };
+			}
+		}
+		catch ( Exception e ) { calibration = new double[]{ 1, 1 }; }
+
+		IJ.log( "Using relative [x, y] calibration: " + Util.printCoordinates( calibration ) );
+		return calibration;
+
+	}
+	
 
 	public static <T extends RealType<T>> void printCoordinates(RandomAccessibleInterval<T> img) {
 		for (int d = 0; d < img.numDimensions(); ++d) {
@@ -215,9 +261,7 @@ public class HelperFunctions {
 			final int numDimensions,
 			final Rectangle rectangle,
 			final double threshold ) {
-		// TODO: here should be the threshold for the peak values
 		for (final RefinedPeak<Point> peak : peaks){
-			// TODO: add threshold value
 			if (HelperFunctions.isInside( peak, rectangle ) && (-peak.getValue() > threshold))
 			{
 				final long[] coordinates = new long[numDimensions];

@@ -2,7 +2,9 @@ package gui;
 
 import java.io.File;
 
+import compute.RadialSymmetry;
 import gui.imagej.GenericDialogGUIParams;
+import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
 import ij.IJ;
 import ij.ImageJ;
@@ -10,8 +12,12 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.io.Opener;
+import ij.measure.Calibration;
 import ij.plugin.PlugIn;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 
@@ -22,6 +28,9 @@ public class Radial_Symmetry implements PlugIn
 	public static int defaultImg = 0;
 	public static int defaultParam = 1;
 	public static boolean defaultGauss = false;
+	
+	// steps per octave
+	public static int defaultSensitivity = 4;
 
 	// TODO: used to choose the image
 	ImagePlus imp;
@@ -105,18 +114,40 @@ public class Radial_Symmetry implements PlugIn
 			// back up the parameter values to the default variables
 			params.setDefaultValues();
 			
-			// TODO: run the processing on the whole image if the user clicked okay 
+			calibration = HelperFunctions.initCalibration(imp);
 			
-		
-			// might have imagej-specific parameters (what to do with channels?)
+			RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
+			
+			// which type of imageplus image is it?
+			int type = -1;
+			final Object pixels = imp.getProcessor().getPixels();
+			if ( pixels instanceof byte[] )
+				type = 0;
+			else if ( pixels instanceof short[] )
+				type = 1;
+			else if ( pixels instanceof float[] )
+				type = 2;
+			else
+				throw new RuntimeException( "Pixels of this type are not supported: " + pixels.getClass().getSimpleName() );
 
+			long [] dim = new long [imp.getNDimensions()];
+			dim[0] = imp.getWidth();
+			dim[1] = imp.getHeight(); 
+			if (dim.length == 3)
+				dim[2] = imp.getImageStackSize();
+			
+			ImageJFunctions.show(HelperFunctions.toImg(imp, dim, type));
+			
+			RadialSymmetry rs = new RadialSymmetry(rsm,  HelperFunctions.toImg(imp, dim, type));
+			
 			// compute on the whole dataset with params
-//			for ( c = 0; c < numChannels; ++c )
-//				for ( t = 0; t < numTimePoints; ++t )
-//				{
-//					rai = wrapImagePlus( t, c );
-//					new RadialSymmetry< FloatType >( allParams, rai );
-//				}
+			for (int c = 0; c < imp.getNChannels(); ++c )
+				for (int t = 0; t < imp.getNFrames(); ++t )
+				{		
+					// RandomAccessibleInterval<T> rai = ImageJFunctions.wrap(HelperFunctions.toImg(imp, dim, type ))
+					// rai = wrapImagePlus( t, c );
+					// new RadialSymmetry< FloatType >( allParams, rai );
+				}
 		}
 
 

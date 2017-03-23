@@ -46,6 +46,8 @@ import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import parameters.GUIParams;
 
+import gui.Radial_Symmetry;
+
 public class InteractiveRadialSymmetry// extends GUIParams
 {
 	public static int bsNumIterations = 100; // not a parameter, can be changed through Beanshell
@@ -59,9 +61,8 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 	// --------------------------------
 
-	// steps per octave
-	public static int standardSensitivity = 4;
-	int sensitivity = standardSensitivity;
+	// TODO: Pass as the parameter (?)
+	int sensitivity = Radial_Symmetry.defaultSensitivity;
 
 	// Frames that are potentially open
 	BackgroundRANSACWindow bkWindow;
@@ -247,7 +248,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		IJ.log( "Using relative [x, y] calibration: " + Util.printCoordinates( this.calibration ) );
 
-		// these values are initially initialized with defaults
+		// these values are initialized with defaults
 //		sigma = defaultSigma;
 //		threshold = defaultThreshold;
 //
@@ -285,6 +286,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 	}
 
+	// TODO: Do I need this one here (?!)
 	// this function will show the result of RANSAC
 	// proper window -> dialog view with the columns
 	protected void ransacResultTable(final ArrayList<Spot> spots) {
@@ -679,7 +681,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	/**
 	 * this function is used for Difference-of-Gaussian calculation in the 
 	 * interactive case. No calibration adjustment is needed.
-	 * (thresholdMin/2) - because some peaks might be skipped - always compute all spots, select later
+	 * (threshold/2) - because some peaks might be skipped - always compute all spots, select later
 	 * */
 	protected void dogDetection( final RandomAccessibleInterval <FloatType> image )
 	{

@@ -42,6 +42,21 @@ public class GUIParams
 		setBsInlierRatio(defaultBsInlierRatio);
 	}
 
+	public void printParams(){
+		System.out.println("SigmaDoG      : " + sigma);
+		System.out.println("ThresholdDoG  : " + threshold);
+		System.out.println("MaxError      : " + maxError);
+		System.out.println("InlierRatio   : " + inlierRatio);
+		System.out.println("supportRadius : " + supportRadius);
+	}
+	
+	public void printDefaultParams(){
+		System.out.println("DSigmaDoG      : " + defaultSigma);
+		System.out.println("DThresholdDoG  : " + defaultThreshold);
+		System.out.println("DMaxError      : " + defaultMaxError);
+		System.out.println("DInlierRatio   : " + defaultInlierRatio);
+		System.out.println("DSupportRadius : " + defaultSupportRadius);
+	}
 	
 	// getters
 	// Difference of Gaussians

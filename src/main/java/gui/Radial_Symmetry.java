@@ -34,6 +34,23 @@ public class Radial_Symmetry implements PlugIn
 	@Override
 	public void run( String arg )
 	{	
+		
+		// Pipeline 
+		/*
+		 * get the 1 method 2 image 3 fitting
+		 * if advanced
+		 *   trigger the advanced gui window
+		 *   restore the defaults
+		 * 	 save the defaults 
+		 * else 
+		 *   trigger the interactive window
+		 *   restore the defaults 
+		 *   listen to the values
+		 *     recompute the results 
+		 *   save the values
+		 * trigger the computations for the whole image  	
+		 * */
+		
 		if ( !initialDialog() ) // if user didn't cancel
 		{
 			// TODO: Check what of the stuff below is necessary
@@ -48,7 +65,6 @@ public class Radial_Symmetry implements PlugIn
 
 			// TODO move this return
  
-
 			if ( imp.getNChannels() > 1 )
 			{
 				IJ.log("Multichannel images are not supported yet ...");
@@ -58,13 +74,6 @@ public class Radial_Symmetry implements PlugIn
 			// set all defaults + initialize the parameters with default values
 			final GUIParams params = new GUIParams();
 			
-			// gui that ask for *** pops up here
-			// * image imp
-			// * type of the detection either manual or interactive
-			// * do additional gauss fit
-			// TODO: Remove called earlier
-			// initialDialog();
-			
 			// TODO: call new GenericDialogGUIParams( params );
 			// to choose 
 			// extra parameters are 
@@ -73,7 +82,9 @@ public class Radial_Symmetry implements PlugIn
 			if ( parameterType == 0 ) // Manual
 			{
 				// imagej stuff
-				new GenericDialogGUIParams( params );
+				GenericDialogGUIParams gdGUIParams = new GenericDialogGUIParams( params );
+				gdGUIParams.automaticDialog();
+				
 				// automaticDialog();
 			}
 			else // interactive
@@ -93,11 +104,9 @@ public class Radial_Symmetry implements PlugIn
 
 			// back up the parameter values to the default variables
 			params.setDefaultValues();
-
-			// ask for more?
-			RadialSymmetryParameters allParams;
 			
 			// TODO: run the processing on the whole image if the user clicked okay 
+			
 		
 			// might have imagej-specific parameters (what to do with channels?)
 
@@ -182,39 +191,6 @@ public class Radial_Symmetry implements PlugIn
 		if (canceled)
 			return;
 	}
-
-	protected void automaticDialog(){
-		// TODO: add caching for variables
-		boolean canceled = false;
-
-		GenericDialog gd = new GenericDialog("Set Stack Parameters");
-
-		gd.addNumericField("Sigma:", this.sigmaInit, 2);
-		gd.addNumericField("Threshold:", this.thresholdInit, 4);
-		gd.addNumericField("Support_Region_Radius:", this.ransacInitSupportRadius, 0);
-		gd.addNumericField("Inlier_Ratio:", this.ransacInitInlierRatio, 2);
-		gd.addNumericField("Max_Error:", this.ransacInitMaxError, 2);
-
-		gd.showDialog();
-		if (gd.wasCanceled()) 
-			canceled = true;
-
-		sigma = (float)gd.getNextNumber();
-		threshold = (float)gd.getNextNumber();
-		supportRadius = (int)Math.round(gd.getNextNumber());
-		inlierRatio = (float)gd.getNextNumber();
-		maxError = (float)gd.getNextNumber();	
-		
-		// wrong values in the fields
-		if (sigma == Double.NaN || threshold == Double.NaN ||  supportRadius == Double.NaN || inlierRatio == Double.NaN || maxError == Double.NaN )
-			canceled = true;
-		
-		if (canceled)
-			return;
-		
-		runRansacAutomatic();
-	}
-
 
 	// unified call for nD cases 
 	protected void runRansacAutomatic(){

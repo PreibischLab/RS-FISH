@@ -14,6 +14,9 @@ import ij.gui.GenericDialog;
 import ij.io.Opener;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
+
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
@@ -28,7 +31,7 @@ public class Radial_Symmetry implements PlugIn
 	public static int defaultImg = 0;
 	public static int defaultParam = 1;
 	public static boolean defaultGauss = false;
-	
+
 	// steps per octave
 	public static int defaultSensitivity = 4;
 
@@ -39,11 +42,11 @@ public class Radial_Symmetry implements PlugIn
 
 	// defines the resolution in x y z dimensions
 	double [] calibration;
-	
+
 	@Override
 	public void run( String arg )
 	{	
-		
+
 		// Pipeline 
 		/*
 		 * get the 1 method 2 image 3 fitting
@@ -59,7 +62,7 @@ public class Radial_Symmetry implements PlugIn
 		 *   save the values
 		 * trigger the computations for the whole image  	
 		 * */
-		
+
 		if ( !initialDialog() ) // if user didn't cancel
 		{
 			// TODO: Check what of the stuff below is necessary
@@ -73,7 +76,7 @@ public class Radial_Symmetry implements PlugIn
 			// right now works with 2d + time
 
 			// TODO move this return
- 
+
 			if ( imp.getNChannels() > 1 )
 			{
 				IJ.log("Multichannel images are not supported yet ...");
@@ -82,42 +85,42 @@ public class Radial_Symmetry implements PlugIn
 
 			// set all defaults + initialize the parameters with default values
 			final GUIParams params = new GUIParams();
-			
+
 			// TODO: call new GenericDialogGUIParams( params );
 			// to choose 
 			// extra parameters are 
 
-			
+
 			if ( parameterType == 0 ) // Manual
 			{
 				// imagej stuff
 				GenericDialogGUIParams gdGUIParams = new GenericDialogGUIParams( params );
 				gdGUIParams.automaticDialog();
-				
+
 				// automaticDialog();
 			}
 			else // interactive
 			{
 				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry( imp, params );
-				
-				 do
-				 {
-				 	SimpleMultiThreading.threadWait( 100 );
-				 	
-				 }
-				 while ( !irs.isFinished() );
-				
-				 if ( irs.wasCanceled() )
+
+				do
+				{
+					SimpleMultiThreading.threadWait( 100 );
+
+				}
+				while ( !irs.isFinished() );
+
+				if ( irs.wasCanceled() )
 					return;
 			}
 
 			// back up the parameter values to the default variables
 			params.setDefaultValues();
-			
-			calibration = HelperFunctions.initCalibration(imp);
+			// TODO: set the proper calibration here! 
+			calibration = new double[]{1,1,1};// HelperFunctions.initCalibration(imp);
 			
 			RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
-			
+
 			// which type of imageplus image is it?
 			int type = -1;
 			final Object pixels = imp.getProcessor().getPixels();
@@ -135,16 +138,18 @@ public class Radial_Symmetry implements PlugIn
 			dim[1] = imp.getHeight(); 
 			if (dim.length == 3)
 				dim[2] = imp.getImageStackSize();
-			
-			ImageJFunctions.show(HelperFunctions.toImg(imp, dim, type));
-			
-			RadialSymmetry rs = new RadialSymmetry(rsm,  HelperFunctions.toImg(imp, dim, type));
-			
+
 			// compute on the whole dataset with params
 			for (int c = 0; c < imp.getNChannels(); ++c )
 				for (int t = 0; t < imp.getNFrames(); ++t )
-				{		
-					// RandomAccessibleInterval<T> rai = ImageJFunctions.wrap(HelperFunctions.toImg(imp, dim, type ))
+				{	
+					// TODO: this part should be changed
+					// works only with 1 channel no time frame images 
+				
+					// get the currently selected slice
+					final Img< FloatType > rai = ImageJFunctions.wrap(imp); //HelperFunctions.toImg( imp, dim, type );		
+					RadialSymmetry rs = new RadialSymmetry(rsm, rai);
+										
 					// rai = wrapImagePlus( t, c );
 					// new RadialSymmetry< FloatType >( allParams, rai );
 				}
@@ -204,57 +209,8 @@ public class Radial_Symmetry implements PlugIn
 		return failed;
 	}
 
-	/*
-	private void fittingDialog(){
-		boolean canceled = false;
-
-		GenericDialog gd = new GenericDialog("Background Subtraction Method");
-		gd.addChoice( "Method :", bsMethods, bsMethods[ defaultMethodBS ] );
-
-		gd.showDialog();
-
-		// Should I move this to the return statement
-		bsMethod = defaultMethodBS = gd.getNextChoiceIndex();
-
-		if (gd.wasCanceled()) 
-			canceled = true;
-
-		if (canceled)
-			return;
-	}
-
-	// unified call for nD cases 
-	protected void runRansacAutomatic(){
-		extendedRoi = ImageJFunctions.wrap(imagePlus); // returns the whole image either 2D or 3D
-
-		// long [] min = new long [extendedRoi.numDimensions()]; 
-		// long [] max = new long [extendedRoi.numDimensions()]; 
-
-		// for (int d = 0; d < extendedRoi.numDimensions(); ++d){
-		// 	min[d] = extendedRoi.min(d);
-		// 	max[d] = extendedRoi.max(d);
-		// }
-
-		this.sigma2 = HelperFunctions.computeSigma2(this.sigma, sensitivity);
-		// IMP: in the 3D case the blobs will have lower contrast as a function of sigma(z) therefore we have to adjust the threshold;
-		// to fix the problem we use an extra factor =0.5 which will decrease the threshold value; this might help in some cases but z-extrasmoothing
-		// is image depended
-
-		final float tFactor = extendedRoi.numDimensions() == 3 ? 0.5f : 1.0f;	
-		final DogDetection<FloatType> dog2 = new DogDetection<>(extendedRoi, calibration, this.sigma, this.sigma2 , DogDetection.ExtremaType.MINIMA,  tFactor*threshold / 4, false);
-		peaks = dog2.getSubpixelPeaks();
-
-		if (extendedRoi.numDimensions() == 2 || extendedRoi.numDimensions() == 3 )
-			ransacAutomatic();
-		else
-			System.out.println("Wrong dimensionality. Currently supported 2D/3D!");
-
-	}
-
-	*/
-	
 	public static void main(String[] args){
-		
+
 		File path = new File( "src/main/resources/multiple_dots.tif" );
 		// path = path.concat("test_background.tif");
 
@@ -272,7 +228,7 @@ public class Radial_Symmetry implements PlugIn
 		imp.show();
 
 		imp.setSlice(20);
-	
+
 		new Radial_Symmetry().run( new String() ); 
 		System.out.println("Doge!");
 	}

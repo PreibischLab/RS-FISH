@@ -7,6 +7,7 @@ import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -23,6 +24,7 @@ import background.NormalizedGradientRANSAC;
 import fit.Spot;
 import fit.Center.CenterMethod;
 import gradient.Gradient;
+import gradient.GradientPreCompute;
 import gui.Radial_Symmetry;
 
 public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
@@ -54,9 +56,14 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			// to fix the problem we use an extra factor =0.5 which will decrease the threshold value; this might help in some cases but z-extrasmoothing
 			// is image depended
 			
+			System.out.println( System.currentTimeMillis() );
 			final float tFactor = img.numDimensions() == 3 ? 0.5f : 1.0f;	
 			final DogDetection<FloatType> dog2 = new DogDetection<>(img, params.getCalibration(), sigma, sigma2 , DogDetection.ExtremaType.MINIMA,  tFactor*threshold / 2, false);
 			peaks = dog2.getSubpixelPeaks();
+			
+			derivative = new GradientPreCompute( img );
+			
+			// if (true) return;
 			
 			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 			int numDimensions = img.numDimensions(); 
@@ -99,7 +106,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			Spot.ransac(spots, numIterations, maxError, inlierRatio);
 			for (final Spot spot : spots)
 				spot.computeAverageCostInliers();
-			
+			ransacResultTable(spots);
 		}
 		else
 			// TODO: if the code is organized correctly this part should be redundant 
@@ -117,6 +124,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 		for (Spot spot : spots) {
 			rt.incrementCounter();
 			for (int d = 0; d < spot.numDimensions(); ++d) {
+				// FIXME: might be the wrong output
 				rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.2f", spot.getFloatPosition(d)));
 			}
 		}

@@ -149,7 +149,6 @@ public class HelperFunctions {
 		return imgTmp;
 	}
 
-	// APPROVED: 
 	public static float computeSigma2(final float sigma1, final int stepsPerOctave) {
 		final float k = (float) Math.pow( 2f, 1f / stepsPerOctave );
 		return sigma1 * k;
@@ -189,10 +188,11 @@ public class HelperFunctions {
 	
 	/**
 	 * initialize calibration
+	 * 2D and 3D friendly
 	 * */
 	public static  double[] initCalibration( final ImagePlus imp)
 	{
-		 double [] calibration = new double[imp.getNDimensions()];
+		double [] calibration = new double[imp.getNDimensions()];
 		
 		try
 		{

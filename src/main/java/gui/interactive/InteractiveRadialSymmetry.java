@@ -181,6 +181,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		
 		// initialize parameters using defaults
 		initParameters( imagePlus );
+		
 
 		// initialize variables for interactive preview
 		// called before updatePreview() !
@@ -216,39 +217,43 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	 * */
 	protected void initParameters( final ImagePlus imp )
 	{
-		try
-		{
-			final Calibration cal = imp.getCalibration();
 	
-			if (
-					cal == null ||
-					Double.isNaN( cal.pixelWidth ) ||
-					Double.isNaN( cal.pixelHeight ) ||
-					Double.isInfinite( cal.pixelWidth ) ||
-					Double.isInfinite( cal.pixelHeight ) ||
-					cal.pixelHeight <= 0 ||
-					cal.pixelHeight <= 0 ||
-					cal.pixelWidth == cal.pixelHeight
-					)
-			{
-				this.calibration = new double[]{ 1, 1 };
-			}
-			else
-			{
-				IJ.log( "WARNING: Pixel calibration is not symmetric in XY! Please check this (Image > Properties)" );
-				IJ.log( "x: " + cal.pixelWidth ); 
-				IJ.log( "y: " + cal.pixelHeight );
+		// 2 because you want to calibrate only XY-plane
+		this.calibration = HelperFunctions.initCalibration(imp, 2);
+
+//		try
+//		{
+//			final Calibration cal = imp.getCalibration();
+//	
+//			if (
+//					cal == null ||
+//					Double.isNaN( cal.pixelWidth ) ||
+//					Double.isNaN( cal.pixelHeight ) ||
+//					Double.isInfinite( cal.pixelWidth ) ||
+//					Double.isInfinite( cal.pixelHeight ) ||
+//					cal.pixelHeight <= 0 ||
+//					cal.pixelHeight <= 0 ||
+//					cal.pixelWidth == cal.pixelHeight
+//					)
+//			{
+//				this.calibration = new double[]{ 1, 1 };
+//			}
+//			else
+//			{
+//				IJ.log( "WARNING: Pixel calibration is not symmetric in XY! Please check this (Image > Properties)" );
+//				IJ.log( "x: " + cal.pixelWidth ); 
+//				IJ.log( "y: " + cal.pixelHeight );
+//	
+//				if ( cal.pixelWidth < cal.pixelHeight ) // x has a higher resolution than y
+//					this.calibration = new double[]{ 1, cal.pixelHeight / cal.pixelWidth };
+//				else
+//					this.calibration = new double[]{ cal.pixelHeight / cal.pixelWidth, 1 };
+//			}
+//		}
+//		catch ( Exception e ) { this.calibration = new double[]{ 1, 1 }; }
+//
+//		IJ.log( "Using relative [x, y] calibration: " + Util.printCoordinates( this.calibration ) );
 	
-				if ( cal.pixelWidth < cal.pixelHeight ) // x has a higher resolution than y
-					this.calibration = new double[]{ 1, cal.pixelHeight / cal.pixelWidth };
-				else
-					this.calibration = new double[]{ cal.pixelHeight / cal.pixelWidth, 1 };
-			}
-		}
-		catch ( Exception e ) { this.calibration = new double[]{ 1, 1 }; }
-
-		IJ.log( "Using relative [x, y] calibration: " + Util.printCoordinates( this.calibration ) );
-
 		// these values are initialized with defaults
 //		sigma = defaultSigma;
 //		threshold = defaultThreshold;

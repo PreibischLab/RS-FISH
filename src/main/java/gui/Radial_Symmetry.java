@@ -117,7 +117,7 @@ public class Radial_Symmetry implements PlugIn
 			// back up the parameter values to the default variables
 			params.setDefaultValues();
 			// TODO: set the proper calibration here! 
-			calibration = new double[]{1,1,1};// HelperFunctions.initCalibration(imp);
+			calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); // new double[]{1, 1, 1};
 			
 			RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
 

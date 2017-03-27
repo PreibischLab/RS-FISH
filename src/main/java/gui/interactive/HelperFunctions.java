@@ -190,42 +190,66 @@ public class HelperFunctions {
 	 * initialize calibration
 	 * 2D and 3D friendly
 	 * */
-	public static  double[] initCalibration( final ImagePlus imp)
+	public static  double[] initCalibration( final ImagePlus imp, int numDimensions)
 	{
-		double [] calibration = new double[imp.getNDimensions()];
+		double [] calibration = new double[numDimensions];
 		
 		try
 		{
 			final Calibration cal = imp.getCalibration();
-	
-			if (
-					cal == null ||
-					Double.isNaN( cal.pixelWidth ) ||
-					Double.isNaN( cal.pixelHeight ) ||
-					Double.isInfinite( cal.pixelWidth ) ||
-					Double.isInfinite( cal.pixelHeight ) ||
-					cal.pixelHeight <= 0 ||
-					cal.pixelHeight <= 0 ||
-					cal.pixelWidth == cal.pixelHeight
-					)
-			{
-				calibration = new double[]{ 1, 1 };
+			double[] calValues = new double[numDimensions];
+			
+			// image doesn't have the calibration
+			if (cal != null){
+				calValues[0] = cal.pixelWidth;
+				calValues[1] = cal.pixelHeight;
+				if (numDimensions == 3)
+					calValues[2] = cal.pixelDepth;			
+			}
+						
+			boolean isFine = true; 
+			boolean isSame = true; // to check the calibration in all dimensions
+			
+			// ? calibration has meaningful values
+			for (int d = 0; d < numDimensions; d++){
+				if (Double.isNaN( calValues[d]) || Double.isInfinite(calValues[d]) || calValues[d] <= 0 ){
+					isFine = false; 
+				}
+				if ( d > 0 && (calValues[d - 1] !=  calValues[d]))
+					isSame = false;
+			}
+			
+			if (!isFine || cal == null || isSame){
+				for (int d  =0; d < numDimensions; d++)
+					calibration[d]  = 1.0;
 			}
 			else
 			{
-				IJ.log( "WARNING: Pixel calibration is not symmetric in XY! Please check this (Image > Properties)" );
-				IJ.log( "x: " + cal.pixelWidth ); 
-				IJ.log( "y: " + cal.pixelHeight );
-	
-				if ( cal.pixelWidth < cal.pixelHeight ) // x has a higher resolution than y
-					calibration = new double[]{ 1, cal.pixelHeight / cal.pixelWidth };
-				else
-					calibration = new double[]{ cal.pixelHeight / cal.pixelWidth, 1 };
+				IJ.log( "WARNING: Pixel calibration might be not symmetric! Please check this (Image > Properties)" );
+				IJ.log( "x: " + calValues[0] ); 
+				IJ.log( "y: " + calValues[1] );
+				if (numDimensions == 3)
+					IJ.log( "z: " + calValues[2] );
+				
+				int iMax = 0;
+				for (int d = 0; d < numDimensions; d++){
+					if (calibration[d] < calibration[iMax])
+						iMax = d;
+				}
+				
+				for (int d = 0; d < numDimensions; d++){
+					if (d != iMax)
+						calibration[d] /= calibration[iMax];  
+				}
+				calibration[iMax] = 1.0;  
 			}
 		}
-		catch ( Exception e ) { calibration = new double[]{ 1, 1 }; }
+		catch ( Exception e ) { 
+			for (int d = 0; d < numDimensions; d++)
+				calibration[d]  = 1.0;
+		}
 
-		IJ.log( "Using relative [x, y] calibration: " + Util.printCoordinates( calibration ) );
+		IJ.log( "Using relative calibration: " + Util.printCoordinates( calibration ) );
 		return calibration;
 
 	}

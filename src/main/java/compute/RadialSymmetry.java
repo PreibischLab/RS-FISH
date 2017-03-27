@@ -35,6 +35,9 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 	ArrayList<RefinedPeak<Point>> peaks;
 	Gradient derivative; 
 
+	private static final boolean debug = true;
+	private static final long timingScale = 1000; // will result in seconds
+
 	public RadialSymmetry( final RadialSymmetryParameters params, final RandomAccessibleInterval< FloatType > img )
 	{
 		// TODO: make them fields (?) 
@@ -47,7 +50,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 		int bsMethod = params.getParams().getBsMethod();
 		float bsMaxError = params.getParams().getBsMaxError();
 		float bsInlierRatio = params.getParams().getBsInlierRatio();
-		
+
 		float sigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
 
 		if (img.numDimensions() == 2 || img.numDimensions() == 3 )
@@ -55,16 +58,25 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			// IMP: in the 3D case the blobs will have lower contrast as a function of sigma(z) therefore we have to adjust the threshold;
 			// to fix the problem we use an extra factor =0.5 which will decrease the threshold value; this might help in some cases but z-extrasmoothing
 			// is image depended
-			
-			System.out.println( System.currentTimeMillis() );
+
+			long sTime = System.currentTimeMillis();
 			final float tFactor = img.numDimensions() == 3 ? 0.5f : 1.0f;	
 			final DogDetection<FloatType> dog2 = new DogDetection<>(img, params.getCalibration(), sigma, sigma2 , DogDetection.ExtremaType.MINIMA,  tFactor*threshold / 2, false);
 			peaks = dog2.getSubpixelPeaks();
-			
+
+			if (debug){
+				System.out.println( "Timing: DoG peaks : " + (System.currentTimeMillis() - sTime)/timingScale );
+				sTime = System.currentTimeMillis();
+			}
+
 			derivative = new GradientPreCompute( img );
-			
+
+			if (debug){
+				System.out.println( "Timing: Derivative : " + (System.currentTimeMillis() - sTime)/timingScale );
+				sTime = System.currentTimeMillis();
+			}
 			// if (true) return;
-			
+
 			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 			int numDimensions = img.numDimensions(); 
 			// copy all peaks
@@ -78,6 +90,10 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				}
 			}
 
+			if (debug){
+				System.out.println( "Timing: Copying peaks : " + (System.currentTimeMillis() - sTime)/timingScale );
+				sTime = System.currentTimeMillis();
+			}
 			// the size of the RANSAC area
 			final long[] range = new long[numDimensions];
 
@@ -103,16 +119,31 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				throw new RuntimeException( "Unknown bsMethod: " + bsMethod );
 
 			final ArrayList<Spot> spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
+			if (debug){
+				System.out.println( "Timing: Extract peaks : " + (System.currentTimeMillis() - sTime)/timingScale );
+				sTime = System.currentTimeMillis();
+			}
+
 			Spot.ransac(spots, numIterations, maxError, inlierRatio);
 			for (final Spot spot : spots)
 				spot.computeAverageCostInliers();
+
+			if (debug){
+				System.out.println( "Timing : RANSAC peaks : " + (System.currentTimeMillis() - sTime)/timingScale );
+				sTime = System.currentTimeMillis();
+			}
 			ransacResultTable(spots);
+			if (debug){
+				System.out.println( "Timing : Results peaks : " + (System.currentTimeMillis() - sTime)/timingScale );
+				sTime = System.currentTimeMillis();
+			}
+
 		}
 		else
 			// TODO: if the code is organized correctly this part should be redundant 
 			System.out.println("Wrong dimensionality. Currently supported 2D/3D!");
 	}
-	
+
 	// this function will show the result of RANSAC
 	// proper window -> dialog view with the columns
 	public void ransacResultTable(final ArrayList<Spot> spots) {
@@ -130,5 +161,5 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 		}
 		rt.show("Results");
 	}
-	
+
 }

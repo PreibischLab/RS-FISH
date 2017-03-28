@@ -17,78 +17,79 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
-public class TestIjCommands< T extends RealType<T> & NativeType<T>>{
-	
-	public void testIjCommands(ImagePlus imp){		
-		int [] impDim = imp.getDimensions();
-		long[] dim; // stores xyz dimensions
-		if (impDim[3] == 1){ // if there is no z dimension -- 2D image
-			dim = new long []{impDim[0], impDim[1]};
-		}
-		else { // 3D image
-			dim = new long []{impDim[0], impDim[1], impDim[3]};
-		}
-		
-		// TODO: use different image Constructors
-		RandomAccessibleInterval<FloatType> img = ArrayImgs.floats(dim);
-		
-		for (int c = 1; c <= imp.getNChannels(); c++){
-			imp.setC(c);
-			for (int t = 1; t <= imp.getNFrames(); t++){
-				imp.setT(t);
-				// ImageJFunctions.show(ImageJFunctions.wrap(imp));
+public class TestIjCommands {
 
-				System.out.println("imp: c, t: " + imp.getC() + " " + imp.getT());
+	/**
+	 * Small test program to see how the wrapping of IJ ImagePlus is working 
+	 * */
+	public void testIjCommands(ImagePlus imp) {
+		RandomAccessibleInterval<FloatType> rai = ImageJFunctions.wrap(imp);
+		// x y c z t 
+		int[] impDim = imp.getDimensions();
 		
-				
-				
-			    // final Img< FloatType > rai = ImageJFunctions.wrap(imp); //HelperFunctions.toImg( imp, dim, type );		
-			    // ImageJFunctions.show(rai);
-				// RadialSymmetry rs = new RadialSymmetry(rsm, rai);
+		long[] dim; // stores x y z dimensions
+		if (impDim[3] == 1) { // if there is no z dimension 
+			dim = new long[] { impDim[0], impDim[1] };
+		} else { // 3D image
+			dim = new long[] { impDim[0], impDim[1], impDim[3] };
+		}
+
+		RandomAccessibleInterval<FloatType> img;
+
+		for (int c = 1; c <= imp.getNChannels(); c++) {
+			for (int t = 1; t <= imp.getNFrames(); t++) {		
+				img = copyImg(rai, c, t, dim);
+				// TODO: process img
 			}
 		}
 	}
-	
-	public static < T extends RealType<T> & NativeType<T> > void copyImg(ImagePlus imp, RandomAccessibleInterval<T> img, int [] impDim, long [] dim){
-		RandomAccessibleInterval<T> rai = ImageJFunctions.wrap(imp);
+
+	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, int channel, int time, long[] dim) {
+		// this one will be returned
+		RandomAccessibleInterval<FloatType> img = ArrayImgs.floats(dim);
 		
-		Cursor <T> cursorTo = Views.iterable(rai).localizingCursor();
-		Cursor <T> cursorFrom = Views.iterable(img).localizingCursor();
+		time--;
+		channel--;
 		
-		while (cursorTo.hasNext()){
-			cursorTo.fwd();
-			cursorFrom.fwd();
-			
-			long [] it = new long [dim.length];
-			
-			if ((it[0] + 1)*(it[1] + 1) % dim[0]*dim[1] == 0){
-				// shift 3rd dim 
-			}
-			
+		Cursor<FloatType> cursor = Views.iterable(img).localizingCursor();
+		RandomAccess<FloatType> ra = rai.randomAccess();
+
+		long[] pos = new long[dim.length];
+
+		while (cursor.hasNext()) {
+			// move over output image
+			cursor.fwd(); 
+			cursor.localize(pos); 
+			// set the corresponding position (channel + time)
+			ra.setPosition(new long[]{pos[0], pos[1], channel, pos[2], time});
+			cursor.get().setReal(ra.get().getRealFloat());
+						
 		}
-}
-	
-	public static void main(String[] args){
-		new ImageJ();
 		
-		File path = new File( "/home/milkyklim/Desktop/test-image.tif" );
+		return img;
+	}
+
+	public static void main(String[] args) {
+		new ImageJ();
+
+		File path = new File("/Users/kkolyva/Desktop/test-image-1-c=1.tif");
 		// path = path.concat("test_background.tif");
 
-		if ( !path.exists() )
-			throw new RuntimeException( "'" + path.getAbsolutePath() + "' doesn't exist." );
+		if (!path.exists())
+			throw new RuntimeException("'" + path.getAbsolutePath() + "' doesn't exist.");
 
 		new ImageJ();
-		System.out.println( "Opening '" + path + "'");
+		System.out.println("Opening '" + path + "'");
 
-		ImagePlus imp = new Opener().openImage( path.getAbsolutePath() );
+		ImagePlus imp = new Opener().openImage(path.getAbsolutePath());
 
 		if (imp == null)
-			throw new RuntimeException( "image was not loaded" );
+			throw new RuntimeException("image was not loaded");
 
 		imp.show();
-		
+
 		new TestIjCommands().testIjCommands(imp);
-		
+
 		System.out.println("Doge!");
 	}
 }

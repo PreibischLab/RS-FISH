@@ -115,6 +115,17 @@ public class HelperFunctions {
 		imp.updateAndDraw();
 	}
 
+	/**
+	 * Do a copy and normalize with min/max >> 0/1
+	 * 
+	 * @param imagePlus
+	 * @param dim
+	 * @param type
+	 * @param min
+	 * @param max
+	 * 
+	 * @return
+	 */
 	public static Img< FloatType > toImg( final ImagePlus imagePlus, final long[] dim, final int type )
 	{
 		final ImageProcessor ip = imagePlus.getStack().getProcessor( imagePlus.getCurrentSlice() );

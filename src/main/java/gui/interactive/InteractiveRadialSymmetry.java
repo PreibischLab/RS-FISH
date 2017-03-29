@@ -25,11 +25,15 @@ import gradient.GradientPreCompute;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.gui.Roi;
 import ij.io.Opener;
 import ij.measure.Calibration;
 import ij.measure.ResultsTable;
 import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import imglib2.RealTypeNormalization;
+import imglib2.TypeTransformingRandomAccessibleInterval;
 import mpicbg.models.PointMatch;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
@@ -77,6 +81,8 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 	// TODO: you probably need one image plus object 
 	final ImagePlus imagePlus;
+	final boolean normalize; // do we normalize intensities?
+	final double min, max; // intensity of the imageplus
 	final long[] dim;
 	final int type;
 	Rectangle rectangle;
@@ -137,14 +143,27 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		return wasCanceled;
 	}
 
+	public InteractiveRadialSymmetry( final ImagePlus imp, final GUIParams params )
+	{
+		this( imp, params, Double.NaN, Double.NaN );
+	}
+	
 	/**
 	 * Single-channel imageplus, 2d or 3d or 4d
 	 * 
 	 * @param imp
 	 */
-	public InteractiveRadialSymmetry( final ImagePlus imp, final GUIParams params )
+	public InteractiveRadialSymmetry( final ImagePlus imp, final GUIParams params, final double min, final double max )
 	{
 		this.imagePlus = imp;
+		this.min = min;
+		this.max = max;
+		
+		if ( Double.isNaN( min ) || Double.isNaN( max ) )
+			this.normalize = false;
+		else
+			this.normalize = true;
+
 		this.params = params;
 
 		// which type of imageplus image is it?
@@ -660,8 +679,13 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			long [] max = new long []{rectangle.width + rectangle.x + params.getSupportRadius() - 1, rectangle.height + rectangle.y + params.getSupportRadius() - 1};
 
 			// get the currently selected slice
-			final Img< FloatType > imgTmp = HelperFunctions.toImg( imagePlus, dim, type );
-
+			final RandomAccessibleInterval< FloatType > imgTmp;
+			
+			if ( normalize )
+				imgTmp = new TypeTransformingRandomAccessibleInterval<>( HelperFunctions.toImg( imagePlus, dim, type ), new RealTypeNormalization<>( this.min, this.max - this.min ), new FloatType() );
+			else
+				imgTmp = HelperFunctions.toImg( imagePlus, dim, type );
+			
 			extendedRoi = Views.interval( Views.extendMirrorSingle( imgTmp ), min, max);
 
 			roiChanged = true;
@@ -727,7 +751,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 	public static void main(String[] args)
 	{
-		File path = new File( "src/main/resources/multiple_dots.tif" );
+		File path = new File( "/Users/kkolyva/Desktop/test-2.tif" );
 		// path = path.concat("test_background.tif");
 
 		if ( !path.exists() )
@@ -741,6 +765,24 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		if (imp == null)
 			throw new RuntimeException( "image was not loaded" );
 
+		float min = Float.MAX_VALUE;
+		float max = -Float.MAX_VALUE;
+
+		for ( int z = 1; z <= imp.getStack().getSize(); ++z )
+		{
+			final ImageProcessor ip = imp.getStack().getProcessor( z );
+
+			for ( int i = 0; i < ip.getPixelCount(); ++i )
+			{
+				final float v = ip.getf( i );
+				min = Math.min( min, v );
+				max = Math.max( max, v );
+			}
+		}
+		
+		IJ.log( "min=" + min );
+		IJ.log( "max=" + max );
+
 		imp.show();
 
 		imp.setSlice(20);
@@ -748,7 +790,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
-		new InteractiveRadialSymmetry( imp, new GUIParams() );
+		new InteractiveRadialSymmetry( imp, new GUIParams(), min, max );
 
 		System.out.println("DOGE!");
 	}

@@ -34,6 +34,8 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 
 	ArrayList<RefinedPeak<Point>> peaks;
 	Gradient derivative; 
+	
+	ArrayList<Spot> spots;
 
 	private static final boolean debug = true;
 	private static final long timingScale = 1000; // will result in seconds
@@ -118,7 +120,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			else
 				throw new RuntimeException( "Unknown bsMethod: " + bsMethod );
 
-			final ArrayList<Spot> spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
+			spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
 			if (debug){
 				System.out.println( "Timing: Extract peaks : " + (System.currentTimeMillis() - sTime)/timingScale );
 				sTime = System.currentTimeMillis();
@@ -142,6 +144,15 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 		else
 			// TODO: if the code is organized correctly this part should be redundant 
 			System.out.println("Wrong dimensionality. Currently supported 2D/3D!");
+	}
+	
+
+	public ArrayList<RefinedPeak<Point>> getPeaks(){
+		return peaks;
+	}
+	
+	public ArrayList<Spot> getSpots(){
+		return spots;
 	}
 
 	// this function will show the result of RANSAC

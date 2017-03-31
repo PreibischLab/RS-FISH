@@ -8,12 +8,8 @@ import ij.io.Opener;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.NumericType;
-import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
@@ -38,7 +34,7 @@ public class TestIjCommands {
 
 		for (int c = 1; c <= imp.getNChannels(); c++) {
 			for (int t = 1; t <= imp.getNFrames(); t++) {		
-				img = copyImg(rai, c, t, dim);
+				img = copyImg(rai, c - 1, t - 1, dim);
 				// TODO: process img
 			}
 		}
@@ -47,10 +43,7 @@ public class TestIjCommands {
 	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, int channel, int time, long[] dim) {
 		// this one will be returned
 		RandomAccessibleInterval<FloatType> img = ArrayImgs.floats(dim);
-		
-		time--;
-		channel--;
-		
+			
 		Cursor<FloatType> cursor = Views.iterable(img).localizingCursor();
 		RandomAccess<FloatType> ra = rai.randomAccess();
 

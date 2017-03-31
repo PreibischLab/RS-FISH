@@ -1,8 +1,10 @@
 package gui;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import compute.RadialSymmetry;
+import fit.Spot;
 import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
@@ -14,9 +16,13 @@ import ij.gui.GenericDialog;
 import ij.io.Opener;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
-
+import net.imglib2.Cursor;
+import net.imglib2.Point;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
@@ -132,30 +138,79 @@ public class Radial_Symmetry implements PlugIn
 				type = 2;
 			else
 				throw new RuntimeException( "Pixels of this type are not supported: " + pixels.getClass().getSimpleName() );
+			
+			RandomAccessibleInterval<FloatType> rai = ImageJFunctions.wrap(imp);
+			// x y c z t 
+			int[] impDim = imp.getDimensions();
+			
+			long[] dim; // stores x y z dimensions
+			if (impDim[3] == 1) { // if there is no z dimension 
+				dim = new long[] { impDim[0], impDim[1] };
+			} else { // 3D image
+				dim = new long[] { impDim[0], impDim[1], impDim[3] };
+			}
 
-			long [] dim = new long [imp.getNDimensions()];
-			dim[0] = imp.getWidth();
-			dim[1] = imp.getHeight(); 
-			if (dim.length == 3)
-				dim[2] = imp.getImageStackSize();
+			RandomAccessibleInterval<FloatType> timeFrame;
+			ArrayList<Spot> allSpots = new ArrayList<>(1);
 
-			// compute on the whole dataset with params
-			for (int c = 0; c < imp.getNChannels(); ++c )
-				for (int t = 0; t < imp.getNFrames(); ++t )
-				{	
-					// TODO: this part should be changed
-					// works only with 1 channel no time frame images 
-				
-					// get the currently selected slice
-					final Img< FloatType > rai = ImageJFunctions.wrap(imp); //HelperFunctions.toImg( imp, dim, type );		
-					RadialSymmetry rs = new RadialSymmetry(rsm, rai);
-										
-					// rai = wrapImagePlus( t, c );
-					// new RadialSymmetry< FloatType >( allParams, rai );
+			for (int c = 1; c <= imp.getNChannels(); c++) {
+				for (int t = 1; t <= imp.getNFrames(); t++) {
+					// "-1" because of the imp offset 
+					timeFrame = copyImg(rai, c - 1, t - 1, dim);
+					// TODO: process img
+					RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
+					allSpots.addAll(rs.getSpots());
 				}
+			}
+			
+			
+			
+
+//			long [] dim = new long [imp.getNDimensions()];
+//			dim[0] = imp.getWidth();
+//			dim[1] = imp.getHeight(); 
+//			if (dim.length == 3)
+//				dim[2] = imp.getImageStackSize();
+//
+//			// compute on the whole dataset with params
+//			for (int c = 0; c < imp.getNChannels(); ++c )
+//				for (int t = 0; t < imp.getNFrames(); ++t )
+//				{	
+//					// TODO: this part should be changed
+//					// works only with 1 channel no time frame images 
+//				
+//					// get the currently selected slice
+//					final Img< FloatType > rai = ImageJFunctions.wrap(imp); //HelperFunctions.toImg( imp, dim, type );		
+//					RadialSymmetry rs = new RadialSymmetry(rsm, rai);
+//										
+//					// rai = wrapImagePlus( t, c );
+//					// new RadialSymmetry< FloatType >( allParams, rai );
+//				}
 		}
 
 
+	}
+	
+	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, int channel, int time, long[] dim) {
+		// this one will be returned
+		RandomAccessibleInterval<FloatType> img = ArrayImgs.floats(dim);
+		
+		Cursor<FloatType> cursor = Views.iterable(img).localizingCursor();
+		RandomAccess<FloatType> ra = rai.randomAccess();
+
+		long[] pos = new long[dim.length];
+
+		while (cursor.hasNext()) {
+			// move over output image
+			cursor.fwd(); 
+			cursor.localize(pos); 
+			// set the corresponding position (channel + time)
+			ra.setPosition(new long[]{pos[0], pos[1], channel, pos[2], time});
+			cursor.get().setReal(ra.get().getRealFloat());
+						
+		}
+		
+		return img;
 	}
 
 	// TODO: POLISH

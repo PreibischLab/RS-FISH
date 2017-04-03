@@ -16,6 +16,8 @@ import ij.gui.GenericDialog;
 import ij.io.Opener;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
+import imglib2.RealTypeNormalization;
+import imglib2.TypeTransformingRandomAccessibleInterval;
 import net.imglib2.Cursor;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
@@ -105,7 +107,11 @@ public class Radial_Symmetry implements PlugIn
 			else
 				throw new RuntimeException( "Pixels of this type are not supported: " + pixels.getClass().getSimpleName() );
 
-			RandomAccessibleInterval<FloatType> rai = ImageJFunctions.wrap(imp);
+			// Normalize the full image
+			double[] minmax = HelperFunctions.getMinMax(ImageJFunctions.wrap(imp));
+			double min = minmax[0];
+			double max = minmax[1];						
+			RandomAccessibleInterval<FloatType> rai = new TypeTransformingRandomAccessibleInterval<>( ImageJFunctions.wrap(imp), new RealTypeNormalization<>( min, max - min ), new FloatType() );
 			// x y c z t 
 			int[] impDim = imp.getDimensions();
 

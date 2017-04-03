@@ -121,7 +121,6 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				range[d] = 2 * supportRadius;
 			}
 
-			ImageJFunctions.show(new GradientPreCompute(img).preCompute(img));
 			final NormalizedGradient ng;
 
 			// "No background subtraction", "Mean", "Median", "RANSAC on Mean",
@@ -178,7 +177,6 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 	// proper window -> dialog view with the columns
 	public void ransacResultTable(final ArrayList<Spot> spots) {
 		IOFunctions.println("Running RANSAC ... ");
-		IOFunctions.println("Spots found = " + spots.size());
 		// real output
 		ResultsTable rt = new ResultsTable();
 		String[] xyz = { "x", "y", "z" };

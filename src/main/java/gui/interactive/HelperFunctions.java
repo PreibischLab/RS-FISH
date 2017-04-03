@@ -13,6 +13,7 @@ import ij.gui.OvalRoi;
 import ij.gui.Overlay;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
+import net.imglib2.Cursor;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
@@ -24,6 +25,7 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
+import net.imglib2.view.Views;
 
 public class HelperFunctions {
 
@@ -115,17 +117,6 @@ public class HelperFunctions {
 		imp.updateAndDraw();
 	}
 
-	/**
-	 * Do a copy and normalize with min/max >> 0/1
-	 * 
-	 * @param imagePlus
-	 * @param dim
-	 * @param type
-	 * @param min
-	 * @param max
-	 * 
-	 * @return
-	 */
 	public static Img< FloatType > toImg( final ImagePlus imagePlus, final long[] dim, final int type )
 	{
 		final ImageProcessor ip = imagePlus.getStack().getProcessor( imagePlus.getCurrentSlice() );
@@ -194,6 +185,20 @@ public class HelperFunctions {
 				calibration[i] = 1.0;
 		}
 		return calibration;
+	}
+	
+	public static double[] getMinMax(RandomAccessibleInterval<FloatType> rai){
+		Cursor<FloatType> cursor = Views.iterable(rai).cursor();
+		double[] minmax = new double[]{Double.MAX_VALUE, -Double.MAX_VALUE};
+		
+		while (cursor.hasNext()){
+			FloatType val = cursor.next();
+			if (val.getRealDouble() > minmax[1])
+				minmax[1] = val.getRealDouble();
+			if (val.getRealDouble() < minmax[0])
+				minmax[0] = val.getRealDouble();
+		}
+		return minmax;
 	}
 	
 	

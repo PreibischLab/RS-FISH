@@ -206,7 +206,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		// called before updatePreview() !
 		initRansacPreview( imagePlus );
 
-		// TODO: <1010> should this part be moved out this .java file
+		// TODO: <1010> should this part be moved out of this .java file
 		// so that only parameters of the listeners are passed 
 		
 		// show the interactive kit

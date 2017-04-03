@@ -53,36 +53,8 @@ public class Radial_Symmetry implements PlugIn
 	public void run( String arg )
 	{	
 
-		// Pipeline 
-		/*
-		 * get the 1 method 2 image 3 fitting
-		 * if advanced
-		 *   trigger the advanced gui window
-		 *   restore the defaults
-		 * 	 save the defaults 
-		 * else 
-		 *   trigger the interactive window
-		 *   restore the defaults 
-		 *   listen to the values
-		 *     recompute the results 
-		 *   save the values
-		 * trigger the computations for the whole image  	
-		 * */
-
 		if ( !initialDialog() ) // if user didn't cancel
 		{
-			// TODO: Check what of the stuff below is necessary
-			// // if one of the images is rgb or 8-bit color convert them to
-			// hyperstack
-			// imp = Hyperstack_rearranger.convertToHyperStack( imp );
-			//
-			// // test if you can deal with this image (2d? 3d? channels?
-			// timepoints?)
-			// 3d + time should be fine.
-			// right now works with 2d + time
-
-			// TODO move this return
-
 			if ( imp.getNChannels() > 1 )
 			{
 				IJ.log("Multichannel images are not supported yet ...");
@@ -92,18 +64,12 @@ public class Radial_Symmetry implements PlugIn
 			// set all defaults + initialize the parameters with default values
 			final GUIParams params = new GUIParams();
 
-			// TODO: call new GenericDialogGUIParams( params );
-			// to choose 
-			// extra parameters are 
-
-
 			if ( parameterType == 0 ) // Manual
 			{
-				// imagej stuff
+				// set the parameters in the manual mode
 				GenericDialogGUIParams gdGUIParams = new GenericDialogGUIParams( params );
 				gdGUIParams.automaticDialog();
-
-				// automaticDialog();
+				// calculations are performed further
 			}
 			else // interactive
 			{
@@ -112,7 +78,6 @@ public class Radial_Symmetry implements PlugIn
 				do
 				{
 					SimpleMultiThreading.threadWait( 100 );
-
 				}
 				while ( !irs.isFinished() );
 
@@ -121,12 +86,13 @@ public class Radial_Symmetry implements PlugIn
 			}
 
 			// back up the parameter values to the default variables
-			params.setDefaultValues();
-			// TODO: set the proper calibration here! 
+			params.setDefaultValues(); 
 			calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); // new double[]{1, 1, 1};
-			
+
 			RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
 
+			//if (true) return;
+			
 			// which type of imageplus image is it?
 			int type = -1;
 			final Object pixels = imp.getProcessor().getPixels();
@@ -138,11 +104,11 @@ public class Radial_Symmetry implements PlugIn
 				type = 2;
 			else
 				throw new RuntimeException( "Pixels of this type are not supported: " + pixels.getClass().getSimpleName() );
-			
+
 			RandomAccessibleInterval<FloatType> rai = ImageJFunctions.wrap(imp);
 			// x y c z t 
 			int[] impDim = imp.getDimensions();
-			
+
 			long[] dim; // stores x y z dimensions
 			if (impDim[3] == 1) { // if there is no z dimension 
 				dim = new long[] { impDim[0], impDim[1] };
@@ -156,45 +122,26 @@ public class Radial_Symmetry implements PlugIn
 			for (int c = 1; c <= imp.getNChannels(); c++) {
 				for (int t = 1; t <= imp.getNFrames(); t++) {
 					// "-1" because of the imp offset 
-					timeFrame = copyImg(rai, c - 1, t - 1, dim);
+					// ImageJFunctions.show(rai).setTitle("rai");
+					
+					timeFrame = copyImg(rai, c - 1, t - 1, dim, impDim);
+					// ImageJFunctions.show(timeFrame);
+					// if (true)break;
 					// TODO: process img
 					RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
 					allSpots.addAll(rs.getSpots());
 				}
 			}
-			
-			
-			
 
-//			long [] dim = new long [imp.getNDimensions()];
-//			dim[0] = imp.getWidth();
-//			dim[1] = imp.getHeight(); 
-//			if (dim.length == 3)
-//				dim[2] = imp.getImageStackSize();
-//
-//			// compute on the whole dataset with params
-//			for (int c = 0; c < imp.getNChannels(); ++c )
-//				for (int t = 0; t < imp.getNFrames(); ++t )
-//				{	
-//					// TODO: this part should be changed
-//					// works only with 1 channel no time frame images 
-//				
-//					// get the currently selected slice
-//					final Img< FloatType > rai = ImageJFunctions.wrap(imp); //HelperFunctions.toImg( imp, dim, type );		
-//					RadialSymmetry rs = new RadialSymmetry(rsm, rai);
-//										
-//					// rai = wrapImagePlus( t, c );
-//					// new RadialSymmetry< FloatType >( allParams, rai );
-//				}
 		}
 
 
 	}
-	
-	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, int channel, int time, long[] dim) {
+
+	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel, long time, long[] dim, int[] impDim) {
 		// this one will be returned
 		RandomAccessibleInterval<FloatType> img = ArrayImgs.floats(dim);
-		
+
 		Cursor<FloatType> cursor = Views.iterable(img).localizingCursor();
 		RandomAccess<FloatType> ra = rai.randomAccess();
 
@@ -204,12 +151,41 @@ public class Radial_Symmetry implements PlugIn
 			// move over output image
 			cursor.fwd(); 
 			cursor.localize(pos); 
-			// set the corresponding position (channel + time)
-			ra.setPosition(new long[]{pos[0], pos[1], channel, pos[2], time});
+			// set the corresponding position (channel + time)			
+			if (impDim[2] != 1 && impDim[3] != 1 && impDim[4] != 1){ // full 5D stack
+				ra.setPosition(new long[]{pos[0], pos[1], channel, pos[2], time});	
+			}
+			else{
+				if(impDim[2] != 1 && impDim[3] != 1){ // channels + z
+					ra.setPosition(new long[]{pos[0], pos[1], channel, pos[2]});
+				}
+				else 
+					if(impDim[2] != 1 && impDim[4] != 1){ // channels + time
+						ra.setPosition(new long[]{pos[0], pos[1], channel, time});
+					}
+					else 
+						if (impDim[3] != 1 && impDim[4] != 1){ // z + time
+							ra.setPosition(new long[]{pos[0], pos[1], pos[2], time});
+						}
+						else 
+							if (impDim[2] != 1){ // c 
+								ra.setPosition(new long[]{pos[0], pos[1], pos[2]});
+							}
+							else
+								if (impDim[3] != 1){ // z
+									ra.setPosition(new long[]{pos[0], pos[1], pos[2]});
+								}
+								else
+									if (impDim[4] != 1){ // t 
+										ra.setPosition(new long[]{pos[0], pos[1], pos[2]});
+									}
+									else // 2D image										 
+											ra.setPosition(new long[]{pos[0], pos[1]});
+			}
+				
 			cursor.get().setReal(ra.get().getRealFloat());
-						
 		}
-		
+
 		return img;
 	}
 

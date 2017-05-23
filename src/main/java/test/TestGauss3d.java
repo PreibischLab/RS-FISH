@@ -193,7 +193,10 @@ public class TestGauss3d
 	/**
 	 * Adds additive gaussian noise: i = i + gauss(x, sigma)
 	 * 
-	 * @param amount - how many times sigma
+	 * @param img - to which image
+	 * @param rnd - random num generator
+	 * @param sigma - sigma
+	 * @param onlyPositive - if it can be negative
 	 * @return the signal-to-noise ratio (measured)
 	 */
 	public static double addGaussianNoise( final Img< FloatType > img, final Random rnd, final float sigma, boolean onlyPositive )

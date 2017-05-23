@@ -166,7 +166,7 @@ public class HelperFunctions {
 		return Util.round(((sigma - min) / (max - min)) * scrollbarSize);
 	}
 
-	/**
+	/*
 	 * sets the calibration for the initial image. Only the relative value matters.
 	 * normalize everything with respect to the 1-st coordinate.
 	 * */
@@ -202,7 +202,7 @@ public class HelperFunctions {
 	}
 	
 	
-	/**
+	/*
 	 * initialize calibration
 	 * 2D and 3D friendly
 	 * */
@@ -292,7 +292,7 @@ public class HelperFunctions {
 		return res;
 	}
 	
-	/**
+	/*
 	 * Copy peaks found by DoG to lighter ArrayList (!imglib2)
 	 */
 	public static void copyPeaks(
@@ -314,7 +314,7 @@ public class HelperFunctions {
 	}
 	
 	
-	/**
+	/*
 	 * used by background subtraction to calculate
 	 * the boundaries of the spot 
 	 * */

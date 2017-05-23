@@ -490,10 +490,6 @@ public class Benchmark
 		return Math.sqrt( dist );
 	}
 
-	/**
-	 * @param args
-	 * @throws ImgIOException 
-	 */
 	public static void main(String[] args) 
 	{
 		//final String dir = "documents/Images For Stephan/Tests/";

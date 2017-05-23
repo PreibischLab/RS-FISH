@@ -192,7 +192,7 @@ public class Radial_Symmetry implements PlugIn
 	}
 
 	// TODO: POLISH
-	/**
+	/*
 	 * shows the initial GUI dialog 
 	 * user has to choose 
 	 * an image 

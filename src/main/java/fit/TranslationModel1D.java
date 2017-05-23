@@ -126,7 +126,7 @@ public class TranslationModel1D extends AbstractModel< TranslationModel1D > impl
 	 * 1 tx
 	 * 0 1
 	 * 
-	 * @param tx
+	 * @param tx - translation
 	 */
 	final public void set( final float tx )
 	{

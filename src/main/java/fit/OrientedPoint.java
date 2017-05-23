@@ -72,10 +72,10 @@ public class OrientedPoint extends Point
 	 * angle between this points orientation
 	 * the direction from this point to p (in world coordinates).
 	 * 
-	 * @param p
+	 * @param p the angle towards this point
 	 * @return angle in radians [0, pi]
 	 */
-	public double angleTo( Point p )
+	public double angleTo( final Point p )
 	{
 		double len = 0;
 		for ( int d = 0; d < ow.length; ++d )

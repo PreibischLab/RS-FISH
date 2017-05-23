@@ -64,7 +64,7 @@ public class GaussianPeakFitterND <T extends RealType<T>> {
 	 * CONSTRUCTOR
 	 */
 
-	/**
+	/*
 	 * Instantiate a 2D gaussian peak fitter that will operate on the given image. 
 	 * It is important that the image has a 0 background for this class to 
 	 * operate properly. 
@@ -78,7 +78,7 @@ public class GaussianPeakFitterND <T extends RealType<T>> {
 	 * METHODS
 	 */
 
-	/** 
+	/* 
 	 * Ensure the image is not null.
 	 */
 	public boolean checkInput() {

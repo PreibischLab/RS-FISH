@@ -165,8 +165,9 @@ public class Spot implements RealLocalizable
 	 * @param derivative - the derivative image
 	 * @param normalizer - potential per-spot normalization of the derivative image (can be null)
 	 * @param spotSize - the support region for each spot
+	 * @param <T> - type
 	 * 
-	 * @return
+	 * @return list of spots
 	 */
 	public static <T extends RealType<T> > ArrayList< Spot > extractSpots(
 			final Interval interval,

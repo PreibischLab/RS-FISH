@@ -148,7 +148,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		this( imp, params, Double.NaN, Double.NaN );
 	}
 	
-	/**
+	/*
 	 * Single-channel imageplus, 2d or 3d or 4d
 	 * 
 	 * @param imp
@@ -231,7 +231,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		// END:  <1010> -----
 	}
 	
-	/**
+	/*
 	 * initialize all parameters with the default values
 	 * */
 	protected void initParameters( final ImagePlus imp )
@@ -241,7 +241,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	}
 
 
-	/**
+	/*
 	 * Initialize preview variables for RANSAC
 	 */
 	// TODO: might be not necessary
@@ -525,7 +525,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	}
 
 	// APPROVED:
-	/**
+	/*
 	 * shows the results (circles) of the detection. 
 	 * */
 	protected void ransacResults(final ArrayList<Spot> spots) {
@@ -570,7 +570,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	}
 
 	// TODO: NEVER USED
-	/**
+	/*
 	 * copy data from one image to another 
 	 * */
 	protected void createOuputImg(RandomAccessibleInterval<FloatType> iImg, RandomAccessibleInterval<FloatType> oImg){
@@ -594,7 +594,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		return res;
 	}
 
-	/**
+	/*
 	 * Updates the Preview with the current parameters (sigma, threshold, roi,
 	 * slice number + RANSAC parameters)
 	 * 
@@ -662,7 +662,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	}
 
 	// APPROVED:
-	/**
+	/*
 	 * this function is used for Difference-of-Gaussian calculation in the 
 	 * interactive case. No calibration adjustment is needed.
 	 * (threshold/2) - because some peaks might be skipped - always compute all spots, select later

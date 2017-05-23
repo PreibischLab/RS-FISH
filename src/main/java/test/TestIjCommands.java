@@ -15,7 +15,7 @@ import net.imglib2.view.Views;
 
 public class TestIjCommands {
 
-	/**
+	/*
 	 * Small test program to see how the wrapping of IJ ImagePlus is working 
 	 * */
 	public void testIjCommands(ImagePlus imp) {

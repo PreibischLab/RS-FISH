@@ -92,8 +92,6 @@ public class Radial_Symmetry implements PlugIn
 			calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); // new double[]{1, 1, 1};
 
 			RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
-
-			//if (true) return;
 			
 			// which type of imageplus image is it?
 			int type = -1;
@@ -140,8 +138,6 @@ public class Radial_Symmetry implements PlugIn
 			}
 
 		}
-
-
 	}
 
 	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel, long time, long[] dim, int[] impDim) {

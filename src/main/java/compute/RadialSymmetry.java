@@ -1,6 +1,7 @@
 package compute;
 
 import gui.interactive.HelperFunctions;
+import ij.IJ;
 import ij.measure.ResultsTable;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Point;
@@ -68,16 +69,12 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 
 		float sigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
 		
-		ImageJFunctions.show(img).setTitle("is this one a 3D");
-		
-
 		if (img.numDimensions() == 2 || img.numDimensions() == 3) {
 			// IMP: in the 3D case the blobs will have lower contrast as a
 			// function of sigma(z) therefore we have to adjust the threshold;
-			// to fix the problem we use an extra factor =0.5 which will
+			// to fix the problem we use an extra factor = 0.5 which will
 			// decrease the threshold value; this might help in some cases but
-			// z-extrasmoothing
-			// is image depended
+			// z-extra smoothing is image depended
 
 			long sTime = System.currentTimeMillis();
 			final float tFactor = img.numDimensions() == 3 ? 0.5f : 1.0f;
@@ -91,12 +88,11 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			}
 
 			derivative = new GradientPreCompute(img);
-
+			
 			if (debug) {
 				System.out.println("Timing: Derivative : " + (System.currentTimeMillis() - sTime) / timingScale);
 				sTime = System.currentTimeMillis();
 			}
-			// if (true) return;
 
 			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 			int numDimensions = img.numDimensions();
@@ -110,10 +106,13 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				}
 			}
 
+			IJ.log( "peaks: " + simplifiedPeaks.size() );
+
 			if (debug) {
 				System.out.println("Timing: Copying peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
 				sTime = System.currentTimeMillis();
 			}
+			
 			// the size of the RANSAC area
 			final long[] range = new long[numDimensions];
 
@@ -139,6 +138,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				throw new RuntimeException("Unknown bsMethod: " + bsMethod);
 
 			spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
+			IJ.log( "num spots: " + spots.size() );
 			if (debug) {
 				System.out.println("Timing: Extract peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
 				sTime = System.currentTimeMillis();
@@ -147,8 +147,11 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			Spot.ransac(spots, numIterations, maxError, inlierRatio);
 			
 			for (final Spot spot : spots)
+			{
 				spot.computeAverageCostInliers();
-
+				IJ.log( "removed " + spot.numRemoved );
+			}
+			
 			if (debug) {
 				System.out.println("Timing : RANSAC peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
 				sTime = System.currentTimeMillis();

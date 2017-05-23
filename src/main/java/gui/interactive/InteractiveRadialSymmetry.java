@@ -705,7 +705,8 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 	public static void main(String[] args)
 	{
-		File path = new File( "/Users/kkolyva/Desktop/test-2.tif" );
+		// File path = new File( "/Users/kkolyva/Desktop/test-2.tif" );
+		File path = new File( "/home/milkyklim/Desktop/beads_tifs/cropped/tif-3-c.tif" );
 		// path = path.concat("test_background.tif");
 
 		if ( !path.exists() )

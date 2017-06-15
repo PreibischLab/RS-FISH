@@ -209,7 +209,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		// TODO: <1010> should this part be moved out of this .java file
 		// so that only parameters of the listeners are passed 
 		
-		// show the interactive kit
+		// show the interactive dog kit
 		this.dogWindow = new DoGWindow( this );
 		this.dogWindow.getFrame().setVisible( true );
 
@@ -257,7 +257,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		ransacPreview = ArrayImgs.floats(pixels, width, height);
 		impRansacError.show();
 
-		// set same roi for rahsac error image
+		// set same roi for ransac error image
 		Roi roi = imagePlus.getRoi();
 		if (roi != null) {
 			impRansacError.setRoi(roi);
@@ -699,13 +699,13 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		if ( impRansacError != null )
 			impRansacError.close();
-
+		
 		isFinished = true;
 	}
 
 	public static void main(String[] args)
 	{
-		File path = new File( "/Users/kkolyva/Desktop/test-2.tif" );
+		File path = new File( "/Users/kkolyva/Desktop/2017-06-14-radial-symmetry/SEA12_dpy23_wdr52_mdh1_005.nd2 - SEA12_dpy23_wdr52_mdh1_005.nd2 (series 08) - C=0.tif" );
 		// path = path.concat("test_background.tif");
 
 		if ( !path.exists() )

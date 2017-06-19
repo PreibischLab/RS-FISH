@@ -61,12 +61,20 @@ public class TestGauss3d
 		final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 256, 256, 256 }, new FloatType() );
 		final ArrayList< double[] > points = new ArrayList<double[]>();
 		final Random rnd = new Random( 534545 );
-		final double[] sigma = new double[]{ 2, 2, 2 };
+		final double[] sigma = new double[]{ 1.5, 1.5, 1.5 };
 		
 		
 		for ( int i = 0; i < 1500; ++i )
 		{
-			final double[] location = new double[]{ rnd.nextDouble() * 256, rnd.nextDouble() * 256, rnd.nextDouble() * 256 };
+			// small adjustment to have a padding around all points
+			// (int)(Math.random() * ((Max - Min) + 1)) + Min
+			double minValue = 20;
+			double maxValue = 235;
+			double x = rnd.nextDouble()*( (maxValue - minValue)  + 1 ) + minValue; 
+			double y = rnd.nextDouble()*( (maxValue - minValue)  + 1 ) + minValue; 
+			double z = rnd.nextDouble()*( (maxValue - minValue)  + 1 ) + minValue; 
+			
+			final double[] location = new double[]{ x, y, z };
 			addGaussian( image, location, sigma );
 			points.add( location );
 		}

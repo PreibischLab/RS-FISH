@@ -46,9 +46,9 @@ import net.imglib2.view.Views;
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see http://www.gnu.org/licenses/.
  * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de) & Timothee Lionnet
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
 public class TestGauss3d 
 {	
@@ -201,7 +201,10 @@ public class TestGauss3d
 	/**
 	 * Adds additive gaussian noise: i = i + gauss(x, sigma)
 	 * 
-	 * @param amount - how many times sigma
+	 * @param img - to which image
+	 * @param rnd - random num generator
+	 * @param sigma - sigma
+	 * @param onlyPositive - if it can be negative
 	 * @return the signal-to-noise ratio (measured)
 	 */
 	public static double addGaussianNoise( final Img< FloatType > img, final Random rnd, final float sigma, boolean onlyPositive )

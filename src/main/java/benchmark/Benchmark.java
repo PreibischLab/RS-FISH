@@ -47,9 +47,9 @@ import test.TestGauss2d;
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see http://www.gnu.org/licenses/.
  * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de) & Timothee Lionnet
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
 public class Benchmark 
 {
@@ -490,10 +490,6 @@ public class Benchmark
 		return Math.sqrt( dist );
 	}
 
-	/**
-	 * @param args
-	 * @throws ImgIOException 
-	 */
 	public static void main(String[] args) 
 	{
 		//final String dir = "documents/Images For Stephan/Tests/";

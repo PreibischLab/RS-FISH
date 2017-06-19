@@ -30,9 +30,9 @@ import net.imglib2.view.Views;
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see http://www.gnu.org/licenses/.
  * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de) & Timothee Lionnet
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
 public class Spot implements RealLocalizable
 {
@@ -165,8 +165,9 @@ public class Spot implements RealLocalizable
 	 * @param derivative - the derivative image
 	 * @param normalizer - potential per-spot normalization of the derivative image (can be null)
 	 * @param spotSize - the support region for each spot
+	 * @param <T> - type
 	 * 
-	 * @return
+	 * @return list of spots
 	 */
 	public static <T extends RealType<T> > ArrayList< Spot > extractSpots(
 			final Interval interval,

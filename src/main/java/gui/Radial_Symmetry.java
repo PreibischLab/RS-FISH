@@ -142,8 +142,6 @@ public class Radial_Symmetry implements PlugIn
 			
 			// ImageJFunctions.show(resImg).setTitle("Do use the dots?");
 		}
-
-
 	}
 	
 	// DEBUG: 
@@ -213,7 +211,7 @@ public class Radial_Symmetry implements PlugIn
 	}
 
 	// TODO: POLISH
-	/**
+	/*
 	 * shows the initial GUI dialog 
 	 * user has to choose 
 	 * an image 

@@ -16,9 +16,9 @@ import mpicbg.models.Point;
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see http://www.gnu.org/licenses/.
  * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de) & Timothee Lionnet
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
 public class OrientedPoint extends Point
 {
@@ -72,10 +72,10 @@ public class OrientedPoint extends Point
 	 * angle between this points orientation
 	 * the direction from this point to p (in world coordinates).
 	 * 
-	 * @param p
+	 * @param p the angle towards this point
 	 * @return angle in radians [0, pi]
 	 */
-	public double angleTo( Point p )
+	public double angleTo( final Point p )
 	{
 		double len = 0;
 		for ( int d = 0; d < ow.length; ++d )

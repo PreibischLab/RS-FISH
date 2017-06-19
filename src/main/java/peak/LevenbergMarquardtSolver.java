@@ -35,12 +35,12 @@ import Jama.Matrix;
  * the GPL. There are various small tweaks for robustness and speed, mainly a first step to derive 
  * a crude estimate, based on maximum-likelihood analytic formulae.
  *
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2011
+ * @author Jean-Yves Tinevez jeanyves.tinevez@gmail.com 2011
  * @author 2012
  */
 public class LevenbergMarquardtSolver {
 
-	/**
+	/*
 	 * Calculate the current sum-squared-error
 	 */
 	public static final double chiSquared(final double[][] x, final double[] a, final double[] y, final FitFunction f)  {
@@ -62,12 +62,14 @@ public class LevenbergMarquardtSolver {
 	 * 
 	 * @param x array of domain points, each may be multidimensional
 	 * @param y corresponding array of values
+	 * @param f the function
 	 * @param a the parameters/state of the model
 	 * @param lambda blend between steepest descent (lambda high) and
 	 *	jump to bottom of quadratic (lambda zero). Start with 0.001.
 	 * @param termepsilon termination accuracy (0.01)
 	 * @param maxiter	stop and return after this many iterations if not done
 	 *
+	 * @throws Exception if somehting goes wrong
 	 * @return the number of iteration used by minimization
 	 */
 	public static final int solve(double[][] x, double[] a, double[] y, FitFunction f,

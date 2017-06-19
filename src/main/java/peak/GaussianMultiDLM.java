@@ -41,7 +41,7 @@ package peak;
  * <pre>S = ∑ bᵢ × (xᵢ - x₀ᵢ)² </pre>
  * 
  *
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2012
+ * @author Jean-Yves Tinevez jeanyves.tinevez@gmail.com 2012
  */
 public class GaussianMultiDLM implements FitFunction {
 
@@ -80,9 +80,9 @@ public class GaussianMultiDLM implements FitFunction {
 		}
 	}
 
-	/**
+	/*
 	 * Not used but hey.
-	 * @return the hessian value for row r and column c
+	 * returns the hessian value for row r and column c
 	 */
 	public final double hessian(final double[] x, final double[] a, int r, int c) {
 		if (c < r) {

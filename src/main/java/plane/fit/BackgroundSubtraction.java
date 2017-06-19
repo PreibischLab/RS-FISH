@@ -78,7 +78,7 @@ public class BackgroundSubtraction {
 	 * @param imgMin - min coordinates of the underlying image
 	 * @param imgMax - max coordinates of the underlying image
 	 * @param offset - peak radius
-	 * @param numDimensions
+	 * @param numDimensions - num dims
 	 */
 	public static void getBoundaries(long[] peak, long[] min, long [] max, long [] imgMin, long [] imgMax, long offset, int numDimensions){	
 		for (int d = 0; d < numDimensions; ++d){
@@ -93,7 +93,7 @@ public class BackgroundSubtraction {
 	 * calculates the number of boundary points that will be used for plane fitting
 	 * @param min - min coordinates of the bounding box
 	 * @param max - max coordinates of the bounding box 
-	 * @param numDimensions 
+	 * @param numDimensions - number of dimensions
 	 * @return number of boundary points
 	 */
 	public static long getNumPoints(long[] min, long [] max, int numDimensions){

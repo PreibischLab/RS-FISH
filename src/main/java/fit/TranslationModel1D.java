@@ -26,9 +26,9 @@ import mpicbg.models.PointMatch;
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see http://www.gnu.org/licenses/.
  * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de) & Timothee Lionnet
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
 public class TranslationModel1D extends AbstractModel< TranslationModel1D > implements InvertibleCoordinateTransform
 {
@@ -126,7 +126,7 @@ public class TranslationModel1D extends AbstractModel< TranslationModel1D > impl
 	 * 1 tx
 	 * 0 1
 	 * 
-	 * @param tx
+	 * @param tx - translation
 	 */
 	final public void set( final float tx )
 	{

@@ -24,6 +24,7 @@ import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
@@ -31,6 +32,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
+import test.TestGauss3d;
 
 public class Radial_Symmetry implements PlugIn
 {
@@ -59,8 +61,9 @@ public class Radial_Symmetry implements PlugIn
 		{
 			if ( imp.getNChannels() > 1 )
 			{
-				IJ.log("Multichannel images are not supported yet ...");
-				return;
+				// TODO: REMOVE: This part is fixed 
+				// IJ.log("Multichannel images are not supported yet ...");
+				// return;
 			}
 
 			// set all defaults + initialize the parameters with default values
@@ -114,6 +117,8 @@ public class Radial_Symmetry implements PlugIn
 			RandomAccessibleInterval<FloatType> rai = new TypeTransformingRandomAccessibleInterval<>( ImageJFunctions.wrap(imp), new RealTypeNormalization<>( min, max - min ), new FloatType() );
 			// x y c z t 
 			int[] impDim = imp.getDimensions();
+						
+			// ImageJFunctions.show(rai).setTitle("IS THIS NORMALIZED?");
 
 			long[] dim; // stores x y z dimensions
 			if (impDim[3] == 1) { // if there is no z dimension 
@@ -125,24 +130,41 @@ public class Radial_Symmetry implements PlugIn
 			RandomAccessibleInterval<FloatType> timeFrame;
 			ArrayList<Spot> allSpots = new ArrayList<>(1);
 
-			for (int c = 1; c <= imp.getNChannels(); c++) {
-				for (int t = 1; t <= imp.getNFrames(); t++) {
-					// "-1" because of the imp offset 
-					// ImageJFunctions.show(rai).setTitle("rai");
-					
-					timeFrame = copyImg(rai, c - 1, t - 1, dim, impDim);
+			for (int c = 0; c < imp.getNChannels(); c++) {
+				for (int t = 0; t < imp.getNFrames(); t++) {
+					// "-1" because of the imp offset 					
+					timeFrame = copyImg(rai, c, t, dim, impDim);
 					// ImageJFunctions.show(timeFrame);
-					// if (true)break;
-					// TODO: process img
 					RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
 					allSpots.addAll(rs.getSpots());
 				}
 			}
-
+	
+			// DEBUG: REMOVE
+			Img<FloatType> resImg = new ArrayImgFactory<FloatType>().create(rai, new FloatType());
+			double [] resSigma = new double[]{params.getSupportRadius(), params.getSupportRadius(), params.getSupportRadius()};
+			showPoints(resImg, allSpots, resSigma);
+			
+			ImageJFunctions.show(resImg).setTitle("Do use the dots?");
 		}
 
 
 	}
+	
+	// DEBUG: 
+	public static void showPoints(Img <FloatType> image, ArrayList<Spot> spots, double [] sigma){		
+		for ( int i = 0; i < spots.size(); ++i )
+		{
+			// final Spot spot = spots.get(i);		
+			// if not discarded
+			if (spots.get(i).numRemoved != spots.get(i).candidates.size()){
+				final double[] location = new double[]{spots.get(i).getFloatPosition(0), spots.get(i).getFloatPosition(1), spots.get(i).getFloatPosition(2)};
+				TestGauss3d.addGaussian( image, location, sigma );
+			}
+			
+		}
+	}
+	
 
 	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel, long time, long[] dim, int[] impDim) {
 		// this one will be returned
@@ -248,7 +270,7 @@ public class Radial_Symmetry implements PlugIn
 
 	public static void main(String[] args){
 
-		File path = new File( "src/main/resources/multiple_dots.tif" );
+		File path = new File( "/Users/kkolyva/Documents/data/Simulated_3D.tif" );
 		// path = path.concat("test_background.tif");
 
 		if ( !path.exists() )

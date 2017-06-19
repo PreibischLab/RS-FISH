@@ -157,7 +157,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	{
 		this.imagePlus = imp;
 		this.min = min;
-		this.max = max;
+		this.max = max;		
 		
 		if ( Double.isNaN( min ) || Double.isNaN( max ) )
 			this.normalize = false;
@@ -200,7 +200,6 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		
 		// initialize parameters using defaults
 		initParameters( imagePlus );
-		
 
 		// initialize variables for interactive preview
 		// called before updatePreview() !
@@ -705,7 +704,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 	public static void main(String[] args)
 	{
-		File path = new File( "/Users/kkolyva/Desktop/2017-06-14-radial-symmetry/SEA12_dpy23_wdr52_mdh1_005.nd2 - SEA12_dpy23_wdr52_mdh1_005.nd2 (series 08) - C=0.tif" );
+		File path = new File( "/Users/kkolyva/Documents/data/Simulated_3D.tif" );
 		// path = path.concat("test_background.tif");
 
 		if ( !path.exists() )

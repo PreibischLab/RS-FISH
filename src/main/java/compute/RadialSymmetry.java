@@ -33,7 +33,6 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 												// through Beanshell
 	public static int numIterations = 100; // not a parameter, can be changed
 											// through Beanshell
-
 	ArrayList<RefinedPeak<Point>> peaks;
 	Gradient derivative;
 
@@ -68,7 +67,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 
 		float sigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
 		
-		ImageJFunctions.show(img).setTitle("is this one a 3D");
+		// ImageJFunctions.show(img).setTitle("is this one a 3D");
 		
 
 		if (img.numDimensions() == 2 || img.numDimensions() == 3) {
@@ -76,8 +75,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			// function of sigma(z) therefore we have to adjust the threshold;
 			// to fix the problem we use an extra factor =0.5 which will
 			// decrease the threshold value; this might help in some cases but
-			// z-extrasmoothing
-			// is image depended
+			// z-extra smoothing is image depended
 
 			long sTime = System.currentTimeMillis();
 			final float tFactor = img.numDimensions() == 3 ? 0.5f : 1.0f;

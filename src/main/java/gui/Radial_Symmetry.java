@@ -95,8 +95,6 @@ public class Radial_Symmetry implements PlugIn
 			calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); // new double[]{1, 1, 1};
 
 			RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
-
-			//if (true) return;
 			
 			// which type of imageplus image is it?
 			int type = -1;
@@ -117,8 +115,6 @@ public class Radial_Symmetry implements PlugIn
 			RandomAccessibleInterval<FloatType> rai = new TypeTransformingRandomAccessibleInterval<>( ImageJFunctions.wrap(imp), new RealTypeNormalization<>( min, max - min ), new FloatType() );
 			// x y c z t 
 			int[] impDim = imp.getDimensions();
-						
-			// ImageJFunctions.show(rai).setTitle("IS THIS NORMALIZED?");
 
 			long[] dim; // stores x y z dimensions
 			if (impDim[3] == 1) { // if there is no z dimension 
@@ -134,18 +130,17 @@ public class Radial_Symmetry implements PlugIn
 				for (int t = 0; t < imp.getNFrames(); t++) {
 					// "-1" because of the imp offset 					
 					timeFrame = copyImg(rai, c, t, dim, impDim);
-					// ImageJFunctions.show(timeFrame);
 					RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
 					allSpots.addAll(rs.getSpots());
 				}
 			}
 	
 			// DEBUG: REMOVE
-			Img<FloatType> resImg = new ArrayImgFactory<FloatType>().create(rai, new FloatType());
-			double [] resSigma = new double[]{params.getSupportRadius(), params.getSupportRadius(), params.getSupportRadius()};
-			showPoints(resImg, allSpots, resSigma);
+			// Img<FloatType> resImg = new ArrayImgFactory<FloatType>().create(rai, new FloatType());
+			// double [] resSigma = new double[]{params.getSupportRadius(), params.getSupportRadius(), params.getSupportRadius()};
+			// showPoints(resImg, allSpots, resSigma);
 			
-			ImageJFunctions.show(resImg).setTitle("Do use the dots?");
+			// ImageJFunctions.show(resImg).setTitle("Do use the dots?");
 		}
 
 

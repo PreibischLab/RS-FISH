@@ -323,6 +323,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		ransacResults(spots);
 	}
 
+	// TODO: Is this one necessary here? 
 	protected void applyBackgroundSubtraction(ArrayList<long[]> peaksLocal, RandomAccessibleInterval <FloatType> image, long [] fullImgMax){
 		int numDimensions = image.numDimensions();
 

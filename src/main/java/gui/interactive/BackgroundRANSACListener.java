@@ -33,8 +33,8 @@ public class BackgroundRANSACListener implements ItemListener
 			// RANSAC based, open window?
 			if ( parent.bkWindow == null )
 			{
-				System.out.println( parent.bkWindow.getFrame().isVisible() );
 				parent.bkWindow = new BackgroundRANSACWindow( parent );
+				// System.out.println( parent.bkWindow.getFrame().isVisible() );
 			}
 
 			if ( !parent.bkWindow.getFrame().isVisible() )
@@ -42,7 +42,7 @@ public class BackgroundRANSACListener implements ItemListener
 		}
 		else
 		{
-			System.out.println( "hiding frame" );
+			// System.out.println( "hiding frame" );
 			// not RANSAC based, close window?
 			if ( parent.bkWindow != null && parent.bkWindow.getFrame().isVisible() )
 				parent.bkWindow.getFrame().setVisible( false );

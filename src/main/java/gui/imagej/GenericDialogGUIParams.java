@@ -1,5 +1,8 @@
 package gui.imagej;
 
+import java.awt.Choice;
+import java.awt.Label;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -9,6 +12,7 @@ import parameters.GUIParams;
 // used for the advanced option of the initial dialog
 public class GenericDialogGUIParams 
 {
+	// TODO: This one use useless
 	final GUIParams guiParams;
 		
 	public GenericDialogGUIParams( final GUIParams guiParams ) {
@@ -28,6 +32,8 @@ public class GenericDialogGUIParams
 		gd.addNumericField("Inlier_Ratio:", GUIParams.defaultInlierRatio, 2);
 		gd.addNumericField("Max_Error:", GUIParams.defaultMaxError, 2);
 
+		gd.addChoice("Local Background Subtraction:", GUIParams.bsMethods, GUIParams.bsMethods[GUIParams.defaultBsMethod] );
+		
 		gd.showDialog();
 		if (gd.wasCanceled()) 
 			canceled = true;
@@ -38,6 +44,7 @@ public class GenericDialogGUIParams
 		int supportRadius = (int)Math.round(gd.getNextNumber());
 		float inlierRatio = (float)gd.getNextNumber();
 		float maxError = (float)gd.getNextNumber();	
+		int bsMethod = gd.getNextChoiceIndex();
 		
 		// wrong values in the fields
 		if (sigma == Double.NaN || threshold == Double.NaN ||  supportRadius == Double.NaN || inlierRatio == Double.NaN || maxError == Double.NaN )
@@ -48,6 +55,7 @@ public class GenericDialogGUIParams
 			guiParams.setSupportRadius(supportRadius);
 			guiParams.setInlierRatio(inlierRatio);
 			guiParams.setMaxError(maxError);
+			guiParams.setBsMethod(bsMethod);
 		}
 				
 		// TODO: might be unnecessary if you won't add code below

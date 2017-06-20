@@ -104,7 +104,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				}
 			}
 
-			IJ.log( "peaks: " + simplifiedPeaks.size() );
+			// IJ.log( "peaks: " + simplifiedPeaks.size() );
 
 			if (debug) {
 				System.out.println("Timing: Copying peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
@@ -136,7 +136,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				throw new RuntimeException("Unknown bsMethod: " + bsMethod);
 
 			spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
-			IJ.log( "num spots: " + spots.size() );
+			// IJ.log( "num spots: " + spots.size() );
 			if (debug) {
 				System.out.println("Timing: Extract peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
 				sTime = System.currentTimeMillis();
@@ -144,11 +144,11 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 
 			Spot.ransac(spots, numIterations, maxError, inlierRatio);
 			
-			for (final Spot spot : spots)
-			{
-				spot.computeAverageCostInliers();
-				IJ.log( "removed " + spot.numRemoved );
-			}
+//			for (final Spot spot : spots)
+//			{
+//				spot.computeAverageCostInliers();
+//				IJ.log( "removed " + spot.numRemoved );
+//			}
 			
 			if (debug) {
 				System.out.println("Timing : RANSAC peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
@@ -186,7 +186,6 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			if (spot.numRemoved != spot.candidates.size()){
 				rt.incrementCounter();
 				for (int d = 0; d < spot.numDimensions(); ++d) {
-					// FIXME: might be the wrong output
 					rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.2f", spot.getFloatPosition(d)));
 				}
 			}

@@ -21,7 +21,6 @@ public class GenericDialogGUIParams
 	}
 	
 	public void automaticDialog(){
-		// TODO: add caching for variables
 		boolean canceled = false;
 
 		GenericDialog gd = new GenericDialog("Set Stack Parameters");

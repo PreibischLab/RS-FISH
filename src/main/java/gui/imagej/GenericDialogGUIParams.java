@@ -31,7 +31,7 @@ public class GenericDialogGUIParams
 		gd.addNumericField("Inlier_Ratio:", GUIParams.defaultInlierRatio, 2);
 		gd.addNumericField("Max_Error:", GUIParams.defaultMaxError, 2);
 
-		gd.addChoice("Local Background Subtraction:", GUIParams.bsMethods, GUIParams.bsMethods[GUIParams.defaultBsMethod] );
+		gd.addChoice("Local_Background_Subtraction:", GUIParams.bsMethods, GUIParams.bsMethods[GUIParams.defaultBsMethod] );
 		
 		gd.showDialog();
 		if (gd.wasCanceled()) 

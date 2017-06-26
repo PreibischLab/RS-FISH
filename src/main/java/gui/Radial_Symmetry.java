@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import compute.RadialSymmetry;
 import fit.Spot;
+import gauss.GaussianMaskFit;
 import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
@@ -18,6 +19,8 @@ import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
+import mpicbg.spim.io.IOFunctions;
+
 import net.imglib2.Cursor;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
@@ -132,15 +135,48 @@ public class Radial_Symmetry implements PlugIn
 					timeFrame = copyImg(rai, c, t, dim, impDim);
 					RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
 					allSpots.addAll(rs.getSpots());
+					
+
+					
+					// user wants to have the gauss fit here
+					if (gaussFit){
+						// TODO: Additional gauss fit should trigger here? 
+						// since the locations of all peaks are known here
+						// we can get the value for the gauss fit 
+						
+						// TODO: might not work on 4D images
+						for(Spot spot : rs.getSpots()){
+							
+							long [] minSpot = new long[timeFrame.numDimensions()];
+							long [] maxSpot = new long[timeFrame.numDimensions()];
+							double [] sigmaSpot = new double[timeFrame.numDimensions()];
+									
+							// check that center is correct
+							GaussianMaskFit.gaussianMaskFit(Views.interval(timeFrame, minSpot, maxSpot), spot.getCenter(), sigmaSpot, null);
+						}
+										
+//						GaussianMaskFit.gaussianMaskFit( 
+//								final RandomAccessibleInterval<FloatType> signalInterval, 
+//								final double[] location, 
+//								final double[] sigma, 
+//								final Img< FloatType > ransacWeight )
+										
+					}					
+					
+					IOFunctions.println("t: " + t + " " + "c: " + c);
 				}
 			}
-	
+			
+			RadialSymmetry.ransacResultTable(allSpots);
+			
 			// DEBUG: REMOVE
 			// Img<FloatType> resImg = new ArrayImgFactory<FloatType>().create(rai, new FloatType());
 			// double [] resSigma = new double[]{params.getSupportRadius(), params.getSupportRadius(), params.getSupportRadius()};
 			// showPoints(resImg, allSpots, resSigma);
 			
 			// ImageJFunctions.show(resImg).setTitle("Do use the dots?");
+			
+			System.out.println("ONLY ONCE?");
 		}
 	}
 	

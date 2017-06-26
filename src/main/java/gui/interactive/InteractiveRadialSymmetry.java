@@ -198,7 +198,8 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			imagePlus.setRoi( rectangle );
 		}
 		
-		// initialize parameters using defaults
+		// TODO: initialize parameters using defaults
+		// right now sets the calibration only
 		initParameters( imagePlus );
 
 		// initialize variables for interactive preview

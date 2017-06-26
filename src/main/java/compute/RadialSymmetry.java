@@ -154,11 +154,12 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				System.out.println("Timing : RANSAC peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
 				sTime = System.currentTimeMillis();
 			}
-			ransacResultTable(spots);
-			if (debug) {
-				System.out.println("Timing : Results peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
-				sTime = System.currentTimeMillis();
-			}
+			// TODO: Moved to the main function
+// 			ransacResultTable(spots);
+//			if (debug) {
+//				System.out.println("Timing : Results peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
+//				sTime = System.currentTimeMillis();
+//			}
 
 		} else
 			// TODO: if the code is organized correctly this part should be
@@ -176,7 +177,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 
 	// this function will show the result of RANSAC
 	// proper window -> dialog view with the columns
-	public void ransacResultTable(final ArrayList<Spot> spots) {
+	public static void ransacResultTable(final ArrayList<Spot> spots) {
 		IOFunctions.println("Running RANSAC ... ");
 		// real output
 		ResultsTable rt = new ResultsTable();

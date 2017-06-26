@@ -17,7 +17,7 @@ public class DoGWindow
 	{
 		this.parent = parent;
 		this.doGFrame = new Frame( "Adjust Difference-of-Gaussian Values" );
-		doGFrame.setSize(360, 170);
+		doGFrame.setSize(360, 150);
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
@@ -72,9 +72,9 @@ public class DoGWindow
 		int bInBottom = 0;
 		int bInLeft = bInRight;
 
-		++c.gridy;
-		c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);
-		doGFrame.add(button, c);
+		 ++c.gridy;
+		 c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);
+		 doGFrame.add(button, c);
 
 		++c.gridy;
 		c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);

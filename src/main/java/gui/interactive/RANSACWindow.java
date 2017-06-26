@@ -138,6 +138,11 @@ public class RANSACWindow
 		++gbc.gridy;
 		gbc.insets = new Insets(0, 50, 0, 50);
 		ransacFrame.add(cancel, gbc);
+		
+		/* Screen positioning */
+		int xOffset = 20; 
+		int yOffset = 230;
+		ransacFrame.setLocation(xOffset, yOffset);
 
 		// /* Configuration */
 		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(parent,supportRegionText, parent.supportRadiusMin,

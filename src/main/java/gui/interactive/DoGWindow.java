@@ -79,6 +79,12 @@ public class DoGWindow
 		++c.gridy;
 		c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);
 		doGFrame.add(cancel, c);
+		
+		/* On screen positioning */
+		/* Screen positioning */
+		int xOffset = 20; 
+		int yOffset = 20;
+		doGFrame.setLocation(xOffset, yOffset);
 
 		/* Configuration */
 		sigma1Bar.addAdjustmentListener(new SigmaListener(parent,sigmaText1, parent.sigmaMin, parent.sigmaMax, parent.scrollbarSize, sigma1Bar));

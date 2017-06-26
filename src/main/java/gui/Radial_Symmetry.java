@@ -15,19 +15,14 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.io.Opener;
-import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
 import mpicbg.spim.io.IOFunctions;
-
 import net.imglib2.Cursor;
-import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
@@ -278,6 +273,7 @@ public class Radial_Symmetry implements PlugIn
 			initialDialog.addChoice("Image_for_detection", imgList, imgList[defaultImg]);
 			initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
 			initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
+			
 			initialDialog.showDialog();
 
 			if ( initialDialog.wasCanceled() )

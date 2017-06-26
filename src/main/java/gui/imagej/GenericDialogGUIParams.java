@@ -20,7 +20,7 @@ public class GenericDialogGUIParams
 		GenericDialog gui;
 	}
 	
-	public void automaticDialog(){
+	public boolean automaticDialog(){
 		boolean canceled = false;
 
 		GenericDialog gd = new GenericDialog("Set Stack Parameters");
@@ -36,32 +36,31 @@ public class GenericDialogGUIParams
 		gd.showDialog();
 		if (gd.wasCanceled()) 
 			canceled = true;
-
-		// TODO: check if the values are numbers 
-		float sigma = (float)gd.getNextNumber();
-		float threshold = (float)gd.getNextNumber();
-		int supportRadius = (int)Math.round(gd.getNextNumber());
-		float inlierRatio = (float)gd.getNextNumber();
-		float maxError = (float)gd.getNextNumber();	
-		int bsMethod = gd.getNextChoiceIndex();
-		
-		// wrong values in the fields
-		if (sigma == Double.NaN || threshold == Double.NaN ||  supportRadius == Double.NaN || inlierRatio == Double.NaN || maxError == Double.NaN )
-			canceled = true;
 		else{
-			guiParams.setSigmaDog(sigma);
-			guiParams.setThresholdDoG(threshold);
-			guiParams.setSupportRadius(supportRadius);
-			guiParams.setInlierRatio(inlierRatio);
-			guiParams.setMaxError(maxError);
-			guiParams.setBsMethod(bsMethod);
+			// TODO: check if the values are numbers 
+			float sigma = (float)gd.getNextNumber();
+			float threshold = (float)gd.getNextNumber();
+			int supportRadius = (int)Math.round(gd.getNextNumber());
+			float inlierRatio = (float)gd.getNextNumber();
+			float maxError = (float)gd.getNextNumber();	
+			int bsMethod = gd.getNextChoiceIndex();
+			
+			// wrong values in the fields
+			if (sigma == Double.NaN || threshold == Double.NaN ||  supportRadius == Double.NaN || inlierRatio == Double.NaN || maxError == Double.NaN )
+				canceled = true;
+			else{
+				// set the parameters
+				guiParams.setSigmaDog(sigma);
+				guiParams.setThresholdDoG(threshold);
+				guiParams.setSupportRadius(supportRadius);
+				guiParams.setInlierRatio(inlierRatio);
+				guiParams.setMaxError(maxError);
+				guiParams.setBsMethod(bsMethod);
+				
+				// the default values are set in the Radial_Symmetry.java
+			}
 		}
 				
-		// TODO: might be unnecessary if you won't add code below
-		if (canceled)
-			return;
-		
-		// TODO: SHOULD I RETURN THE PARAMETERS HERE? 
-		// ARE THEY CHANGED?
-	}
+		return canceled;
+		}
 }

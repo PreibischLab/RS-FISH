@@ -55,7 +55,9 @@ public class Radial_Symmetry implements PlugIn
 	public void run( String arg )
 	{	
 
-		if ( !initialDialog() ) // if user didn't cancel
+		boolean wasCanceled = initialDialog();
+		
+		if ( !wasCanceled  ) // if user didn't cancel
 		{
 			if ( imp.getNChannels() > 1 )
 			{
@@ -71,7 +73,11 @@ public class Radial_Symmetry implements PlugIn
 			{
 				// set the parameters in the manual mode
 				GenericDialogGUIParams gdGUIParams = new GenericDialogGUIParams( params );
-				gdGUIParams.automaticDialog();
+				wasCanceled = gdGUIParams.automaticDialog();
+				
+				if (wasCanceled) 
+					return;
+				
 				// calculations are performed further
 			}
 			else // interactive

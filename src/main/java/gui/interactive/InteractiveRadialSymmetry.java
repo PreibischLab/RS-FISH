@@ -706,7 +706,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 	public static void main(String[] args)
 	{
-		File path = new File( "/Users/kkolyva/Documents/data/Simulated_3D.tif" );
+		File path = new File( "/media/milkyklim/Samsung_T3/2017-06-26-radial-symmetry-test/Simulated_3D.tif" );
 		// path = path.concat("test_background.tif");
 
 		if ( !path.exists() )

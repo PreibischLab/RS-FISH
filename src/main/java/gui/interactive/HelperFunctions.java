@@ -246,9 +246,10 @@ public class HelperFunctions {
 				IJ.log( "y: " + calValues[1] );
 				if (numDimensions == 3)
 					IJ.log( "z: " + calValues[2] );
-				
+		
 				int iMax = 0;
 				for (int d = 0; d < numDimensions; d++){
+					calibration[d] = calValues[d];
 					if (calibration[d] < calibration[iMax])
 						iMax = d;
 				}

@@ -17,7 +17,7 @@ public class GenericDialogGUIParams
 		
 	public GenericDialogGUIParams( final GUIParams guiParams ) {
 		this.guiParams = guiParams;
-		GenericDialog gui;
+		// GenericDialog gui;
 	}
 	
 	public boolean automaticDialog(){

@@ -14,9 +14,12 @@ public class GUIParams
 	public static float defaultBsInlierRatio = (float) (75.0 / 100.0);
 	public static float defaultBsMaxError = 0.05f;
 	public static int defaultBsMethod = 0;
+	
+	public static boolean defaultRANSAC = true;
 
 	// RANSAC parameters
 	// current value
+	boolean RANSAC;
 	float maxError, inlierRatio;
 	int supportRadius;
 
@@ -33,6 +36,7 @@ public class GUIParams
 	{
 		setSigmaDog(defaultSigma);
 		setThresholdDoG(defaultThreshold);
+		setRANSAC(defaultRANSAC);
 		setMaxError(defaultMaxError);		
 		setInlierRatio(defaultInlierRatio);
 		setSupportRadius(defaultSupportRadius);
@@ -45,6 +49,7 @@ public class GUIParams
 	public void printParams(){
 		System.out.println("SigmaDoG      : " + sigma);
 		System.out.println("ThresholdDoG  : " + threshold);
+		System.out.println("RANSAC        : " + RANSAC);
 		System.out.println("MaxError      : " + maxError);
 		System.out.println("InlierRatio   : " + inlierRatio);
 		System.out.println("supportRadius : " + supportRadius);
@@ -53,6 +58,7 @@ public class GUIParams
 	public void printDefaultParams(){
 		System.out.println("DSigmaDoG      : " + defaultSigma);
 		System.out.println("DThresholdDoG  : " + defaultThreshold);
+		System.out.println("DRANSAC 	   : " + defaultRANSAC);
 		System.out.println("DMaxError      : " + defaultMaxError);
 		System.out.println("DInlierRatio   : " + defaultInlierRatio);
 		System.out.println("DSupportRadius : " + defaultSupportRadius);
@@ -69,6 +75,9 @@ public class GUIParams
 	}
 
 	// RANSAC 
+	public boolean getRANSAC(){
+		return RANSAC;
+	}
 	public float getMaxError(){
 		return maxError;
 	}
@@ -100,6 +109,7 @@ public class GUIParams
 		defaultSigma = sigma;	
 		defaultThreshold = threshold;
 		
+		defaultRANSAC = RANSAC;
 		defaultMaxError = maxError;
 		defaultInlierRatio = inlierRatio;
 		defaultSupportRadius = supportRadius;
@@ -119,6 +129,10 @@ public class GUIParams
 	}
 
 	// RANSAC 
+	public void setRANSAC(boolean RANSAC){
+		this.RANSAC = RANSAC;
+	}
+	
 	public void setMaxError(float maxError){
 		this.maxError = maxError;
 	}

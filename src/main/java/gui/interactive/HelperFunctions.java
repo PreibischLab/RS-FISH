@@ -5,6 +5,7 @@ import java.awt.Font;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 
 import fit.Spot;
 import ij.IJ;
@@ -20,6 +21,10 @@ import net.imglib2.RealLocalizable;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.Type;
+import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
@@ -199,8 +204,34 @@ public class HelperFunctions {
 				minmax[0] = val.getRealDouble();
 		}
 		return minmax;
-	}
+	}	
 	
+	
+	public static < T extends Comparable< T > & RealType< T > > void computeMinMax(
+	        final RandomAccessibleInterval< T > input, final T min, final T max )
+	    {
+	        // create a cursor for the image (the order does not matter)
+	        final Iterator< T > iterator = Views.iterable(input).iterator();
+	 
+	        // initialize min and max with the first image value
+	        T type = iterator.next();
+	 
+	        min.set( type );
+	        max.set( type );
+	 
+	        // loop over the rest of the data and determine min and max value
+	        while ( iterator.hasNext() )
+	        {
+	            // we need this type more than once
+	            type = iterator.next();
+	 
+	            if ( type.compareTo( min ) < 0 )
+	                min.set( type );
+	 
+	            if ( type.compareTo( max ) > 0 )
+	                max.set( type );
+	        }
+	    }
 	
 	/*
 	 * initialize calibration

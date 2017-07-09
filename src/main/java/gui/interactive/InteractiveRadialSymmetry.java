@@ -318,9 +318,12 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
 
-		Spot.ransac(spots, numIterations, params.getMaxError(), params.getInlierRatio());
-		for (final Spot spot : spots)
-			spot.computeAverageCostInliers();
+		// TODO: CORRECT PLACE TO TURN ON/OFF RANSAC
+		if (params.getRANSAC()){	
+			Spot.ransac(spots, numIterations, params.getMaxError(), params.getInlierRatio());
+			for (final Spot spot : spots)
+				spot.computeAverageCostInliers();
+		}
 		ransacResults(spots);
 	}
 

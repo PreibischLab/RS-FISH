@@ -142,7 +142,9 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				sTime = System.currentTimeMillis();
 			}
 
-			Spot.ransac(spots, numIterations, maxError, inlierRatio);
+			// TODO: IS THIS A PLACE WHERE YOU CAN SKIP RANSAC
+			if (params.getParams().getRANSAC())
+				Spot.ransac(spots, numIterations, maxError, inlierRatio);
 			
 //			for (final Spot spot : spots)
 //			{

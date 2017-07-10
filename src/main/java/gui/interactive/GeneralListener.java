@@ -34,8 +34,9 @@ public class GeneralListener implements AdjustmentListener {
 		String labelText = "";
 		if (valueAdjust == ValueChange.SUPPORTRADIUS) {
 			parent.params.setSupportRadius((int) value);
-			labelText = "Support Region Radius:"; // = " + supportRegion ;
-			textField.setText(Integer.toString( parent.params.getSupportRadius() ));
+			labelText = "Support Region Radius = " + parent.params.getSupportRadius() ;
+			// textField.setText(Integer.toString( parent.params.getSupportRadius() ));
+			// labelText = "Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", parent.params.getInlierRatio());
 		} else if (valueAdjust == ValueChange.INLIERRATIO) {
 			parent.params.setInlierRatio(value);
 			// this is ugly fix of the problem when inlier's ratio is 1.0

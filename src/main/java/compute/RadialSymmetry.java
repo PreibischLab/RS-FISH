@@ -173,7 +173,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 						System.out.println("EXCEPTION CAUGHT");
 					}
 				}
-	
+				
 				double[] knowLocation = new double[]{ 124.52561137015748, 129.88211102199878, 121.78135663923388 };
 				double dist = 0;
 		
@@ -240,8 +240,9 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			// if spot was not discarded
 			if (spot.numRemoved != spot.candidates.size()){
 				rt.incrementCounter();
+				double[] pos = spot.getCenter();	
 				for (int d = 0; d < spot.numDimensions(); ++d) {
-					rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.2f", spot.getFloatPosition(d)));
+					rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.2f", pos[d]));
 				}
 			}
 		}

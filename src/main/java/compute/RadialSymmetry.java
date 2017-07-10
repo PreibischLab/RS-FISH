@@ -31,9 +31,9 @@ import gui.Radial_Symmetry;
 public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 {
 	public static int bsNumIterations = 100; // not a parameter, can be changed
-												// through Beanshell
+	// through Beanshell
 	public static int numIterations = 100; // not a parameter, can be changed
-											// through Beanshell
+	// through Beanshell
 	ArrayList<RefinedPeak<Point>> peaks;
 	Gradient derivative;
 
@@ -86,7 +86,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			}
 
 			derivative = new GradientPreCompute(img);
-			
+
 			if (debug) {
 				System.out.println("Timing: Derivative : " + (System.currentTimeMillis() - sTime) / timingScale);
 				sTime = System.currentTimeMillis();
@@ -95,6 +95,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 			int numDimensions = img.numDimensions();
 			// copy all peaks
+			// TODO: USE FUNCTION FROM HELPERFUNCTIONS
 			for (final RefinedPeak<Point> peak : peaks) {
 				if (-peak.getValue() > threshold) {
 					final long[] coordinates = new long[numDimensions];
@@ -109,13 +110,6 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			if (debug) {
 				System.out.println("Timing: Copying peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
 				sTime = System.currentTimeMillis();
-			}
-			
-			// the size of the RANSAC area
-			final long[] range = new long[numDimensions];
-
-			for (int d = 0; d < numDimensions; ++d) {
-				range[d] = 2 * supportRadius;
 			}
 
 			final NormalizedGradient ng;
@@ -135,37 +129,95 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			else
 				throw new RuntimeException("Unknown bsMethod: " + bsMethod);
 
-			spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
-			// IJ.log( "num spots: " + spots.size() );
-			if (debug) {
-				System.out.println("Timing: Extract peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
-				sTime = System.currentTimeMillis();
+			// the size of the RANSAC area
+			final long[] range = new long[numDimensions];
+
+			for (int d = 0; d < numDimensions; ++d)
+				range[d] = 2 * supportRadius;
+
+			// this is a hack
+			//range[ 2 ] *= 6;
+			System.out.println( "Range: " + Util.printCoordinates(range));
+			
+			double bestDist = Double.MAX_VALUE;
+			double bestScale = -1;
+
+			for (float idx = 0.05f; idx < 2; idx += 0.001f){
+			
+				spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
+						
+				// TODO: HERE OR BEFORE? 
+				// ADD SCALING HERE
+				float scaled = idx;
+				for (int j = 0; j < spots.size(); j++){
+					spots.get(j).updateScale(new float []{1, 1, scaled});
+				}
+	
+	
+				// IJ.log( "num spots: " + spots.size() );
+				if (debug) {
+					// System.out.println("Timing: Extract peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
+					sTime = System.currentTimeMillis();
+				}
+	
+				// TODO: IS THIS A PLACE WHERE YOU CAN SKIP RANSAC
+				if (params.getParams().getRANSAC()){
+					Spot.ransac(spots, numIterations, maxError, inlierRatio);
+				}
+				else{
+					try{
+						Spot.fitCandidates(spots);
+						//IJ.log( "inliers: " + spots.get(0).inliers.size() );
+					}
+					catch(Exception e){
+						System.out.println("EXCEPTION CAUGHT");
+					}
+				}
+	
+				double[] knowLocation = new double[]{ 124.52561137015748, 129.88211102199878, 121.78135663923388 };
+				double dist = 0;
+		
+				double avgInliers = 0;
+				long total = 0;
+				for (final Spot spot : spots)
+				{
+					dist = mpicbg.models.Point.distance( new mpicbg.models.Point( knowLocation), new mpicbg.models.Point( spot.getCenter() ) );
+
+					if ( spot.inliers.size() == 0)
+						continue;
+
+					total++;
+					avgInliers += spot.inliers.size();	
+
+					// IJ.log( "removed " + spot.numRemoved );
+				}
+	
+				if ( dist < bestDist )
+				{
+					bestDist = dist;
+					bestScale = idx;
+				}
+
+				IJ.log(scaled + " " + avgInliers/total + " " + avgInliers + " " + total + " d=" + dist );
 			}
 
-			// TODO: IS THIS A PLACE WHERE YOU CAN SKIP RANSAC
-			if (params.getParams().getRANSAC())
-				Spot.ransac(spots, numIterations, maxError, inlierRatio);
-			
-//			for (final Spot spot : spots)
-//			{
-//				spot.computeAverageCostInliers();
-//				IJ.log( "removed " + spot.numRemoved );
-//			}
-			
+			IJ.log("best:");
+			IJ.log( bestScale + " " + bestDist );
+
 			if (debug) {
 				System.out.println("Timing : RANSAC peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
 				sTime = System.currentTimeMillis();
 			}
+			
 			// TODO: Moved to the main function
-// 			ransacResultTable(spots);
-//			if (debug) {
-//				System.out.println("Timing : Results peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
-//				sTime = System.currentTimeMillis();
-//			}
+			//			ransacResultTable(spots);
+			//			if (debug) {
+			//				System.out.println("Timing : Results peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
+			//				sTime = System.currentTimeMillis();
+			//			}
 
 		} else
-			// TODO: if the code is organized correctly this part should be
-			// redundant
+			// TODO: if the code is organized correctly this part should be removed 
 			System.out.println("Wrong dimensionality. Currently supported 2D/3D!");
 	}
 

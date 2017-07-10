@@ -215,8 +215,11 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		// show the interactive ransac kit
 		this.ransacWindow = new RANSACWindow( this );
-		this.ransacWindow.getFrame().setVisible( true );
-
+		
+		// case when we run RS without ransac
+		boolean useRANSAC = params.getRANSAC();
+		this.ransacWindow.getFrame().setVisible( useRANSAC );
+		
 		// add listener to the imageplus slice slider
 		sliceObserver = new SliceObserver(imagePlus, new ImagePlusListener( this ));
 		// compute first version
@@ -297,8 +300,11 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		// the size of the RANSAC area
 		final long[] range = new long[numDimensions];
 
-		range[ 0 ] = range[ 1 ] = 2*params.getSupportRadius();
-
+		if (params.getRANSAC())
+			range[ 0 ] = range[ 1 ] = 2*params.getSupportRadius();
+		else
+			range[ 0 ] = range[ 1 ] = (long)(2*params.getSigmaDoG() + 1);
+		
 		// ImageJFunctions.show(new GradientPreCompute(extendedRoi).preCompute(extendedRoi));
 		final NormalizedGradient ng;
 
@@ -318,12 +324,22 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
 
-		// TODO: CORRECT PLACE TO TURN ON/OFF RANSAC
-		if (params.getRANSAC()){	
+		// TODO: CORRECT PLACE TO TURN ON/OFF RANSAC		
+		if (params.getRANSAC()){
 			Spot.ransac(spots, numIterations, params.getMaxError(), params.getInlierRatio());
 			for (final Spot spot : spots)
 				spot.computeAverageCostInliers();
 		}
+		else{
+			try{
+				Spot.fitCandidates(spots);
+			}
+			catch(Exception e){
+				System.out.println("EXCEPTION CAUGHT");
+			}
+		}
+				
+		System.out.println("total RS: " + spots.size());
 		ransacResults(spots);
 	}
 
@@ -748,7 +764,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
-		new InteractiveRadialSymmetry( imp, new GUIParams(), min, max );
+		new InteractiveRadialSymmetry( imp, new GUIParams(true), min, max );
 
 		System.out.println("DOGE!");
 	}

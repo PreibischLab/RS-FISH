@@ -12,6 +12,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Overlay;
+import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
 import net.imglib2.Cursor;
@@ -56,7 +57,7 @@ public class HelperFunctions {
 		return filtered;
 	}
 
-	public static < L extends RealLocalizable > void drawRealLocalizable( final Collection< L > peaks, final ImagePlus imp, final double radius, final Color col, final boolean clearFirst)
+	public static < L extends  RealLocalizable > void drawRealLocalizable( final Collection< L > peaks, final ImagePlus imp, final double radius, final Color col, final boolean clearFirst)
 	{
 		// extract peaks to show
 		// we will overlay them with RANSAC result
@@ -75,13 +76,24 @@ public class HelperFunctions {
 		for ( final L peak : peaks )
 		{
 			final float x = peak.getFloatPosition(0);
-			final float y = peak.getFloatPosition(1);
-
-			// +0.5 is to center in on the middle of the detection pixel
-			final OvalRoi or = new OvalRoi( x - radius + 0.5, y - radius + 0.5, radius * 2, radius * 2);
-
-			or.setStrokeColor( col );
-			overlay.add(or);
+			final float y = peak.getFloatPosition(1);	
+			
+			if (!clearFirst){
+				// +0.5 is to center in on the middle of the detection pixel cross roi 
+				final Roi lrv = new Roi(x - radius + 0.5, y + 0.5, radius*2, 0);
+				final Roi lrh = new Roi(x + 0.5, y - radius + 0.5, 0, radius*2);
+						
+				lrv.setStrokeColor( col );
+				lrh.setStrokeColor( col );
+				overlay.add(lrv);
+				overlay.add(lrh);
+			}
+			else{
+				// +0.5 is to center in on the middle of the detection pixel
+				final OvalRoi or = new OvalRoi( x - radius + 0.5, y - radius + 0.5, radius * 2, radius * 2);
+				or.setStrokeColor( col );
+				overlay.add(or);
+			}
 		}
 
 		// this part might be useful for debugging

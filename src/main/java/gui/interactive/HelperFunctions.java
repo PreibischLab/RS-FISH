@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer.Sigma;
+
 import fit.Spot;
 import ij.IJ;
 import ij.ImagePlus;
@@ -218,6 +220,15 @@ public class HelperFunctions {
 		return minmax;
 	}	
 
+	// set the min/max location for the given location  
+	public static void setMinMaxLocation(double[] location, double[] sigma, long[] min, long [] max){
+		int nunDimensions = location.length;
+		
+		for (int d = 0; d < nunDimensions; d++){
+			min[d] = (long) (location[d] - sigma[d] - 1);
+			max[d] = (long) (location[d] + sigma[d] + 1);
+		}
+	}
 
 	public static < T extends Comparable< T > & Type< T > > void computeMinMax(
 			final RandomAccessibleInterval< T > input, final T min, final T max )
@@ -272,6 +283,10 @@ public class HelperFunctions {
 
 		return new double[]{ min, max };
 	}
+	
+	
+	
+	
 
 	/*
 	 * initialize calibration

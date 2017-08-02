@@ -138,6 +138,10 @@ public class Radial_Symmetry implements PlugIn
 
 			RandomAccessibleInterval<FloatType> timeFrame;
 			ArrayList<Spot> allSpots = new ArrayList<>(1);
+			
+			
+			ArrayList<Long> timePoint = new ArrayList<>(0);
+			
 
 			for (int c = 0; c < imp.getNChannels(); c++) {
 				for (int t = 0; t < imp.getNFrames(); t++) {
@@ -145,6 +149,9 @@ public class Radial_Symmetry implements PlugIn
 					timeFrame = copyImg(rai, c, t, dim, impDim);
 					RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
 					allSpots.addAll(rs.getSpots());
+									
+					for (int j = allSpots.size(); j < allSpots.size() + rs.getSpots().size(); j++)
+						timePoint.add(new Long(t));
 										
 					// user wants to have the gauss fit here
 //					if (gaussFit){
@@ -177,12 +184,15 @@ public class Radial_Symmetry implements PlugIn
 				}
 			}
 			
-			RadialSymmetry.ransacResultTable(allSpots);
+			RadialSymmetry.ransacResultTable(allSpots, timePoint);
 			
 			
 			Img<FloatType> ransacPreview = new ArrayImgFactory<FloatType>().create(rai, new FloatType());			
-			Spot.drawRANSACArea(allSpots, ransacPreview);
-			ImageJFunctions.show(ransacPreview);
+			// Spot.drawRANSACArea(allSpots, ransacPreview);
+			
+			// Uncomment after done with 2d + time testing 
+			// Spot.showInliers(allSpots, ransacPreview, params.getMaxError());
+			// ImageJFunctions.show(ransacPreview);
 			
 			// DEBUG: REMOVE
 			// Img<FloatType> resImg = new ArrayImgFactory<FloatType>().create(rai, new FloatType());
@@ -249,7 +259,7 @@ public class Radial_Symmetry implements PlugIn
 								}
 								else
 									if (impDim[4] != 1){ // t 
-										ra.setPosition(new long[]{pos[0], pos[1], pos[2]});
+										ra.setPosition(new long[]{pos[0], pos[1], time}); // fix 
 									}
 									else // 2D image										 
 											ra.setPosition(new long[]{pos[0], pos[1]});
@@ -318,7 +328,7 @@ public class Radial_Symmetry implements PlugIn
 
 	public static void main(String[] args){
 
-		File path = new File( "/Users/kkolyva/Documents/data/singlespot_sigma_1-1-1.tif"); //Simulated_3D_6x_1px.tif" );
+		File path = new File( "/Users/kkolyva/Desktop/2017-07-28-Klim-Dhana-radial-symmetry/Ravg.tif" ); //"/Users/kkolyva/Dropbox/PhD/2017-07-13-lab-meeting/data/part SEA12_dpy23_wdr52_mdh1_006.nd2 - SEA12_dpy23_wdr52_mdh1_006.nd2 (series 13) - C=3-1.tif"); //singlespot_sigma_1-1-1.tif"); //
 		// path = path.concat("test_background.tif");
 
 		if ( !path.exists() )
@@ -332,9 +342,9 @@ public class Radial_Symmetry implements PlugIn
 		if (imp == null)
 			throw new RuntimeException( "image was not loaded" );
 
-		imp.show();
+		imp.show(); 
 
-		imp.setSlice(20);
+		imp.setSlice(121);
 
 		new Radial_Symmetry().run( new String() ); 
 		System.out.println("Doge!");

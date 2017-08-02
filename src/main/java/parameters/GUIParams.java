@@ -4,19 +4,22 @@ public class GUIParams
 {
 	final public static String [] bsMethods = new String []{ "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
 
-	public static float defaultSigma = 5.0f;
-	public static float defaultThreshold = 0.03f;
+	public static float defaultSigma = 1.5f;
+	public static float defaultThreshold = 0.0001f;
 	
 	public static float defaultMaxError = 3.0f;
 	public static float defaultInlierRatio = (float) (75.0 / 100.0);
-	public static int defaultSupportRadius = 5;
+	public static int defaultSupportRadius = 7;
 	
 	public static float defaultBsInlierRatio = (float) (75.0 / 100.0);
 	public static float defaultBsMaxError = 0.05f;
 	public static int defaultBsMethod = 0;
+	
+	public static boolean defaultRANSAC = true;
 
 	// RANSAC parameters
 	// current value
+	boolean RANSAC;
 	float maxError, inlierRatio;
 	int supportRadius;
 
@@ -29,10 +32,11 @@ public class GUIParams
 	// current
 	float sigma, threshold;
 
-	public GUIParams()
+	public GUIParams(boolean RANSAC)
 	{
 		setSigmaDog(defaultSigma);
 		setThresholdDoG(defaultThreshold);
+		setRANSAC(RANSAC);
 		setMaxError(defaultMaxError);		
 		setInlierRatio(defaultInlierRatio);
 		setSupportRadius(defaultSupportRadius);
@@ -45,6 +49,7 @@ public class GUIParams
 	public void printParams(){
 		System.out.println("SigmaDoG      : " + sigma);
 		System.out.println("ThresholdDoG  : " + threshold);
+		System.out.println("RANSAC        : " + RANSAC);
 		System.out.println("MaxError      : " + maxError);
 		System.out.println("InlierRatio   : " + inlierRatio);
 		System.out.println("supportRadius : " + supportRadius);
@@ -53,6 +58,7 @@ public class GUIParams
 	public void printDefaultParams(){
 		System.out.println("DSigmaDoG      : " + defaultSigma);
 		System.out.println("DThresholdDoG  : " + defaultThreshold);
+		System.out.println("DRANSAC 	   : " + defaultRANSAC);
 		System.out.println("DMaxError      : " + defaultMaxError);
 		System.out.println("DInlierRatio   : " + defaultInlierRatio);
 		System.out.println("DSupportRadius : " + defaultSupportRadius);
@@ -69,6 +75,9 @@ public class GUIParams
 	}
 
 	// RANSAC 
+	public boolean getRANSAC(){
+		return RANSAC;
+	}
 	public float getMaxError(){
 		return maxError;
 	}
@@ -100,6 +109,7 @@ public class GUIParams
 		defaultSigma = sigma;	
 		defaultThreshold = threshold;
 		
+		defaultRANSAC = RANSAC;
 		defaultMaxError = maxError;
 		defaultInlierRatio = inlierRatio;
 		defaultSupportRadius = supportRadius;
@@ -119,6 +129,10 @@ public class GUIParams
 	}
 
 	// RANSAC 
+	public void setRANSAC(boolean RANSAC){
+		this.RANSAC = RANSAC;
+	}
+	
 	public void setMaxError(float maxError){
 		this.maxError = maxError;
 	}

@@ -113,7 +113,7 @@ public class GaussianMaskFit
 			
 			N = sumSN / sumSS;
 			
-			//System.out.println( i + ": " + Util.printCoordinates( location )  + " N: " + N );
+			System.out.println( i + ": " + Util.printCoordinates( location )  + " N: " + N );
 			
 			++i;
 			

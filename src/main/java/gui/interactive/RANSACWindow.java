@@ -37,9 +37,9 @@ public class RANSACWindow
 		final Scrollbar supportRegionScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + parent.scrollbarSize);
 
-		final TextField SupportRegionTextField = new TextField(Integer.toString(parent.params.getSupportRadius()));
-		SupportRegionTextField.setEditable(true);
-		SupportRegionTextField.setCaretPosition(Integer.toString(parent.params.getSupportRadius()).length());
+		// final TextField SupportRegionTextField = new TextField(Integer.toString(parent.params.getSupportRadius()));
+		// SupportRegionTextField.setEditable(true);
+		// SupportRegionTextField.setCaretPosition(Integer.toString(parent.params.getSupportRadius()).length());
 
 		scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(
 				parent.params.getInlierRatio(),
@@ -57,7 +57,7 @@ public class RANSACWindow
 				10 + parent.scrollbarSize);
 
 		final Label supportRegionText = new Label(
-				"Support Region Radius:" /* = " + this.supportRegion */, Label.CENTER);
+				"Support Region Radius = " + parent.params.getSupportRadius(), Label.CENTER);
 		final Label inlierRatioText = new Label(
 				"Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", parent.params.getInlierRatio()), Label.CENTER);
 		final Label maxErrorText = new Label("Max Error = " + String.format(java.util.Locale.US, "%.4f", parent.params.getMaxError()),
@@ -83,51 +83,51 @@ public class RANSACWindow
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.gridx = 0;
 		gbc.gridy = 0;
-		gbc.weightx = 0.50;
-		gbc.gridwidth = 1;
+		// gbc.weightx = 0.50;
+//		gbc.gridwidth = 1;
 		ransacFrame.add(supportRegionText, gbc);
 
-		gbc.gridx = 1;
-		gbc.weightx = 0.50;
-		gbc.gridwidth = 1;
-		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
-		ransacFrame.add(SupportRegionTextField, gbc);
+//		gbc.gridx = 1;
+//		gbc.weightx = 0.50;
+//		gbc.gridwidth = 1;
+//		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
+//		ransacFrame.add(SupportRegionTextField, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 1;
-		gbc.gridwidth = 2;
+// 		gbc.gridwidth = 2;
 		gbc.insets = new Insets(5, inLeft, inBottom, inRight);
 		ransacFrame.add(supportRegionScrollbar, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 2;
-		gbc.gridwidth = 2;
+//		gbc.gridwidth = 2;
 		ransacFrame.add(inlierRatioText, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 3;
-		gbc.gridwidth = 2;
+//		gbc.gridwidth = 2;
 		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		ransacFrame.add(inlierRatioScrollbar, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 4;
-		gbc.gridwidth = 2;
+//		gbc.gridwidth = 2;
 		ransacFrame.add(maxErrorText, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 5;
-		gbc.gridwidth = 2;
+//		gbc.gridwidth = 2;
 		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		ransacFrame.add(maxErrorScrollbar, gbc);
 
 		++gbc.gridy;
-		gbc.gridwidth = 2;
+//		gbc.gridwidth = 2;
 		gbc.insets = new Insets(inTop+5, inLeft, inBottom, inRight);
 		ransacFrame.add(bsText, gbc);
 
 		++gbc.gridy;
-		gbc.gridwidth = 2;
+//		gbc.gridwidth = 2;
 		gbc.insets = new Insets(inTop, inLeft, inBottom, inRight);
 		ransacFrame.add(bsMethodChoice, gbc);
 
@@ -145,15 +145,15 @@ public class RANSACWindow
 		ransacFrame.setLocation(xOffset, yOffset);
 
 		// /* Configuration */
-		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(parent,supportRegionText, parent.supportRadiusMin,
-				parent.supportRadiusMax, ValueChange.SUPPORTRADIUS, SupportRegionTextField));
+		supportRegionScrollbar.addAdjustmentListener(new GeneralListener(parent, supportRegionText, parent.supportRadiusMin,
+				parent.supportRadiusMax, ValueChange.SUPPORTRADIUS, new TextField()));
 		inlierRatioScrollbar.addAdjustmentListener(new GeneralListener(parent,inlierRatioText, parent.inlierRatioMin, parent.inlierRatioMax,
 				ValueChange.INLIERRATIO, new TextField()));
 		maxErrorScrollbar.addAdjustmentListener(
-				new GeneralListener(parent,maxErrorText, parent.maxErrorMin, parent.maxErrorMax, ValueChange.MAXERROR, new TextField()));
+				new GeneralListener(parent, maxErrorText, parent.maxErrorMin, parent.maxErrorMax, ValueChange.MAXERROR, new TextField()));
 
-		SupportRegionTextField.addActionListener(new TextFieldListener(parent,supportRegionText, parent.supportRadiusMin,
-				parent.supportRadiusMax, ValueChange.SUPPORTRADIUS, SupportRegionTextField, supportRegionScrollbar));
+		// SupportRegionTextField.addActionListener(new TextFieldListener(parent,supportRegionText, parent.supportRadiusMin,
+		// 		parent.supportRadiusMax, ValueChange.SUPPORTRADIUS, SupportRegionTextField, supportRegionScrollbar));
 
 		bsMethodChoice.addItemListener( new BackgroundRANSACListener( parent ) );
 

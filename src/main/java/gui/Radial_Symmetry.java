@@ -23,11 +23,17 @@ import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+
+import org.apache.commons.math3.analysis.integration.gauss.HermiteRuleFactory;
+
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 import test.TestGauss3d;
@@ -37,9 +43,10 @@ public class Radial_Symmetry implements PlugIn
 	// used to save previous values of the fields
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
-	public static int defaultParam = 1;
+	public static int defaultParam = 0;
 	public static boolean defaultGauss = false;
-
+	public static boolean defaultRANSAC = false;
+	
 	// steps per octave
 	public static int defaultSensitivity = 4;
 
@@ -47,6 +54,7 @@ public class Radial_Symmetry implements PlugIn
 	ImagePlus imp;
 	int parameterType;
 	boolean gaussFit;
+	boolean RANSAC;
 
 	// defines the resolution in x y z dimensions
 	double [] calibration;
@@ -66,8 +74,19 @@ public class Radial_Symmetry implements PlugIn
 				// return;
 			}
 
-			// set all defaults + initialize the parameters with default values
-			final GUIParams params = new GUIParams();
+			long [] dimensions = new long [imp.getNDimensions()];
+			for (int d = 0; d < imp.getNDimensions(); ++d){
+				dimensions[d] = imp.getDimensions()[d];
+			}
+			
+			// make some dirty code as it is not defined at compile time, but for all subsequent code it is
+			double[] minmax = HelperFunctions.computeMinMax( (Img)ImageJFunctions.wrapReal(imp) );
+			
+			float min = (float)minmax[ 0 ];
+			float max = (float)minmax[ 1 ];
+						
+			// set all defaults + set RANSAC 
+			final GUIParams params = new GUIParams(RANSAC);
 
 			if ( parameterType == 0 ) // Manual
 			{
@@ -82,7 +101,7 @@ public class Radial_Symmetry implements PlugIn
 			}
 			else // interactive
 			{
-				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry( imp, params );
+				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry( imp, params, min, max );
 
 				do
 				{
@@ -100,23 +119,13 @@ public class Radial_Symmetry implements PlugIn
 
 			RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
 			
-			// which type of imageplus image is it?
-			int type = -1;
-			final Object pixels = imp.getProcessor().getPixels();
-			if ( pixels instanceof byte[] )
-				type = 0;
-			else if ( pixels instanceof short[] )
-				type = 1;
-			else if ( pixels instanceof float[] )
-				type = 2;
-			else
-				throw new RuntimeException( "Pixels of this type are not supported: " + pixels.getClass().getSimpleName() );
-
-			// Normalize the full image
-			double[] minmax = HelperFunctions.getMinMax(ImageJFunctions.wrap(imp));
-			double min = minmax[0];
-			double max = minmax[1];						
-			RandomAccessibleInterval<FloatType> rai = new TypeTransformingRandomAccessibleInterval<>( ImageJFunctions.wrap(imp), new RealTypeNormalization<>( min, max - min ), new FloatType() );
+			RandomAccessibleInterval<FloatType> rai;
+			if ( ! Double.isNaN(min)  &&  ! Double.isNaN( max)) // if normalizable
+				rai = new TypeTransformingRandomAccessibleInterval<>( ImageJFunctions.wrap(imp), new RealTypeNormalization<>( min, max - min ), new FloatType() );
+			else // otherwise use 
+				rai = ImageJFunctions.wrap(imp);
+		
+			// RandomAccessibleInterval<FloatType> rai = new TypeTransformingRandomAccessibleInterval<>( ImageJFunctions.wrap(imp), new RealTypeNormalization<>( min, max - min ), new FloatType() );
 			// x y c z t 
 			int[] impDim = imp.getDimensions();
 
@@ -129,46 +138,77 @@ public class Radial_Symmetry implements PlugIn
 
 			RandomAccessibleInterval<FloatType> timeFrame;
 			ArrayList<Spot> allSpots = new ArrayList<>(1);
-
+			
+		
+			// stores number of detected spots per time point
+			ArrayList<Long> timePoint = new ArrayList<>(0);
+			// stores number of detected spots per channel
+			ArrayList<Long> channelPoint = new ArrayList<>(0);
+ 			
 			for (int c = 0; c < imp.getNChannels(); c++) {
 				for (int t = 0; t < imp.getNFrames(); t++) {
 					// "-1" because of the imp offset 					
 					timeFrame = copyImg(rai, c, t, dim, impDim);
 					RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
 					allSpots.addAll(rs.getSpots());
+									
+//					for (int j = allSpots.size(); j < allSpots.size() + rs.getSpots().size(); j++)
+//						timePoint.add(new Long(t));
+					// indicate the corresponding time point
+										
+					timePoint.add(new Long(rs.getSpots().size()));
 					
-
+					
 					
 					// user wants to have the gauss fit here
-					if (gaussFit){
-						// TODO: Additional gauss fit should trigger here? 
-						// since the locations of all peaks are known here
-						// we can get the value for the gauss fit 
-						
-						// TODO: might not work on 4D images
-						for(Spot spot : rs.getSpots()){
-							
-							long [] minSpot = new long[timeFrame.numDimensions()];
-							long [] maxSpot = new long[timeFrame.numDimensions()];
-							double [] sigmaSpot = new double[timeFrame.numDimensions()];
-									
-							// check that center is correct
-							GaussianMaskFit.gaussianMaskFit(Views.interval(timeFrame, minSpot, maxSpot), spot.getCenter(), sigmaSpot, null);
-						}
-										
-//						GaussianMaskFit.gaussianMaskFit( 
-//								final RandomAccessibleInterval<FloatType> signalInterval, 
-//								final double[] location, 
-//								final double[] sigma, 
-//								final Img< FloatType > ransacWeight )
-										
-					}					
+//					if (gaussFit){
+//						// TODO: Additional gauss fit should trigger here? 
+//						// since the locations of all peaks are known here
+//						// we can get the value for the gauss fit 
+//						
+//						// TODO: might not work on 4D images
+//						for(Spot spot : rs.getSpots()){
+//							
+//							long [] minSpot = new long[timeFrame.numDimensions()];
+//							long [] maxSpot = new long[timeFrame.numDimensions()];
+//							double [] sigmaSpot = new double[timeFrame.numDimensions()];
+//									
+//							// FIXME: check that center is correct
+//							double [] location = new double [timeFrame.numDimensions()];
+//							GaussianMaskFit.gaussianMaskFit(Views.interval(timeFrame, minSpot, maxSpot), location, sigmaSpot, null);
+//							
+//						}
+//										
+////						GaussianMaskFit.gaussianMaskFit( 
+////								final RandomAccessibleInterval<FloatType> signalInterval, 
+////								final double[] location, 
+////								final double[] sigma, 
+////								final Img< FloatType > ransacWeight )
+//										
+//					}					
 					
 					IOFunctions.println("t: " + t + " " + "c: " + c);
 				}
+				if (c != 0 )
+					channelPoint.add(new Long(allSpots.size() - channelPoint.get(c)));
+				else
+					channelPoint.add(new Long(allSpots.size()));
 			}
+
+//			DEBUG: 			
+//			System.out.println("total # of channels " + channelPoint.size());
+//			System.out.println("total # of timepoits" + timePoint.size());
 			
-			RadialSymmetry.ransacResultTable(allSpots);
+			
+			RadialSymmetry.ransacResultTable(allSpots, timePoint, channelPoint);
+			
+			
+			Img<FloatType> ransacPreview = new ArrayImgFactory<FloatType>().create(rai, new FloatType());			
+			// Spot.drawRANSACArea(allSpots, ransacPreview);
+			
+			// Uncomment after done with 2d + time testing 
+			// Spot.showInliers(allSpots, ransacPreview, params.getMaxError());
+			// ImageJFunctions.show(ransacPreview);
 			
 			// DEBUG: REMOVE
 			// Img<FloatType> resImg = new ArrayImgFactory<FloatType>().create(rai, new FloatType());
@@ -196,6 +236,8 @@ public class Radial_Symmetry implements PlugIn
 	}
 	
 
+	// clunky function to handle different space-time cases
+	// TODO: check that it is working properly for all cases
 	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel, long time, long[] dim, int[] impDim) {
 		// this one will be returned
 		RandomAccessibleInterval<FloatType> img = ArrayImgs.floats(dim);
@@ -235,12 +277,13 @@ public class Radial_Symmetry implements PlugIn
 								}
 								else
 									if (impDim[4] != 1){ // t 
-										ra.setPosition(new long[]{pos[0], pos[1], pos[2]});
+										ra.setPosition(new long[]{pos[0], pos[1], time}); // fix 
 									}
 									else // 2D image										 
 											ra.setPosition(new long[]{pos[0], pos[1]});
 			}
-				
+			
+
 			cursor.get().setReal(ra.get().getRealFloat());
 		}
 
@@ -279,6 +322,7 @@ public class Radial_Symmetry implements PlugIn
 			initialDialog.addChoice("Image_for_detection", imgList, imgList[defaultImg]);
 			initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
 			initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
+			initialDialog.addCheckbox("Use_RANSAC", defaultRANSAC);
 			
 			initialDialog.showDialog();
 
@@ -293,6 +337,7 @@ public class Radial_Symmetry implements PlugIn
 				this.imp = WindowManager.getImage( imgIdList[ tmp ] );
 				this.parameterType = defaultParam = initialDialog.getNextChoiceIndex();
 				this.gaussFit = defaultGauss = initialDialog.getNextBoolean();
+				this.RANSAC = defaultRANSAC = initialDialog.getNextBoolean();
 			}
 		}
 
@@ -301,8 +346,7 @@ public class Radial_Symmetry implements PlugIn
 
 	public static void main(String[] args){
 
-		File path = new File( "/media/milkyklim/Samsung_T3/2017-06-26-radial-symmetry-test/Simulated_3D.tif" );
-		// path = path.concat("test_background.tif");
+		File path = new File( "/media/milkyklim/Samsung_T3/2017-07-28-Klim-Dhana-radial-symmetry/Ravg.tif" ); 
 
 		if ( !path.exists() )
 			throw new RuntimeException( "'" + path.getAbsolutePath() + "' doesn't exist." );
@@ -315,9 +359,9 @@ public class Radial_Symmetry implements PlugIn
 		if (imp == null)
 			throw new RuntimeException( "image was not loaded" );
 
-		imp.show();
+		imp.show(); 
 
-		imp.setSlice(20);
+		imp.setSlice(121);
 
 		new Radial_Symmetry().run( new String() ); 
 		System.out.println("Doge!");

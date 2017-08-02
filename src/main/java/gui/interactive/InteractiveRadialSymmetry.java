@@ -166,6 +166,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		this.params = params;
 
+		// TODO: do we need this check? Maybe it is enought have a wrapper here?
 		// which type of imageplus image is it?
 		final Object pixels = imp.getProcessor().getPixels();
 		if ( pixels instanceof byte[] )

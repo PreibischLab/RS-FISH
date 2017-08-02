@@ -12,8 +12,13 @@ import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.cell.CellImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.iterator.IntervalIterator;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
 /**
@@ -204,7 +209,7 @@ public class Spot implements RealLocalizable
 			// this part defines the possible values		
 			for ( int e = 0; e < numDimensions; ++e )
 			{
-				min[ e ] = peak[ e ] - spotSize[ e ] / 2;
+				min[ e ] = peak[ e ] - spotSize[ e ]/2;
 				max[ e ] = min[ e ] + spotSize[ e ] - 1;
 
 				// check that it does not exceed bounds of the underlying image
@@ -224,6 +229,10 @@ public class Spot implements RealLocalizable
 				//	System.out.println( i++ + ": " + Util.printCoordinates( ((NormalizedGradient)gradient).getBackground() ));
 			}
 			
+			
+			// Img<FloatType> discard = new CellImgFactory<FloatType>().create(spotInterval, new FloatType());
+			// RandomAccess<FloatType> ra = discard.randomAccess();
+			
 			// define a local region to iterate around the potential detection
 			final IntervalIterator cursor = new IntervalIterator( spotInterval );
 
@@ -242,9 +251,20 @@ public class Spot implements RealLocalizable
 						p[ e ] = cursor.getIntPosition( e ) + 0.5f; // we add 0,5 to correct for the half-pixel-shift of the gradient image (because pixel 0 is actually at position 0,5 and pixel 1 at position 1,5)
 					
 					spot.candidates.add( new PointFunctionMatch( new OrientedPoint( p, v, 1 ) ) );
+					
+//					ra.setPosition(cursor);
+//					for (int d = 0; d < cursor.numDimensions(); d++){
+//						ra.move(-min[d], d);
+//						// System.out.print(ra.getIntPosition(d) + " ");
+//					}
+//					// System.out.println();
+//					ra.get().set(1);
 				}
+							
 			}
 			spots.add( spot );
+			
+			// ImageJFunctions.show(discard);
 		}
 		return spots;
 	}
@@ -318,6 +338,32 @@ public class Spot implements RealLocalizable
 			}
 		}
 	}
+	
+	// plot inliers for the given spot 
+	public static <T extends RealType<T> > void showInliers(final ArrayList< Spot > spots, final RandomAccessibleInterval< T > draw, double threshold){
+		final int numDimensions = draw.numDimensions();
+
+		for ( final Spot spot : spots )
+		{
+			if ( spot.inliers.size() == 0 )
+				continue;
+			// Using extension because sometimes spots are not fully inside of the image
+			final RandomAccess< T > drawRA =  Views.extendMirrorSingle(draw).randomAccess();
+			final double[] scale = spot.scale;
+
+			for ( final PointFunctionMatch pm : spot.candidates )
+			{
+				final Point p = pm.getP1();
+				for ( int d = 0; d < numDimensions; ++d )
+					drawRA.setPosition( Math.round( p.getW()[ d ]/scale[ d ] ), d );
+				// set color to error value
+				drawRA.get().setReal(pm.getDistance() > threshold ? 1 : 0 );
+			}
+		}
+		
+	}
+	
+	
 	
 	public static double length( final double[] f )
 	{

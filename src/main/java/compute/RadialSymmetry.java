@@ -2,6 +2,8 @@ package compute;
 
 import gui.interactive.HelperFunctions;
 import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
 import ij.measure.ResultsTable;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Point;
@@ -80,6 +82,14 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 					DogDetection.ExtremaType.MINIMA, tFactor * threshold / 2, false);
 			peaks = dog2.getSubpixelPeaks();
 
+//			for (RefinedPeak<Point> point : peaks){
+//				for (int d = 0; d < 3; d++)
+//					System.out.print(point.getDoublePosition(d) + " ");
+//				System.out.println();
+//			}
+//			System.out.println(peaks.size());
+			
+			
 			if (debug) {
 				System.out.println("Timing: DoG peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
 				sTime = System.currentTimeMillis();
@@ -133,30 +143,29 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			final long[] range = new long[numDimensions];
 
 			for (int d = 0; d < numDimensions; ++d)
-				range[d] = 2 * supportRadius;
+				range[d] = supportRadius;
 
 			// this is a hack
 			//range[ 2 ] *= 6;
 			System.out.println( "Range: " + Util.printCoordinates(range));
 			
-			double bestDist = Double.MAX_VALUE;
-			double bestScale = -1;
-
-			for (float idx = 0.05f; idx < 2; idx += 0.001f){
+//			double bestDist = Double.MAX_VALUE;
+//			double bestScale = -1;
 			
+//			for (float idx = 1.0f; idx < 1.21f; idx += 0.2f){
 				spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
 						
 				// TODO: HERE OR BEFORE? 
 				// ADD SCALING HERE
-				float scaled = idx;
-				for (int j = 0; j < spots.size(); j++){
-					spots.get(j).updateScale(new float []{1, 1, scaled});
-				}
+//				float scaled = idx;
+//				for (int j = 0; j < spots.size(); j++){
+//					spots.get(j).updateScale(new float []{1, 1, scaled});
+//				}
 	
 	
-				// IJ.log( "num spots: " + spots.size() );
+				IJ.log( "num spots: " + spots.size() );
 				if (debug) {
-					// System.out.println("Timing: Extract peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
+					System.out.println("Timing: Extract peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
 					sTime = System.currentTimeMillis();
 				}
 	
@@ -174,35 +183,36 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 					}
 				}
 				
-				double[] knowLocation = new double[]{ 124.52561137015748, 129.88211102199878, 121.78135663923388 };
-				double dist = 0;
-		
-				double avgInliers = 0;
-				long total = 0;
-				for (final Spot spot : spots)
-				{
-					dist = mpicbg.models.Point.distance( new mpicbg.models.Point( knowLocation), new mpicbg.models.Point( spot.getCenter() ) );
+//				double[] knowLocation = new double[]{ 124.52561137015748, 129.88211102199878, 121.78135663923388 };
+//				double dist = 0;
+//		
+//				double avgInliers = 0;
+//				long total = 0;
+//				for (final Spot spot : spots)
+//				{
+//					dist = mpicbg.models.Point.distance( new mpicbg.models.Point( knowLocation), new mpicbg.models.Point( spot.getCenter() ) );
+//
+//					if ( spot.inliers.size() == 0)
+//						continue;
+//
+//					total++;
+//					avgInliers += spot.inliers.size();	
+//
+//					// IJ.log( "removed " + spot.numRemoved );
+//				}
+//	
+//				if ( dist < bestDist )
+//				{
+//					bestDist = dist;
+//					bestScale = idx;
+//				}
+//
+//				IJ.log(scaled + " " + avgInliers/total + " " + avgInliers + " " + total + " d=" + dist );
+				
+//			}
 
-					if ( spot.inliers.size() == 0)
-						continue;
-
-					total++;
-					avgInliers += spot.inliers.size();	
-
-					// IJ.log( "removed " + spot.numRemoved );
-				}
-	
-				if ( dist < bestDist )
-				{
-					bestDist = dist;
-					bestScale = idx;
-				}
-
-				IJ.log(scaled + " " + avgInliers/total + " " + avgInliers + " " + total + " d=" + dist );
-			}
-
-			IJ.log("best:");
-			IJ.log( bestScale + " " + bestDist );
+//			IJ.log("best:");
+//			IJ.log( bestScale + " " + bestDist );
 
 			if (debug) {
 				System.out.println("Timing : RANSAC peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
@@ -231,19 +241,20 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 
 	// this function will show the result of RANSAC
 	// proper window -> dialog view with the columns
-	public static void ransacResultTable(final ArrayList<Spot> spots) {
+	public static void ransacResultTable(final ArrayList<Spot> spots, final ArrayList<Long> timePoint) {
 		IOFunctions.println("Running RANSAC ... ");
 		// real output
 		ResultsTable rt = new ResultsTable();
 		String[] xyz = { "x", "y", "z" };
 		for (Spot spot : spots) {	
 			// if spot was not discarded
-			if (spot.numRemoved != spot.candidates.size()){
+			if (spot.inliers.size() != 0){
 				rt.incrementCounter();
 				double[] pos = spot.getCenter();	
 				for (int d = 0; d < spot.numDimensions(); ++d) {
 					rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.2f", pos[d]));
 				}
+				rt.addValue("t", timePoint.get(rt.getCounter()));
 			}
 		}
 		IOFunctions.println("Spots found = " + rt.getCounter()); 

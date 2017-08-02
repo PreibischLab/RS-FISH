@@ -241,11 +241,18 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 
 	// this function will show the result of RANSAC
 	// proper window -> dialog view with the columns
-	public static void ransacResultTable(final ArrayList<Spot> spots, final ArrayList<Long> timePoint) {
+	public static void ransacResultTable(final ArrayList<Spot> spots, final ArrayList<Long> timePoint, final ArrayList<Long> channelPoint) {
 		IOFunctions.println("Running RANSAC ... ");
 		// real output
 		ResultsTable rt = new ResultsTable();
 		String[] xyz = { "x", "y", "z" };
+		int currentTimePoint = 0; 
+		int totalSpotsPerTimePoint = 0;
+		
+		int currentChannelPoint = 0; 
+		int totalSpotsPerChannelPoint = 0;
+		
+		
 		for (Spot spot : spots) {	
 			// if spot was not discarded
 			if (spot.inliers.size() != 0){
@@ -254,7 +261,22 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				for (int d = 0; d < spot.numDimensions(); ++d) {
 					rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.2f", pos[d]));
 				}
-				rt.addValue("t", timePoint.get(rt.getCounter()));
+						
+				totalSpotsPerTimePoint++;
+				if (totalSpotsPerTimePoint > timePoint.get(currentTimePoint)){
+					currentTimePoint++;
+					totalSpotsPerTimePoint = 0;
+				}
+				rt.addValue("t", currentTimePoint + 1); // user-friendly, starting the counting from 1
+				
+				totalSpotsPerChannelPoint++;
+				if (totalSpotsPerChannelPoint > channelPoint.get(currentChannelPoint)){
+					currentChannelPoint++;
+					totalSpotsPerChannelPoint = 0;
+				}
+				rt.addValue("c", currentChannelPoint + 1); // user-friendly, starting the counting from 1				
+				
+				
 			}
 		}
 		IOFunctions.println("Spots found = " + rt.getCounter()); 

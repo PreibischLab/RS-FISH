@@ -139,10 +139,12 @@ public class Radial_Symmetry implements PlugIn
 			RandomAccessibleInterval<FloatType> timeFrame;
 			ArrayList<Spot> allSpots = new ArrayList<>(1);
 			
-			
+		
+			// stores number of detected spots per time point
 			ArrayList<Long> timePoint = new ArrayList<>(0);
-			
-
+			// stores number of detected spots per channel
+			ArrayList<Long> channelPoint = new ArrayList<>(0);
+ 			
 			for (int c = 0; c < imp.getNChannels(); c++) {
 				for (int t = 0; t < imp.getNFrames(); t++) {
 					// "-1" because of the imp offset 					
@@ -150,9 +152,14 @@ public class Radial_Symmetry implements PlugIn
 					RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
 					allSpots.addAll(rs.getSpots());
 									
-					for (int j = allSpots.size(); j < allSpots.size() + rs.getSpots().size(); j++)
-						timePoint.add(new Long(t));
+//					for (int j = allSpots.size(); j < allSpots.size() + rs.getSpots().size(); j++)
+//						timePoint.add(new Long(t));
+					// indicate the corresponding time point
 										
+					timePoint.add(new Long(rs.getSpots().size()));
+					
+					
+					
 					// user wants to have the gauss fit here
 //					if (gaussFit){
 //						// TODO: Additional gauss fit should trigger here? 
@@ -182,9 +189,18 @@ public class Radial_Symmetry implements PlugIn
 					
 					IOFunctions.println("t: " + t + " " + "c: " + c);
 				}
+				if (c != 0 )
+					channelPoint.add(new Long(allSpots.size() - channelPoint.get(c)));
+				else
+					channelPoint.add(new Long(allSpots.size()));
 			}
+
+//			DEBUG: 			
+//			System.out.println("total # of channels " + channelPoint.size());
+//			System.out.println("total # of timepoits" + timePoint.size());
 			
-			RadialSymmetry.ransacResultTable(allSpots, timePoint);
+			
+			RadialSymmetry.ransacResultTable(allSpots, timePoint, channelPoint);
 			
 			
 			Img<FloatType> ransacPreview = new ArrayImgFactory<FloatType>().create(rai, new FloatType());			
@@ -220,6 +236,8 @@ public class Radial_Symmetry implements PlugIn
 	}
 	
 
+	// clunky function to handle different space-time cases
+	// TODO: check that it is working properly for all cases
 	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel, long time, long[] dim, int[] impDim) {
 		// this one will be returned
 		RandomAccessibleInterval<FloatType> img = ArrayImgs.floats(dim);
@@ -328,8 +346,7 @@ public class Radial_Symmetry implements PlugIn
 
 	public static void main(String[] args){
 
-		File path = new File( "/Users/kkolyva/Desktop/2017-07-28-Klim-Dhana-radial-symmetry/Ravg.tif" ); //"/Users/kkolyva/Dropbox/PhD/2017-07-13-lab-meeting/data/part SEA12_dpy23_wdr52_mdh1_006.nd2 - SEA12_dpy23_wdr52_mdh1_006.nd2 (series 13) - C=3-1.tif"); //singlespot_sigma_1-1-1.tif"); //
-		// path = path.concat("test_background.tif");
+		File path = new File( "/media/milkyklim/Samsung_T3/2017-07-28-Klim-Dhana-radial-symmetry/Ravg.tif" ); 
 
 		if ( !path.exists() )
 			throw new RuntimeException( "'" + path.getAbsolutePath() + "' doesn't exist." );

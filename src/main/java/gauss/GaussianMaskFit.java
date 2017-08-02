@@ -5,6 +5,7 @@ import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
@@ -117,14 +118,16 @@ public class GaussianMaskFit
 			
 			++i;
 			
-			//ImageJFunctions.show( gaussianMask );
-			//ImageJFunctions.show( signalInterval );
+			// ImageJFunctions.show( gaussianMask );
+			// ImageJFunctions.show( signalInterval );
 			
-			//SimpleMultiThreading.threadHaltUnClean();
+			// SimpleMultiThreading.threadHaltUnClean();
 		}
 		while ( i < 100 );
 		
-		//ImageJFunctions.show( interval );
+		ImageJFunctions.show( signalInterval );
+		ImageJFunctions.show( gaussianMask );
+		SimpleMultiThreading.threadHaltUnClean();
 	}
 	
 	public static void removeBackground( final IterableInterval< FloatType > iterable )

@@ -35,7 +35,8 @@ public class GaussianMaskFit
 			final RandomAccessibleInterval<FloatType> signalInterval, 
 			final double[] location, 
 			final double[] sigma, 
-			final Img< FloatType > ransacWeight )
+			final Img< FloatType > ransacWeight, 
+			int numItereations)
 	{
 		final int n = signalInterval.numDimensions();
 		
@@ -123,11 +124,20 @@ public class GaussianMaskFit
 			
 			// SimpleMultiThreading.threadHaltUnClean();
 		}
-		while ( i < 100 );
+		while ( i < numItereations );
 		
-		ImageJFunctions.show( signalInterval );
-		ImageJFunctions.show( gaussianMask );
-		SimpleMultiThreading.threadHaltUnClean();
+		// ImageJFunctions.show( signalInterval );
+		// ImageJFunctions.show( gaussianMask );
+		// SimpleMultiThreading.threadHaltUnClean();
+	}
+	
+	
+	public static void gaussianMaskFit( 
+			final RandomAccessibleInterval<FloatType> signalInterval, 
+			final double[] location, 
+			final double[] sigma, 
+			final Img< FloatType > ransacWeight){
+		gaussianMaskFit(signalInterval, location, sigma, ransacWeight, 100);
 	}
 	
 	public static void removeBackground( final IterableInterval< FloatType > iterable )

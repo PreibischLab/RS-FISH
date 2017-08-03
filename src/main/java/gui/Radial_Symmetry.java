@@ -139,61 +139,35 @@ public class Radial_Symmetry implements PlugIn
 			RandomAccessibleInterval<FloatType> timeFrame;
 			ArrayList<Spot> allSpots = new ArrayList<>(1);
 			
-		
 			// stores number of detected spots per time point
 			ArrayList<Long> timePoint = new ArrayList<>(0);
 			// stores number of detected spots per channel
 			ArrayList<Long> channelPoint = new ArrayList<>(0);
+			
+			processSliceBySlice(rai, rsm, impDim, dim, gaussFit, params.getSigmaDoG(), allSpots, timePoint, channelPoint);
  			
-			for (int c = 0; c < imp.getNChannels(); c++) {
-				for (int t = 0; t < imp.getNFrames(); t++) {
-					// "-1" because of the imp offset 					
-					timeFrame = copyImg(rai, c, t, dim, impDim);
-					RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
-					allSpots.addAll(rs.getSpots());
-									
-//					for (int j = allSpots.size(); j < allSpots.size() + rs.getSpots().size(); j++)
-//						timePoint.add(new Long(t));
-					// indicate the corresponding time point
-										
-					timePoint.add(new Long(rs.getSpots().size()));
-					
-					
-					
-					// user wants to have the gauss fit here
+//			for (int c = 0; c < imp.getNChannels(); c++) {
+//				for (int t = 0; t < imp.getNFrames(); t++) {
+//					// "-1" because of the imp offset 					
+//					timeFrame = copyImg(rai, c, t, dim, impDim);
+//					RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
+//					allSpots.addAll(rs.getSpots());
+//					
+//					// set the number of points found for the current time step
+//					timePoint.add(new Long(rs.getSpots().size()));
+//					
+//					// user wants to have the gauss fit here
 //					if (gaussFit){
-//						// TODO: Additional gauss fit should trigger here? 
-//						// since the locations of all peaks are known here
-//						// we can get the value for the gauss fit 
-//						
-//						// TODO: might not work on 4D images
-//						for(Spot spot : rs.getSpots()){
-//							
-//							long [] minSpot = new long[timeFrame.numDimensions()];
-//							long [] maxSpot = new long[timeFrame.numDimensions()];
-//							double [] sigmaSpot = new double[timeFrame.numDimensions()];
-//									
-//							// FIXME: check that center is correct
-//							double [] location = new double [timeFrame.numDimensions()];
-//							GaussianMaskFit.gaussianMaskFit(Views.interval(timeFrame, minSpot, maxSpot), location, sigmaSpot, null);
-//							
-//						}
-//										
-////						GaussianMaskFit.gaussianMaskFit( 
-////								final RandomAccessibleInterval<FloatType> signalInterval, 
-////								final double[] location, 
-////								final double[] sigma, 
-////								final Img< FloatType > ransacWeight )
-//										
+//						fitGaussian(timeFrame, rs.getSpots(), params.getSigmaDoG());			
 //					}					
-					
-					IOFunctions.println("t: " + t + " " + "c: " + c);
-				}
-				if (c != 0 )
-					channelPoint.add(new Long(allSpots.size() - channelPoint.get(c)));
-				else
-					channelPoint.add(new Long(allSpots.size()));
-			}
+//					
+//					// IOFunctions.println("t: " + t + " " + "c: " + c);
+//				}
+//				if (c != 0 )
+//					channelPoint.add(new Long(allSpots.size() - channelPoint.get(c)));
+//				else
+//					channelPoint.add(new Long(allSpots.size()));
+//			}
 
 //			DEBUG: 			
 //			System.out.println("total # of channels " + channelPoint.size());
@@ -216,9 +190,65 @@ public class Radial_Symmetry implements PlugIn
 			// showPoints(resImg, allSpots, resSigma);
 			
 			// ImageJFunctions.show(resImg).setTitle("Do use the dots?");
-			
-			System.out.println("ONLY ONCE?");
 		}
+	}
+	
+	// process each 2D/3D slice of the image to search for the spots
+	public static void processSliceBySlice(RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm, int[] impDim, long[] dim, boolean gaussFit, double sigma, ArrayList<Spot> allSpots, ArrayList<Long> timePoint, ArrayList<Long> channelPoint){
+		RandomAccessibleInterval<FloatType> timeFrame;
+		// impDim <- x y c z t
+		for (int c = 0; c < impDim[2]; c++) {
+			for (int t = 0; t < impDim[4]; t++) {
+				// "-1" because of the imp offset 					
+				timeFrame = copyImg(rai, c, t, dim, impDim);
+				RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
+				allSpots.addAll(rs.getSpots());
+				
+				// set the number of points found for the current time step
+				timePoint.add(new Long(rs.getSpots().size()));
+				
+				// user wants to have the gauss fit here
+				if (gaussFit){
+					fitGaussian(timeFrame, rs.getSpots(), sigma);			
+				}					
+				
+				// IOFunctions.println("t: " + t + " " + "c: " + c);
+			}
+			if (c != 0 )
+				channelPoint.add(new Long(allSpots.size() - channelPoint.get(c)));
+			else
+				channelPoint.add(new Long(allSpots.size()));
+		}
+
+	}
+	
+	
+	//triggers the gaussian fit if user wants it
+	public static void fitGaussian(RandomAccessibleInterval<FloatType> timeFrame, ArrayList<Spot> spots, double sigma){
+	
+		int numDimensions = timeFrame.numDimensions();
+		
+		
+		// here we might have the 3D or 2D spot 
+		
+		// TODO: Check that this part is working 
+		for(final Spot spot : spots){
+			// TODO: check that center is correct
+			double [] location = new double [numDimensions];					
+			double [] sigmaSpot = new double[numDimensions];
+			
+			for (int d = 0; d < numDimensions; d++){
+				sigmaSpot[d] = sigma;
+				location[d] = spot.getCenter()[d];
+			}
+			
+			long [] minSpot = new long[numDimensions];
+			long [] maxSpot = new long[numDimensions];
+			HelperFunctions.setMinMaxLocation(location, sigmaSpot, minSpot, maxSpot);
+			
+			GaussianMaskFit.gaussianMaskFit(Views.interval(timeFrame, minSpot, maxSpot), location, sigmaSpot, null);
+			
+		}		
 	}
 	
 	// DEBUG: 
@@ -290,7 +320,6 @@ public class Radial_Symmetry implements PlugIn
 		return img;
 	}
 
-	// TODO: POLISH
 	/*
 	 * shows the initial GUI dialog 
 	 * user has to choose 

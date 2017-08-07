@@ -16,6 +16,8 @@ public class GUIParams
 	public static int defaultBsMethod = 0;
 	
 	public static boolean defaultRANSAC = true;
+	
+	public static float defaultAnisotropy = -1;
 
 	// RANSAC parameters
 	// current value
@@ -31,6 +33,9 @@ public class GUIParams
 	// DoG parameters
 	// current
 	float sigma, threshold;
+	
+	// Z-scaling anisotropy calculation
+	float anisotropyCoefficient;
 
 	public GUIParams(boolean RANSAC)
 	{
@@ -40,11 +45,14 @@ public class GUIParams
 		setMaxError(defaultMaxError);		
 		setInlierRatio(defaultInlierRatio);
 		setSupportRadius(defaultSupportRadius);
+		// anisotropy in z
+		setAnisotropyCoefficient(defaultAnisotropy);
 		// what do you do with this values here
 		setBsMethod(defaultBsMethod);
 		setBsMaxError(defaultBsMaxError);
 		setBsInlierRatio(defaultBsInlierRatio);
 	}
+
 
 	public void printParams(){
 		System.out.println("SigmaDoG      : " + sigma);
@@ -86,6 +94,11 @@ public class GUIParams
 	}
 	public int getSupportRadius(){
 		return supportRadius;
+	}
+	
+	public float getAnisotropyCoefficient() {
+		return anisotropyCoefficient;
+		
 	}
 	
 	// background subtraction 
@@ -143,6 +156,12 @@ public class GUIParams
 	public void setSupportRadius(int supportRadius){
 		this.supportRadius = supportRadius;
 	}
+	
+	public void setAnisotropyCoefficient(float anisotropyCoefficient) {
+		this.anisotropyCoefficient = anisotropyCoefficient;
+		
+	}
+	
 	
 	// background subtraction 
 	// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };

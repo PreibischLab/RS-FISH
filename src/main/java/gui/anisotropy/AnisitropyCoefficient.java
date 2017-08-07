@@ -28,10 +28,12 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
+import mpicbg.imglib.wrapper.ImgLib1;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
@@ -42,13 +44,13 @@ import ucar.nc2.stream.NcStreamProto.DimensionOrBuilder;
 public class AnisitropyCoefficient {
 
 	public static int numIterations = 100; // not a parameter, can be changed through Beanshell
-	
+
 	// calibration in xy, usually [1, 1], will be read from ImagePlus upon initialization
 	final double[] calibration;
 
 	// TODO: Pass as the parameter (?)
 	int sensitivity = Radial_Symmetry.defaultSensitivity;
-	
+
 	// window that is potentially open
 	AnysotropyWindow aWindow; 
 
@@ -130,7 +132,7 @@ public class AnisitropyCoefficient {
 			throw new RuntimeException( "Pixels of this type are not supported: " + pixels.getClass().getSimpleName() );
 
 		this.calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions());
-		
+
 		rectangle = new Rectangle(0, 0, (int)dim[0], (int)dim[1]);// always the full image 
 
 		// show the interactive kit 
@@ -145,163 +147,135 @@ public class AnisitropyCoefficient {
 		// TODO: don't need roi becasue the full image is used
 		// check whenever roi is modified to update accordingly
 		// imagePlus.getCanvas().addMouseListener( roiListener );
-		
-		
+
+
 		// triggers on the dispose method 
 		do {
 			SimpleMultiThreading.threadWait(100);
 		} while (!this.isFinished());
-		
+
 		if (this.wasCanceled())
 			return;
-		
-		
+
+		calculateAnisotropyCoefficient();
 	}
-	
-	
-	
-	public static void interactiveAnisotropyCoefficient(){
-	}
-	
-	
 
 	// pass the image with the bead
 	// detect it 
 	// run with different scalings to see which scaling will produce the best result 
-	// 
-	//	public static void calculateAnisotropyCoefficient(){
-	//		double scaling = 1; // return value 
-	//
-	//		// TODO: read these values from the gui
-	//		AParams.sigma = 1.5;         // params.getParams().getSigmaDoG();
-	//		threshold =  0.0050; // params.getParams().getThresholdDoG();
-	//
-	//		float sigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
-	//		
-	//		if (img.numDimensions() != 3)
-	//			System.out.println("Wrong dimensionality of the image");
-	//		else {
-	//			// IMP: in the 3D case the blobs will have lower contrast as a
-	//			// function of sigma(z) therefore we have to adjust the threshold;
-	//			// to fix the problem we use an extra factor = 0.5 which will
-	//			// decrease the threshold value; this might help in some cases but
-	//			// z-extra smoothing is image depended
-	//
-	//			long sTime = System.currentTimeMillis();
-	//			final float tFactor = img.numDimensions() == 3 ? 0.5f : 1.0f;
-	//			final DogDetection<FloatType> dog2 = new DogDetection<>(img, params.getCalibration(), sigma, sigma2,
-	//					DogDetection.ExtremaType.MINIMA, tFactor * threshold / 2, false);
-	//			peaks = dog2.getSubpixelPeaks();
-	//
-	//			derivative = new GradientPreCompute(img);
-	//
-	//
-	//			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
-	//			int numDimensions = img.numDimensions();
-	//			// copy all peaks
-	//			// TODO: USE FUNCTION FROM HELPERFUNCTIONS
-	//			for (final RefinedPeak<Point> peak : peaks) {
-	//				if (-peak.getValue() > threshold) {
-	//					final long[] coordinates = new long[numDimensions];
-	//					for (int d = 0; d < peak.numDimensions(); ++d)
-	//						coordinates[d] = Util.round(peak.getDoublePosition(d));
-	//					simplifiedPeaks.add(coordinates);
-	//				}
-	//			}
-	//
-	//			final NormalizedGradient ng; // don't use the gradient normalization for the bead detection 
-	//
-	//			// the size of the RANSAC area
-	//			final long[] range = new long[numDimensions];
-	//
-	//			for (int d = 0; d < numDimensions; ++d)
-	//				range[d] = supportRadius;
-	//
-	//			// this is a hack
-	//			//range[ 2 ] *= 6;
-	//			System.out.println( "Range: " + Util.printCoordinates(range));
-	//
-	//			//					double bestDist = Double.MAX_VALUE;
-	//			//					double bestScale = -1;
-	//
-	//			//					for (float idx = 1.0f; idx < 1.21f; idx += 0.2f){
-	//			spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
-	//
-	//			// TODO: HERE OR BEFORE? 
-	//			// ADD SCALING HERE
-	//			//						float scaled = idx;
-	//			//						for (int j = 0; j < spots.size(); j++){
-	//			//							spots.get(j).updateScale(new float []{1, 1, scaled});
-	//			//						}
-	//
-	//
-	//			IJ.log( "num spots: " + spots.size() );
-	//			if (debug) {
-	//				System.out.println("Timing: Extract peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
-	//				sTime = System.currentTimeMillis();
-	//			}
-	//
-	//			// TODO: IS THIS A PLACE WHERE YOU CAN SKIP RANSAC
-	//			if (params.getParams().getRANSAC()){
-	//				Spot.ransac(spots, numIterations, maxError, inlierRatio);
-	//			}
-	//			else{
-	//				try{
-	//					Spot.fitCandidates(spots);
-	//					//IJ.log( "inliers: " + spots.get(0).inliers.size() );
-	//				}
-	//				catch(Exception e){
-	//					System.out.println("EXCEPTION CAUGHT");
-	//				}
-	//			}
-	//
-	//			//						double[] knowLocation = new double[]{ 124.52561137015748, 129.88211102199878, 121.78135663923388 };
-	//			//						double dist = 0;
-	//			//				
-	//			//						double avgInliers = 0;
-	//			//						long total = 0;
-	//			//						for (final Spot spot : spots)
-	//			//						{
-	//			//							dist = mpicbg.models.Point.distance( new mpicbg.models.Point( knowLocation), new mpicbg.models.Point( spot.getCenter() ) );
-	//			//
-	//			//							if ( spot.inliers.size() == 0)
-	//			//								continue;
-	//			//
-	//			//							total++;
-	//			//							avgInliers += spot.inliers.size();	
-	//			//
-	//			//							// IJ.log( "removed " + spot.numRemoved );
-	//			//						}
-	//			//	
-	//			//						if ( dist < bestDist )
-	//			//						{
-	//			//							bestDist = dist;
-	//			//							bestScale = idx;
-	//			//						}
-	//			//
-	//			//						IJ.log(scaled + " " + avgInliers/total + " " + avgInliers + " " + total + " d=" + dist );
-	//
-	//			//					}
-	//
-	//			//					IJ.log("best:");
-	//			//					IJ.log( bestScale + " " + bestDist );
-	//
-	//
-	//			// TODO: Moved to the main function
-	//			//			ransacResultTable(spots);
-	//			//			if (debug) {
-	//			//				System.out.println("Timing : Results peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
-	//			//				sTime = System.currentTimeMillis();
-	//			//			}
-	//
-	//		} else
-	//			// TODO: if the code is organized correctly this part should be removed 
-	//			System.out.println("Wrong dimensionality. Currently supported 2D/3D!");
-	//
-	//
-	//	}
 
-	
+	public void calculateAnisotropyCoefficient(){
+
+		System.out.println("BEEP");
+
+		double bestScale = 1; // return value 
+
+		// TODO Add this parameters to the gui?
+		float sigma = params.getSigmaDoG(); 
+		double threshold = params.getThresholdDoG();
+
+		RandomAccessibleInterval<FloatType> img = ImageJFunctions.wrapFloat(imagePlus);
+
+		float sigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
+
+		if (img.numDimensions() != 3)
+			System.out.println("Wrong dimensionality of the image");
+		else {
+			// IMP: in the 3D case the blobs will have lower contrast as a
+			// function of sigma(z) therefore we have to adjust the threshold;
+			// to fix the problem we use an extra factor = 0.5 which will
+			// decrease the threshold value; this might help in some cases but
+			// z-extra smoothing is image depended
+
+			final float tFactor = img.numDimensions() == 3 ? 0.5f : 1.0f;
+			final DogDetection<FloatType> dog2 = new DogDetection<>(img, calibration, sigma, sigma2,
+					DogDetection.ExtremaType.MINIMA, tFactor * threshold / 2, false);
+			peaks = dog2.getSubpixelPeaks();
+
+			derivative = new GradientPreCompute(img);
+
+			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
+			int numDimensions = img.numDimensions();
+			// copy all peaks
+			// TODO: USE FUNCTION FROM HELPERFUNCTIONS
+			for (final RefinedPeak<Point> peak : peaks) {
+				if (-peak.getValue() > threshold) {
+					final long[] coordinates = new long[numDimensions];
+					for (int d = 0; d < peak.numDimensions(); ++d)
+						coordinates[d] = Util.round(peak.getDoublePosition(d));
+					simplifiedPeaks.add(coordinates);
+				}
+			}
+
+			final NormalizedGradient ng = null; // don't use the gradient normalization for the bead detection 
+
+
+			// TODO: should the user set it?
+			// or it is just enough to use the difference of gaussian value -> sigma + 1? 
+			// the size of the RANSAC area
+			final long[] range = new long[numDimensions];
+
+			for (int d = 0; d < numDimensions; ++d)
+				range[d] = (long)(sigma + 6);
+
+			// this is a hack
+			// range[ 2 ] *= 6;
+			// System.out.println( "Range: " + Util.printCoordinates(range));
+			
+			// double bestScale = -1;
+			long bestTotalInliers = -Long.MAX_VALUE;
+			for (float idx = 1.0f; idx < 1.6f; idx += 0.01f){
+				final ArrayList<Spot> spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
+
+				// scale the z-axis 
+				float scale = idx;
+				for (int j = 0; j < spots.size(); j++){
+					spots.get(j).updateScale(new float []{1, 1, scale});
+				}
+
+				// IJ.log( "num spots: " + spots.size() );
+
+				// TODO: MOVE TO THE DEFAULT PARAMETERS
+				// USERS SHOULD NOT ADJUST THIS ONE 
+				double maxError = 1.0; // 1.0px error 
+				double inlierRatio = 0.6; // at least 60% inliers 
+				
+				Spot.ransac(spots, numIterations, maxError, inlierRatio);
+				try{
+					Spot.fitCandidates(spots);
+				}
+				catch(Exception e){
+					System.out.println("EXCEPTION CAUGHT");
+				}				
+				// double[] knowLocation = new double[]{ 124.52561137015748, 129.88211102199878, 121.78135663923388 };
+				// double dist = 0;
+
+				long totalInliers = 0;
+				long total = 0;
+				
+				for (final Spot spot : spots)
+				{
+					if ( spot.inliers.size() == 0)
+						continue;
+
+					total++;
+					totalInliers += spot.inliers.size();	
+				}
+				
+				if (totalInliers > bestTotalInliers){
+					bestScale = scale;
+					bestTotalInliers = totalInliers;
+				} 
+
+				IJ.log(scale + " " + (1.0)*totalInliers/total + " " + totalInliers + " " + total);
+
+			}
+
+			IJ.log("best: " + bestScale);
+		}
+	}
+
+
 	// APPROVED:
 	protected final void dispose()
 	{
@@ -315,7 +289,7 @@ public class AnisitropyCoefficient {
 			imagePlus.getOverlay().clear();
 			imagePlus.updateAndDraw();
 		}
-		
+
 		isFinished = true;
 	}
 
@@ -329,7 +303,7 @@ public class AnisitropyCoefficient {
 	protected void updatePreview(final ValueChange change) {
 		// TODO : verify
 		long offset = (long)(params.getSigmaDoG() + 1);
-		
+
 		long [] min = new long []{rectangle.x - offset, rectangle.y - offset};
 		long [] max = new long []{rectangle.width + rectangle.x + offset - 1, rectangle.height + rectangle.y + offset - 1};
 
@@ -356,10 +330,10 @@ public class AnisitropyCoefficient {
 		HelperFunctions.drawRealLocalizable( filteredPeaks, imagePlus, radius, Color.RED, true);
 
 		// TODO Should adjust the parameters? 
-		ransacInteractive( derivative );
+		// ransacInteractive( derivative );
 		isComputing = false;
 	}
-	
+
 	protected void ransacInteractive( final Gradient derivative ) {
 		// TODO: I think this problem with the rectangle was previously fixed
 		// make sure the size is not 0 (is possible in ImageJ when making the Rectangle, not when changing it ... yeah)
@@ -375,7 +349,7 @@ public class AnisitropyCoefficient {
 		final long[] range = new long[numDimensions];
 
 		range[ 0 ] = range[ 1 ] = (long)(2*params.getSigmaDoG() + 1);
-		
+
 		// ImageJFunctions.show(new GradientPreCompute(extendedRoi).preCompute(extendedRoi));
 		final NormalizedGradient ng = null;
 		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
@@ -386,12 +360,12 @@ public class AnisitropyCoefficient {
 			for (final Spot spot : spots)
 				spot.computeAverageCostInliers();
 		}
-				
+
 		System.out.println("total RS: " + spots.size());
-	
-	
+
+
 	}
-		
+
 	// APPROVED:
 	/*
 	 * this function is used for Difference-of-Gaussian calculation in the 
@@ -404,11 +378,11 @@ public class AnisitropyCoefficient {
 		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA,  params.getThresholdDoG()/2, false);
 		peaks = dog2.getSubpixelPeaks(); 
 	}
-	
+
 
 	public static void main(String[] args)
 	{
-		File path = new File( "/media/milkyklim/Samsung_T3/2017-06-26-radial-symmetry-test/Simulated_3D.tif" );
+		File path = new File( "/media/milkyklim/Samsung_T3/2017-06-26-radial-symmetry-test/Simulated_3D_2x.tif" );
 		// path = path.concat("test_background.tif");
 
 		if ( !path.exists() )

@@ -4,8 +4,10 @@ import java.io.File;
 import java.util.ArrayList;
 
 import compute.RadialSymmetry;
+import fiji.util.gui.GenericDialogPlus;
 import fit.Spot;
 import gauss.GaussianMaskFit;
+import gui.anisotropy.AnisitropyCoefficient;
 import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
@@ -48,9 +50,10 @@ public class Radial_Symmetry implements PlugIn {
 	// used to save previous values of the fields
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
-	public static int defaultParam = 0;
+	public static int defaultParam = 1;
 	public static boolean defaultGauss = false;
 	public static boolean defaultRANSAC = false;
+	public static boolean defaultAnisotropy = true; 
 
 	// steps per octave
 	public static int defaultSensitivity = 4;
@@ -60,6 +63,7 @@ public class Radial_Symmetry implements PlugIn {
 	int parameterType;
 	boolean gaussFit;
 	boolean RANSAC;
+	boolean anisotropy; 
 
 	// defines the resolution in x y z dimensions
 	double[] calibration;
@@ -100,10 +104,19 @@ public class Radial_Symmetry implements PlugIn {
 
 				if (wasCanceled)
 					return;
-
+				
 				// calculations are performed further
 			} else // interactive
 			{
+				
+				wasCanceled = anisotropyChooseImageDialog();
+				
+				if (wasCanceled)
+					return;
+				
+				
+				// AnisitropyCoefficient ac = new AnisitropyCoefficient(imp, params, min, max)
+				
 				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, min, max);
 
 				do {
@@ -380,6 +393,7 @@ public class Radial_Symmetry implements PlugIn {
 			initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
 			initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
 			initialDialog.addCheckbox("Use_RANSAC", defaultRANSAC);
+			initialDialog.addCheckbox("Adjust_scaling", defaultAnisotropy);
 
 			initialDialog.showDialog();
 
@@ -392,11 +406,37 @@ public class Radial_Symmetry implements PlugIn {
 				this.parameterType = defaultParam = initialDialog.getNextChoiceIndex();
 				this.gaussFit = defaultGauss = initialDialog.getNextBoolean();
 				this.RANSAC = defaultRANSAC = initialDialog.getNextBoolean();
+				this.anisotropy = defaultAnisotropy = initialDialog.getNextBoolean();
 			}
 		}
 
 		return failed;
 	}
+
+	protected boolean anisotropyChooseImageDialog(){
+		
+		boolean failed = false;
+		
+		GenericDialogPlus gdp = new GenericDialogPlus("Choose bead image");
+		gdp.addFileField("Image", "/media/milkyklim/Samsung_T3/2017-06-26-radial-symmetry-test/Simulated_3D.tif");
+		
+		String imgName = gdp.getNextString(); // this one should the name of the image
+		
+		
+		// TODO: Check that the file is the image
+		
+		
+		// gdp.addDirectoryField(label, defaultPath);
+		// gdp.addDirectoryOrFileField(label, defaultPath);
+		
+		
+		gdp.showDialog();
+		
+		if (gdp.wasCanceled()) failed = true;
+		
+		return failed;
+	}
+
 
 	public static void main(String[] args) {
 

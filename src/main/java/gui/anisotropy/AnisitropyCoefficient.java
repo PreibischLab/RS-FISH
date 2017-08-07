@@ -32,10 +32,12 @@ import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import parameters.GUIParams;
+import ucar.nc2.stream.NcStreamProto.DimensionOrBuilder;
 
 public class AnisitropyCoefficient {
 
@@ -128,10 +130,8 @@ public class AnisitropyCoefficient {
 			throw new RuntimeException( "Pixels of this type are not supported: " + pixels.getClass().getSimpleName() );
 
 		this.calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions());
-
-		// TODO:
-		rectangle = new Rectangle(0, 0, 100, 100);// always the  full image 
-
+		
+		rectangle = new Rectangle(0, 0, (int)dim[0], (int)dim[1]);// always the full image 
 
 		// show the interactive kit 
 		this.aWindow = new AnysotropyWindow( this );
@@ -140,11 +140,30 @@ public class AnisitropyCoefficient {
 		// add listener to the imageplus slice slider
 		sliceObserver = new SliceObserver(imagePlus, new ImagePlusListener( this ));
 		// compute first version
-		// updatePreview(ValueChange.ALL);
+		updatePreview(ValueChange.ALL);
 		isStarted = true;
+		// TODO: don't need roi becasue the full image is used
 		// check whenever roi is modified to update accordingly
 		// imagePlus.getCanvas().addMouseListener( roiListener );
+		
+		
+		// triggers on the dispose method 
+		do {
+			SimpleMultiThreading.threadWait(100);
+		} while (!this.isFinished());
+		
+		if (this.wasCanceled())
+			return;
+		
+		
 	}
+	
+	
+	
+	public static void interactiveAnisotropyCoefficient(){
+	}
+	
+	
 
 	// pass the image with the bead
 	// detect it 
@@ -336,6 +355,7 @@ public class AnisitropyCoefficient {
 
 		HelperFunctions.drawRealLocalizable( filteredPeaks, imagePlus, radius, Color.RED, true);
 
+		// TODO Should adjust the parameters? 
 		ransacInteractive( derivative );
 		isComputing = false;
 	}

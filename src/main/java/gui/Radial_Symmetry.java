@@ -18,6 +18,7 @@ import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.io.Opener;
 import ij.plugin.PlugIn;
+import ij.process.ImageProcessor;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
 import mpicbg.spim.io.IOFunctions;
@@ -26,8 +27,10 @@ import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.localization.EllipticGaussianOrtho;
 import net.imglib2.algorithm.localization.Gaussian;
 import net.imglib2.algorithm.localization.LevenbergMarquardtSolver;
+import net.imglib2.algorithm.localization.MLEllipticGaussianEstimator;
 import net.imglib2.algorithm.localization.MLGaussianEstimator;
 import net.imglib2.algorithm.localization.PeakFitter;
 import net.imglib2.img.Img;
@@ -42,6 +45,7 @@ import net.imglib2.view.Views;
 
 import org.apache.commons.math3.analysis.integration.gauss.HermiteRuleFactory;
 
+import anisotropy.parameters.AParams;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 import test.TestGauss3d;
@@ -51,8 +55,8 @@ public class Radial_Symmetry implements PlugIn {
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
 	public static int defaultParam = 1;
-	public static boolean defaultGauss = false;
-	public static boolean defaultRANSAC = false;
+	public static boolean defaultGauss = true;
+	public static boolean defaultRANSAC = true;
 	public static boolean defaultAnisotropy = true; 
 
 	// steps per octave
@@ -104,19 +108,20 @@ public class Radial_Symmetry implements PlugIn {
 
 				if (wasCanceled)
 					return;
-				
+
 				// calculations are performed further
 			} else // interactive
 			{
-				
-				wasCanceled = anisotropyChooseImageDialog();
-				
-				if (wasCanceled)
-					return;
-				
-				
-				// AnisitropyCoefficient ac = new AnisitropyCoefficient(imp, params, min, max)
-				
+
+				float bestScale = 1;
+				// if the box is checked 
+				if (anisotropy){
+					bestScale = (float)anisotropyChooseImageDialog();
+					if (bestScale == -1) // -1 - user clicked "cancel"
+						return;
+				}
+
+				params.setAnisotropyCoefficient(bestScale);
 				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, min, max);
 
 				do {
@@ -225,22 +230,26 @@ public class Radial_Symmetry implements PlugIn {
 					// for (Localizable p : peaks)
 					// System.out.println(p.toString());
 
+					// TODO:
+					// new net.imglib2.algorithm.localization.EllipticGaussianOrtho();
+					
+					double [] typicalSigmas = new double[numDimensions];
 					PeakFitter<FloatType> pf = new PeakFitter<FloatType>(timeFrame, peaks,
-							new LevenbergMarquardtSolver(), new Gaussian(),
-							new MLGaussianEstimator(sigma, numDimensions));
+							new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(), // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
+							new MLEllipticGaussianEstimator(typicalSigmas));
 					pf.process();
 					// element: x y (z) A b 
 					for (double[] element : pf.getResult().values()){
 						intensity.add(new Float(element[numDimensions]));	
 					}
-					
+
 					// print out parameters
 					for (double[] element : pf.getResult().values()){
 						for (int i = 0; i < element.length; ++i){
 							System.out.println("parameter[" + i + "] : " + element[i]);
 						}
 					}
-					
+
 				}
 
 				// IOFunctions.println("t: " + t + " " + "c: " + c);
@@ -413,34 +422,65 @@ public class Radial_Symmetry implements PlugIn {
 		return failed;
 	}
 
-	protected boolean anisotropyChooseImageDialog(){
-		
-		boolean failed = false;
-		
+	protected double anisotropyChooseImageDialog(){
+
+		// boolean failed = false;
+		double bestScale;
+
 		GenericDialogPlus gdp = new GenericDialogPlus("Choose bead image");
-		gdp.addFileField("Image", "/media/milkyklim/Samsung_T3/2017-06-26-radial-symmetry-test/Simulated_3D.tif");
-		
-		String imgName = gdp.getNextString(); // this one should the name of the image
-		
-		
-		// TODO: Check that the file is the image
-		
-		
+		gdp.addFileField("Image", "/Volumes/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/psf.tif");
+
+		// TODO: Check that the file is the image		
 		// gdp.addDirectoryField(label, defaultPath);
-		// gdp.addDirectoryOrFileField(label, defaultPath);
-		
-		
+		// gdp.addDirectoryOrFileField(label, defaultPath);		
 		gdp.showDialog();
-		
-		if (gdp.wasCanceled()) failed = true;
-		
-		return failed;
+
+		if (gdp.wasCanceled()){ 
+			// failed = true;
+			bestScale = -1;
+		}
+		else{
+			String imgPath = gdp.getNextString(); // this one should the name of the image
+			File file = new File(imgPath);
+			ImagePlus imagePlus = new Opener().openImage(file.getAbsolutePath());
+			if (!file.exists())
+				throw new RuntimeException("'" + file.getAbsolutePath() + "' doesn't exist.");
+
+			imagePlus.show();
+
+			// TODO: remove as a parameter? 
+			AParams ap = new AParams();
+
+			double [] minmax = calculateMinMax(imagePlus);
+			AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, minmax[0], minmax[1]);
+			bestScale = ac.calculateAnisotropyCoefficient();
+		}
+		return bestScale;
+	}
+
+	public static double[] calculateMinMax(ImagePlus imp){
+		float min = Float.MAX_VALUE;
+		float max = -Float.MAX_VALUE;
+
+		for ( int z = 1; z <= imp.getStack().getSize(); ++z )
+		{
+			final ImageProcessor ip = imp.getStack().getProcessor( z );
+
+			for ( int i = 0; i < ip.getPixelCount(); ++i )
+			{
+				final float v = ip.getf( i );
+				min = Math.min( min, v );
+				max = Math.max( max, v );
+			}
+		}
+
+		return new double[]{min, max};
 	}
 
 
 	public static void main(String[] args) {
 
-		File path = new File("/media/milkyklim/Samsung_T3/2017-07-28-Klim-Dhana-radial-symmetry/Ravg.tif");
+		File path = new File("/media/milkyklim/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif");
 
 		if (!path.exists())
 			throw new RuntimeException("'" + path.getAbsolutePath() + "' doesn't exist.");

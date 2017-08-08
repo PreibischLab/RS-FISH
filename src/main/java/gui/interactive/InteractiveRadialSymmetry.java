@@ -324,6 +324,12 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			throw new RuntimeException( "Unknown bsMethod: " + params.getBsMethod() );
 
 		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
+		
+		float bestScale = params.getAnisotropyCoefficient();
+		
+		for (int j = 0; j < spots.size(); j++){
+			spots.get(j).updateScale(new float []{1, 1, bestScale});
+		}
 
 		// TODO: CORRECT PLACE TO TURN ON/OFF RANSAC		
 		if (params.getRANSAC()){

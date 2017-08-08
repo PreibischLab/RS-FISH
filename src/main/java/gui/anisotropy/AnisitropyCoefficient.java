@@ -157,14 +157,14 @@ public class AnisitropyCoefficient {
 		if (this.wasCanceled())
 			return;
 
-		calculateAnisotropyCoefficient();
+		// calculateAnisotropyCoefficient();
 	}
 
 	// pass the image with the bead
 	// detect it 
 	// run with different scalings to see which scaling will produce the best result 
 
-	public void calculateAnisotropyCoefficient(){
+	public double calculateAnisotropyCoefficient(){
 
 		System.out.println("BEEP");
 
@@ -216,7 +216,7 @@ public class AnisitropyCoefficient {
 			final long[] range = new long[numDimensions];
 
 			for (int d = 0; d < numDimensions; ++d)
-				range[d] = (long)(sigma + 6);
+				range[d] = (long)(sigma + 2);
 
 			// this is a hack
 			// range[ 2 ] *= 6;
@@ -273,6 +273,8 @@ public class AnisitropyCoefficient {
 
 			IJ.log("best: " + bestScale);
 		}
+		
+		return bestScale;
 	}
 
 

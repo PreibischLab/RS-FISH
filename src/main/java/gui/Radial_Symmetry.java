@@ -57,7 +57,7 @@ public class Radial_Symmetry implements PlugIn {
 	public static int defaultParam = 1;
 	public static boolean defaultGauss = true;
 	public static boolean defaultRANSAC = true;
-	public static boolean defaultAnisotropy = true; 
+	public static boolean defaultAnisotropy = false; 
 
 	// steps per octave
 	public static int defaultSensitivity = 4;
@@ -213,10 +213,14 @@ public class Radial_Symmetry implements PlugIn {
 				// "-1" because of the imp offset
 				timeFrame = copyImg(rai, c, t, dim, impDim);
 				RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
-				allSpots.addAll(rs.getSpots());
+				
+				// TODO: if the detect spot has at least 1 inlier add it
+				ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), 1 );
+				
+				allSpots.addAll(filteredSpots);
 
 				// set the number of points found for the current time step
-				timePoint.add(new Long(rs.getSpots().size()));
+				timePoint.add(new Long(filteredSpots.size()));
 
 				// user wants to have the gauss fit here
 				if (gaussFit) {
@@ -224,30 +228,33 @@ public class Radial_Symmetry implements PlugIn {
 
 					ArrayList<Localizable> peaks = new ArrayList<Localizable>(1);
 
-					HelperFunctions.copyToLocalizable(rs.getSpots(), peaks, numDimensions);
-
-					// DEBUG:
-					// for (Localizable p : peaks)
-					// System.out.println(p.toString());
-
-					// TODO:
-					// new net.imglib2.algorithm.localization.EllipticGaussianOrtho();
+					HelperFunctions.copyToLocalizable(filteredSpots, peaks, numDimensions);
 					
 					double [] typicalSigmas = new double[numDimensions];
+					for (int d =0; d < numDimensions; d++)
+						typicalSigmas[d] = sigma;
+
 					PeakFitter<FloatType> pf = new PeakFitter<FloatType>(timeFrame, peaks,
 							new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(), // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
 							new MLEllipticGaussianEstimator(typicalSigmas));
 					pf.process();
 					// element: x y (z) A b 
-					for (double[] element : pf.getResult().values()){
+					long idx=0;
+					for (double[] element : pf.getResult().values())
 						intensity.add(new Float(element[numDimensions]));	
-					}
 
 					// print out parameters
 					for (double[] element : pf.getResult().values()){
+						System.out.println(idx++);
+						
+						if (idx > 3) break;
+						
 						for (int i = 0; i < element.length; ++i){
 							System.out.println("parameter[" + i + "] : " + element[i]);
 						}
+						
+						
+						
 					}
 
 				}

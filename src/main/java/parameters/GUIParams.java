@@ -5,11 +5,11 @@ public class GUIParams
 	final public static String [] bsMethods = new String []{ "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
 
 	public static float defaultSigma = 1.5f;
-	public static float defaultThreshold = 0.0001f;
+	public static float defaultThreshold = 0.0125f;
 	
 	public static float defaultMaxError = 3.0f;
-	public static float defaultInlierRatio = (float) (75.0 / 100.0);
-	public static int defaultSupportRadius = 7;
+	public static float defaultInlierRatio = (float) (56.0 / 100.0);
+	public static int defaultSupportRadius = 5;
 	
 	public static float defaultBsInlierRatio = (float) (75.0 / 100.0);
 	public static float defaultBsMaxError = 0.05f;

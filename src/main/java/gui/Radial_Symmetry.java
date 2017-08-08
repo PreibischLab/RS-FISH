@@ -57,7 +57,7 @@ public class Radial_Symmetry implements PlugIn {
 	public static int defaultParam = 1;
 	public static boolean defaultGauss = true;
 	public static boolean defaultRANSAC = true;
-	public static boolean defaultAnisotropy = false; 
+	public static float defaultAnisotropy = 1.0f; 
 
 	// steps per octave
 	public static int defaultSensitivity = 4;
@@ -67,8 +67,8 @@ public class Radial_Symmetry implements PlugIn {
 	int parameterType;
 	boolean gaussFit;
 	boolean RANSAC;
-	boolean anisotropy; 
-
+	float anisotropy;
+	
 	// defines the resolution in x y z dimensions
 	double[] calibration;
 
@@ -113,15 +113,10 @@ public class Radial_Symmetry implements PlugIn {
 			} else // interactive
 			{
 
-				float bestScale = 1;
-				// if the box is checked 
-				if (anisotropy){
-					bestScale = (float)anisotropyChooseImageDialog();
-					if (bestScale == -1) // -1 - user clicked "cancel"
-						return;
-				}
 
-				params.setAnisotropyCoefficient(bestScale);
+ 				params.setAnisotropyCoefficient(anisotropy);
+				
+				
 				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, min, max);
 
 				do {
@@ -409,7 +404,9 @@ public class Radial_Symmetry implements PlugIn {
 			initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
 			initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
 			initialDialog.addCheckbox("Use_RANSAC", defaultRANSAC);
-			initialDialog.addCheckbox("Adjust_scaling", defaultAnisotropy);
+
+			if (imp.getNDimensions() != 2)
+					initialDialog.addNumericField("Anisotropy_coefficient", defaultAnisotropy, 2);
 
 			initialDialog.showDialog();
 
@@ -422,68 +419,14 @@ public class Radial_Symmetry implements PlugIn {
 				this.parameterType = defaultParam = initialDialog.getNextChoiceIndex();
 				this.gaussFit = defaultGauss = initialDialog.getNextBoolean();
 				this.RANSAC = defaultRANSAC = initialDialog.getNextBoolean();
-				this.anisotropy = defaultAnisotropy = initialDialog.getNextBoolean();
+				if (imp.getNDimensions() != 2)
+					defaultAnisotropy = (float)initialDialog.getNextNumber();
+				this.anisotropy = defaultAnisotropy;
 			}
 		}
 
 		return failed;
 	}
-
-	protected double anisotropyChooseImageDialog(){
-
-		// boolean failed = false;
-		double bestScale;
-
-		GenericDialogPlus gdp = new GenericDialogPlus("Choose bead image");
-		gdp.addFileField("Image", "/Volumes/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/psf.tif");
-
-		// TODO: Check that the file is the image		
-		// gdp.addDirectoryField(label, defaultPath);
-		// gdp.addDirectoryOrFileField(label, defaultPath);		
-		gdp.showDialog();
-
-		if (gdp.wasCanceled()){ 
-			// failed = true;
-			bestScale = -1;
-		}
-		else{
-			String imgPath = gdp.getNextString(); // this one should the name of the image
-			File file = new File(imgPath);
-			ImagePlus imagePlus = new Opener().openImage(file.getAbsolutePath());
-			if (!file.exists())
-				throw new RuntimeException("'" + file.getAbsolutePath() + "' doesn't exist.");
-
-			imagePlus.show();
-
-			// TODO: remove as a parameter? 
-			AParams ap = new AParams();
-
-			double [] minmax = calculateMinMax(imagePlus);
-			AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, minmax[0], minmax[1]);
-			bestScale = ac.calculateAnisotropyCoefficient();
-		}
-		return bestScale;
-	}
-
-	public static double[] calculateMinMax(ImagePlus imp){
-		float min = Float.MAX_VALUE;
-		float max = -Float.MAX_VALUE;
-
-		for ( int z = 1; z <= imp.getStack().getSize(); ++z )
-		{
-			final ImageProcessor ip = imp.getStack().getProcessor( z );
-
-			for ( int i = 0; i < ip.getPixelCount(); ++i )
-			{
-				final float v = ip.getf( i );
-				min = Math.min( min, v );
-				max = Math.max( max, v );
-			}
-		}
-
-		return new double[]{min, max};
-	}
-
 
 	public static void main(String[] args) {
 

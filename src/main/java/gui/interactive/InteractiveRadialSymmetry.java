@@ -578,6 +578,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		impRansacError.updateAndDraw();
 
 		final double radius = ( params.getSigmaDoG() + HelperFunctions.computeSigma2(  params.getSigmaDoG(), sensitivity  ) ) / 2.0;
+		// TODO: why do I use 1 here? 
 		final ArrayList< Spot > filteredSpots = HelperFunctions.filterSpots( spots, 1 );
 
 		// draw the result of radialsymetry

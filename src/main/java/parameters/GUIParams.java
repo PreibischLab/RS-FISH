@@ -16,8 +16,7 @@ public class GUIParams
 	public static int defaultBsMethod = 0;
 	
 	public static boolean defaultRANSAC = true;
-	
-	public static float defaultAnisotropy = -1;
+	public static float defaultAnisotropy = 1.0f;
 
 	// RANSAC parameters
 	// current value

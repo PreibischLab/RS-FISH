@@ -5,6 +5,8 @@ public class AParams {
 	public static float defaultSigma = 1.5f;
 	public static float defaultThreshold = 0.0001f;
 	
+	public static float defaultAnisotropy = 1.0f;
+	
 	// RANSAC parameters
 	// current value
 	boolean RANSAC;
@@ -15,19 +17,25 @@ public class AParams {
 	// current
 	float sigma, threshold;
 	
+	// 
+	float anisotropy;
+	
 	public AParams() {
 		setSigmaDog(defaultSigma);
 		setThresholdDoG(defaultThreshold);
+		setAnisotropy(defaultAnisotropy);
 	}
 	
 	public void printParams(){
 		System.out.println("SigmaDoG      : " + sigma);
 		System.out.println("ThresholdDoG  : " + threshold);
+		System.out.println("Anisotropy    : " + anisotropy);
 	}
 	
 	public void printDefaultParams(){
 		System.out.println("DSigmaDoG      : " + defaultSigma);
 		System.out.println("DThresholdDoG  : " + defaultThreshold);
+		System.out.println("DAnisotropy  : " + defaultAnisotropy);		
 	}
 	
 	// getters
@@ -54,12 +62,18 @@ public class AParams {
 		return supportRadius;
 	}
 	
+	// 
+	public float getAnisotropy(){
+		return anisotropy;
+	}
+	
 	/*
 	 * back up the default values
 	 * */
 	public void setDefaultValues() {
 		defaultSigma = sigma;	
 		defaultThreshold = threshold;
+		defaultAnisotropy = anisotropy;
 	}
 	
 	// to be used by the listeners
@@ -85,6 +99,12 @@ public class AParams {
 	}
 	public void setSupportRadius(int supportRadius){
 		this.supportRadius = supportRadius;
+	}
+	
+	
+	//
+	public void setAnisotropy(float anisotropy){
+		this.anisotropy = anisotropy;
 	}
 	
 	

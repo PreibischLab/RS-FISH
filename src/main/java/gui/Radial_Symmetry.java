@@ -1,5 +1,7 @@
 package gui;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -405,9 +407,11 @@ public class Radial_Symmetry implements PlugIn {
 			initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
 			initialDialog.addCheckbox("Use_RANSAC", defaultRANSAC);
 
-			if (imp.getNDimensions() != 2)
-					initialDialog.addNumericField("Anisotropy_coefficient", defaultAnisotropy, 2);
-
+			// if (imp.getNDimensions() != 2)
+			initialDialog.addNumericField("Anisotropy_coefficient", defaultAnisotropy, 2);
+			
+			initialDialog.addMessage("*Use the \"Anisotropy Coeffcient Plugin\"\nto calculate the coefficient or\n leave 1.0 for a reasonable result.", new Font("Arial", 0, 10), new Color(255, 0, 0));
+			
 			initialDialog.showDialog();
 
 			if (initialDialog.wasCanceled()) {
@@ -419,8 +423,8 @@ public class Radial_Symmetry implements PlugIn {
 				this.parameterType = defaultParam = initialDialog.getNextChoiceIndex();
 				this.gaussFit = defaultGauss = initialDialog.getNextBoolean();
 				this.RANSAC = defaultRANSAC = initialDialog.getNextBoolean();
-				if (imp.getNDimensions() != 2)
-					defaultAnisotropy = (float)initialDialog.getNextNumber();
+				// if (imp.getNDimensions() != 2)
+				defaultAnisotropy = (float)initialDialog.getNextNumber();
 				this.anisotropy = defaultAnisotropy;
 			}
 		}

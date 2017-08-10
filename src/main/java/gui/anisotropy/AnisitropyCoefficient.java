@@ -157,7 +157,7 @@ public class AnisitropyCoefficient {
 		if (this.wasCanceled())
 			return;
 
-		// calculateAnisotropyCoefficient();
+		calculateAnisotropyCoefficient();
 	}
 
 	// pass the image with the bead

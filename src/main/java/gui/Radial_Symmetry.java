@@ -51,12 +51,13 @@ import anisotropy.parameters.AParams;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 import test.TestGauss3d;
+import visualization.Inliers;
 
 public class Radial_Symmetry implements PlugIn {
 	// used to save previous values of the fields
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
-	public static int defaultParam = 1;
+	public static int defaultParam = 0;
 	public static boolean defaultGauss = true;
 	public static boolean defaultRANSAC = true;
 	public static float defaultAnisotropy = 1.0f; 
@@ -114,11 +115,8 @@ public class Radial_Symmetry implements PlugIn {
 				// calculations are performed further
 			} else // interactive
 			{
-
-
  				params.setAnisotropyCoefficient(anisotropy);
-				
-				
+					
 				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, min, max);
 
 				do {
@@ -131,11 +129,8 @@ public class Radial_Symmetry implements PlugIn {
 
 			// back up the parameter values to the default variables
 			params.setDefaultValues();
-			calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); // new
-			// double[]{1,
-			// 1,
-			// 1};
-
+			calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); 
+			
 			RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
 
 			RandomAccessibleInterval<FloatType> rai;
@@ -178,12 +173,13 @@ public class Radial_Symmetry implements PlugIn {
 
 			RadialSymmetry.ransacResultTable(allSpots, timePoint, channelPoint, gaussFit, intensity);
 
-			Img<FloatType> ransacPreview = new ArrayImgFactory<FloatType>().create(rai, new FloatType());
+			// TODO: Remove since moved to a separate class
+			// Img<FloatType> ransacPreview = new ArrayImgFactory<FloatType>().create(rai, new FloatType());
 			// Spot.drawRANSACArea(allSpots, ransacPreview);
-
 			// Uncomment after done with 2d + time testing
 			// Spot.showInliers(allSpots, ransacPreview, params.getMaxError());
 			// ImageJFunctions.show(ransacPreview);
+			Inliers.showInliers(imp, allSpots);
 
 			// DEBUG: REMOVE
 			// Img<FloatType> resImg = new
@@ -241,18 +237,15 @@ public class Radial_Symmetry implements PlugIn {
 						intensity.add(new Float(element[numDimensions]));	
 
 					// print out parameters
-					for (double[] element : pf.getResult().values()){
-						System.out.println(idx++);
-						
-						if (idx > 3) break;
-						
-						for (int i = 0; i < element.length; ++i){
-							System.out.println("parameter[" + i + "] : " + element[i]);
-						}
-						
-						
-						
-					}
+//					for (double[] element : pf.getResult().values()){
+//						System.out.println(idx++);
+//						
+//						if (idx > 3) break;
+//						
+//						for (int i = 0; i < element.length; ++i){
+//							System.out.println("parameter[" + i + "] : " + element[i]);
+//						}
+//					}
 
 				}
 
@@ -317,7 +310,6 @@ public class Radial_Symmetry implements PlugIn {
 			HelperFunctions.setMinMaxLocation(location, sigmaSpot, minSpot, maxSpot);
 
 			GaussianMaskFit.gaussianMaskFit(Views.interval(timeFrame, minSpot, maxSpot), location, sigmaSpot, null);
-
 		}
 	}
 

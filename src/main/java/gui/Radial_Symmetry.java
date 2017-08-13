@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Font;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import compute.RadialSymmetry;
 import fiji.util.gui.GenericDialogPlus;
@@ -12,6 +14,7 @@ import gauss.GaussianMaskFit;
 import gui.anisotropy.AnisitropyCoefficient;
 import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
+import gui.interactive.HelperFunctions.PointSpot;
 import gui.interactive.InteractiveRadialSymmetry;
 import ij.IJ;
 import ij.ImageJ;
@@ -77,8 +80,11 @@ public class Radial_Symmetry implements PlugIn {
 
 	@Override
 	public void run(String arg) {
-
-		boolean wasCanceled = initialDialog();
+		boolean wasCanceled = chooseImageDialog();
+	
+		if (wasCanceled) return;
+		
+		wasCanceled = initialDialog();
 
 		if (!wasCanceled) // if user didn't cancel
 		{
@@ -205,6 +211,7 @@ public class Radial_Symmetry implements PlugIn {
 			for (int t = 0; t < impDim[4]; t++) {
 				// "-1" because of the imp offset
 				timeFrame = copyImg(rai, c, t, dim, impDim);
+			
 				RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
 				
 				// TODO: if the detect spot has at least 1 inlier add it
@@ -219,18 +226,34 @@ public class Radial_Symmetry implements PlugIn {
 				if (gaussFit) {
 					// fitGaussianMask(timeFrame, rs.getSpots(), sigma);
 
-					ArrayList<Localizable> peaks = new ArrayList<Localizable>(1);
-
-					HelperFunctions.copyToLocalizable(filteredSpots, peaks, numDimensions);
+					// TODO: implement hashCode for Spot, othewise lookups will be very slow
+					// TODO: make spot implement Localizable and just return the original location for the Localize methods
+					// HelperFunctions.copyToLocalizable(filteredSpots, peaks);
 					
 					double [] typicalSigmas = new double[numDimensions];
 					for (int d =0; d < numDimensions; d++)
 						typicalSigmas[d] = sigma;
 
-					PeakFitter<FloatType> pf = new PeakFitter<FloatType>(timeFrame, peaks,
+					PeakFitter<FloatType> pf = new PeakFitter<FloatType>(timeFrame, (ArrayList)filteredSpots,
 							new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(), // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
 							new MLEllipticGaussianEstimator(typicalSigmas));
 					pf.process();
+
+					// TODO: make spot implement Localizable - then this is already a HashMap that maps Spot > double[]
+					// this is actually a Map< Spot, double[] >
+//				final Map< Localizable, double[] > fits = pf.getResult();
+					
+					// TODO: implement hashCode for PointSpot & Spot
+					//HashMap< Spot, double[] > spotToFits = new HashMap<>();
+					
+					//for ( final Localizable l : fits.keySet() )
+					//	spotToFits.put( ((PointSpot)l).getSpot(), fits.get( l ) ); 
+
+//				for ( final Spot spot : filteredSpots )
+//				{
+//					double[] gaussLocationForSpot = fits.get( spot );
+//				}
+					
 					// element: x y (z) A b 
 					long idx=0;
 					for (double[] element : pf.getResult().values())
@@ -370,6 +393,42 @@ public class Radial_Symmetry implements PlugIn {
 
 		return img;
 	}
+	
+	
+	// user chooses the image here
+	protected boolean chooseImageDialog(){
+		boolean failed = false;
+		// check that the are images
+		final int[] imgIdList = WindowManager.getIDList();
+		if (imgIdList == null || imgIdList.length < 1) {
+			IJ.error("You need at least one open image.");
+			failed = true;
+		}
+		else{
+			// titles of the images
+			final String[] imgList = new String[imgIdList.length];
+			for (int i = 0; i < imgIdList.length; ++i)
+				imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
+			
+			if (defaultImg >= imgList.length)
+				defaultImg = 0;
+			
+			GenericDialog gd = new GenericDialog("Choose the image");
+			gd.addChoice("Image_for_detection", imgList, imgList[defaultImg]);
+			gd.showDialog();
+
+			if (gd.wasCanceled()) {
+				failed = true;
+			} else {
+				int tmp = defaultImg = gd.getNextChoiceIndex();
+				this.imp = WindowManager.getImage(imgIdList[tmp]);
+			}
+		}
+		
+		return failed;
+	}
+	
+	
 
 	/*
 	 * shows the initial GUI dialog user has to choose an image a processing
@@ -378,29 +437,29 @@ public class Radial_Symmetry implements PlugIn {
 	protected boolean initialDialog() {
 		boolean failed = false;
 		// check that the are images
-		final int[] imgIdList = WindowManager.getIDList();
-		if (imgIdList == null || imgIdList.length < 1) {
-			IJ.error("You need at least one open image.");
-			failed = true;
-		} else {
+		// final int[] imgIdList = WindowManager.getIDList();
+		// if (imgIdList == null || imgIdList.length < 1) {
+		// 	IJ.error("You need at least one open image.");
+		// 	failed = true;
+		//} else {
 			// titles of the images
-			final String[] imgList = new String[imgIdList.length];
-			for (int i = 0; i < imgIdList.length; ++i)
-				imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
+			// final String[] imgList = new String[imgIdList.length];
+			// for (int i = 0; i < imgIdList.length; ++i)
+			// 	imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
 
 			// choose image to process and method to use
 			GenericDialog initialDialog = new GenericDialog("Initial Setup");
 
-			if (defaultImg >= imgList.length)
-				defaultImg = 0;
+			// if (defaultImg >= imgList.length)
+			// 	defaultImg = 0;
 
-			initialDialog.addChoice("Image_for_detection", imgList, imgList[defaultImg]);
+			// initialDialog.addChoice("Image_for_detection", imgList, imgList[defaultImg]);
 			initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
 			initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
 			initialDialog.addCheckbox("Use_RANSAC", defaultRANSAC);
 
-			// if (imp.getNDimensions() != 2)
-			initialDialog.addNumericField("Anisotropy_coefficient", defaultAnisotropy, 2);
+			if (imp.getNDimensions() != 2)
+				initialDialog.addNumericField("Anisotropy_coefficient", defaultAnisotropy, 2);
 			
 			initialDialog.addMessage("*Use the \"Anisotropy Coeffcient Plugin\"\nto calculate the coefficient or\n leave 1.0 for a reasonable result.", new Font("Arial", 0, 10), new Color(255, 0, 0));
 			
@@ -410,8 +469,8 @@ public class Radial_Symmetry implements PlugIn {
 				failed = true;
 			} else {
 				// Save current index and current choice here
-				int tmp = defaultImg = initialDialog.getNextChoiceIndex();
-				this.imp = WindowManager.getImage(imgIdList[tmp]);
+			//	int tmp = defaultImg = initialDialog.getNextChoiceIndex();
+			//	this.imp = WindowManager.getImage(imgIdList[tmp]);
 				this.parameterType = defaultParam = initialDialog.getNextChoiceIndex();
 				this.gaussFit = defaultGauss = initialDialog.getNextBoolean();
 				this.RANSAC = defaultRANSAC = initialDialog.getNextBoolean();
@@ -419,14 +478,14 @@ public class Radial_Symmetry implements PlugIn {
 				defaultAnisotropy = (float)initialDialog.getNextNumber();
 				this.anisotropy = defaultAnisotropy;
 			}
-		}
+		// }
 
 		return failed;
 	}
 
 	public static void main(String[] args) {
 
-		File path = new File("/media/milkyklim/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif");
+		File path = new File("/Users/kkolyva/Desktop/gauss3d-1,2,3.tif");
 
 		if (!path.exists())
 			throw new RuntimeException("'" + path.getAbsolutePath() + "' doesn't exist.");
@@ -443,6 +502,8 @@ public class Radial_Symmetry implements PlugIn {
 
 		imp.setSlice(121);
 
+		// new Radial_Symmetry().chooseImageDialog();
+		
 		new Radial_Symmetry().run(new String());
 		System.out.println("Doge!");
 	}

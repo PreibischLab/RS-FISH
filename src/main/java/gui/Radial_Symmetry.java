@@ -74,16 +74,16 @@ public class Radial_Symmetry implements PlugIn {
 	boolean gaussFit;
 	boolean RANSAC;
 	float anisotropy;
-	
+
 	// defines the resolution in x y z dimensions
 	double[] calibration;
 
 	@Override
 	public void run(String arg) {
 		boolean wasCanceled = chooseImageDialog();
-	
+
 		if (wasCanceled) return;
-		
+
 		wasCanceled = initialDialog();
 
 		if (!wasCanceled) // if user didn't cancel
@@ -121,8 +121,8 @@ public class Radial_Symmetry implements PlugIn {
 				// calculations are performed further
 			} else // interactive
 			{
- 				params.setAnisotropyCoefficient(anisotropy);
-					
+				params.setAnisotropyCoefficient(anisotropy);
+
 				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, min, max);
 
 				do {
@@ -136,7 +136,7 @@ public class Radial_Symmetry implements PlugIn {
 			// back up the parameter values to the default variables
 			params.setDefaultValues();
 			calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); 
-			
+
 			RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
 
 			RandomAccessibleInterval<FloatType> rai;
@@ -211,12 +211,12 @@ public class Radial_Symmetry implements PlugIn {
 			for (int t = 0; t < impDim[4]; t++) {
 				// "-1" because of the imp offset
 				timeFrame = copyImg(rai, c, t, dim, impDim);
-			
+
 				RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
-				
+
 				// TODO: if the detect spot has at least 1 inlier add it
 				ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), 1 );
-				
+
 				allSpots.addAll(filteredSpots);
 
 				// set the number of points found for the current time step
@@ -229,7 +229,7 @@ public class Radial_Symmetry implements PlugIn {
 					// TODO: implement hashCode for Spot, othewise lookups will be very slow
 					// TODO: make spot implement Localizable and just return the original location for the Localize methods
 					// HelperFunctions.copyToLocalizable(filteredSpots, peaks);
-					
+
 					double [] typicalSigmas = new double[numDimensions];
 					for (int d =0; d < numDimensions; d++)
 						typicalSigmas[d] = sigma;
@@ -241,34 +241,34 @@ public class Radial_Symmetry implements PlugIn {
 
 					// TODO: make spot implement Localizable - then this is already a HashMap that maps Spot > double[]
 					// this is actually a Map< Spot, double[] >
-//				final Map< Localizable, double[] > fits = pf.getResult();
-					
+					//				final Map< Localizable, double[] > fits = pf.getResult();
+
 					// TODO: implement hashCode for PointSpot & Spot
 					//HashMap< Spot, double[] > spotToFits = new HashMap<>();
-					
+
 					//for ( final Localizable l : fits.keySet() )
 					//	spotToFits.put( ((PointSpot)l).getSpot(), fits.get( l ) ); 
 
-//				for ( final Spot spot : filteredSpots )
-//				{
-//					double[] gaussLocationForSpot = fits.get( spot );
-//				}
-					
+					//				for ( final Spot spot : filteredSpots )
+					//				{
+					//					double[] gaussLocationForSpot = fits.get( spot );
+					//				}
+
 					// element: x y (z) A b 
 					long idx=0;
 					for (double[] element : pf.getResult().values())
 						intensity.add(new Float(element[numDimensions]));	
 
 					// print out parameters
-//					for (double[] element : pf.getResult().values()){
-//						System.out.println(idx++);
-//						
-//						if (idx > 3) break;
-//						
-//						for (int i = 0; i < element.length; ++i){
-//							System.out.println("parameter[" + i + "] : " + element[i]);
-//						}
-//					}
+					//					for (double[] element : pf.getResult().values()){
+					//						System.out.println(idx++);
+					//						
+					//						if (idx > 3) break;
+					//						
+					//						for (int i = 0; i < element.length; ++i){
+					//							System.out.println("parameter[" + i + "] : " + element[i]);
+					//						}
+					//					}
 
 				}
 
@@ -393,8 +393,8 @@ public class Radial_Symmetry implements PlugIn {
 
 		return img;
 	}
-	
-	
+
+
 	// user chooses the image here
 	protected boolean chooseImageDialog(){
 		boolean failed = false;
@@ -409,10 +409,10 @@ public class Radial_Symmetry implements PlugIn {
 			final String[] imgList = new String[imgIdList.length];
 			for (int i = 0; i < imgIdList.length; ++i)
 				imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
-			
+
 			if (defaultImg >= imgList.length)
 				defaultImg = 0;
-			
+
 			GenericDialog gd = new GenericDialog("Choose the image");
 			gd.addChoice("Image_for_detection", imgList, imgList[defaultImg]);
 			gd.showDialog();
@@ -424,11 +424,11 @@ public class Radial_Symmetry implements PlugIn {
 				this.imp = WindowManager.getImage(imgIdList[tmp]);
 			}
 		}
-		
+
 		return failed;
 	}
-	
-	
+
+
 
 	/*
 	 * shows the initial GUI dialog user has to choose an image a processing
@@ -436,49 +436,33 @@ public class Radial_Symmetry implements PlugIn {
 	 */
 	protected boolean initialDialog() {
 		boolean failed = false;
-		// check that the are images
-		// final int[] imgIdList = WindowManager.getIDList();
-		// if (imgIdList == null || imgIdList.length < 1) {
-		// 	IJ.error("You need at least one open image.");
-		// 	failed = true;
-		//} else {
-			// titles of the images
-			// final String[] imgList = new String[imgIdList.length];
-			// for (int i = 0; i < imgIdList.length; ++i)
-			// 	imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
 
-			// choose image to process and method to use
-			GenericDialog initialDialog = new GenericDialog("Initial Setup");
 
-			// if (defaultImg >= imgList.length)
-			// 	defaultImg = 0;
+		// choose image to process and method to use
+		GenericDialog initialDialog = new GenericDialog("Initial Setup");
 
-			// initialDialog.addChoice("Image_for_detection", imgList, imgList[defaultImg]);
-			initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
-			initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
-			initialDialog.addCheckbox("Use_RANSAC", defaultRANSAC);
+		initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
+		initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
+		initialDialog.addCheckbox("Use_RANSAC", defaultRANSAC);
 
+		if (imp.getNDimensions() != 2)
+			initialDialog.addNumericField("Anisotropy_coefficient", defaultAnisotropy, 2);
+
+		initialDialog.addMessage("*Use the \"Anisotropy Coeffcient Plugin\"\nto calculate the coefficient or\n leave 1.0 for a reasonable result.", new Font("Arial", 0, 10), new Color(255, 0, 0));
+
+		initialDialog.showDialog();
+
+		if (initialDialog.wasCanceled()) {
+			failed = true;
+		} else {
+			// Save current index and current choice here
+			this.parameterType = defaultParam = initialDialog.getNextChoiceIndex();
+			this.gaussFit = defaultGauss = initialDialog.getNextBoolean();
+			this.RANSAC = defaultRANSAC = initialDialog.getNextBoolean();
 			if (imp.getNDimensions() != 2)
-				initialDialog.addNumericField("Anisotropy_coefficient", defaultAnisotropy, 2);
-			
-			initialDialog.addMessage("*Use the \"Anisotropy Coeffcient Plugin\"\nto calculate the coefficient or\n leave 1.0 for a reasonable result.", new Font("Arial", 0, 10), new Color(255, 0, 0));
-			
-			initialDialog.showDialog();
-
-			if (initialDialog.wasCanceled()) {
-				failed = true;
-			} else {
-				// Save current index and current choice here
-			//	int tmp = defaultImg = initialDialog.getNextChoiceIndex();
-			//	this.imp = WindowManager.getImage(imgIdList[tmp]);
-				this.parameterType = defaultParam = initialDialog.getNextChoiceIndex();
-				this.gaussFit = defaultGauss = initialDialog.getNextBoolean();
-				this.RANSAC = defaultRANSAC = initialDialog.getNextBoolean();
-				// if (imp.getNDimensions() != 2)
 				defaultAnisotropy = (float)initialDialog.getNextNumber();
-				this.anisotropy = defaultAnisotropy;
-			}
-		// }
+			this.anisotropy = defaultAnisotropy;
+		}
 
 		return failed;
 	}
@@ -503,7 +487,7 @@ public class Radial_Symmetry implements PlugIn {
 		imp.setSlice(121);
 
 		// new Radial_Symmetry().chooseImageDialog();
-		
+
 		new Radial_Symmetry().run(new String());
 		System.out.println("Doge!");
 	}

@@ -2,24 +2,21 @@ package fit;
 
 import java.util.ArrayList;
 
+import net.imglib2.FinalInterval;
+import net.imglib2.Interval;
+import net.imglib2.Localizable;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealLocalizable;
+import net.imglib2.iterator.IntervalIterator;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
+
 import background.NormalizedGradient;
 import gradient.Gradient;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
-import net.imglib2.FinalInterval;
-import net.imglib2.Interval;
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.RealLocalizable;
-import net.imglib2.img.Img;
-import net.imglib2.img.ImgFactory;
-import net.imglib2.img.cell.CellImgFactory;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.iterator.IntervalIterator;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.Views;
 
 /**
  * Radial Symmetry Package
@@ -39,7 +36,7 @@ import net.imglib2.view.Views;
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
-public class Spot implements RealLocalizable
+public class Spot implements RealLocalizable, Localizable
 {
 	public final SymmetryCenter< ? extends SymmetryCenter< ? > > center;// = new SymmetryCenter3d();
 	public final ArrayList< PointFunctionMatch > candidates = new ArrayList<PointFunctionMatch>();
@@ -401,5 +398,25 @@ public class Spot implements RealLocalizable
 	public float getFloatPosition( final int d ) { return (float)center.getSymmetryCenter( d ); }
 
 	@Override
-	public double getDoublePosition( final int d ) { return center.getSymmetryCenter( d ); }	
+	public double getDoublePosition( final int d ) { return center.getSymmetryCenter( d ); }
+
+	@Override
+	public void localize(final int[] position)
+	{
+		for ( int d = 0; d < n; ++d )
+			position[ d ] = (int)loc[ d ];
+	}
+
+	@Override
+	public void localize(long[] position)
+	{
+		for ( int d = 0; d < n; ++d )
+			position[ d ] = loc[ d ];
+	}
+
+	@Override
+	public int getIntPosition( final int d ) { return (int)loc[ d ]; }
+
+	@Override
+	public long getLongPosition( final int d ) { return loc[ d ]; }
 }

@@ -22,6 +22,8 @@ import gui.interactive.InteractiveRadialSymmetry.ValueChange;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
 import ij.gui.Roi;
 import ij.io.Opener;
 import ij.process.FloatProcessor;
@@ -42,7 +44,7 @@ import parameters.GUIParams;
 import ucar.nc2.stream.NcStreamProto.DimensionOrBuilder;
 
 public class AnisitropyCoefficient {
-
+	
 	public static int numIterations = 100; // not a parameter, can be changed through Beanshell
 
 	// calibration in xy, usually [1, 1], will be read from ImagePlus upon initialization
@@ -59,7 +61,7 @@ public class AnisitropyCoefficient {
 	FixROIListener fixROIListener;
 
 	// TODO: you probably need one image plus object 
-	final ImagePlus imagePlus;
+	ImagePlus imagePlus;
 	final boolean normalize; // do we normalize intensities?
 	final double min, max; // intensity of the imageplus
 	final long[] dim;
@@ -380,11 +382,10 @@ public class AnisitropyCoefficient {
 		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA,  params.getThresholdDoG()/2, false);
 		peaks = dog2.getSubpixelPeaks(); 
 	}
-
-
+	
 	public static void main(String[] args)
 	{
-		File path = new File( "/media/milkyklim/Samsung_T3/2017-06-26-radial-symmetry-test/Simulated_3D_2x.tif" );
+		File path = new File( "/Users/kkolyva/Desktop/gauss3d-1,2,3.tif" );
 		// path = path.concat("test_background.tif");
 
 		if ( !path.exists() )

@@ -105,7 +105,9 @@ public class AnisitropyCoefficient {
 		return wasCanceled;
 	}
 
-	public AnisitropyCoefficient(ImagePlus imp, final AParams params, final double min, final double max){
+	
+	// paramType defines if we use RS or Gaussian Fit
+	public AnisitropyCoefficient(ImagePlus imp, final AParams params, int paramType, final double min, final double max){
 		this.imagePlus = imp;
 
 		dim = new long[imp.getNDimensions()];
@@ -159,14 +161,23 @@ public class AnisitropyCoefficient {
 		if (this.wasCanceled())
 			return;
 
-		calculateAnisotropyCoefficient();
+		// calculateAnisotropyCoefficient();
 	}
+	
+	
+	// use gauss fit to detect the anisotropy coefficent of the 3D images
+	public double calculateAnisotropyCoefficientGF(){
+		double bestScale = 1; 
+		
+		return bestScale;
+	}
+	
 
 	// pass the image with the bead
 	// detect it 
 	// run with different scalings to see which scaling will produce the best result 
 
-	public double calculateAnisotropyCoefficient(){
+	public double calculateAnisotropyCoefficientRS(){
 
 		System.out.println("BEEP");
 
@@ -424,7 +435,7 @@ public class AnisitropyCoefficient {
 
 		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
-		new AnisitropyCoefficient( imp, new AParams(), min, max );
+		new AnisitropyCoefficientRS( imp, new AParams(), min, max );
 
 		System.out.println("DOGE!");
 	}

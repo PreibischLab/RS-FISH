@@ -16,38 +16,36 @@ import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 
 public class Anisotropy_Plugin implements PlugIn {
-	
+
 	public static String[] paramChoice = new String[] { "Gauss Fit", "Radial Symmetry" };
 	public static int defaultParam = 0;
 	public static int defaultImg = 0;
-	
+
 	ImagePlus imagePlus;
 	int paramType;
-	
+
 	@Override
 	public void run(String arg) {
 		boolean wasCanceled = false; 
 		wasCanceled = chooseMethodDialog();
-		
+
 		double bestScale = 1.0;
+
+
+		AParams ap = new AParams();
+		double [] minmax = calculateMinMax(imagePlus);
+		AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, paramType, minmax[0], minmax[1]);
 		
-		// split because of the method
-		if (paramType == 0){ // Gauss fit 
-			
-		}
-		else{ // radial symmetry
-			
-			AParams ap = new AParams();
-			double [] minmax = calculateMinMax(imagePlus);
-			AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, minmax[0], minmax[1]);
-			bestScale = ac.calculateAnisotropyCoefficient();
-			
-			// bestScale = anisotropyChooseImageDialog();
-		}
-		
-		
+		if (paramType == 0) // gauss fit 
+			;//
+		else
+			bestScale = ac.calculateAnisotropyCoefficientRS();
+
+		// bestScale = anisotropyChooseImageDialog();
+
+
 	}
-		
+
 	// here user chooses the image and 
 	// the method for the calculation of the anisotropy coefficient
 	protected boolean chooseMethodDialog(){
@@ -70,7 +68,7 @@ public class Anisotropy_Plugin implements PlugIn {
 			GenericDialog gd = new GenericDialog("Choose the image");
 			gd.addChoice("Image_for_detection", imgList, imgList[defaultImg]);
 			gd.addChoice("Detection_method", paramChoice, paramChoice[defaultParam]);
-			
+
 			gd.showDialog();
 
 			if (gd.wasCanceled()) {
@@ -84,7 +82,7 @@ public class Anisotropy_Plugin implements PlugIn {
 
 		return failed;
 	}
-	
+
 	public static double[] calculateMinMax(ImagePlus imp){
 		float min = Float.MAX_VALUE;
 		float max = -Float.MAX_VALUE;
@@ -103,7 +101,7 @@ public class Anisotropy_Plugin implements PlugIn {
 
 		return new double[]{min, max};
 	}
-	
+
 	public static void main(String[] args)
 	{
 		File path = new File( "/Users/kkolyva/Desktop/gauss3d-1,2,3.tif" );
@@ -149,6 +147,6 @@ public class Anisotropy_Plugin implements PlugIn {
 
 		System.out.println("DOGE!");
 	}
-	
-	
+
+
 }

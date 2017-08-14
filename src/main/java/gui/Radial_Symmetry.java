@@ -168,7 +168,7 @@ public class Radial_Symmetry implements PlugIn {
 			// Uncomment after done with 2d + time testing
 			// Spot.showInliers(allSpots, ransacPreview, params.getMaxError());
 			// ImageJFunctions.show(ransacPreview);
-			Inliers.showInliers(imp, allSpots);
+			Inliers.showInliers(ImageJFunctions.wrapReal(imp), allSpots);
 
 			// DEBUG: REMOVE
 			// Img<FloatType> resImg = new
@@ -214,7 +214,7 @@ public class Radial_Symmetry implements PlugIn {
 					// HelperFunctions.copyToLocalizable(filteredSpots, peaks);
 
 					double [] typicalSigmas = new double[numDimensions];
-					for (int d =0; d < numDimensions; d++)
+					for (int d = 0; d < numDimensions; d++)
 						typicalSigmas[d] = sigma;
 
 					PeakFitter<FloatType> pf = new PeakFitter<FloatType>(timeFrame, (ArrayList)filteredSpots,
@@ -227,7 +227,7 @@ public class Radial_Symmetry implements PlugIn {
 					//				final Map< Localizable, double[] > fits = pf.getResult();
 
 					// TODO: implement hashCode for PointSpot & Spot
-					//HashMap< Spot, double[] > spotToFits = new HashMap<>();
+					// HashMap< Spot, double[] > spotToFits = new HashMap<>();
 
 					//for ( final Localizable l : fits.keySet() )
 					//	spotToFits.put( ((PointSpot)l).getSpot(), fits.get( l ) ); 
@@ -238,7 +238,7 @@ public class Radial_Symmetry implements PlugIn {
 					//				}
 
 					// element: x y (z) A b 
-					long idx=0;
+					long idx = 0;
 					for (double[] element : pf.getResult().values())
 						intensity.add(new Float(element[numDimensions]));	
 
@@ -452,7 +452,7 @@ public class Radial_Symmetry implements PlugIn {
 
 	public static void main(String[] args) {
 
-		File path = new File("/Users/kkolyva/Desktop/gauss3d-1,2,3.tif");
+		File path = new File("/media/milkyklim/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif");
 
 		if (!path.exists())
 			throw new RuntimeException("'" + path.getAbsolutePath() + "' doesn't exist.");

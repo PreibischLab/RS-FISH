@@ -36,13 +36,9 @@ public class Anisotropy_Plugin implements PlugIn {
 		double [] minmax = calculateMinMax(imagePlus);
 		AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, paramType, minmax[0], minmax[1]);
 		
-		if (paramType == 0) // gauss fit 
-			;//
-		else
-			bestScale = ac.calculateAnisotropyCoefficientRS();
-
-		// bestScale = anisotropyChooseImageDialog();
-
+		bestScale = ac.calculateAnisotropyCoefficient();
+		
+		// TODO: write bestScale somewhere
 
 	}
 

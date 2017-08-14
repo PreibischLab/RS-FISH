@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Rectangle;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Map;
 
 import anisotropy.parameters.AParams;
 import background.NormalizedGradient;
@@ -31,10 +32,15 @@ import ij.process.ImageProcessor;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
 import mpicbg.imglib.wrapper.ImgLib1;
+import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.algorithm.localization.EllipticGaussianOrtho;
+import net.imglib2.algorithm.localization.LevenbergMarquardtSolver;
+import net.imglib2.algorithm.localization.MLEllipticGaussianEstimator;
+import net.imglib2.algorithm.localization.PeakFitter;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
@@ -67,7 +73,9 @@ public class AnisitropyCoefficient {
 	final long[] dim;
 	final int type;
 	Rectangle rectangle;
-
+	
+	final int paramType; // defines which method will be used: gauusfit or radial symmetry 
+	
 	ArrayList<RefinedPeak<Point>> peaks;
 
 	// TODO: always process only this part of the initial image READ ONLY
@@ -105,10 +113,10 @@ public class AnisitropyCoefficient {
 		return wasCanceled;
 	}
 
-	
 	// paramType defines if we use RS or Gaussian Fit
 	public AnisitropyCoefficient(ImagePlus imp, final AParams params, int paramType, final double min, final double max){
 		this.imagePlus = imp;
+		this.paramType = paramType;
 
 		dim = new long[imp.getNDimensions()];
 		for (int d = 0; d< imp.getNDimensions(); ++d)
@@ -164,28 +172,15 @@ public class AnisitropyCoefficient {
 		// calculateAnisotropyCoefficient();
 	}
 	
-	
-	// use gauss fit to detect the anisotropy coefficent of the 3D images
-	public double calculateAnisotropyCoefficientGF(){
-		double bestScale = 1; 
-		
-		return bestScale;
-	}
-	
-
-	// pass the image with the bead
-	// detect it 
-	// run with different scalings to see which scaling will produce the best result 
-
-	public double calculateAnisotropyCoefficientRS(){
-
+	// trigger the coefficient calculation
+	public double calculateAnisotropyCoefficient(){
+		double bestScale = 1.0;
+				
 		System.out.println("BEEP");
-
-		double bestScale = 1; // return value 
 
 		// TODO Add this parameters to the gui?
 		float sigma = params.getSigmaDoG(); 
-		double threshold = params.getThresholdDoG();
+		float threshold = params.getThresholdDoG();
 
 		RandomAccessibleInterval<FloatType> img = ImageJFunctions.wrapFloat(imagePlus);
 
@@ -204,7 +199,62 @@ public class AnisitropyCoefficient {
 			final DogDetection<FloatType> dog2 = new DogDetection<>(img, calibration, sigma, sigma2,
 					DogDetection.ExtremaType.MINIMA, tFactor * threshold / 2, false);
 			peaks = dog2.getSubpixelPeaks();
+		}
+		
+	
+		if (paramType == 0) // gauss fit 
+			bestScale = calculateAnisotropyCoefficientGF(img, threshold, sigma); 
+		else
+			bestScale = calculateAnisotropyCoefficientRS(img, threshold, sigma);
 
+		// bestScale = anisotropyChooseImageDialog();
+		return bestScale;
+	}
+	
+	
+	// use gauss fit to detect the anisotropy coefficent of the 3D images
+	public double calculateAnisotropyCoefficientGF(RandomAccessibleInterval<FloatType> img, float threshold, float sigma){
+		double bestScale = 1; 
+		
+		int numDimensions = img.numDimensions();
+		
+		double [] typicalSigmas = new double[numDimensions];
+		for (int d = 0; d < numDimensions; d++)
+			typicalSigmas[d] = sigma;
+
+		// TODO: implement hashCode for Spot, othewise lookups will be very slow
+		// TODO: make spot implement Localizable and just return the original location for the Localize methods
+		// TODO: implement the background subtraction here, otherwise peakfitter will givethe wrong result 
+		// HelperFunctions.copyToLocalizable(filteredSpots, peaks);
+		
+		// (ArrayList)filteredSpots 
+		// peaks
+		
+		// HelperFunctions.copyToLocalizable(filteredSpots, peaks);
+		
+		// TODO: move this to the separate function
+		for (RefinedPeak<Point> peak : peaks){
+			
+		}
+				
+		// PeakFitter<FloatType> pf = new PeakFitter<FloatType>(img, peaks,
+		// 		new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(), // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
+		// 		new MLEllipticGaussianEstimator(typicalSigmas));
+		// pf.process();
+		
+		final Map< Localizable, double[] > fits = pf.getResult();
+		
+		return bestScale;
+	}
+	
+
+	// pass the image with the bead
+	// detect it 
+	// run with different scalings to see which scaling will produce the best result 
+
+	public double calculateAnisotropyCoefficientRS(RandomAccessibleInterval<FloatType> img, float threshold, float sigma){
+
+			double bestScale = 1.0;
 			derivative = new GradientPreCompute(img);
 
 			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
@@ -285,7 +335,7 @@ public class AnisitropyCoefficient {
 			}
 
 			IJ.log("best: " + bestScale);
-		}
+		
 		
 		return bestScale;
 	}
@@ -435,7 +485,7 @@ public class AnisitropyCoefficient {
 
 		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
-		new AnisitropyCoefficientRS( imp, new AParams(), min, max );
+		new AnisitropyCoefficient( imp, new AParams(), 1, min, max );
 
 		System.out.println("DOGE!");
 	}

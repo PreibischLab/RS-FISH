@@ -9,53 +9,76 @@ import gui.anisotropy.AnisitropyCoefficient;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
 import ij.io.Opener;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 
 public class Anisotropy_Plugin implements PlugIn {
-	
+
+	public static String[] paramChoice = new String[] { "Gauss Fit", "Radial Symmetry" };
+	public static int defaultParam = 0;
+	public static int defaultImg = 0;
+
+	ImagePlus imagePlus;
+	int paramType;
+
 	@Override
 	public void run(String arg) {
-		double bestScale = anisotropyChooseImageDialog();
+		boolean wasCanceled = false; 
+		wasCanceled = chooseMethodDialog();
+
+		double bestScale = 1.0;
+
+
+		AParams ap = new AParams();
+		double [] minmax = calculateMinMax(imagePlus);
+		AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, paramType, minmax[0], minmax[1]);
+		
+		bestScale = ac.calculateAnisotropyCoefficient();
+		
+		// TODO: write bestScale somewhere
+
 	}
-	
-	protected double anisotropyChooseImageDialog(){
 
-		// boolean failed = false;
-		double bestScale;
-
-		GenericDialogPlus gdp = new GenericDialogPlus("Choose bead image");
-		gdp.addFileField("Image", "/Volumes/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/psf.tif");
-
-		// TODO: Check that the file is the image		
-		// gdp.addDirectoryField(label, defaultPath);
-		// gdp.addDirectoryOrFileField(label, defaultPath);		
-		gdp.showDialog();
-
-		if (gdp.wasCanceled()){ 
-			// failed = true;
-			bestScale = 1.0;
+	// here user chooses the image and 
+	// the method for the calculation of the anisotropy coefficient
+	protected boolean chooseMethodDialog(){
+		boolean failed = false;
+		// check that the are images
+		final int[] imgIdList = WindowManager.getIDList();
+		if (imgIdList == null || imgIdList.length < 1) {
+			IJ.error("You need at least one open image.");
+			failed = true;
 		}
 		else{
-			String imgPath = gdp.getNextString(); // this one should the name of the image
-			File file = new File(imgPath);
-			ImagePlus imagePlus = new Opener().openImage(file.getAbsolutePath());
-			if (!file.exists())
-				throw new RuntimeException("'" + file.getAbsolutePath() + "' doesn't exist.");
+			// titles of the images
+			final String[] imgList = new String[imgIdList.length];
+			for (int i = 0; i < imgIdList.length; ++i)
+				imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
 
-			imagePlus.show();
+			if (defaultImg >= imgList.length)
+				defaultImg = 0;
 
-			// TODO: remove as a parameter? 
-			AParams ap = new AParams();
+			GenericDialog gd = new GenericDialog("Choose the image");
+			gd.addChoice("Image_for_detection", imgList, imgList[defaultImg]);
+			gd.addChoice("Detection_method", paramChoice, paramChoice[defaultParam]);
 
-			double [] minmax = calculateMinMax(imagePlus);
-			AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, minmax[0], minmax[1]);
-			bestScale = ac.calculateAnisotropyCoefficient();
+			gd.showDialog();
+
+			if (gd.wasCanceled()) {
+				failed = true;
+			} else {
+				int tmp = defaultImg = gd.getNextChoiceIndex();
+				this.paramType = defaultParam = gd.getNextChoiceIndex();
+				this.imagePlus = WindowManager.getImage(imgIdList[tmp]);
+			}
 		}
-		return bestScale;
+
+		return failed;
 	}
-	
+
 	public static double[] calculateMinMax(ImagePlus imp){
 		float min = Float.MAX_VALUE;
 		float max = -Float.MAX_VALUE;
@@ -74,10 +97,10 @@ public class Anisotropy_Plugin implements PlugIn {
 
 		return new double[]{min, max};
 	}
-	
+
 	public static void main(String[] args)
 	{
-		File path = new File( "/media/milkyklim/Samsung_T3/2017-06-26-radial-symmetry-test/Simulated_3D_2x.tif" );
+		File path = new File( "/Users/kkolyva/Desktop/gauss3d-1,2,3.tif" );
 		// path = path.concat("test_background.tif");
 
 		if ( !path.exists() )
@@ -120,6 +143,6 @@ public class Anisotropy_Plugin implements PlugIn {
 
 		System.out.println("DOGE!");
 	}
-	
-	
+
+
 }

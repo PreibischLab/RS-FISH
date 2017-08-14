@@ -37,6 +37,7 @@ import imglib2.TypeTransformingRandomAccessibleInterval;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 import test.TestGauss3d;
+import visualization.Detections;
 import visualization.Inliers;
 
 public class Radial_Symmetry implements PlugIn {
@@ -168,8 +169,12 @@ public class Radial_Symmetry implements PlugIn {
 			// Uncomment after done with 2d + time testing
 			// Spot.showInliers(allSpots, ransacPreview, params.getMaxError());
 			// ImageJFunctions.show(ransacPreview);
-			Inliers.showInliers(ImageJFunctions.wrapReal(imp), allSpots);
-
+			
+			// Inliers.showInliers(ImageJFunctions.wrapReal(imp), allSpots);
+			Detections.showDetections(ImageJFunctions.wrapReal(imp), allSpots);
+			
+			
+			
 			// DEBUG: REMOVE
 			// Img<FloatType> resImg = new
 			// ArrayImgFactory<FloatType>().create(rai, new FloatType());

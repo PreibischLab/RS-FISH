@@ -385,12 +385,24 @@ public class HelperFunctions {
 	}
 
 	// used to copy Spots to Peaks
-	public static void copyToLocalizable(final ArrayList<Spot> spots, Collection<Localizable> peaks,
-			int numDimensions) {
+	public static void copyToLocalizable(final ArrayList<Spot> spots, Collection<Localizable> peaks ) {
 		for (final Spot spot : spots) {
-			Point pos = new Point(spot.getOriginalLocation());
-			peaks.add(pos);
+			peaks.add( new PointSpot( spot ) );
+			//Point pos = new Point(spot.getOriginalLocation());
+			//peaks.add(pos);
 		}
+	}
+
+	public static class PointSpot extends Point
+	{
+		final Spot spot;
+
+		public PointSpot( final Spot spot )
+		{
+			super( spot.getOriginalLocation() );
+			this.spot = spot;
+		}
+		public Spot getSpot() { return spot; }
 	}
 
 	/*

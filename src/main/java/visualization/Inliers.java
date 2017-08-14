@@ -21,31 +21,7 @@ public class Inliers {
 	public Inliers(){
 		
 	}
-	
-	// make the overlay of the initital image and the RANSAC result 
-	// TODO: DEPRECATED
-	public static void showInliers(ImagePlus imp, ArrayList<Spot> spots){	
-		int [] impDimensions = imp.getDimensions();
-		long [] dimensions;
 		
-		if (imp.getNChannels() != 1)
-			System.out.println("only 1 channel images are supported");
-		
-		
-		if(imp.getNFrames() != 1)
-			dimensions = new long[]{impDimensions[0], impDimensions[1], impDimensions[3], impDimensions[4]};
-		else 
-			dimensions = new long[]{impDimensions[0], impDimensions[1], impDimensions[3]};
-				
-		// TODO: for the images with time have to make a loop
-		
-		
-		Img<FloatType> imgInliers = new ArrayImgFactory<FloatType>().create(dimensions, new FloatType());
-		Spot.drawRANSACArea(spots, imgInliers);
-		
-		ImageJFunctions.show(imgInliers);
-	}
-	
 	public static void showInliers(RandomAccessibleInterval<FloatType> img, ArrayList<Spot> spots)
 	{
 		long [] dimensions = new long [img.numDimensions()];

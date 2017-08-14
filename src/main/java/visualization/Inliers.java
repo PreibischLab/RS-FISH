@@ -19,7 +19,6 @@ public class Inliers {
 	
 	public static void showInliers(ImagePlus imp, ArrayList<Spot> spots){
 		
-		
 		// what are the possible values for the dimensions
 		// x y z + time scale ? 
 		// TODO: how to process the multi-channel images
@@ -31,10 +30,13 @@ public class Inliers {
 		else 
 			dimensions = new long[]{impDimensions[0], impDimensions[1], impDimensions[3]};
 				
-		Img<FloatType> ransacPreview = new ArrayImgFactory<FloatType>().create(dimensions, new FloatType());
-		Spot.drawRANSACArea(spots, ransacPreview);
+		// TODO: for the images with time have to make a loop
 		
-		ImageJFunctions.show(ransacPreview);
+		
+		Img<FloatType> imgInliers = new ArrayImgFactory<FloatType>().create(dimensions, new FloatType());
+		Spot.drawRANSACArea(spots, imgInliers);
+		
+		ImageJFunctions.show(imgInliers);
 	}
 	
 	public static void main(String[] args){

@@ -242,7 +242,7 @@ public class AnisitropyCoefficient {
 		// 		new MLEllipticGaussianEstimator(typicalSigmas));
 		// pf.process();
 		
-		final Map< Localizable, double[] > fits = pf.getResult();
+		// final Map< Localizable, double[] > fits = pf.getResult();
 		
 		return bestScale;
 	}

@@ -37,7 +37,7 @@ public class GenericDialogGUIParams
 			gd.addChoice("Local_Background_Subtraction:", GUIParams.bsMethods, GUIParams.bsMethods[GUIParams.defaultBsMethod] );
 		}
 			
-		gd.addNumericField("Z-scaling value", GUIParams.defaultAnisotropy, 2);	
+		// gd.addNumericField("Z-scaling value", GUIParams.defaultAnisotropy, 2);	
 		
 		gd.showDialog();
 		if (gd.wasCanceled()) 
@@ -62,7 +62,7 @@ public class GenericDialogGUIParams
 				// supportRadius = (int)sigma + 1;
 			}
 			
-			float anisotropyCoefficient = (float)gd.getNextNumber();
+		//	float anisotropyCoefficient = (float)gd.getNextNumber();
 			
 			// wrong values in the fields
 			if (sigma == Double.NaN || threshold == Double.NaN ||  supportRadius == Double.NaN || inlierRatio == Double.NaN || maxError == Double.NaN )
@@ -80,7 +80,7 @@ public class GenericDialogGUIParams
 					guiParams.setBsMethod(bsMethod);
 				}		
 				
-				guiParams.setAnisotropyCoefficient(anisotropyCoefficient);
+		//		guiParams.setAnisotropyCoefficient(anisotropyCoefficient);
 				
 				// the default values are set in the Radial_Symmetry.java
 			}

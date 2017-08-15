@@ -392,6 +392,14 @@ public class HelperFunctions {
 			//peaks.add(pos);
 		}
 	}
+	
+	// used to copy Spots to long []
+	public static void copyToLong(final ArrayList<Spot> spots, ArrayList<long[]> peaks ) {
+		for (final Spot spot : spots)
+			peaks.add(spot.getOriginalLocation());
+	}
+	
+	
 
 	public static class PointSpot extends Point
 	{

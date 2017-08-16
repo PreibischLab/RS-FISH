@@ -470,7 +470,7 @@ public class Radial_Symmetry implements PlugIn {
 
 	public static void main(String[] args) {
 
-		File path = new File( "/media/milkyklim/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif" );
+		File path = new File( "/Volumes/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif" );
 		//		File path = new File("/Users/kkolyva/Desktop/gauss3d-1,2,3.tif");
 
 		if (!path.exists())

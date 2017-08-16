@@ -115,7 +115,7 @@ public class Detections {
 		isComputing = false;
 	}
 
-	// TODO: maybe possible speed up
+	// TODO: maybe possible speed up and not necessary to sort in longs
 	public class PosComparator implements Comparator<double []>{
 
 		@Override
@@ -148,8 +148,10 @@ public class Detections {
 		tmp[numDimensions - 1] = lowerBound;
 		int idxLower = Collections.binarySearch(peaks, tmp, new PosComparator());
 		tmp[numDimensions - 1] = upperBound;
-		int idxUpper = Collections.binarySearch(peaks, tmp, Collections.reverseOrder(new PosComparator()));
+		int idxUpper = Collections.binarySearch(peaks, tmp, new PosComparator());
 
+		System.out.println(idxLower + " "  + idxUpper);
+			
 		// FIXME: fix the issue when the indices are negative but not -1
 		
 		

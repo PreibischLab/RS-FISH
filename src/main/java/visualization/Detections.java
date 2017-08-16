@@ -19,7 +19,7 @@ import net.imglib2.type.numeric.real.FloatType;
 public class Detections {
 
 	ImagePlus imp;
-	ArrayList<long[]> peaks;
+	ArrayList<double []> peaks;
 	int numDimensions;
 	long [] dimensions;
 
@@ -50,20 +50,9 @@ public class Detections {
 		this.imp = ImageJFunctions.wrap(img, "");
 		this.peaks = new ArrayList<>();
 
-		HelperFunctions.copyToLong(spots, peaks);
+		HelperFunctions.copyToDouble(spots, peaks);
 		// sort by z in increasing order 
-		Collections.sort(peaks, new Comparator<long[]>() {
-			@Override
-			public int compare(long[] a, long [] b) {
-				int compareTo = 0;
-				if (a[numDimensions - 1] < b[numDimensions - 1])
-					compareTo = -1;
-				if (a[numDimensions - 1] > b[numDimensions - 1])
-					compareTo = 1;
-				return compareTo;
-			}
-		});
-
+		Collections.sort(peaks, new PosComparator());
 	}
 
 
@@ -94,56 +83,35 @@ public class Detections {
 		int zSlice = imp.getCurrentSlice(); // getZ() ? 
 		int ds = 5;
 
-		long lowerBound = Math.max(zSlice - ds, 1);
-		long upperBound = Math.min(zSlice + ds, imp.getNChannels()); // imp.getNSlices());
+		double lowerBound = Math.max(zSlice - ds, 1);
+		double upperBound = Math.min(zSlice + ds, imp.getNChannels()); // imp.getNSlices());
 
 
 		System.out.println(lowerBound + " " + zSlice + " " + upperBound);
 
 
-		long [] tmp = new long[numDimensions];
+		double [] tmp = new double[numDimensions];
 		tmp[numDimensions - 1] = lowerBound;
 
 
-		int peakLower = Collections.binarySearch(peaks, tmp, new Comparator<long[]>() {
-			@Override
-			public int compare(long[] a, long [] b) {
-				int compareTo = 0;
-				if (a[numDimensions - 1] < b[numDimensions - 1])
-					compareTo = -1;
-				if (a[numDimensions - 1] > b[numDimensions - 1])
-					compareTo = 1;
-				return compareTo;
-			}
-		});
+		int peakLower = Collections.binarySearch(peaks, tmp, new PosComparator());
 
 
 		tmp[numDimensions - 1] = upperBound;
 
-		int peakUpper = Collections.binarySearch(peaks, tmp, new Comparator<long[]>() {
-			@Override
-			public int compare(long[] a, long [] b) {
-				int compareTo = 0;
-				if (a[numDimensions - 1] < b[numDimensions - 1])
-					compareTo = -1;
-				if (a[numDimensions - 1] > b[numDimensions - 1])
-					compareTo = 1;
-				return compareTo;
-			}
-		});
+		int peakUpper = Collections.binarySearch(peaks, tmp, Collections.reverseOrder(new PosComparator()));
 
 		System.out.println(peakLower + " " + peakUpper);
 
 
 		if (peakLower >= 0 && peakUpper >= 0){
-
 			for (int curPeak = peakLower; curPeak <= peakUpper; curPeak++){
 
-				long [] peak = peaks.get(curPeak);
+				double [] peak = peaks.get(curPeak);
 
-				final float x = peak[0];
-				final float y = peak[1];
-				final long z = peak[2];
+				final double x = peak[0];
+				final double y = peak[1];
+				final long z = (long)peak[2];
 
 				int initRadius = 5;
 				int radius = initRadius - (int)Math.abs(z - zSlice) ;
@@ -187,6 +155,20 @@ public class Detections {
 
 		imp.updateAndDraw();
 		isComputing = false;
+	}
+
+	public class PosComparator implements Comparator<double []>{
+
+		@Override
+		public int compare(double[] a, double [] b) {
+			int compareTo = 0;
+			if (a[numDimensions - 1] < b[numDimensions - 1])
+				compareTo = -1;
+			if (a[numDimensions - 1] > b[numDimensions - 1])
+				compareTo = 1;
+			return compareTo;
+		}
+
 	}
 
 	public static void main(String [] args){

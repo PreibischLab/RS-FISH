@@ -398,7 +398,12 @@ public class HelperFunctions {
 		for (final Spot spot : spots)
 			peaks.add(spot.getOriginalLocation());
 	}
-	
+
+	// used to copy Spots to double []
+	public static void copyToDouble(final ArrayList<Spot> spots, ArrayList<double []> peaks ) {
+		for (final Spot spot : spots)
+			peaks.add(spot.getCenter());
+	}
 	
 
 	public static class PointSpot extends Point

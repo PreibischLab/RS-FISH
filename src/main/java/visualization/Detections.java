@@ -138,6 +138,8 @@ public class Detections {
 	public int[] findIndices(long zSlice){
 		int[] indices = new int[2]; // 
 
+		// TODO: MAKE THE THIS THE PARAMETER THAT IS PASSED 
+		// THIS IS THE SCALE THAT YOU COMPUTE
 		int ds = 5; // how many extra slices to consider = ds*2
 
 		// FIXME: this imageJ problem slices vs channels!
@@ -150,11 +152,20 @@ public class Detections {
 		tmp[numDimensions - 1] = upperBound;
 		int idxUpper = Collections.binarySearch(peaks, tmp, new PosComparator());
 
-		System.out.println(idxLower + " "  + idxUpper);
-			
-		// FIXME: fix the issue when the indices are negative but not -1
+		// DEBUG: 
+		// System.out.println(idxLower + " "  + idxUpper);		
 		
+		if (idxLower < 0){
+			idxLower = -(idxLower + 1);
+			if (idxLower == peaks.size())
+				idxLower -= 1;
+		}
 		
+		if (idxUpper < 0){
+			idxUpper = -(idxUpper + 1);
+			if (idxUpper == peaks.size())
+				idxUpper -= 1;
+		}
 		
 		//TODO: Update this to have real O(lg n) complexity
 
@@ -183,13 +194,12 @@ public class Detections {
 
 			if((long)peaks.get(j)[numDimensions - 1] != zPos)
 				break;
-			else
-				newIdx = j;
-
+			
+			newIdx = j;
 			j += direction;
 		}
 
-		System.out.println("No infinite loop; Such success!");
+		// System.out.println("No infinite loop; Such success!");
 
 		return newIdx;
 	}

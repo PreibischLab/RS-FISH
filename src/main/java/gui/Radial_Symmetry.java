@@ -5,20 +5,6 @@ import java.awt.Font;
 import java.io.File;
 import java.util.ArrayList;
 
-import net.imglib2.Cursor;
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.algorithm.localization.EllipticGaussianOrtho;
-import net.imglib2.algorithm.localization.LevenbergMarquardtSolver;
-import net.imglib2.algorithm.localization.MLEllipticGaussianEstimator;
-import net.imglib2.algorithm.localization.PeakFitter;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.Views;
-
 import compute.RadialSymmetry;
 import fit.Spot;
 import gauss.GaussianMaskFit;
@@ -34,6 +20,19 @@ import ij.io.Opener;
 import ij.plugin.PlugIn;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
+import net.imglib2.Cursor;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.localization.EllipticGaussianOrtho;
+import net.imglib2.algorithm.localization.LevenbergMarquardtSolver;
+import net.imglib2.algorithm.localization.MLEllipticGaussianEstimator;
+import net.imglib2.algorithm.localization.PeakFitter;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 import test.TestGauss3d;
@@ -49,15 +48,21 @@ public class Radial_Symmetry implements PlugIn {
 	public static boolean defaultRANSAC = true;
 	public static float defaultAnisotropy = 1.0f; 
 
+	public static boolean defaultDetections = true;
+	public static boolean defaultInliers = false; 
+
 	// steps per octave
 	public static int defaultSensitivity = 4;
 
 	// TODO: used to choose the image
 	ImagePlus imp;
 	int parameterType;
-	boolean gaussFit;
 	boolean RANSAC;
 	float anisotropy;
+	// use gaussfit 
+	boolean gaussFit;
+	boolean showDetections;
+	boolean showInliers;
 
 	// defines the resolution in x y z dimensions
 	double[] calibration;
@@ -169,12 +174,13 @@ public class Radial_Symmetry implements PlugIn {
 			// Uncomment after done with 2d + time testing
 			// Spot.showInliers(allSpots, ransacPreview, params.getMaxError());
 			// ImageJFunctions.show(ransacPreview);
-			
-			// Inliers.showInliers(ImageJFunctions.wrapReal(imp), allSpots);
-			new Detections(ImageJFunctions.wrapReal(imp), allSpots).showDetections();
-			
-			
-			
+
+			// Visualization incoming
+			if (showInliers)
+				Inliers.showInliers(ImageJFunctions.wrapReal(imp), allSpots);
+			if (showDetections)
+				new Detections(ImageJFunctions.wrapReal(imp), allSpots).showDetections();
+
 			// DEBUG: REMOVE
 			// Img<FloatType> resImg = new
 			// ArrayImgFactory<FloatType>().create(rai, new FloatType());
@@ -432,7 +438,10 @@ public class Radial_Symmetry implements PlugIn {
 		initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
 		initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
 		initialDialog.addCheckbox("Use_RANSAC", defaultRANSAC);
-
+		
+		initialDialog.addCheckbox("Show_RANSAC_results", defaultInliers);
+		initialDialog.addCheckbox("Show_detections", defaultDetections);
+		
 		if (imp.getNDimensions() != 2)
 			initialDialog.addNumericField("Anisotropy_coefficient", defaultAnisotropy, 2);
 
@@ -447,6 +456,10 @@ public class Radial_Symmetry implements PlugIn {
 			this.parameterType = defaultParam = initialDialog.getNextChoiceIndex();
 			this.gaussFit = defaultGauss = initialDialog.getNextBoolean();
 			this.RANSAC = defaultRANSAC = initialDialog.getNextBoolean();
+			
+			this.showInliers = defaultInliers = initialDialog.getNextBoolean();
+			this.showDetections = defaultDetections = initialDialog.getNextBoolean();
+			
 			if (imp.getNDimensions() != 2)
 				defaultAnisotropy = (float)initialDialog.getNextNumber();
 			this.anisotropy = defaultAnisotropy;
@@ -458,7 +471,7 @@ public class Radial_Symmetry implements PlugIn {
 	public static void main(String[] args) {
 
 		File path = new File( "/media/milkyklim/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif" );
-//		File path = new File("/Users/kkolyva/Desktop/gauss3d-1,2,3.tif");
+		//		File path = new File("/Users/kkolyva/Desktop/gauss3d-1,2,3.tif");
 
 		if (!path.exists())
 			throw new RuntimeException("'" + path.getAbsolutePath() + "' doesn't exist.");

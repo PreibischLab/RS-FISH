@@ -15,6 +15,7 @@ import ij.gui.Overlay;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
+import util.ImgLib2Util;
 
 public class Detections {
 
@@ -53,6 +54,11 @@ public class Detections {
 		HelperFunctions.copyToDouble(spots, peaks);
 		// sort by z in increasing order 
 		Collections.sort(peaks, new PosComparator());
+		
+//		for (double[] peak : peaks){
+//			System.out.println(peak[numDimensions - 1]);
+//		}
+		
 	}
 
 
@@ -82,33 +88,9 @@ public class Detections {
 
 		int zSlice = imp.getCurrentSlice(); // getZ() ? 
 
-		//		int ds = 5; // how many extra slices to consider = ds*2
-		//
-		//		double lowerBound = Math.max(zSlice - ds, 1);
-		//		double upperBound = Math.min(zSlice + ds, imp.getNChannels()); // imp.getNSlices());
-		//
-		//
-		//		System.out.println(lowerBound + " " + zSlice + " " + upperBound);
-		//
-		//
-		//		double [] tmp = new double[numDimensions];
-		//		tmp[numDimensions - 1] = lowerBound;
-		//
-		//
-		//		int peakLower = Collections.binarySearch(peaks, tmp, new PosComparator());
-		//
-		//
-		//		tmp[numDimensions - 1] = upperBound;
-		//
-		//		int peakUpper = Collections.binarySearch(peaks, tmp, Collections.reverseOrder(new PosComparator()));
-		//
-		//		System.out.println(peakLower + " " + peakUpper);
-
-
 		int[] indices = findIndices(zSlice); // contains indices of the lower and upper slices
 
-
-		System.out.println(indices[0] + " " + zSlice + " " + indices[1]);
+//		System.out.println(indices[0] + " " + indices[1]);
 
 		if (indices[0] >= 0 && indices[1] >= 0){
 			for (int curPeak = indices[0]; curPeak <= indices[1]; curPeak++){
@@ -127,50 +109,25 @@ public class Detections {
 				overlay.add(or);
 			}
 		}
-
-		// TODO: Move this part to the listeners -> gui.vizualization 
-		//		for (final long[] peak : peaks) {
-		//			final float x = peak[0];
-		//			final float y = peak[1];
-		//			final float z = peak[2];
-		//
-		//			// TODO: make a loop here to show [-3 +3] slices too
-		//			// TODO: make the search here more efficient.
-		//			// maybe binary search to find the lowest and the highest index values 
-		//			
-		//			// defines how many slices to take
-		//			
-		//			
-		//			
-		//			
-		////			for (int curSlice = Math.max(zSlice - ds, 1); curSlice <= Math.min(zSlice + ds, imp.getNSlices()); curSlice++){
-		//				if (z == zSlice){
-		//					
-		//					// System.out.println(x + " " + y + " " + z);
-		//		
-		//					// TODO: Should be adaptive
-		//					int radius = 3;
-		//		
-		//					final OvalRoi or = new OvalRoi(x - radius + 0.5, y - radius + 0.5, radius * 2, radius * 2);
-		//					or.setStrokeColor(new Color(255, 0, 0));
-		//					overlay.add(or);
-		//				}
-		////			}
-		//		
-		//		}		
+		
 
 		imp.updateAndDraw();
 		isComputing = false;
 	}
 
+	// TODO: maybe possible speed up
 	public class PosComparator implements Comparator<double []>{
 
 		@Override
 		public int compare(double[] a, double [] b) {
 			int compareTo = 0;
-			if (a[numDimensions - 1] < b[numDimensions - 1])
+			
+			long az = (long) a[numDimensions - 1];
+			long bz = (long) b[numDimensions - 1];
+					
+			if (az < bz)
 				compareTo = -1;
-			if (a[numDimensions - 1] > b[numDimensions - 1])
+			if (az > bz)
 				compareTo = 1;
 			return compareTo;
 		}
@@ -193,6 +150,10 @@ public class Detections {
 		tmp[numDimensions - 1] = upperBound;
 		int idxUpper = Collections.binarySearch(peaks, tmp, Collections.reverseOrder(new PosComparator()));
 
+		// FIXME: fix the issue when the indices are negative but not -1
+		
+		
+		
 		//TODO: Update this to have real O(lg n) complexity
 
 		indices[0] = idxLower;
@@ -211,14 +172,14 @@ public class Detections {
 
 		int from = idx;
 
-		long zPos = (long) peaks.get(idx)[numDimensions]; // current zPosition
+		long zPos = (long) peaks.get(idx)[numDimensions - 1]; // current zPosition
 
 		int j = from;
 		while(zSlice == zPos){
 			if (j < 0 || j == peaks.size())
 				break;
 
-			if((long)peaks.get(j)[numDimensions] != zPos)
+			if((long)peaks.get(j)[numDimensions - 1] != zPos)
 				break;
 			else
 				newIdx = j;

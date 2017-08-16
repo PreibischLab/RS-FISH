@@ -81,31 +81,37 @@ public class Detections {
 		overlay.clear();		
 
 		int zSlice = imp.getCurrentSlice(); // getZ() ? 
-		int ds = 5;
 
-		double lowerBound = Math.max(zSlice - ds, 1);
-		double upperBound = Math.min(zSlice + ds, imp.getNChannels()); // imp.getNSlices());
+		//		int ds = 5; // how many extra slices to consider = ds*2
+		//
+		//		double lowerBound = Math.max(zSlice - ds, 1);
+		//		double upperBound = Math.min(zSlice + ds, imp.getNChannels()); // imp.getNSlices());
+		//
+		//
+		//		System.out.println(lowerBound + " " + zSlice + " " + upperBound);
+		//
+		//
+		//		double [] tmp = new double[numDimensions];
+		//		tmp[numDimensions - 1] = lowerBound;
+		//
+		//
+		//		int peakLower = Collections.binarySearch(peaks, tmp, new PosComparator());
+		//
+		//
+		//		tmp[numDimensions - 1] = upperBound;
+		//
+		//		int peakUpper = Collections.binarySearch(peaks, tmp, Collections.reverseOrder(new PosComparator()));
+		//
+		//		System.out.println(peakLower + " " + peakUpper);
 
 
-		System.out.println(lowerBound + " " + zSlice + " " + upperBound);
+		int[] indices = findIndices(zSlice); // contains indices of the lower and upper slices
 
 
-		double [] tmp = new double[numDimensions];
-		tmp[numDimensions - 1] = lowerBound;
+		System.out.println(indices[0] + " " + zSlice + " " + indices[1]);
 
-
-		int peakLower = Collections.binarySearch(peaks, tmp, new PosComparator());
-
-
-		tmp[numDimensions - 1] = upperBound;
-
-		int peakUpper = Collections.binarySearch(peaks, tmp, Collections.reverseOrder(new PosComparator()));
-
-		System.out.println(peakLower + " " + peakUpper);
-
-
-		if (peakLower >= 0 && peakUpper >= 0){
-			for (int curPeak = peakLower; curPeak <= peakUpper; curPeak++){
+		if (indices[0] >= 0 && indices[1] >= 0){
+			for (int curPeak = indices[0]; curPeak <= indices[1]; curPeak++){
 
 				double [] peak = peaks.get(curPeak);
 
@@ -170,6 +176,61 @@ public class Detections {
 		}
 
 	}
+
+	// searches for the min[IDX_1] and max[IDX_2] 
+	public int[] findIndices(long zSlice){
+		int[] indices = new int[2]; // 
+
+		int ds = 5; // how many extra slices to consider = ds*2
+
+		// FIXME: this imageJ problem slices vs channels!
+		double lowerBound = Math.max(zSlice - ds, 1);
+		double upperBound = Math.min(zSlice + ds, imp.getNChannels()); // imp.getNSlices());
+		
+		double [] tmp = new double[numDimensions];
+		tmp[numDimensions - 1] = lowerBound;
+		int idxLower = Collections.binarySearch(peaks, tmp, new PosComparator());
+		tmp[numDimensions - 1] = upperBound;
+		int idxUpper = Collections.binarySearch(peaks, tmp, Collections.reverseOrder(new PosComparator()));
+
+		//TODO: Update this to have real O(lg n) complexity
+
+		indices[0] = idxLower;
+		indices[1] = idxUpper;
+		
+		if (idxLower >= 0 && idxUpper >= 0){
+			indices[0] = updateIdx(peaks, numDimensions, zSlice, idxLower, -1);
+			indices[1] = updateIdx(peaks, numDimensions, zSlice, idxUpper, 1);
+		}
+
+		return indices;
+	}
+
+	public static int updateIdx(ArrayList<double[]> peaks, int numDimensions, long zSlice, int idx, int direction){
+		int newIdx = idx;
+
+		int from = idx;
+
+		long zPos = (long) peaks.get(idx)[numDimensions]; // current zPosition
+
+		int j = from;
+		while(zSlice == zPos){
+			if (j < 0 || j == peaks.size())
+				break;
+
+			if((long)peaks.get(j)[numDimensions] != zPos)
+				break;
+			else
+				newIdx = j;
+
+			j += direction;
+		}
+
+		System.out.println("No infinite loop; Such success!");
+
+		return newIdx;
+	}
+
 
 	public static void main(String [] args){
 

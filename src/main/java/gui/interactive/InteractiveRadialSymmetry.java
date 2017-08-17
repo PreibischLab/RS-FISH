@@ -560,7 +560,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		for (final FloatType t : Views.iterable(ransacPreview))
 			t.setZero();
 
-		Spot.drawRANSACArea(spots, ransacPreview);
+		Spot.drawRANSACArea(spots, ransacPreview, true);
 
 		// TODO: create a separate function for this part
 		double displayMaxError = 0;		

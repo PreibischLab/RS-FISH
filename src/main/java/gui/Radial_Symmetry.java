@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Map;
 
 import compute.RadialSymmetry;
 import fit.Spot;
@@ -11,9 +12,11 @@ import gauss.GaussianMaskFit;
 import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
+import ij.CompositeImage;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.io.Opener;
@@ -21,6 +24,7 @@ import ij.plugin.PlugIn;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
 import net.imglib2.Cursor;
+import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.localization.EllipticGaussianOrtho;
@@ -159,7 +163,7 @@ public class Radial_Symmetry implements PlugIn {
 			// stores the intensity values for gauss fitting
 			ArrayList<Float> intensity = new ArrayList<>(0);
 
-			processSliceBySlice(rai, rsm, impDim, dim, gaussFit, params.getSigmaDoG(), allSpots, timePoint,
+			processSliceBySlice(imp, rai, rsm, impDim, dim, gaussFit, params.getSigmaDoG(), allSpots, timePoint,
 					channelPoint, intensity);
 
 			// DEBUG:
@@ -193,10 +197,11 @@ public class Radial_Symmetry implements PlugIn {
 	}
 
 	// process each 2D/3D slice of the image to search for the spots
-	public static void processSliceBySlice(RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
+	public static void processSliceBySlice(ImagePlus imp, RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
 			int[] impDim, long[] dim, boolean gaussFit, double sigma, ArrayList<Spot> allSpots,
 			ArrayList<Long> timePoint, ArrayList<Long> channelPoint, ArrayList<Float> intensity) {
 		RandomAccessibleInterval<FloatType> timeFrame;
+		ImagePlus xzyImp; // stores non-normalized xyz stack
 
 		int numDimensions = dim.length;
 
@@ -205,7 +210,7 @@ public class Radial_Symmetry implements PlugIn {
 			for (int t = 0; t < impDim[4]; t++) {
 				// "-1" because of the imp offset
 				timeFrame = copyImg(rai, c, t, dim, impDim);
-
+						
 				RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
 
 				// TODO: if the detect spot has at least 1 inlier add it
@@ -228,14 +233,16 @@ public class Radial_Symmetry implements PlugIn {
 					for (int d = 0; d < numDimensions; d++)
 						typicalSigmas[d] = sigma;
 
-					PeakFitter<FloatType> pf = new PeakFitter<FloatType>(timeFrame, (ArrayList)filteredSpots,
+					xzyImp = getXyz(imp);
+					
+					PeakFitter<FloatType> pf = new PeakFitter<FloatType>(ImageJFunctions.wrap(xzyImp), (ArrayList)filteredSpots,
 							new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(), // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
 							new MLEllipticGaussianEstimator(typicalSigmas));
 					pf.process();
 
 					// TODO: make spot implement Localizable - then this is already a HashMap that maps Spot > double[]
 					// this is actually a Map< Spot, double[] >
-					//				final Map< Localizable, double[] > fits = pf.getResult();
+					final Map< Localizable, double[] > fits = pf.getResult();
 
 					// TODO: implement hashCode for PointSpot & Spot
 					// HashMap< Spot, double[] > spotToFits = new HashMap<>();
@@ -243,13 +250,17 @@ public class Radial_Symmetry implements PlugIn {
 					//for ( final Localizable l : fits.keySet() )
 					//	spotToFits.put( ((PointSpot)l).getSpot(), fits.get( l ) ); 
 
-					//				for ( final Spot spot : filteredSpots )
-					//				{
-					//					double[] gaussLocationForSpot = fits.get( spot );
-					//				}
+					long idx = 0;
+					for ( final Spot spot : filteredSpots )
+					{
+						double[] gaussLocationForSpot = fits.get( spot );
+						System.out.println( idx + ": " + spot.getCenter()[0] + " " + spot.getCenter()[1] + " " + spot.getCenter()[2]);
+						System.out.println( idx + ": " + gaussLocationForSpot[0] + " " + gaussLocationForSpot[1] + " " + gaussLocationForSpot[2]);
+						idx++;
+					}
 
 					// element: x y (z) A b 
-					long idx = 0;
+					// long idx = 0;
 					for (double[] element : pf.getResult().values())
 						intensity.add(new Float(element[numDimensions]));	
 
@@ -275,6 +286,9 @@ public class Radial_Symmetry implements PlugIn {
 		}
 
 	}
+	
+	
+	
 
 	// triggers the gaussian fit if user wants it
 	public static void fitGaussian(RandomAccessibleInterval<FloatType> timeFrame, ArrayList<Spot> spots, double sigma) {
@@ -344,8 +358,26 @@ public class Radial_Symmetry implements PlugIn {
 		}
 	}
 
+	// returns only xyz stack from the ImagePlus object
+	public static ImagePlus getXyz(ImagePlus imp){
+		final ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight() );
+		int [] impDimensions = imp.getDimensions();
+	
+		for (int z = 0; z < impDimensions[3]; z++){
+			int id = imp.getStackIndex(1, z + 1, 1);
+			stack.addSlice(imp.getStack().getProcessor( id ));
+		}
+		
+		ImagePlus xyzImp = new ImagePlus("merge", stack );
+		// xyzImp.setDimensions( 1, impDimensions[3], 1 );
+	
+		return xyzImp;
+	}
+	
+	
 	// clunky function to handle different space-time cases
 	// TODO: check that it is working properly for all cases
+	// TODO: can be rewritten with ImagePlus operations
 	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel,
 			long time, long[] dim, int[] impDim) {
 		// this one will be returned

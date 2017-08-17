@@ -438,15 +438,18 @@ public class Radial_Symmetry implements PlugIn {
 		initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
 		initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
 		initialDialog.addCheckbox("Use_RANSAC", defaultRANSAC);
-		
-		initialDialog.addCheckbox("Show_RANSAC_results", defaultInliers);
-		initialDialog.addCheckbox("Show_detections", defaultDetections);
-		
+				
 		if (imp.getNDimensions() != 2)
 			initialDialog.addNumericField("Anisotropy_coefficient", defaultAnisotropy, 2);
 
 		initialDialog.addMessage("*Use the \"Anisotropy Coeffcient Plugin\"\nto calculate the coefficient or\n leave 1.0 for a reasonable result.", new Font("Arial", 0, 10), new Color(255, 0, 0));
 
+		initialDialog.addMessage("Visualization:");
+		initialDialog.addCheckbox("Show_RANSAC_results", defaultInliers);
+		initialDialog.addCheckbox("Show_detections", defaultDetections);
+
+		
+		
 		initialDialog.showDialog();
 
 		if (initialDialog.wasCanceled()) {
@@ -456,22 +459,22 @@ public class Radial_Symmetry implements PlugIn {
 			this.parameterType = defaultParam = initialDialog.getNextChoiceIndex();
 			this.gaussFit = defaultGauss = initialDialog.getNextBoolean();
 			this.RANSAC = defaultRANSAC = initialDialog.getNextBoolean();
-			
-			this.showInliers = defaultInliers = initialDialog.getNextBoolean();
-			this.showDetections = defaultDetections = initialDialog.getNextBoolean();
-			
+						
 			if (imp.getNDimensions() != 2)
 				defaultAnisotropy = (float)initialDialog.getNextNumber();
 			this.anisotropy = defaultAnisotropy;
+		
+			this.showInliers = defaultInliers = initialDialog.getNextBoolean();
+			this.showDetections = defaultDetections = initialDialog.getNextBoolean();
+			
 		}
 
 		return failed;
 	}
 
 	public static void main(String[] args) {
-
-		File path = new File( "/Volumes/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif" );
-		//		File path = new File("/Users/kkolyva/Desktop/gauss3d-1,2,3.tif");
+		// File path = new File( "/Volumes/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif" );
+		File path = new File( "/media/milkyklim/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif" );
 
 		if (!path.exists())
 			throw new RuntimeException("'" + path.getAbsolutePath() + "' doesn't exist.");

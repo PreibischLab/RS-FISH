@@ -123,10 +123,10 @@ public class Detections {
 		@Override
 		public int compare(double[] a, double [] b) {
 			int compareTo = 0;
+				
+			double az = a[numDimensions - 1];
+			double bz = b[numDimensions - 1];
 			
-			long az = (long) a[numDimensions - 1];
-			long bz = (long) b[numDimensions - 1];
-					
 			if (az < bz)
 				compareTo = -1;
 			if (az > bz)
@@ -146,7 +146,7 @@ public class Detections {
 
 		// FIXME: this imageJ problem slices vs channels!
 		double lowerBound = Math.max(zSlice - ds, 1);
-		double upperBound = Math.min(zSlice + ds, imp.getStackSize()); // imp.getNSlices());
+		double upperBound = Math.min(zSlice + ds, imp.getNSlices()); // imp.getNSlices());
 		
 		double [] tmp = new double[numDimensions];
 		tmp[numDimensions - 1] = lowerBound;

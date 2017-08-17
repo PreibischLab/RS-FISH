@@ -9,6 +9,7 @@ import fiji.tool.SliceObserver;
 import fit.Spot;
 import gui.interactive.HelperFunctions;
 import gui.vizualization.ImagePlusListener;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Overlay;
@@ -49,6 +50,7 @@ public class Detections {
 		// TODO: add the check for the 2-4D different cases
 
 		this.imp = ImageJFunctions.wrap(img, "");
+		this.imp.setDimensions( 1, (int)img.dimension( 2 ), 1 );
 		this.peaks = new ArrayList<>();
 
 		HelperFunctions.copyToDouble(spots, peaks);
@@ -115,7 +117,7 @@ public class Detections {
 		isComputing = false;
 	}
 
-	// TODO: maybe possible speed up
+	// TODO: maybe possible speed up and not necessary to sort in longs
 	public class PosComparator implements Comparator<double []>{
 
 		@Override
@@ -138,21 +140,34 @@ public class Detections {
 	public int[] findIndices(long zSlice){
 		int[] indices = new int[2]; // 
 
+		// TODO: MAKE THE THIS THE PARAMETER THAT IS PASSED 
+		// THIS IS THE SCALE THAT YOU COMPUTE
 		int ds = 5; // how many extra slices to consider = ds*2
 
 		// FIXME: this imageJ problem slices vs channels!
 		double lowerBound = Math.max(zSlice - ds, 1);
-		double upperBound = Math.min(zSlice + ds, imp.getNChannels()); // imp.getNSlices());
+		double upperBound = Math.min(zSlice + ds, imp.getStackSize()); // imp.getNSlices());
 		
 		double [] tmp = new double[numDimensions];
 		tmp[numDimensions - 1] = lowerBound;
 		int idxLower = Collections.binarySearch(peaks, tmp, new PosComparator());
 		tmp[numDimensions - 1] = upperBound;
-		int idxUpper = Collections.binarySearch(peaks, tmp, Collections.reverseOrder(new PosComparator()));
+		int idxUpper = Collections.binarySearch(peaks, tmp, new PosComparator());
 
-		// FIXME: fix the issue when the indices are negative but not -1
+		// DEBUG: 
+		// System.out.println(idxLower + " "  + idxUpper);		
 		
+		if (idxLower < 0){
+			idxLower = -(idxLower + 1);
+			if (idxLower == peaks.size())
+				idxLower -= 1;
+		}
 		
+		if (idxUpper < 0){
+			idxUpper = -(idxUpper + 1);
+			if (idxUpper == peaks.size())
+				idxUpper -= 1;
+		}
 		
 		//TODO: Update this to have real O(lg n) complexity
 
@@ -181,13 +196,12 @@ public class Detections {
 
 			if((long)peaks.get(j)[numDimensions - 1] != zPos)
 				break;
-			else
-				newIdx = j;
-
+			
+			newIdx = j;
 			j += direction;
 		}
 
-		System.out.println("No infinite loop; Such success!");
+		// System.out.println("No infinite loop; Such success!");
 
 		return newIdx;
 	}

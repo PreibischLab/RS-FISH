@@ -6,6 +6,7 @@ import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
 import net.imglib2.iterator.IntervalIterator;
@@ -313,25 +314,51 @@ public class Spot implements RealLocalizable, Localizable
 			spot.center.fit( spot.inliers );
 	}
 
-	public static <T extends RealType<T> > void drawRANSACArea( final ArrayList< Spot > spots, final RandomAccessibleInterval< T > draw)
+	public static <T extends RealType<T> > void drawRANSACArea(
+			final ArrayList< Spot > spots,
+			final RandomAccessibleInterval< T > draw,
+			final boolean encodeError )
 	{
 		final int numDimensions = draw.numDimensions();
+		final RandomAccessible<T> drawOobs = Views.extendZero( draw );
+
+		final long[] min = new long[ numDimensions ];
+		final long[] max = new long[ numDimensions ];
+
+		// sum of contributing pixels for one gradient == 1
+		final double valuePerPixel = 1.0 / Math.pow( 2, numDimensions );
 
 		for ( final Spot spot : spots )
 		{
 			if ( spot.inliers.size() == 0 )
 				continue;
 			// Using extension because sometimes spots are not fully inside of the image
-			final RandomAccess< T > drawRA =  Views.extendMirrorSingle(draw).randomAccess();
-			final double[] scale = spot.scale;
+			// final RandomAccess< T > drawRA =  Views.extendZero(draw).randomAccess();
+			// final double[] scale = spot.scale;
 
 			for ( final PointFunctionMatch pm : spot.inliers )
 			{
 				final Point p = pm.getP1();
 				for ( int d = 0; d < numDimensions; ++d )
-					drawRA.setPosition( Math.round( p.getW()[ d ]/scale[ d ] ), d );
-				// set color to error value
-				drawRA.get().setReal(pm.getDistance());
+				{
+					// the gradient sits at the 0.5, 0.5 ... location using its 8-neigborhood
+					// to be computed. So we set the whole 8-neighborhood to be part of the 
+					// computation
+					//
+					// we use getL because getW might be scaled because of anisotropy
+					min[ d ] = Math.round( Math.floor( p.getL()[ d ] ) );
+					max[ d ] = Math.round( Math.ceil( p.getL()[ d ] ) );
+				}
+
+				// set the intensity 
+				for ( final T type : Views.iterable( Views.interval( drawOobs, min, max ) ) )
+				{
+					// set color to error value
+					if ( encodeError )
+						type.setReal( type.getRealDouble() + valuePerPixel * pm.getDistance() );
+					else
+						type.setReal( type.getRealDouble() + valuePerPixel );
+				}
 			}
 		}
 	}

@@ -19,7 +19,7 @@ import net.imglib2.view.Views;
 
 public class Inliers {
 	
-	ImagePlus imp; // initial image
+	// ImagePlus imp; // initial image
 	
 	public Inliers(){
 		
@@ -29,7 +29,6 @@ public class Inliers {
 	{
 		long [] dimensions = new long [img.numDimensions()];
 		img.dimensions(dimensions);
-		
 	
 		// TODO: doesn't fix all the cases! 
 		if (dimensions.length == 5)
@@ -59,54 +58,11 @@ public class Inliers {
 		
 		CompositeImage ci = new CompositeImage( merged );
 		ci.setDisplayMode( CompositeImage.COMPOSITE );
-		//ci.setSlice( imp.getStackSize() / 2 );
-		//ci.resetDisplayRange();
 		ci.show();
-
-		//mergeImages(img, imgInliers);
 	}
 	
 	
-	public static void mergeImages(RandomAccessibleInterval<FloatType> img, RandomAccessibleInterval<FloatType> inliers){
-		Cursor<FloatType> imgCursor = Views.iterable(img).cursor();
-		Cursor<FloatType> inlCursor = Views.iterable(inliers).cursor();
-		
-		if (isSameSize(img, inliers)){
-			
-			int numDimensions = img.numDimensions();
-			long [] dimensions = new long[numDimensions + 1];
-			img.dimensions(dimensions);
-			dimensions[numDimensions] = 2; // will have 2 channel image 
-			
-			Img<FloatType> result = new ArrayImgFactory<FloatType>().create(dimensions, new FloatType());
-			
-			RandomAccess<FloatType> ra = result.randomAccess();
-			
-			long [] position = new long[numDimensions + 1];
-						
-			while(imgCursor.hasNext()){
-				imgCursor.fwd();
-				inlCursor.fwd();	
-				
-				// set the 1st channel
-				imgCursor.localize(position);
-				position[numDimensions] = 0;
-				ra.setPosition(position);
-				ra.get().set(imgCursor.get());
-				// set the 2nd channel
-				inlCursor.localize(position);
-				position[numDimensions] = 1;
-				ra.setPosition(position);
-				ra.get().set(inlCursor.get());
-				
-			}
-			
-			ImageJFunctions.show(result);
-		}
-		
-		
-	} 
-	
+	// TODO: not used in the script anymore!
 	public static <T extends NativeType<T>> boolean isSameSize(RandomAccessibleInterval<T> img1, RandomAccessibleInterval<T> img2){
 		
 		boolean isSame = true; 

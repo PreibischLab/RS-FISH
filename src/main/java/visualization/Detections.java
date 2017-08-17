@@ -9,6 +9,7 @@ import fiji.tool.SliceObserver;
 import fit.Spot;
 import gui.interactive.HelperFunctions;
 import gui.vizualization.ImagePlusListener;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Overlay;
@@ -49,6 +50,7 @@ public class Detections {
 		// TODO: add the check for the 2-4D different cases
 
 		this.imp = ImageJFunctions.wrap(img, "");
+		this.imp.setDimensions( 1, (int)img.dimension( 2 ), 1 );
 		this.peaks = new ArrayList<>();
 
 		HelperFunctions.copyToDouble(spots, peaks);
@@ -144,7 +146,7 @@ public class Detections {
 
 		// FIXME: this imageJ problem slices vs channels!
 		double lowerBound = Math.max(zSlice - ds, 1);
-		double upperBound = Math.min(zSlice + ds, imp.getNChannels()); // imp.getNSlices());
+		double upperBound = Math.min(zSlice + ds, imp.getStackSize()); // imp.getNSlices());
 		
 		double [] tmp = new double[numDimensions];
 		tmp[numDimensions - 1] = lowerBound;

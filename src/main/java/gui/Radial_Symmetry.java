@@ -233,48 +233,23 @@ public class Radial_Symmetry implements PlugIn {
 					for (int d = 0; d < numDimensions; d++)
 						typicalSigmas[d] = sigma;
 
-					xzyImp = getXyz(imp);
+					xzyImp = getXyz(imp); // grabbed the non-normalized xyz-stack  
 					
 					PeakFitter<FloatType> pf = new PeakFitter<FloatType>(ImageJFunctions.wrap(xzyImp), (ArrayList)filteredSpots,
-							new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(), // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
-							new MLEllipticGaussianEstimator(typicalSigmas));
+							new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(), 
+							new MLEllipticGaussianEstimator(typicalSigmas)); // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
 					pf.process();
 
 					// TODO: make spot implement Localizable - then this is already a HashMap that maps Spot > double[]
 					// this is actually a Map< Spot, double[] >
 					final Map< Localizable, double[] > fits = pf.getResult();
 
-					// TODO: implement hashCode for PointSpot & Spot
-					// HashMap< Spot, double[] > spotToFits = new HashMap<>();
-
-					//for ( final Localizable l : fits.keySet() )
-					//	spotToFits.put( ((PointSpot)l).getSpot(), fits.get( l ) ); 
-
-					long idx = 0;
+					// FIXME: is the order consistent
 					for ( final Spot spot : filteredSpots )
 					{
-						double[] gaussLocationForSpot = fits.get( spot );
-						System.out.println( idx + ": " + spot.getCenter()[0] + " " + spot.getCenter()[1] + " " + spot.getCenter()[2]);
-						System.out.println( idx + ": " + gaussLocationForSpot[0] + " " + gaussLocationForSpot[1] + " " + gaussLocationForSpot[2]);
-						idx++;
+						double[] params = fits.get( spot );
+						intensity.add(new Float(params[numDimensions]));
 					}
-
-					// element: x y (z) A b 
-					// long idx = 0;
-					for (double[] element : pf.getResult().values())
-						intensity.add(new Float(element[numDimensions]));	
-
-					// print out parameters
-					//					for (double[] element : pf.getResult().values()){
-					//						System.out.println(idx++);
-					//						
-					//						if (idx > 3) break;
-					//						
-					//						for (int i = 0; i < element.length; ++i){
-					//							System.out.println("parameter[" + i + "] : " + element[i]);
-					//						}
-					//					}
-
 				}
 
 				// IOFunctions.println("t: " + t + " " + "c: " + c);

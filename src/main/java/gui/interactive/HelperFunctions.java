@@ -384,6 +384,21 @@ public class HelperFunctions {
 		}
 	}
 
+	/*
+	 * Copy peaks found by DoG to lighter ArrayList (!imglib2)
+	 */
+	public static ArrayList<Localizable> localizablePeaks(final ArrayList<RefinedPeak<Point>> peaks) {
+		ArrayList< Localizable > integerPeaks = new ArrayList<>();
+		for (final RefinedPeak<Point> peak : peaks) {
+			int numDimensions = peak.numDimensions();
+			final long[] coordinates = new long[numDimensions];
+			for (int d = 0; d < peak.numDimensions(); ++d)
+				coordinates[d] = Util.round(peak.getDoublePosition(d));
+			integerPeaks.add( new Point(coordinates));
+		}
+		return integerPeaks;
+	}	
+	
 	// used to copy Spots to Peaks
 	public static void copyToLocalizable(final ArrayList<Spot> spots, Collection<Localizable> peaks ) {
 		for (final Spot spot : spots) {

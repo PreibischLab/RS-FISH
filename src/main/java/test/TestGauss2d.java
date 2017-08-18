@@ -134,7 +134,7 @@ public class TestGauss2d
 		}
 		
 		Img< FloatType > ransacarea = image.factory().create( image, image.firstElement() );
-		Spot.drawRANSACArea( goodspots, ransacarea );
+		Spot.drawRANSACArea( goodspots, ransacarea, true);
 		ImageJFunctions.show( ransacarea );
 	}
 

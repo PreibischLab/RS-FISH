@@ -30,16 +30,18 @@ public class Anisotropy_Plugin implements PlugIn {
 		wasCanceled = chooseMethodDialog();
 
 		double bestScale = 1.0;
-
-
 		AParams ap = new AParams();
-		double [] minmax = calculateMinMax(imagePlus);
-		AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, paramType, minmax[0], minmax[1]);
-		
-		bestScale = ac.calculateAnisotropyCoefficient();
-		
+		if (!wasCanceled){
+			
+			double [] minmax = calculateMinMax(imagePlus);
+			AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, paramType, minmax[0], minmax[1]);
+			
+			bestScale = ac.calculateAnisotropyCoefficient();	
+		}
+	
 		// TODO: write bestScale somewhere
-
+		ap.setAnisotropy((float)bestScale);
+		
 	}
 
 	// here user chooses the image and 
@@ -100,7 +102,7 @@ public class Anisotropy_Plugin implements PlugIn {
 
 	public static void main(String[] args)
 	{
-		File path = new File( "/Users/kkolyva/Desktop/gauss3d-1,2,3.tif" );
+		File path = new File( "/media/milkyklim/Samsung_T3/2017-08-18-radial-symmetry-test/gauss3d-1,2,3.tif" );
 		// path = path.concat("test_background.tif");
 
 		if ( !path.exists() )

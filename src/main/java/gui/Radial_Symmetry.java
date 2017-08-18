@@ -225,7 +225,6 @@ public class Radial_Symmetry implements PlugIn {
 				if (gaussFit) {
 					// fitGaussianMask(timeFrame, rs.getSpots(), sigma);
 
-					// TODO: implement hashCode for Spot, othewise lookups will be very slow
 					// TODO: make spot implement Localizable and just return the original location for the Localize methods
 					// HelperFunctions.copyToLocalizable(filteredSpots, peaks);
 

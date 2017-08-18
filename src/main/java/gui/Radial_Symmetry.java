@@ -379,7 +379,7 @@ public class Radial_Symmetry implements PlugIn {
 				} else if (impDim[3] != 1 && impDim[4] != 1) { // z + time
 					ra.setPosition(new long[] { pos[0], pos[1], pos[2], time });
 				} else if (impDim[2] != 1) { // c
-					ra.setPosition(new long[] { pos[0], pos[1], pos[2] });
+					ra.setPosition(new long[] { pos[0], pos[1], pos[3] }); // fixed ?
 				} else if (impDim[3] != 1) { // z
 					ra.setPosition(new long[] { pos[0], pos[1], pos[2] });
 				} else if (impDim[4] != 1) { // t
@@ -480,8 +480,9 @@ public class Radial_Symmetry implements PlugIn {
 
 	public static void main(String[] args) {
 		// File path = new File( "/Volumes/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif" );
-		File path = new File( "/media/milkyklim/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif" );
-
+		// File path = new File( "/media/milkyklim/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif" );
+		File path = new File( "/home/milkyklim/Desktop/Image 0-1-1000.tif" );
+		
 		if (!path.exists())
 			throw new RuntimeException("'" + path.getAbsolutePath() + "' doesn't exist.");
 

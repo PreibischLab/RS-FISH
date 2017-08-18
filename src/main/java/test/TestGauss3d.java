@@ -73,7 +73,7 @@ public class TestGauss3d
 			double x = rnd.nextDouble()*( (maxValue - minValue)  + 1 ) + minValue; 
 			double y = rnd.nextDouble()*( (maxValue - minValue)  + 1 ) + minValue; 
 			double z = rnd.nextDouble()*( (maxValue - minValue)  + 1 ) + minValue; 
-			
+					
 			final double[] location = new double[]{ x, y, z };
 			addGaussian( image, location, sigma );
 			points.add( location );
@@ -182,7 +182,7 @@ public class TestGauss3d
 
 		
 		final Img< FloatType > draw = image.factory().create( image, image.firstElement() );
-		Spot.drawRANSACArea( spots, draw );
+		Spot.drawRANSACArea( spots, draw, true);
 		ImageJFunctions.show( draw );
 		
 		final Img< FloatType > detected = image.factory().create( image, image.firstElement() );
@@ -233,7 +233,7 @@ public class TestGauss3d
 		return Math.sqrt( sum );
 	}
 
-	final public static void addGaussian( final Img< FloatType > image, final double[] location, final double[] sigma )
+	final public static void addGaussian( final Img< FloatType > image, final double[] location, final double[] sigma, float A )
 	{
 		final int numDimensions = image.numDimensions();
 		final int[] size = new int[ numDimensions ];
@@ -265,11 +265,17 @@ public class TestGauss3d
 			for ( int d = 0; d < numDimensions; ++d )
 			{
 				final double x = location[ d ] - cursor.getIntPosition( d );
-				value *= Math.exp( -(x * x) / two_sq_sigma[ d ] );
+				value *= A*Math.exp( -(x * x) / two_sq_sigma[ d ] );
 			}
 			
 			cursor.get().set( cursor.get().get() + (float)value );
 		}
 	}
 
+	
+	final public static void addGaussian( final Img< FloatType > image, final double[] location, final double[] sigma){
+		addGaussian(image, location, sigma, 1);
+	}
+	
+	
 }

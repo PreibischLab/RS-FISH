@@ -50,7 +50,7 @@ import parameters.GUIParams;
 import ucar.nc2.stream.NcStreamProto.DimensionOrBuilder;
 
 public class AnisitropyCoefficient {
-	
+
 	public static int numIterations = 100; // not a parameter, can be changed through Beanshell
 
 	// calibration in xy, usually [1, 1], will be read from ImagePlus upon initialization
@@ -73,10 +73,11 @@ public class AnisitropyCoefficient {
 	final long[] dim;
 	final int type;
 	Rectangle rectangle;
-	
+
 	final int paramType; // defines which method will be used: gauusfit or radial symmetry 
-	
-	ArrayList<RefinedPeak<Point>> peaks;
+
+	ArrayList< Point > peaks;
+	ArrayList< RefinedPeak< Point> > refPeaks;
 
 	// TODO: always process only this part of the initial image READ ONLY
 	RandomAccessibleInterval<FloatType> extendedRoi;
@@ -171,11 +172,11 @@ public class AnisitropyCoefficient {
 
 		// calculateAnisotropyCoefficient();
 	}
-	
+
 	// trigger the coefficient calculation
 	public double calculateAnisotropyCoefficient(){
 		double bestScale = 1.0;
-				
+
 		System.out.println("BEEP");
 
 		// TODO Add this parameters to the gui?
@@ -198,10 +199,11 @@ public class AnisitropyCoefficient {
 			final float tFactor = img.numDimensions() == 3 ? 0.5f : 1.0f;
 			final DogDetection<FloatType> dog2 = new DogDetection<>(img, calibration, sigma, sigma2,
 					DogDetection.ExtremaType.MINIMA, tFactor * threshold / 2, false);
-			peaks = dog2.getSubpixelPeaks();
+			peaks = dog2.getPeaks();
+			refPeaks = dog2.getSubpixelPeaks();
 		}
-		
-	
+
+
 		if (paramType == 0) // gauss fit 
 			bestScale = calculateAnisotropyCoefficientGF(img, threshold, sigma); 
 		else
@@ -210,14 +212,13 @@ public class AnisitropyCoefficient {
 		// bestScale = anisotropyChooseImageDialog();
 		return bestScale;
 	}
-	
-	
+
 	// use gauss fit to detect the anisotropy coefficent of the 3D images
 	public double calculateAnisotropyCoefficientGF(RandomAccessibleInterval<FloatType> img, float threshold, float sigma){
 		double bestScale = 1; 
-		
+
 		int numDimensions = img.numDimensions();
-		
+
 		double [] typicalSigmas = new double[numDimensions];
 		for (int d = 0; d < numDimensions; d++)
 			typicalSigmas[d] = sigma;
@@ -226,27 +227,46 @@ public class AnisitropyCoefficient {
 		// TODO: make spot implement Localizable and just return the original location for the Localize methods
 		// TODO: implement the background subtraction here, otherwise peakfitter will givethe wrong result 
 		// HelperFunctions.copyToLocalizable(filteredSpots, peaks);
-		
-		// (ArrayList)filteredSpots 
-		// peaks
-		
-		// HelperFunctions.copyToLocalizable(filteredSpots, peaks);
-		
-		// TODO: move this to the separate function
-		for (RefinedPeak<Point> peak : peaks){
-			
+
+		PeakFitter<FloatType> pf = new PeakFitter<FloatType>(img, (ArrayList)peaks,
+				new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(), // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
+				new MLEllipticGaussianEstimator(typicalSigmas));
+		pf.process();
+
+		// TODO: make spot implement Localizable - then this is already a HashMap that maps Spot > double[]
+		// this is actually a Map< Spot, double[] >
+		final Map< Localizable, double[] > fits = pf.getResult();
+
+
+		double [] sigmas = new double[numDimensions];
+		for (int d = 0; d < numDimensions; d++)
+			sigmas[d] = 0;
+
+		// FIXME: is the order consistent
+		for (final Point peak : peaks)
+		{
+			double[] params = fits.get( peak );
+			System.out.println(params.length);
+
+			for (int j = 0; j < numDimensions; j++){
+				sigmas[j] += params[numDimensions + 1 + j];
+			}
 		}
-				
-		// PeakFitter<FloatType> pf = new PeakFitter<FloatType>(img, peaks,
-		// 		new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(), // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
-		// 		new MLEllipticGaussianEstimator(typicalSigmas));
-		// pf.process();
+
+		// TODO: skip division by zero		
+		for(int d = 0; d < numDimensions; d++)
+			sigmas[d] = (peaks.size() == 0) ? 1 : sigmas[d]/peaks.size();
+		for(int d = 0; d < numDimensions; d++){
+			sigmas[d] = 1 / (Math.sqrt(2 * sigmas[d]));
+		}
+
+		// TODO: here we suppose that the x and y sigmas are the same
 		
-		// final Map< Localizable, double[] > fits = pf.getResult();
-		
+		bestScale = sigmas[numDimensions - 1] / sigmas[0]; // x/z
+
 		return bestScale;
 	}
-	
+
 
 	// pass the image with the bead
 	// detect it 
@@ -254,89 +274,89 @@ public class AnisitropyCoefficient {
 
 	public double calculateAnisotropyCoefficientRS(RandomAccessibleInterval<FloatType> img, float threshold, float sigma){
 
-			double bestScale = 1.0;
-			derivative = new GradientPreCompute(img);
+		double bestScale = 1.0;
+		derivative = new GradientPreCompute(img);
 
-			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
-			int numDimensions = img.numDimensions();
-			// copy all peaks
-			// TODO: USE FUNCTION FROM HELPERFUNCTIONS
-			for (final RefinedPeak<Point> peak : peaks) {
-				if (-peak.getValue() > threshold) {
-					final long[] coordinates = new long[numDimensions];
-					for (int d = 0; d < peak.numDimensions(); ++d)
-						coordinates[d] = Util.round(peak.getDoublePosition(d));
-					simplifiedPeaks.add(coordinates);
-				}
+		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
+		int numDimensions = img.numDimensions();
+		// copy all peaks
+		// TODO: USE FUNCTION FROM HELPERFUNCTIONS
+		for (final RefinedPeak<Point> peak : refPeaks) {
+			if (-peak.getValue() > threshold) {
+				final long[] coordinates = new long[numDimensions];
+				for (int d = 0; d < peak.numDimensions(); ++d)
+					coordinates[d] = Util.round(peak.getDoublePosition(d));
+				simplifiedPeaks.add(coordinates);
+			}
+		}
+
+		final NormalizedGradient ng = null; // don't use the gradient normalization for the bead detection 
+
+
+		// TODO: should the user set it?
+		// or it is just enough to use the difference of gaussian value -> sigma + 1? 
+		// the size of the RANSAC area
+		final long[] range = new long[numDimensions];
+
+		for (int d = 0; d < numDimensions; ++d)
+			range[d] = (long)(sigma + 2);
+
+		// this is a hack
+		// range[ 2 ] *= 6;
+		// System.out.println( "Range: " + Util.printCoordinates(range));
+
+		// double bestScale = -1;
+		long bestTotalInliers = -Long.MAX_VALUE;
+		for (float idx = 1.0f; idx < 1.6f; idx += 0.01f){
+			final ArrayList<Spot> spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
+
+			// scale the z-axis 
+			float scale = idx;
+			for (int j = 0; j < spots.size(); j++){
+				spots.get(j).updateScale(new float []{1, 1, scale});
 			}
 
-			final NormalizedGradient ng = null; // don't use the gradient normalization for the bead detection 
+			// IJ.log( "num spots: " + spots.size() );
 
+			// TODO: MOVE TO THE DEFAULT PARAMETERS
+			// USERS SHOULD NOT ADJUST THIS ONE 
+			double maxError = 1.0; // 1.0px error 
+			double inlierRatio = 0.6; // at least 60% inliers 
 
-			// TODO: should the user set it?
-			// or it is just enough to use the difference of gaussian value -> sigma + 1? 
-			// the size of the RANSAC area
-			final long[] range = new long[numDimensions];
+			Spot.ransac(spots, numIterations, maxError, inlierRatio);
+			try{
+				Spot.fitCandidates(spots);
+			}
+			catch(Exception e){
+				System.out.println("EXCEPTION CAUGHT");
+			}				
+			// double[] knowLocation = new double[]{ 124.52561137015748, 129.88211102199878, 121.78135663923388 };
+			// double dist = 0;
 
-			for (int d = 0; d < numDimensions; ++d)
-				range[d] = (long)(sigma + 2);
+			long totalInliers = 0;
+			long total = 0;
 
-			// this is a hack
-			// range[ 2 ] *= 6;
-			// System.out.println( "Range: " + Util.printCoordinates(range));
-			
-			// double bestScale = -1;
-			long bestTotalInliers = -Long.MAX_VALUE;
-			for (float idx = 1.0f; idx < 1.6f; idx += 0.01f){
-				final ArrayList<Spot> spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
+			for (final Spot spot : spots)
+			{
+				if ( spot.inliers.size() == 0)
+					continue;
 
-				// scale the z-axis 
-				float scale = idx;
-				for (int j = 0; j < spots.size(); j++){
-					spots.get(j).updateScale(new float []{1, 1, scale});
-				}
-
-				// IJ.log( "num spots: " + spots.size() );
-
-				// TODO: MOVE TO THE DEFAULT PARAMETERS
-				// USERS SHOULD NOT ADJUST THIS ONE 
-				double maxError = 1.0; // 1.0px error 
-				double inlierRatio = 0.6; // at least 60% inliers 
-				
-				Spot.ransac(spots, numIterations, maxError, inlierRatio);
-				try{
-					Spot.fitCandidates(spots);
-				}
-				catch(Exception e){
-					System.out.println("EXCEPTION CAUGHT");
-				}				
-				// double[] knowLocation = new double[]{ 124.52561137015748, 129.88211102199878, 121.78135663923388 };
-				// double dist = 0;
-
-				long totalInliers = 0;
-				long total = 0;
-				
-				for (final Spot spot : spots)
-				{
-					if ( spot.inliers.size() == 0)
-						continue;
-
-					total++;
-					totalInliers += spot.inliers.size();	
-				}
-				
-				if (totalInliers > bestTotalInliers){
-					bestScale = scale;
-					bestTotalInliers = totalInliers;
-				} 
-
-				IJ.log(scale + " " + (1.0)*totalInliers/total + " " + totalInliers + " " + total);
-
+				total++;
+				totalInliers += spot.inliers.size();	
 			}
 
-			IJ.log("best: " + bestScale);
-		
-		
+			if (totalInliers > bestTotalInliers){
+				bestScale = scale;
+				bestTotalInliers = totalInliers;
+			} 
+
+			IJ.log(scale + " " + (1.0)*totalInliers/total + " " + totalInliers + " " + total);
+
+		}
+
+		IJ.log("best: " + bestScale);
+
+
 		return bestScale;
 	}
 
@@ -390,7 +410,7 @@ public class AnisitropyCoefficient {
 		}
 
 		final double radius = ( params.getSigmaDoG() + HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity  ) ) / 2.0;
-		final ArrayList< RefinedPeak< Point > > filteredPeaks = HelperFunctions.filterPeaks( peaks, rectangle, params.getThresholdDoG() );
+		final ArrayList< RefinedPeak< Point > > filteredPeaks = HelperFunctions.filterPeaks( refPeaks, rectangle, params.getThresholdDoG() );
 
 		HelperFunctions.drawRealLocalizable( filteredPeaks, imagePlus, radius, Color.RED, true);
 
@@ -408,7 +428,7 @@ public class AnisitropyCoefficient {
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 		int numDimensions = extendedRoi.numDimensions(); // DEBUG: should always be 2 
 		// extract peaks for the roi
-		HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle, params.getThresholdDoG() );
+		HelperFunctions.copyPeaks(refPeaks, simplifiedPeaks, numDimensions, rectangle, params.getThresholdDoG() );
 
 		// the size of the RANSAC area
 		final long[] range = new long[numDimensions];
@@ -441,12 +461,13 @@ public class AnisitropyCoefficient {
 	{
 		final double sigma2 = HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity );
 		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA,  params.getThresholdDoG()/2, false);
-		peaks = dog2.getSubpixelPeaks(); 
+		peaks = dog2.getPeaks();
+		refPeaks = dog2.getSubpixelPeaks(); 
 	}
-	
+
 	public static void main(String[] args)
 	{
-		File path = new File( "/Users/kkolyva/Desktop/gauss3d-1,2,3.tif" );
+		File path = new File( "/media/milkyklim/Samsung_T3/2017-08-18-radial-symmetry-test/gauss3d-1,2,3.tif" );
 		// path = path.concat("test_background.tif");
 
 		if ( !path.exists() )

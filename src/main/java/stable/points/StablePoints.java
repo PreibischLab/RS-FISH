@@ -81,7 +81,7 @@ public class StablePoints {
 	public static void main(String[] args) {
 
 		new ImageJ();
-		File file = new File("/Users/kkolyva/Desktop/untitled folder/one-spot.tif"); 
+		File file = new File("src/main/resources/one-spot.tif"); 
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(file);
 
 		ImageJFunctions.show(img);

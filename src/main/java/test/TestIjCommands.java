@@ -32,7 +32,7 @@ public class TestIjCommands {
 
 		RandomAccessibleInterval<FloatType> img;
 
-		for (int c = 1; c <= imp.getNChannels(); c++) {
+		for (int c = 1; c <= imp.getNChannels(); c++) { 
 			for (int t = 1; t <= imp.getNFrames(); t++) {		
 				img = copyImg(rai, c - 1, t - 1, dim);
 				// TODO: process img

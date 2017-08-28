@@ -278,6 +278,18 @@ public class Spot implements RealLocalizable, Localizable
 		for ( final Spot spot : spots )
 			spot.center.fit( spot.inliers );
 	}
+	
+	/* this functions are working on one separate spot */
+	public static void fitCandidates( final Spot spot) throws NotEnoughDataPointsException, IllDefinedDataPointsException
+	{
+		spot.center.fit( spot.candidates );
+	}
+
+	public static void fitInliers( final Spot spot ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
+	{
+		spot.center.fit( spot.inliers );
+	}
+	
 
 	public static void ransac( final ArrayList< Spot > spots, final int iterations, final double maxError, final double inlierRatio )
 	{

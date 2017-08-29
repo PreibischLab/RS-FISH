@@ -346,7 +346,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			}
 		}
 				
-		System.out.println("total RS: " + spots.size());
+		// System.out.println("total RS: " + spots.size());
 		ransacResults(spots);
 	}
 

@@ -172,27 +172,11 @@ public class Radial_Symmetry implements PlugIn {
 
 			RadialSymmetry.ransacResultTable(allSpots, timePoint, channelPoint, gaussFit, intensity);
 
-			// TODO: Remove since moved to a separate class
-			// Img<FloatType> ransacPreview = new ArrayImgFactory<FloatType>().create(rai, new FloatType());
-			// Spot.drawRANSACArea(allSpots, ransacPreview);
-			// Uncomment after done with 2d + time testing
-			// Spot.showInliers(allSpots, ransacPreview, params.getMaxError());
-			// ImageJFunctions.show(ransacPreview);
-
 			// Visualization incoming
 			if (showInliers)
 				Inliers.showInliers(ImageJFunctions.wrapReal(imp), allSpots);
 			if (showDetections)
 				new Detections(ImageJFunctions.wrapReal(imp), allSpots).showDetections();
-
-			// DEBUG: REMOVE
-			// Img<FloatType> resImg = new
-			// ArrayImgFactory<FloatType>().create(rai, new FloatType());
-			// double [] resSigma = new double[]{params.getSupportRadius(),
-			// params.getSupportRadius(), params.getSupportRadius()};
-			// showPoints(resImg, allSpots, resSigma);
-
-			// ImageJFunctions.show(resImg).setTitle("Do use the dots?");
 		}
 	}
 
@@ -480,8 +464,8 @@ public class Radial_Symmetry implements PlugIn {
 
 	public static void main(String[] args) {
 		// File path = new File( "/Volumes/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif" );
-		// File path = new File( "/media/milkyklim/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif" );
-		File path = new File( "/home/milkyklim/Desktop/Image 0-1-1000.tif" );
+		File path = new File( "/media/milkyklim/Samsung_T3/2017-08-24-intronic-probes/N2_dpy-23_ex_int_ama-1_015/channels/c3/N2_dpy-23_ex_int_ama-1_015.nd2 - N2_dpy-23_ex_int_ama-1_015.nd2 (series 03) - C=2-32.tif" );
+		// File path = new File( "/home/milkyklim/Desktop/Image 0-1-1000.tif" );
 		
 		if (!path.exists())
 			throw new RuntimeException("'" + path.getAbsolutePath() + "' doesn't exist.");

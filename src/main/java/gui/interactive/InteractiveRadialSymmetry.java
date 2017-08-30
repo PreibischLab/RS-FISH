@@ -22,13 +22,12 @@ import fit.PointFunctionMatch;
 import fit.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
+import gui.Radial_Symmetry;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.gui.Roi;
 import ij.io.Opener;
-import ij.measure.Calibration;
 import ij.measure.ResultsTable;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -40,18 +39,13 @@ import net.imglib2.Cursor;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
-
 import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import parameters.GUIParams;
-
-import gui.Radial_Symmetry;
 
 public class InteractiveRadialSymmetry// extends GUIParams
 {
@@ -79,7 +73,6 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	ROIListener roiListener;
 	FixROIListener fixROIListener;
 
-	// TODO: you probably need one image plus object 
 	final ImagePlus imagePlus;
 	final boolean normalize; // do we normalize intensities?
 	final double min, max; // intensity of the imageplus
@@ -148,10 +141,14 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		this( imp, params, Double.NaN, Double.NaN );
 	}
 	
-	/*
+	/**
+	 * Triggers the interactive radial symmetry plugin
 	 * Single-channel imageplus, 2d or 3d or 4d
 	 * 
-	 * @param imp
+	 * @param imp - intial image
+	 * @param params - parameters for the computation of the radial symmetry
+	 * @param min - min intensity of the image
+	 * @param max - max intensity of the image
 	 */
 	public InteractiveRadialSymmetry( final ImagePlus imp, final GUIParams params, final double min, final double max )
 	{
@@ -166,7 +163,6 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		this.params = params;
 
-		// TODO: do we need this check? Maybe it is enought have a wrapper here?
 		// which type of imageplus image is it?
 		final Object pixels = imp.getProcessor().getPixels();
 		if ( pixels instanceof byte[] )
@@ -195,13 +191,11 @@ public class InteractiveRadialSymmetry// extends GUIParams
 					imagePlus.getWidth() / 2,
 					imagePlus.getHeight() / 2);
 
-			// IJ.log( "A rectangular ROI is required to define the area..." );
 			imagePlus.setRoi( rectangle );
 		}
 		
-		// TODO: initialize parameters using defaults
-		// right now sets the calibration only
-		initParameters( imagePlus );
+		// set the calibaration
+		this.calibration = HelperFunctions.initCalibration(imp, 2);
 
 		// initialize variables for interactive preview
 		// called before updatePreview() !
@@ -209,6 +203,9 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		// TODO: <1010> should this part be moved out of this .java file
 		// so that only parameters of the listeners are passed 
+		
+		initInteractiveKit();
+		
 		
 		// show the interactive dog kit
 		this.dogWindow = new DoGWindow( this );
@@ -235,21 +232,41 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		// END:  <1010> -----
 	}
 	
-	/*
-	 * initialize all parameters with the default values
+	
+	/**
+	 *	Initialize the image kit - DoG and RANSAC windows to adjust the parameters
 	 * */
-	protected void initParameters( final ImagePlus imp )
-	{
-		// 2 because you want to calibrate only XY-plane
-		this.calibration = HelperFunctions.initCalibration(imp, 2);
+	protected void initInteractiveKit(){
+		// show the interactive dog kit
+		this.dogWindow = new DoGWindow( this );
+		this.dogWindow.getFrame().setVisible( true );
+
+		// show the interactive ransac kit
+		this.ransacWindow = new RANSACWindow( this );
+		
+		// case when we run RS without ransac
+		boolean useRANSAC = params.getRANSAC();
+		this.ransacWindow.getFrame().setVisible( useRANSAC );
+		
+		// add listener to the imageplus slice slider
+		sliceObserver = new SliceObserver(imagePlus, new ImagePlusListener( this ));
+		// compute first version
+		updatePreview(ValueChange.ALL);
+		isStarted = true;
+		// check whenever roi is modified to update accordingly
+		roiListener = new ROIListener( this, imagePlus, impRansacError );
+		imagePlus.getCanvas().addMouseListener( roiListener );
+		fixROIListener = new FixROIListener( imagePlus, impRansacError );
+		impRansacError.getCanvas().addMouseListener( fixROIListener );
 	}
-
-
-	/*
-	 * Initialize preview variables for RANSAC
+	
+	
+	
+	/**
+	 *	Initialize preview variables for RANSAC
+	 *	@param imp - input image
 	 */
-	// TODO: might be not necessary
-	protected void initRansacPreview( final ImagePlus imp )
+	protected void initRansacPreview( final ImagePlus imp)
 	{
 		int width = imp.getWidth();
 		int height = imp.getHeight();
@@ -269,23 +286,24 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 	}
 
-	// TODO: Do I need this one here (?!)
-	// this function will show the result of RANSAC
-	// proper window -> dialog view with the columns
-	protected void ransacResultTable(final ArrayList<Spot> spots) {
-		IOFunctions.println("Running RANSAC ... ");
-		IOFunctions.println("Spots found = " + spots.size());
-		// real output
-		ResultsTable rt = new ResultsTable();
-		String[] xyz = { "x", "y", "z" };
-		for (Spot spot : spots) {
-			rt.incrementCounter();
-			for (int d = 0; d < spot.numDimensions(); ++d) {
-				rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.2f", spot.getFloatPosition(d)));
-			}
-		}
-		rt.show("Results");
-	}
+// 	TODO: REMOVE	
+//	// TODO: Do I need this one here (?!)
+//	// this function will show the result of RANSAC
+//	// proper window -> dialog view with the columns
+//	protected void ransacResultTable(final ArrayList<Spot> spots) {
+//		IOFunctions.println("Running RANSAC ... ");
+//		IOFunctions.println("Spots found = " + spots.size());
+//		// real output
+//		ResultsTable rt = new ResultsTable();
+//		String[] xyz = { "x", "y", "z" };
+//		for (Spot spot : spots) {
+//			rt.incrementCounter();
+//			for (int d = 0; d < spot.numDimensions(); ++d) {
+//				rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.2f", spot.getFloatPosition(d)));
+//			}
+//		}
+//		rt.show("Results");
+//	}
 
 	protected void ransacInteractive( final Gradient derivative ) {
 		// TODO: I think this problem with the rectangle was previously fixed
@@ -330,8 +348,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		for (int j = 0; j < spots.size(); j++){
 			spots.get(j).updateScale(new float []{1, 1, bestScale});
 		}
-
-		// TODO: CORRECT PLACE TO TURN ON/OFF RANSAC		
+		
 		if (params.getRANSAC()){
 			Spot.ransac(spots, numIterations, params.getMaxError(), params.getInlierRatio());
 			for (final Spot spot : spots)
@@ -345,8 +362,6 @@ public class InteractiveRadialSymmetry// extends GUIParams
 				System.out.println("EXCEPTION CAUGHT");
 			}
 		}
-				
-		// System.out.println("total RS: " + spots.size());
 		ransacResults(spots);
 	}
 
@@ -551,9 +566,9 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 	}
 
-	// APPROVED:
-	/*
-	 * shows the results (circles) of the detection. 
+	/**
+	 * shows the results (circles) of the detection in the interactive mode 
+	 * @params spots - detections to be shown
 	 * */
 	protected void ransacResults(final ArrayList<Spot> spots) {
 		// reset the image
@@ -581,10 +596,10 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		// TODO: why do I use 1 here? 
 		final ArrayList< Spot > filteredSpots = HelperFunctions.filterSpots( spots, 1 );
 
-		// draw the result of radialsymetry
+		// draw the result of radialsymmetry
 		HelperFunctions.drawRealLocalizable( filteredSpots, impRansacError, radius, Color.ORANGE, true );
 
-		// draw the result of radialsymetry in the initial image
+		// draw the result of radialsymmetry in the initial image
 		HelperFunctions.drawRealLocalizable( filteredSpots, imagePlus, radius, Color.ORANGE, false );
 	}
 

@@ -612,31 +612,6 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		return res;
 	}
 
-	// TODO: NEVER USED
-	/*
-	 * copy data from one image to another 
-	 * */
-	protected void createOuputImg(RandomAccessibleInterval<FloatType> iImg, RandomAccessibleInterval<FloatType> oImg){
-		Cursor<FloatType> cursor = Views.iterable(iImg).localizingCursor();
-		RandomAccess<FloatType> ra = oImg.randomAccess(); //Views.translate(oImg, new long[]{rectangle.x - supportRadius, rectangle.y - supportRadius}).randomAccess();
-
-		long [] pos = new long [iImg.numDimensions()];
-		while(cursor.hasNext()){
-			cursor.fwd();
-			cursor.localize(pos);
-			ra.setPosition(pos);
-			ra.get().set(cursor.get().get());	
-		}
-	}
-
-
-	public static int[] long2int(long [] a){
-		int [] res = new int [a.length];
-		for (int k = 0; k < a.length; k++)
-			res[k] = (int)a[k];
-		return res;
-	}
-
 	/*
 	 * Updates the Preview with the current parameters (sigma, threshold, roi,
 	 * slice number + RANSAC parameters)

@@ -207,27 +207,27 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		initInteractiveKit();
 		
 		
-		// show the interactive dog kit
-		this.dogWindow = new DoGWindow( this );
-		this.dogWindow.getFrame().setVisible( true );
-
-		// show the interactive ransac kit
-		this.ransacWindow = new RANSACWindow( this );
-		
-		// case when we run RS without ransac
-		boolean useRANSAC = params.getRANSAC();
-		this.ransacWindow.getFrame().setVisible( useRANSAC );
-		
-		// add listener to the imageplus slice slider
-		sliceObserver = new SliceObserver(imagePlus, new ImagePlusListener( this ));
-		// compute first version
-		updatePreview(ValueChange.ALL);
-		isStarted = true;
-		// check whenever roi is modified to update accordingly
-		roiListener = new ROIListener( this, imagePlus, impRansacError );
-		imagePlus.getCanvas().addMouseListener( roiListener );
-		fixROIListener = new FixROIListener( imagePlus, impRansacError );
-		impRansacError.getCanvas().addMouseListener( fixROIListener );
+//		// show the interactive dog kit
+//		this.dogWindow = new DoGWindow( this );
+//		this.dogWindow.getFrame().setVisible( true );
+//
+//		// show the interactive ransac kit
+//		this.ransacWindow = new RANSACWindow( this );
+//		
+//		// case when we run RS without ransac
+//		boolean useRANSAC = params.getRANSAC();
+//		this.ransacWindow.getFrame().setVisible( useRANSAC );
+//		
+//		// add listener to the imageplus slice slider
+//		sliceObserver = new SliceObserver(imagePlus, new ImagePlusListener( this ));
+//		// compute first version
+//		updatePreview(ValueChange.ALL);
+//		isStarted = true;
+//		// check whenever roi is modified to update accordingly
+//		roiListener = new ROIListener( this, imagePlus, impRansacError );
+//		imagePlus.getCanvas().addMouseListener( roiListener );
+//		fixROIListener = new FixROIListener( imagePlus, impRansacError );
+//		impRansacError.getCanvas().addMouseListener( fixROIListener );
 		
 		// END:  <1010> -----
 	}
@@ -612,12 +612,9 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		return res;
 	}
 
-	/*
-	 * Updates the Preview with the current parameters (sigma, threshold, roi,
-	 * slice number + RANSAC parameters)
-	 * 
-	 * @param change
-	 *            - what did change
+	/**
+	 * Updates the Preview with the current parameters (sigma, threshold, roi, slice number + RANSAC parameters)
+	 * @param change - what did change
 	 */
 	protected void updatePreview(final ValueChange change) {
 		// set up roi 

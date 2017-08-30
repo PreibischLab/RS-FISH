@@ -177,7 +177,7 @@ public class AnisitropyCoefficient {
 	public double calculateAnisotropyCoefficient(){
 		double bestScale = 1.0;
 
-		System.out.println("BEEP");
+		// System.out.println("BEEP");
 
 		// TODO Add this parameters to the gui?
 		float sigma = params.getSigmaDoG(); 
@@ -210,6 +210,8 @@ public class AnisitropyCoefficient {
 			bestScale = calculateAnisotropyCoefficientRS(img, threshold, sigma);
 
 		// bestScale = anisotropyChooseImageDialog();
+		
+		System.out.println("Best scale = " + bestScale);
 		return bestScale;
 	}
 

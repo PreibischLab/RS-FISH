@@ -14,6 +14,7 @@ import ij.gui.GenericDialog;
 import ij.io.Opener;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
+import parameters.GUIParams;
 
 public class Anisotropy_Plugin implements PlugIn {
 
@@ -41,6 +42,8 @@ public class Anisotropy_Plugin implements PlugIn {
 	
 		// TODO: write bestScale somewhere
 		ap.setAnisotropy((float)bestScale);
+		// TODO: will it work? Should not it be 1/bestScale ?
+		GUIParams.defaultAnisotropy = (float) bestScale; 
 		
 	}
 

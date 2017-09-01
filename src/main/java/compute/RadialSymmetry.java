@@ -241,7 +241,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 
 	// this function will show the result of RANSAC
 	// proper window -> dialog view with the columns
-	public static void ransacResultTable(final ArrayList<Spot> spots, final ArrayList<Long> timePoint, final ArrayList<Long> channelPoint, boolean gaussFit, ArrayList<Float> intensity) {
+	public static void ransacResultTable(final ArrayList<Spot> spots, final ArrayList<Long> timePoint, final ArrayList<Long> channelPoint, ArrayList<Float> intensity) {
 		IOFunctions.println("Running RANSAC ... ");
 		// real output
 		ResultsTable rt = new ResultsTable();
@@ -275,9 +275,9 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				}
 				rt.addValue("c", currentChannelPoint + 1); // user-friendly, starting the counting from 1				
 				
-				
-				if (gaussFit)
-					rt.addValue("intensity",  String.format(java.util.Locale.US, "%.4f", intensity.get(rt.getCounter() - 1)) );
+				// TODO: REMOVE THIS IF - show the result always
+				// if (gaussFit)
+				rt.addValue("intensity",  String.format(java.util.Locale.US, "%.4f", intensity.get(rt.getCounter() - 1)) );
 				
 			}
 		}

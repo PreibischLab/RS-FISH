@@ -27,6 +27,8 @@ import net.imglib2.Cursor;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealRandomAccess;
+import net.imglib2.RealRandomAccessible;
 import net.imglib2.algorithm.localization.EllipticGaussianOrtho;
 import net.imglib2.algorithm.localization.LevenbergMarquardtSolver;
 import net.imglib2.algorithm.localization.MLEllipticGaussianEstimator;
@@ -34,6 +36,8 @@ import net.imglib2.algorithm.localization.PeakFitter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
+import net.imglib2.interpolation.randomaccess.NearestNeighborInterpolatorFactory;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
@@ -48,7 +52,7 @@ public class Radial_Symmetry implements PlugIn {
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
 	public static int defaultParam = 0;
-	public static boolean defaultGauss = true;
+	public static boolean defaultGauss = true; 
 	public static boolean defaultRANSAC = true;
 	public static float defaultAnisotropy = 1.0f; 
 
@@ -64,7 +68,7 @@ public class Radial_Symmetry implements PlugIn {
 	boolean RANSAC;
 	float anisotropy;
 	// use gaussfit 
-	boolean gaussFit;
+	boolean gaussFit; // defines if we perform the gauss fit or linear interpolation for peak intensities
 	boolean showDetections;
 	boolean showInliers;
 
@@ -170,7 +174,7 @@ public class Radial_Symmetry implements PlugIn {
 			// System.out.println("total # of channels " + channelPoint.size());
 			// System.out.println("total # of timepoits" + timePoint.size());
 
-			RadialSymmetry.ransacResultTable(allSpots, timePoint, channelPoint, gaussFit, intensity);
+			RadialSymmetry.ransacResultTable(allSpots, timePoint, channelPoint, intensity);
 
 			// Visualization incoming
 			if (showInliers)
@@ -185,7 +189,7 @@ public class Radial_Symmetry implements PlugIn {
 			int[] impDim, long[] dim, boolean gaussFit, double sigma, ArrayList<Spot> allSpots,
 			ArrayList<Long> timePoint, ArrayList<Long> channelPoint, ArrayList<Float> intensity) {
 		RandomAccessibleInterval<FloatType> timeFrame;
-		ImagePlus xzyImp; // stores non-normalized xyz stack
+		ImagePlus xyzImp; // stores non-normalized xyz stack
 
 		int numDimensions = dim.length;
 
@@ -216,9 +220,9 @@ public class Radial_Symmetry implements PlugIn {
 					for (int d = 0; d < numDimensions; d++)
 						typicalSigmas[d] = sigma;
 
-					xzyImp = getXyz(imp); // grabbed the non-normalized xyz-stack  
+					xyzImp = getXyz(imp); // grabbed the non-normalized xyz-stack  
 					
-					PeakFitter<FloatType> pf = new PeakFitter<FloatType>(ImageJFunctions.wrap(xzyImp), (ArrayList)filteredSpots,
+					PeakFitter<FloatType> pf = new PeakFitter<FloatType>(ImageJFunctions.wrap(xyzImp), (ArrayList)filteredSpots,
 							new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(), 
 							new MLEllipticGaussianEstimator(typicalSigmas)); // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
 					pf.process();
@@ -233,6 +237,21 @@ public class Radial_Symmetry implements PlugIn {
 						double[] params = fits.get( spot );
 						intensity.add(new Float(params[numDimensions]));
 					}
+				}
+				else{
+					//  iterate over all points and perform the linear interpolation for each of the spots
+				
+					xyzImp = getXyz(imp); // grabbed the non-normalized xyz-stack  
+					NLinearInterpolatorFactory<FloatType> factory = new NLinearInterpolatorFactory<>();
+					RealRandomAccessible<FloatType> interpolant = Views.interpolate(Views.extendMirrorSingle( ImageJFunctions.wrapFloat( xyzImp)), factory);
+					
+					for (Spot fSpot : filteredSpots){
+						RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
+						double[] position = fSpot.getCenter();
+						rra.setPosition(position);
+						intensity.add(new Float(rra.get().get()));	
+					}
+					
 				}
 
 				// IOFunctions.println("t: " + t + " " + "c: " + c);
@@ -449,7 +468,7 @@ public class Radial_Symmetry implements PlugIn {
 			this.parameterType = defaultParam = initialDialog.getNextChoiceIndex();
 			this.gaussFit = defaultGauss = initialDialog.getNextBoolean();
 			this.RANSAC = defaultRANSAC = initialDialog.getNextBoolean();
-						
+		
 			if (imp.getNDimensions() != 2)
 				defaultAnisotropy = (float)initialDialog.getNextNumber();
 			this.anisotropy = defaultAnisotropy;

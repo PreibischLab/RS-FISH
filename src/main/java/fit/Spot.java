@@ -423,7 +423,11 @@ public class Spot implements RealLocalizable, Localizable
 		for ( int i = 0; i < f.length; ++i )
 			f[ i ] = ( f[ i ] / l );
 	}
+	
+	public ArrayList<PointFunctionMatch> getInliers(){ return inliers; }
 
+	public ArrayList<PointFunctionMatch> getCandidates(){ return candidates; }
+	
 	@Override
 	public int numDimensions() { return n; }
 

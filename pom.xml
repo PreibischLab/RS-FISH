@@ -94,7 +94,7 @@
 		<system>Travis CI</system>
 		<url>https://travis-ci.org/milkyklim/RadialSymmetryLocalization</url>
 	</ciManagement>
-		
+
 	<properties>
 		<scijava.jvm.version>1.8</scijava.jvm.version>
 		<license.licenseName>gpl_v2</license.licenseName>
@@ -120,7 +120,6 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
-			<version>3.6.1</version>
 		</dependency>
 	</dependencies>
 </project>

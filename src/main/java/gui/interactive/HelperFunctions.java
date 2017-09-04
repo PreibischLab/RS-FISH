@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer.Sigma;
-
 import fit.Spot;
 import ij.IJ;
 import ij.ImagePlus;

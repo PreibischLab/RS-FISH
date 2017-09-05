@@ -568,7 +568,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 	/**
 	 * shows the results (circles) of the detection in the interactive mode 
-	 * @params spots - detections to be shown
+	 * @param spots - detections to be shown
 	 * */
 	protected void ransacResults(final ArrayList<Spot> spots) {
 		// reset the image

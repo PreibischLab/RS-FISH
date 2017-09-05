@@ -448,11 +448,11 @@ public class Radial_Symmetry implements PlugIn {
 		initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
 		initialDialog.addCheckbox("Use_RANSAC", defaultRANSAC);
 				
-		if (imp.getNDimensions() != 2)
+		if (imp.getNDimensions() != 2){
 			initialDialog.addNumericField("Anisotropy_coefficient", defaultAnisotropy, 2);
-
-		initialDialog.addMessage("*Use the \"Anisotropy Coeffcient Plugin\"\nto calculate the coefficient or\n leave 1.0 for a reasonable result.", new Font("Arial", 0, 10), new Color(255, 0, 0));
-
+			initialDialog.addMessage("*Use the \"Anisotropy Coeffcient Plugin\"\nto calculate the coefficient or\n leave 1.0 for a reasonable result.", new Font("Arial", 0, 10), new Color(255, 0, 0));
+		}
+			
 		initialDialog.addMessage("Visualization:");
 		initialDialog.addCheckbox("Show_RANSAC_results", defaultInliers);
 		initialDialog.addCheckbox("Show_detections", defaultDetections);

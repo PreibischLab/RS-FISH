@@ -158,7 +158,7 @@ public class Radial_Symmetry implements PlugIn {
 			}
 
 			RandomAccessibleInterval<FloatType> timeFrame;
-			ArrayList<Spot> allSpots = new ArrayList<>(1);
+			ArrayList<Spot> allSpots = new ArrayList<>(0);
 
 			// stores number of detected spots per time point
 			ArrayList<Long> timePoint = new ArrayList<>(0);

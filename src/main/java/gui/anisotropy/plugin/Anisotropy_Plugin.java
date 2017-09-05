@@ -44,7 +44,7 @@ public class Anisotropy_Plugin implements PlugIn {
 		ap.setAnisotropy((float)bestScale);
 		// TODO: will it work? Should not it be 1/bestScale ?
 		GUIParams.defaultAnisotropy = (float) bestScale; 
-		
+		IJ.log("Anisotropy coefficient: " + bestScale);		
 	}
 
 	// here user chooses the image and 

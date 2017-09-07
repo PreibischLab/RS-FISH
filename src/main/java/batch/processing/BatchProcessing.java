@@ -156,7 +156,7 @@ public class BatchProcessing {
 		String[] nextLine = new String [5];
 
 		try {
-			writer = new CSVWriter(new FileWriter(path + "/" + fileName + ".csv"), '\t');
+			writer = new CSVWriter(new FileWriter(path + "/" + fileName + ".csv"), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 			for (int j = 0; j < spots.size(); j++) {
 				double[] position = spots.get(j).getCenter();
 			

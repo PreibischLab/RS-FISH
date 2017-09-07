@@ -442,22 +442,24 @@ public class Radial_Symmetry implements PlugIn {
 
 
 		// choose image to process and method to use
-		GenericDialog initialDialog = new GenericDialog("Initial Setup");
+		GenericDialog initialDialog = new GenericDialog("Initial setup");
 
-		initialDialog.addChoice("Define_Parameters", paramChoice, paramChoice[defaultParam]);
-		initialDialog.addCheckbox("Do_additional_gauss_fit", defaultGauss);
-		initialDialog.addCheckbox("Use_RANSAC", defaultRANSAC);
+		initialDialog.addChoice("Parameter's_mode:", paramChoice, paramChoice[defaultParam]);
+		initialDialog.addMessage("Computation:");
+		initialDialog.addCheckbox("RANSAC", defaultRANSAC);
+		initialDialog.addCheckbox("Gaussian_fitting", defaultGauss);
 				
 		if (imp.getNDimensions() != 2){
-			initialDialog.addNumericField("Anisotropy_coefficient", defaultAnisotropy, 2);
-			initialDialog.addMessage("*Use the \"Anisotropy Coeffcient Plugin\"\nto calculate the coefficient or\n leave 1.0 for a reasonable result.", new Font("Arial", 0, 10), new Color(255, 0, 0));
+			initialDialog.addNumericField("Anisotropy_coefficient:", defaultAnisotropy, 2);
 		}
 			
 		initialDialog.addMessage("Visualization:");
-		initialDialog.addCheckbox("Show_RANSAC_results", defaultInliers);
-		initialDialog.addCheckbox("Show_detections", defaultDetections);
+		initialDialog.addCheckbox("RANSAC_regions", defaultInliers);
+		initialDialog.addCheckbox("Detections_overlay", defaultDetections);
 
-		
+		if (imp.getNDimensions() != 2){
+			initialDialog.addMessage("*Use the \"Anisotropy Coeffcient Plugin\"\nto calculate the anisotropy coefficient\n or leave 1.00 for a reasonable result.", new Font("Arial", 0, 10), new Color(255, 0, 0));
+		}
 		
 		initialDialog.showDialog();
 
@@ -466,8 +468,9 @@ public class Radial_Symmetry implements PlugIn {
 		} else {
 			// Save current index and current choice here
 			this.parameterType = defaultParam = initialDialog.getNextChoiceIndex();
-			this.gaussFit = defaultGauss = initialDialog.getNextBoolean();
 			this.RANSAC = defaultRANSAC = initialDialog.getNextBoolean();
+			this.gaussFit = defaultGauss = initialDialog.getNextBoolean();
+		
 		
 			if (imp.getNDimensions() != 2)
 				defaultAnisotropy = (float)initialDialog.getNextNumber();

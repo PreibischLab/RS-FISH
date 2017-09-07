@@ -21,7 +21,7 @@ public class RANSACWindow
 	public RANSACWindow( final InteractiveRadialSymmetry parent )
 	{
 		this.parent = parent;
-		ransacFrame = new Frame("Adjust RANSAC Values");
+		ransacFrame = new Frame("Adjust RANSAC values");
 		ransacFrame.setSize(260, 260);
 
 		/* Instantiation */
@@ -57,13 +57,13 @@ public class RANSACWindow
 				10 + parent.scrollbarSize);
 
 		final Label supportRegionText = new Label(
-				"Support Region Radius = " + parent.params.getSupportRadius(), Label.CENTER);
+				"Support region radius = " + parent.params.getSupportRadius(), Label.CENTER);
 		final Label inlierRatioText = new Label(
-				"Inlier Ratio = " + String.format(java.util.Locale.US, "%.2f", parent.params.getInlierRatio()), Label.CENTER);
-		final Label maxErrorText = new Label("Max Error = " + String.format(java.util.Locale.US, "%.4f", parent.params.getMaxError()),
+				"Inlier ratio = " + String.format(java.util.Locale.US, "%.2f", parent.params.getInlierRatio()), Label.CENTER);
+		final Label maxErrorText = new Label("Max error = " + String.format(java.util.Locale.US, "%.4f", parent.params.getMaxError()),
 				Label.CENTER);
 
-		final Label bsText = new Label("Local Background Subtraction:", Label.CENTER);
+		final Label bsText = new Label("Local background subtraction:", Label.CENTER);
 		final Choice bsMethodChoice = new Choice();
 		for ( final String s : GUIParams.bsMethods )
 			bsMethodChoice.add( s );

@@ -16,7 +16,7 @@ public class DoGWindow
 	public DoGWindow( final InteractiveRadialSymmetry parent )
 	{
 		this.parent = parent;
-		this.doGFrame = new Frame( "Adjust Difference-of-Gaussian Values" );
+		this.doGFrame = new Frame( "Adjust difference-of-gaussian values" );
 		doGFrame.setSize(360, 150);
 
 		/* Instantiation */
@@ -33,7 +33,7 @@ public class DoGWindow
 		final Scrollbar thresholdBar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
 				10 + parent.scrollbarSize);
 
-		final Label sigmaText1 = new Label("Sigma 1 = " + String.format(java.util.Locale.US, "%.2f", parent.params.getSigmaDoG()),
+		final Label sigmaText1 = new Label("Sigma = " + String.format(java.util.Locale.US, "%.2f", parent.params.getSigmaDoG()),
 				Label.CENTER);
 
 		final Label thresholdText = new Label(

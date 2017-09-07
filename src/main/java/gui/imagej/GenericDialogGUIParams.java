@@ -23,18 +23,18 @@ public class GenericDialogGUIParams
 	public boolean automaticDialog(){
 		boolean canceled = false;
 
-		GenericDialog gd = new GenericDialog("Set Stack Parameters");
+		GenericDialog gd = new GenericDialog("Set parameters");
 
 		gd.addNumericField("Sigma:", GUIParams.defaultSigma, 2);
 		gd.addNumericField("Threshold:", GUIParams.defaultThreshold, 4);
 		
-		gd.addNumericField("Support_Region_Radius:", GUIParams.defaultSupportRadius, 0);
+		gd.addNumericField("Support_region_radius:", GUIParams.defaultSupportRadius, 0);
 		
 		// TODO: Hide for the case of RS without RANSAC
 		if (guiParams.getRANSAC()){
-			gd.addNumericField("Inlier_Ratio:", GUIParams.defaultInlierRatio, 2);
-			gd.addNumericField("Max_Error:", GUIParams.defaultMaxError, 2);
-			gd.addChoice("Local_Background_Subtraction:", GUIParams.bsMethods, GUIParams.bsMethods[GUIParams.defaultBsMethod] );
+			gd.addNumericField("Inlier_ratio:", GUIParams.defaultInlierRatio, 2);
+			gd.addNumericField("Max_error:", GUIParams.defaultMaxError, 2);
+			gd.addChoice("Local_background_subtraction:", GUIParams.bsMethods, GUIParams.bsMethods[GUIParams.defaultBsMethod] );
 		}
 			
 		// gd.addNumericField("Z-scaling value", GUIParams.defaultAnisotropy, 2);	

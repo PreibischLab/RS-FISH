@@ -67,7 +67,7 @@ public class Anisotropy_Plugin implements PlugIn {
 				defaultImg = 0;
 
 			GenericDialog gd = new GenericDialog("Choose the image");
-			gd.addChoice("Image_for_detection", imgList, imgList[defaultImg]);
+			gd.addChoice("Image", imgList, imgList[defaultImg]);
 			gd.addChoice("Detection_method", paramChoice, paramChoice[defaultParam]);
 
 			gd.showDialog();

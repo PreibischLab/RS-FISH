@@ -105,10 +105,12 @@ public class Anisotropy_Plugin implements PlugIn {
 
 	public static void main(String[] args)
 	{
-		File path = new File( "/media/milkyklim/Samsung_T3/2017-08-18-radial-symmetry-test/gauss3d-1,2,3.tif" );
+		// File path = new File( "/media/milkyklim/Samsung_T3/2017-08-18-radial-symmetry-test/gauss3d-1,2,3.tif" );
+		// File path = new File("/Users/kkolyva/Desktop/beads.tif");
+		File path = new File("/Users/kkolyva/Desktop/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/beads-cropped.tif");
 		// path = path.concat("test_background.tif");
 
-		if ( !path.exists() )
+		if ( !path.exists() ) 
 			throw new RuntimeException( "'" + path.getAbsolutePath() + "' doesn't exist." );
 
 		new ImageJ();

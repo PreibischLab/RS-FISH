@@ -274,8 +274,6 @@ public class AnisitropyCoefficient {
 		for (final Point peak : peaks)
 		{
 			double[] params = fits.get( peak );
-			// System.out.println(params.length); // should be of the size 2*nDims + 1
-
 			for (int j = 0; j < numDimensions; j++){
 				sigmas[j] += params[numDimensions + 1 + j];
 			}
@@ -289,7 +287,6 @@ public class AnisitropyCoefficient {
 		}
 
 		// TODO: here we suppose that the x and y sigmas are the same
-
 		bestScale = sigmas[numDimensions - 1] / sigmas[0]; // x/z
 
 		return bestScale;
@@ -299,7 +296,7 @@ public class AnisitropyCoefficient {
 	// pass the image with the bead
 	// detect it 
 	// run with different scalings to see which scaling will produce the best result 
-
+	// is this part working at the moment 
 	public double calculateAnisotropyCoefficientRS(RandomAccessibleInterval<FloatType> img, float threshold, float sigma){
 
 		double bestScale = 1.0;

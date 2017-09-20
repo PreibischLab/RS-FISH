@@ -180,7 +180,8 @@ public class BatchProcessing {
 
 		boolean useRANSAC = true;
 		final GUIParams params = new GUIParams(useRANSAC);
-		params.setAnisotropyCoefficient(1.0f);
+		// apparently the best value for now
+		params.setAnisotropyCoefficient(1.10f);
 		// pre-detection
 		params.setSigmaDog(1.5f);
 		params.setThresholdDoG(0.0033f);

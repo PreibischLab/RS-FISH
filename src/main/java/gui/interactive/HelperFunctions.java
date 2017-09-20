@@ -41,18 +41,39 @@ public class HelperFunctions {
 		final ArrayList<RefinedPeak<Point>> filtered = new ArrayList<>();
 
 		for (final RefinedPeak<Point> peak : peaks)
-			if (HelperFunctions.isInside(peak, rectangle) && (-peak.getValue() > threshold)) // I
-																								// guess
-																								// the
-																								// peak.getValue
-																								// function
-																								// returns
-																								// the
-																								// value
-																								// in
-																								// scale-space
+			if (HelperFunctions.isInside(peak, rectangle) && (-peak.getValue() > threshold)) 
+				// I guess the peak.getValue function returns the value in scale-space
 				filtered.add(peak);
 
+		return filtered;
+	}
+	
+	// TODO: code might be reused instead of copy\pasting
+	public static ArrayList<RefinedPeak<Point>> filterPeaks(final ArrayList<RefinedPeak<Point>> peaks, final double threshold) {
+		final ArrayList<RefinedPeak<Point>> filtered = new ArrayList<>();
+		
+		for (final RefinedPeak<Point> peak : peaks)
+			if (-peak.getValue() > threshold)
+				filtered.add(peak);
+		
+		return filtered;
+	}
+	
+	// TODO: Create a more sophisticated way to filter the peaks
+	public static ArrayList<Point> resavePeaks(final ArrayList<RefinedPeak<Point>> peaks, final double threshold, int numDimensions) {
+		final ArrayList<Point> filtered = new ArrayList<>();
+		
+		double [] pos = new double[numDimensions];
+		long [] iPos = new long [numDimensions];
+	
+		for (final RefinedPeak<Point> peak : peaks)
+			if (-peak.getValue() > threshold){
+				peak.localize(pos);
+				for (int d = 0; d < numDimensions; d ++)
+					iPos[d] = (long)pos[d];		
+				filtered.add(new Point(iPos));
+				
+			}		
 		return filtered;
 	}
 

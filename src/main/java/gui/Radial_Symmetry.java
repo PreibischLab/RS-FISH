@@ -86,9 +86,7 @@ public class Radial_Symmetry implements PlugIn {
 		if (!wasCanceled) // if user didn't cancel
 		{
 			if (imp.getNChannels() > 1) {
-				// TODO: REMOVE: This part is fixed
-				// IJ.log("Multichannel images are not supported yet ...");
-				// return;
+				IJ.log("Multichannel image detected. We recommend to adjust the parameters for each channel separately.");
 			}
 
 			long[] dimensions = new long[imp.getNDimensions()];
@@ -106,7 +104,7 @@ public class Radial_Symmetry implements PlugIn {
 			// set all defaults + set RANSAC
 			final GUIParams params = new GUIParams(RANSAC);
 
-			if (parameterType == 0) // Manual
+			if (parameterType == 0) // manual
 			{
 				// set the parameters in the manual mode
 				GenericDialogGUIParams gdGUIParams = new GenericDialogGUIParams(params);
@@ -114,15 +112,14 @@ public class Radial_Symmetry implements PlugIn {
 
 				if (wasCanceled)
 					return;
-
 				// calculations are performed further
 			} else // interactive
 			{
 				params.setAnisotropyCoefficient(anisotropy);
-
 				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, min, max);
 
 				do {
+					// TODO: change to something that is not deprecated
 					SimpleMultiThreading.threadWait(100);
 				} while (!irs.isFinished());
 
@@ -136,6 +133,7 @@ public class Radial_Symmetry implements PlugIn {
 
 			RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
 
+			// normalize the whole image if it is possible
 			RandomAccessibleInterval<FloatType> rai;
 			if (!Double.isNaN(min) && !Double.isNaN(max)) // if normalizable
 				rai = new TypeTransformingRandomAccessibleInterval<>(ImageJFunctions.wrap(imp),
@@ -143,13 +141,9 @@ public class Radial_Symmetry implements PlugIn {
 			else // otherwise use
 				rai = ImageJFunctions.wrap(imp);
 
-			// RandomAccessibleInterval<FloatType> rai = new
-			// TypeTransformingRandomAccessibleInterval<>(
-			// ImageJFunctions.wrap(imp), new RealTypeNormalization<>( min, max
-			// - min ), new FloatType() );
 			// x y c z t
 			int[] impDim = imp.getDimensions();
-
+			
 			long[] dim; // stores x y z dimensions
 			if (impDim[3] == 1) { // if there is no z dimension
 				dim = new long[] { impDim[0], impDim[1] };
@@ -157,7 +151,6 @@ public class Radial_Symmetry implements PlugIn {
 				dim = new long[] { impDim[0], impDim[1], impDim[3] };
 			}
 
-			RandomAccessibleInterval<FloatType> timeFrame;
 			ArrayList<Spot> allSpots = new ArrayList<>(0);
 
 			// stores number of detected spots per time point
@@ -202,6 +195,7 @@ public class Radial_Symmetry implements PlugIn {
 				RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
 
 				// TODO: if the detect spot has at least 1 inlier add it
+				// FIXME: is this part necessary? 
 				ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), 1 );
 
 				allSpots.addAll(filteredSpots);
@@ -210,15 +204,13 @@ public class Radial_Symmetry implements PlugIn {
 				timePoint.add(new Long(filteredSpots.size()));
 
 				// user wants to have the gauss fit here
-				if (gaussFit) {
-					// fitGaussianMask(timeFrame, rs.getSpots(), sigma);
-
-					// TODO: make spot implement Localizable and just return the original location for the Localize methods
-					// HelperFunctions.copyToLocalizable(filteredSpots, peaks);
-
+				if (gaussFit) { // TODO: fix the problem with the computations of this one
+					
 					double [] typicalSigmas = new double[numDimensions];
 					for (int d = 0; d < numDimensions; d++)
 						typicalSigmas[d] = sigma;
+					
+					if (numDimensions == 3) typicalSigmas[numDimensions - 1] *= rsm.getParams().getAnisotropyCoefficient();
 
 					xyzImp = getXyz(imp); // grabbed the non-normalized xyz-stack  
 					
@@ -253,8 +245,6 @@ public class Radial_Symmetry implements PlugIn {
 					}
 					
 				}
-
-				// IOFunctions.println("t: " + t + " " + "c: " + c);
 			}
 			if (c != 0)
 				channelPoint.add(new Long(allSpots.size() - channelPoint.get(c)));
@@ -264,10 +254,9 @@ public class Radial_Symmetry implements PlugIn {
 
 	}
 	
-	
-	
 
 	// triggers the gaussian fit if user wants it
+	// FIXME: Gauss fit should be performed only on the inliers
 	public static void fitGaussian(RandomAccessibleInterval<FloatType> timeFrame, ArrayList<Spot> spots, double sigma) {
 
 		int numDimensions = timeFrame.numDimensions();
@@ -485,8 +474,9 @@ public class Radial_Symmetry implements PlugIn {
 	}
 
 	public static void main(String[] args) {
-		// File path = new File( "/Volumes/Samsung_T3/2017-08-07-stephan-radial-symmetry-pipeline/Simulated_3D_2x.tif" );
-		File path = new File( "/media/milkyklim/Samsung_T3/2017-08-24-intronic-probes/N2_dpy-23_ex_int_ama-1_015/channels/c3/N2_dpy-23_ex_int_ama-1_015.nd2 - N2_dpy-23_ex_int_ama-1_015.nd2 (series 03) - C=2-32.tif" );
+		// File path = new File( "/Users/kkolyva/Desktop/corr.tif");
+		File path = new File( "/Volumes/Samsung_T3/2017-08-24-intronic-probes/N2_dpy-23_ex_int_ama-1_015/subtracted/c3/N2_dpy-23_ex_int_ama-1_015.nd2 - N2_dpy-23_ex_int_ama-1_015.nd2 (series 05) - C=2.tif" );
+		// File path = new File( "/media/milkyklim/Samsung_T3/2017-08-24-intronic-probes/N2_dpy-23_ex_int_ama-1_015/channels/c3/N2_dpy-23_ex_int_ama-1_015.nd2 - N2_dpy-23_ex_int_ama-1_015.nd2 (series 03) - C=2-32.tif" );
 		// File path = new File( "/home/milkyklim/Desktop/Image 0-1-1000.tif" );
 		
 		if (!path.exists())

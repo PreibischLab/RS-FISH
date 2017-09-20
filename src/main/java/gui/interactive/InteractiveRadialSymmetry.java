@@ -194,42 +194,14 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			imagePlus.setRoi( rectangle );
 		}
 		
-		// set the calibaration
+		// set the calibration
 		this.calibration = HelperFunctions.initCalibration(imp, 2);
 
 		// initialize variables for interactive preview
 		// called before updatePreview() !
 		initRansacPreview( imagePlus );
-
-		// TODO: <1010> should this part be moved out of this .java file
-		// so that only parameters of the listeners are passed 
 		
 		initInteractiveKit();
-		
-		
-//		// show the interactive dog kit
-//		this.dogWindow = new DoGWindow( this );
-//		this.dogWindow.getFrame().setVisible( true );
-//
-//		// show the interactive ransac kit
-//		this.ransacWindow = new RANSACWindow( this );
-//		
-//		// case when we run RS without ransac
-//		boolean useRANSAC = params.getRANSAC();
-//		this.ransacWindow.getFrame().setVisible( useRANSAC );
-//		
-//		// add listener to the imageplus slice slider
-//		sliceObserver = new SliceObserver(imagePlus, new ImagePlusListener( this ));
-//		// compute first version
-//		updatePreview(ValueChange.ALL);
-//		isStarted = true;
-//		// check whenever roi is modified to update accordingly
-//		roiListener = new ROIListener( this, imagePlus, impRansacError );
-//		imagePlus.getCanvas().addMouseListener( roiListener );
-//		fixROIListener = new FixROIListener( imagePlus, impRansacError );
-//		impRansacError.getCanvas().addMouseListener( fixROIListener );
-		
-		// END:  <1010> -----
 	}
 	
 	
@@ -285,25 +257,6 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		}
 
 	}
-
-// 	TODO: REMOVE	
-//	// TODO: Do I need this one here (?!)
-//	// this function will show the result of RANSAC
-//	// proper window -> dialog view with the columns
-//	protected void ransacResultTable(final ArrayList<Spot> spots) {
-//		IOFunctions.println("Running RANSAC ... ");
-//		IOFunctions.println("Spots found = " + spots.size());
-//		// real output
-//		ResultsTable rt = new ResultsTable();
-//		String[] xyz = { "x", "y", "z" };
-//		for (Spot spot : spots) {
-//			rt.incrementCounter();
-//			for (int d = 0; d < spot.numDimensions(); ++d) {
-//				rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.2f", spot.getFloatPosition(d)));
-//			}
-//		}
-//		rt.show("Results");
-//	}
 
 	protected void ransacInteractive( final Gradient derivative ) {
 		// TODO: I think this problem with the rectangle was previously fixed
@@ -755,9 +708,6 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		imp.show();
 
 		imp.setSlice(20);
-
-
-		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
 		new InteractiveRadialSymmetry( imp, new GUIParams(true), min, max );
 

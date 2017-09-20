@@ -53,11 +53,11 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 	int bsMethod;
 	float bsMaxError;
 	float bsInlierRatio;
+	
+	float anisotropy;
 
 	public RadialSymmetry(final RadialSymmetryParameters params, final RandomAccessibleInterval<FloatType> img) {
-		// TODO: make them fields (?)
-		// instead you can use only one RadialSymmetryParameters variable but
-		// the calls will be too long
+
 		sigma = params.getParams().getSigmaDoG();
 		threshold = params.getParams().getThresholdDoG();
 		supportRadius = params.getParams().getSupportRadius();
@@ -67,8 +67,11 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 		bsMethod = params.getParams().getBsMethod();
 		bsMaxError = params.getParams().getBsMaxError();
 		bsInlierRatio = params.getParams().getBsInlierRatio();
+		
+		anisotropy = params.getParams().getAnisotropyCoefficient();
 
 		float sigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
+		// TODO: is this check necessary ? 
 		if (img.numDimensions() == 2 || img.numDimensions() == 3) {
 			// IMP: in the 3D case the blobs will have lower contrast as a
 			// function of sigma(z) therefore we have to adjust the threshold;
@@ -82,14 +85,6 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 					DogDetection.ExtremaType.MINIMA, tFactor * threshold / 2, false);
 			peaks = dog2.getSubpixelPeaks();
 
-//			for (RefinedPeak<Point> point : peaks){
-//				for (int d = 0; d < 3; d++)
-//					System.out.print(point.getDoublePosition(d) + " ");
-//				System.out.println();
-//			}
-//			System.out.println(peaks.size());
-			
-			
 			if (debug) {
 				System.out.println("Timing: DoG peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
 				sTime = System.currentTimeMillis();
@@ -102,7 +97,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				sTime = System.currentTimeMillis();
 			}
 
-			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
+			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(0);
 			int numDimensions = img.numDimensions();
 			// copy all peaks
 			// TODO: USE FUNCTION FROM HELPERFUNCTIONS
@@ -115,6 +110,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				}
 			}
 
+			// HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions);		
 			// IJ.log( "peaks: " + simplifiedPeaks.size() );
 
 			if (debug) {
@@ -145,86 +141,38 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			for (int d = 0; d < numDimensions; ++d)
 				range[d] = supportRadius;
 
-			// this is a hack
-			//range[ 2 ] *= 6;
-			System.out.println( "Range: " + Util.printCoordinates(range));
-			
-//			double bestDist = Double.MAX_VALUE;
-//			double bestScale = -1;
-			
-//			for (float idx = 1.0f; idx < 1.21f; idx += 0.2f){
-				spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
-						
-				// TODO: HERE OR BEFORE? 
-				// ADD SCALING HERE
-//				float scaled = idx;
-//				for (int j = 0; j < spots.size(); j++){
-//					spots.get(j).updateScale(new float []{1, 1, scaled});
-//				}
-	
-	
-				IJ.log( "num spots: " + spots.size() );
-				if (debug) {
-					System.out.println("Timing: Extract peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
-					sTime = System.currentTimeMillis();
-				}
-	
-				// TODO: IS THIS A PLACE WHERE YOU CAN SKIP RANSAC
-				if (params.getParams().getRANSAC()){
-					Spot.ransac(spots, numIterations, maxError, inlierRatio);
-				}
-				else{
-					try{
-						Spot.fitCandidates(spots);
-						//IJ.log( "inliers: " + spots.get(0).inliers.size() );
-					}
-					catch(Exception e){
-						System.out.println("EXCEPTION CAUGHT");
-					}
-				}
-				
-//				double[] knowLocation = new double[]{ 124.52561137015748, 129.88211102199878, 121.78135663923388 };
-//				double dist = 0;
-//		
-//				double avgInliers = 0;
-//				long total = 0;
-//				for (final Spot spot : spots)
-//				{
-//					dist = mpicbg.models.Point.distance( new mpicbg.models.Point( knowLocation), new mpicbg.models.Point( spot.getCenter() ) );
-//
-//					if ( spot.inliers.size() == 0)
-//						continue;
-//
-//					total++;
-//					avgInliers += spot.inliers.size();	
-//
-//					// IJ.log( "removed " + spot.numRemoved );
-//				}
-//	
-//				if ( dist < bestDist )
-//				{
-//					bestDist = dist;
-//					bestScale = idx;
-//				}
-//
-//				IJ.log(scaled + " " + avgInliers/total + " " + avgInliers + " " + total + " d=" + dist );
-				
-//			}
+			if (debug) System.out.println( "Range: " + Util.printCoordinates(range));
+			spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
+			// scale the z-component according to the anisotropy coefficient	
+			// if the image is 3D
+			if (numDimensions == 3)
+				for (int j = 0; j < spots.size(); j++)
+					spots.get(j).updateScale(new float []{1, 1, anisotropy});
 
-//			IJ.log("best:");
-//			IJ.log( bestScale + " " + bestDist );
+			IJ.log( "num spots: " + spots.size() );
+			if (debug) {
+				System.out.println("Timing: Extract peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
+				sTime = System.currentTimeMillis();
+			}
+
+			// TODO: IS THIS A PLACE WHERE YOU CAN SKIP RANSAC
+			if (params.getParams().getRANSAC()){
+				Spot.ransac(spots, numIterations, maxError, inlierRatio);
+			}
+			else{
+				try{
+					Spot.fitCandidates(spots);
+					//IJ.log( "inliers: " + spots.get(0).inliers.size() );
+				}
+				catch(Exception e){
+					System.out.println("EXCEPTION CAUGHT");
+				}
+			}
 
 			if (debug) {
 				System.out.println("Timing : RANSAC peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
 				sTime = System.currentTimeMillis();
 			}
-			
-			// TODO: Moved to the main function
-			//			ransacResultTable(spots);
-			//			if (debug) {
-			//				System.out.println("Timing : Results peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
-			//				sTime = System.currentTimeMillis();
-			//			}
 
 		} else
 			// TODO: if the code is organized correctly this part should be removed 
@@ -248,10 +196,10 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 		String[] xyz = { "x", "y", "z" };
 		int currentTimePoint = 0; 
 		int totalSpotsPerTimePoint = 0;
-		
+
 		int currentChannelPoint = 0; 
 		int totalSpotsPerChannelPoint = 0;
-		
+
 		for (Spot spot : spots) {	
 			// if spot was not discarded
 			if (spot.inliers.size() != 0){
@@ -260,25 +208,25 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 				for (int d = 0; d < spot.numDimensions(); ++d) {
 					rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.4f", pos[d]));
 				}
-						
+
 				totalSpotsPerTimePoint++;
 				if (totalSpotsPerTimePoint > timePoint.get(currentTimePoint)){
 					currentTimePoint++;
 					totalSpotsPerTimePoint = 0;
 				}
 				rt.addValue("t", currentTimePoint + 1); // user-friendly, starting the counting from 1
-				
+
 				totalSpotsPerChannelPoint++;
 				if (totalSpotsPerChannelPoint > channelPoint.get(currentChannelPoint)){
 					currentChannelPoint++;
 					totalSpotsPerChannelPoint = 0;
 				}
 				rt.addValue("c", currentChannelPoint + 1); // user-friendly, starting the counting from 1				
-				
+
 				// TODO: REMOVE THIS IF - show the result always
 				// if (gaussFit)
 				rt.addValue("intensity",  String.format(java.util.Locale.US, "%.4f", intensity.get(rt.getCounter() - 1)) );
-				
+
 			}
 		}
 		IOFunctions.println("Spots found = " + rt.getCounter()); 

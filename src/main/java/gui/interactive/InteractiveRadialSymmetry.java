@@ -5,6 +5,17 @@ import java.awt.Rectangle;
 import java.io.File;
 import java.util.ArrayList;
 
+import net.imglib2.Cursor;
+import net.imglib2.Point;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.dog.DogDetection;
+import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
+
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.DecompositionSolver;
@@ -28,23 +39,11 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.io.Opener;
-import ij.measure.ResultsTable;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
 import mpicbg.models.PointMatch;
-import mpicbg.spim.io.IOFunctions;
-import net.imglib2.Cursor;
-import net.imglib2.Point;
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.algorithm.dog.DogDetection;
-import net.imglib2.algorithm.localextrema.RefinedPeak;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.Views;
 import parameters.GUIParams;
 
 public class InteractiveRadialSymmetry// extends GUIParams

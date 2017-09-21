@@ -3,8 +3,6 @@ package gui.anisotropy.plugin;
 import java.io.File;
 
 import anisotropy.parameters.AParams;
-import fiji.util.gui.GenericDialogPlus;
-import gui.Radial_Symmetry;
 import gui.anisotropy.AnisitropyCoefficient;
 import ij.IJ;
 import ij.ImageJ;

@@ -1,11 +1,26 @@
 package gui.interactive;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+
+import net.imglib2.Cursor;
+import net.imglib2.Localizable;
+import net.imglib2.Point;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealLocalizable;
+import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.type.Type;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
+import net.imglib2.view.Views;
 
 import fit.Spot;
 import ij.IJ;
@@ -15,24 +30,6 @@ import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
-import net.imglib2.Cursor;
-import net.imglib2.Localizable;
-import net.imglib2.Point;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.RealLocalizable;
-import net.imglib2.algorithm.localextrema.RefinedPeak;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.Type;
-import net.imglib2.type.numeric.NumericType;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Util;
-import net.imglib2.view.Views;
 
 public class HelperFunctions {
 

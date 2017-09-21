@@ -1,34 +1,28 @@
 package compute;
 
-import gui.interactive.HelperFunctions;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.measure.ResultsTable;
-import mpicbg.spim.io.IOFunctions;
+import java.util.ArrayList;
+
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
-import net.imglib2.view.Views;
-import parameters.RadialSymmetryParameters;
-
-import java.util.ArrayList;
 
 import background.NormalizedGradient;
 import background.NormalizedGradientAverage;
 import background.NormalizedGradientMedian;
 import background.NormalizedGradientRANSAC;
-import fit.Spot;
 import fit.Center.CenterMethod;
+import fit.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
 import gui.Radial_Symmetry;
+import gui.interactive.HelperFunctions;
+import ij.IJ;
+import ij.measure.ResultsTable;
+import mpicbg.spim.io.IOFunctions;
+import parameters.RadialSymmetryParameters;
 
 public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 {

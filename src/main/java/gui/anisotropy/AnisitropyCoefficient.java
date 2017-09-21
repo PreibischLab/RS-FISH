@@ -6,32 +6,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
-import anisotropy.parameters.AParams;
-import background.NormalizedGradient;
-import background.NormalizedGradientAverage;
-import background.NormalizedGradientMedian;
-import background.NormalizedGradientRANSAC;
-import fiji.tool.SliceObserver;
-import fit.Spot;
-import fit.Center.CenterMethod;
-import gradient.Gradient;
-import gradient.GradientPreCompute;
-import gui.Radial_Symmetry;
-import gui.interactive.FixROIListener;
-import gui.interactive.HelperFunctions;
-import gui.interactive.InteractiveRadialSymmetry.ValueChange;
-import ij.IJ;
-import ij.ImageJ;
-import ij.ImagePlus;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
-import ij.gui.Roi;
-import ij.io.Opener;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-import imglib2.RealTypeNormalization;
-import imglib2.TypeTransformingRandomAccessibleInterval;
-import mpicbg.imglib.wrapper.ImgLib1;
 import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
@@ -46,8 +20,23 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
-import parameters.GUIParams;
-import ucar.nc2.stream.NcStreamProto.DimensionOrBuilder;
+
+import anisotropy.parameters.AParams;
+import background.NormalizedGradient;
+import fiji.tool.SliceObserver;
+import fit.Spot;
+import gradient.Gradient;
+import gradient.GradientPreCompute;
+import gui.Radial_Symmetry;
+import gui.interactive.FixROIListener;
+import gui.interactive.HelperFunctions;
+import ij.IJ;
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.io.Opener;
+import ij.process.ImageProcessor;
+import imglib2.RealTypeNormalization;
+import imglib2.TypeTransformingRandomAccessibleInterval;
 
 public class AnisitropyCoefficient {
 
@@ -253,7 +242,7 @@ public class AnisitropyCoefficient {
 
 		// TODO: implement hashCode for Spot, othewise lookups will be very slow
 		// TODO: make spot implement Localizable and just return the original location for the Localize methods
-		// TODO: implement the background subtraction here, otherwise peakfitter will givethe wrong result 
+		// TODO: implement the background subtraction here, otherwise peakfitter will give the wrong result 
 		// HelperFunctions.copyToLocalizable(filteredSpots, peaks);
 
 		PeakFitter<FloatType> pf = new PeakFitter<FloatType>(img, (ArrayList)peaks,

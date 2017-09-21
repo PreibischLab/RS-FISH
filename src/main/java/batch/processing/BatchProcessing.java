@@ -6,15 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
-import compute.RadialSymmetry;
-import fit.Spot;
-import gui.interactive.HelperFunctions;
-import ij.ImageJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.io.Opener;
-import imglib2.RealTypeNormalization;
-import imglib2.TypeTransformingRandomAccessibleInterval;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
@@ -28,9 +19,18 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+
+import compute.RadialSymmetry;
+import fit.Spot;
+import gui.interactive.HelperFunctions;
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.io.Opener;
+import imglib2.RealTypeNormalization;
+import imglib2.TypeTransformingRandomAccessibleInterval;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
-import util.ImgLib2Util;
 import util.opencsv.CSVWriter;
 
 public class BatchProcessing {

@@ -2,6 +2,7 @@ package visualization;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -16,12 +17,17 @@ import ij.gui.Overlay;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.ValuePair;
+
 import util.ImgLib2Util;
 
 public class Detections {
 
 	ImagePlus imp;
 	ArrayList<double []> peaks;
+	ArrayList<Float> intensity;
+	Integer [] sortedIndices; // sorting order in increasing z-dim
+
 	int numDimensions;
 	long [] dimensions;
 
@@ -44,9 +50,9 @@ public class Detections {
 	public double getThreshold(){
 		return threshold;
 	}
-	
 
-	public Detections(RandomAccessibleInterval <FloatType> img, ArrayList<Spot> spots){
+
+	public Detections(RandomAccessibleInterval <FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity){
 		this.numDimensions = img.numDimensions();
 		this.dimensions = new long[numDimensions];
 
@@ -59,13 +65,30 @@ public class Detections {
 
 		this.imp = ImageJFunctions.wrap(img, "");
 		this.imp.setDimensions( 1, (int)img.dimension( 2 ), 1 );
-		this.peaks = new ArrayList<>();
+		
+		this.peaks = new ArrayList<>(spots.size());
+		this.intensity = new ArrayList<>(intensity.size());
 
 		HelperFunctions.copyToDouble(spots, peaks);
+		
+		// sorts the indices to be able to get the intensities
+		IndexComparator comparator = new IndexComparator(peaks);
+		sortedIndices = comparator.createIndexArray();
+		Arrays.sort(sortedIndices, comparator);
 		// sort by z in increasing order 
-		Collections.sort(peaks, new PosComparator());		
+		Collections.sort(peaks, new PosComparator());
+		
+		permuteIntensities(intensity, this.intensity, sortedIndices);
+		
 	}
 
+	public static void permuteIntensities(ArrayList<Float> from, ArrayList<Float> to, Integer[] idx ){
+		// from and to are of the same sizes
+		for( int j = 0; j < from.size(); j++){
+			to.add(from.get(idx[j]));
+		}
+	}
+	
 
 	// shows the detected blobs
 	// images can be 2,3,4D
@@ -80,12 +103,13 @@ public class Detections {
 
 	// will be triggered by the movement of the slider
 	// TODO: add the threshold value for the overlays that you want to show
-	public void updatePreview(double threshold){		
+	public void updatePreview(double threshold){	
+		
+		this.threshold = threshold;
+		
 		Overlay overlay = imp.getOverlay();
 
 		if (overlay == null) {
-			// System.out.println("If this message pops up probably something
-			// went wrong.");
 			overlay = new Overlay();
 			imp.setOverlay(overlay);
 		}
@@ -97,13 +121,9 @@ public class Detections {
 		int[] indices = findIndices(zSlice); // contains indices of the lower and upper slices
 
 		if (indices[0] >= 0 && indices[1] >= 0){
-			for (int curPeak = indices[0]; curPeak <= indices[1]; curPeak++){
-
-				System.out.println("th = " + threshold);
-				
-				
-				if (threshold > -1){ // this one should be the comparison with the current peak intensity
-					double [] peak = peaks.get(curPeak);
+			for (int curPeakIdx = indices[0]; curPeakIdx <= indices[1]; curPeakIdx++){			
+				if (intensity.get(curPeakIdx) > threshold){ // this one should be the comparison with the current peak intensity
+					double [] peak = peaks.get(curPeakIdx);
 
 					final double x = peak[0];
 					final double y = peak[1];
@@ -118,7 +138,6 @@ public class Detections {
 				}
 			}
 		}
-
 
 		imp.updateAndDraw();
 		isComputing = false;
@@ -140,8 +159,40 @@ public class Detections {
 				compareTo = 1;
 			return compareTo;
 		}
-
 	}
+
+	public class IndexComparator implements Comparator<Integer>{
+		private final ArrayList<double []> peaks; 
+
+		public IndexComparator(ArrayList<double []> peaks){
+			this.peaks = peaks;
+		}
+
+		public Integer [] createIndexArray(){
+			Integer[] indexes = new Integer[peaks.size()];
+			for (int i = 0; i < peaks.size(); i++)
+				indexes[i] = i; // Autoboxing
+			return indexes;
+		}
+
+		@Override
+		public int compare(Integer index1, Integer index2)
+		{
+			// Autounbox from Integer to int to use as array indexes
+			int compareTo = 0;
+
+			double az = peaks.get(index1)[numDimensions - 1];
+			double bz = peaks.get(index2)[numDimensions - 1];
+
+			if (az < bz)
+				compareTo = -1;
+			if (az > bz)
+				compareTo = 1;
+			return compareTo;
+		}
+	}
+
+
 
 	// searches for the min[IDX_1] and max[IDX_2] 
 	public int[] findIndices(long zSlice){

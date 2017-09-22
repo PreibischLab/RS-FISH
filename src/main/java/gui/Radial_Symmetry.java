@@ -170,7 +170,8 @@ public class Radial_Symmetry implements PlugIn {
 
 			RadialSymmetry.ransacResultTable(allSpots, timePoint, channelPoint, intensity);
 
-			Detections detection = new Detections(ImageJFunctions.wrapReal(imp), allSpots);
+			// TODO: make this thing computed locally because you don't need it every time!
+			Detections detection = new Detections(ImageJFunctions.wrapReal(imp), allSpots, intensity);
 			
 			// Visualization incoming
 			if (showInliers)

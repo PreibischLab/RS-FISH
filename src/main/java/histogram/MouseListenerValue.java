@@ -42,6 +42,15 @@ public class MouseListenerValue implements ChartMouseListener
 		this.valueMarker = makeMarker( startValue );
 		this.detection = detection;
 		((XYPlot)panel.getChart().getPlot()).addDomainMarker( valueMarker );
+		
+		// first "update" so that the histogram and the overlays are consistennt in values
+		if (detection.isStarted()) {
+			while (detection.isComputing()) {
+				SimpleMultiThreading.threadWait(10);
+			}
+			detection.updatePreview(startValue);
+		}
+		
 	}
 
 	protected ValueMarker makeMarker( final double value )

@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import net.imglib2.Cursor;
@@ -30,6 +31,7 @@ import gauss.GaussianMaskFit;
 import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
+import histogram.Histogram;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -51,7 +53,7 @@ public class Radial_Symmetry implements PlugIn {
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
 	public static int defaultParam = 0;
-	public static boolean defaultGauss = true; 
+	public static boolean defaultGauss = false; 
 	public static boolean defaultRANSAC = true;
 	public static float defaultAnisotropy = 1.0f; 
 
@@ -173,6 +175,18 @@ public class Radial_Symmetry implements PlugIn {
 				Inliers.showInliers(ImageJFunctions.wrapReal(imp), allSpots);
 			if (showDetections)
 				new Detections(ImageJFunctions.wrapReal(imp), allSpots).showDetections();
+			
+			// FIXME: make interactive
+			if (true){ // part for the histogram window 
+				final List< Double > values = new ArrayList< Double >(intensity.size());
+				
+				for (final Float i : intensity )
+					values.add(i.doubleValue());
+				int numBins = 100;
+				
+				final Histogram demo = new Histogram( values, numBins, "Intensity distribution", "" );
+				demo.showHistogram();
+			}
 		}
 	}
 
@@ -474,7 +488,7 @@ public class Radial_Symmetry implements PlugIn {
 
 	public static void main(String[] args) {
 		// File path = new File( "/Users/kkolyva/Desktop/corr.tif");
-		File path = new File( "/Volumes/Samsung_T3/2017-08-24-intronic-probes/N2_dpy-23_ex_int_ama-1_015/subtracted/c3/N2_dpy-23_ex_int_ama-1_015.nd2 - N2_dpy-23_ex_int_ama-1_015.nd2 (series 05) - C=2.tif" );
+		File path = new File( "/Users/kkolyva/Desktop/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/Simulated_3D_2x.tif" );
 		// File path = new File( "/media/milkyklim/Samsung_T3/2017-08-24-intronic-probes/N2_dpy-23_ex_int_ama-1_015/channels/c3/N2_dpy-23_ex_int_ama-1_015.nd2 - N2_dpy-23_ex_int_ama-1_015.nd2 (series 03) - C=2-32.tif" );
 		// File path = new File( "/home/milkyklim/Desktop/Image 0-1-1000.tif" );
 		

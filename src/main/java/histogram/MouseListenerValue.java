@@ -34,7 +34,7 @@ public class MouseListenerValue implements ChartMouseListener
 		final ValueMarker valueMarker = new ValueMarker( value );
 		valueMarker.setStroke( new BasicStroke ( 2f ) );
 		valueMarker.setPaint( new Color( 0f/255f, 0f/255f, 255f/255f ) );
-		valueMarker.setLabel( " Distance=" + value );
+		valueMarker.setLabel( " I = " + String.format(java.util.Locale.US,"%.2f", value) );
 		valueMarker.setLabelPaint( Color.BLUE );
 		valueMarker.setLabelAnchor( RectangleAnchor.TOP );
 		valueMarker.setLabelTextAnchor( TextAnchor.TOP_LEFT );
@@ -48,12 +48,11 @@ public class MouseListenerValue implements ChartMouseListener
 		// left mouse click
 		if ( e.getTrigger().getButton() == MouseEvent.BUTTON1 )
 		{
-			double value = getChartXLocation( e.getTrigger().getPoint(), panel );
-			
-			System.out.println("value = " + value);
+			double value = getChartXLocation( e.getTrigger().getPoint(), panel );			
+			// System.out.println("value = " + value);
 			
 			valueMarker.setValue( value );
-			valueMarker.setLabel(  " Distance=" + value );
+			valueMarker.setLabel( " I = " + String.format(java.util.Locale.US,"%.2f", value) );
 		}
 	}
 	

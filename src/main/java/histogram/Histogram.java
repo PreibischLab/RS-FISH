@@ -113,9 +113,9 @@ public class Histogram extends ApplicationFrame
 	{
 		final JFreeChart chart = ChartFactory.createXYBarChart(
 			title,
-			"Distance [" + units + "]", 
+			"Intensity", // + " [" + units + "]", 
 			false,
-			"Count", 
+			"# of spots", 
 			dataset,
 			PlotOrientation.VERTICAL,
 			false, // legend
@@ -142,7 +142,7 @@ public class Histogram extends ApplicationFrame
 		if( evt.getWindow() == this )
 			dispose();
 	}
-
+	
 	public static void main( final String[] args )
 	{
 		new ImageJ();
@@ -154,8 +154,7 @@ public class Histogram extends ApplicationFrame
 			values.add( rnd.nextGaussian() );
 
 		final Histogram demo = new Histogram( values, 100, "Histogram for ...", "pixels" );
-		demo.pack();
-		RefineryUtilities.centerFrameOnScreen(demo);
-		demo.setVisible( true );
+		demo.showHistogram();
+		
 	}
 }

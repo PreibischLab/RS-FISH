@@ -16,16 +16,31 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.ui.RectangleAnchor;
 import org.jfree.ui.TextAnchor;
 
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
+import visualization.Detections;
+
 public class MouseListenerValue implements ChartMouseListener
 {
 	final ChartPanel panel;
 	ValueMarker valueMarker;
 	
+	final Detections detection; // contains the image with overlays 	
 	
-	MouseListenerValue( final ChartPanel panel, final double startValue )
+	MouseListenerValue( final ChartPanel panel, final double startValue)
 	{
 		this.panel = panel;
 		this.valueMarker = makeMarker( startValue );
+		((XYPlot)panel.getChart().getPlot()).addDomainMarker( valueMarker );
+		
+		this.detection = null; // for back support
+	}
+	
+	// this constructor is used by the to sync the histogram and the overlay image
+	MouseListenerValue( final ChartPanel panel, final double startValue, final Detections detection)
+	{
+		this.panel = panel;
+		this.valueMarker = makeMarker( startValue );
+		this.detection = detection;
 		((XYPlot)panel.getChart().getPlot()).addDomainMarker( valueMarker );
 	}
 
@@ -53,6 +68,14 @@ public class MouseListenerValue implements ChartMouseListener
 			
 			valueMarker.setValue( value );
 			valueMarker.setLabel( " I = " + String.format(java.util.Locale.US,"%.2f", value) );
+			
+			// TODO: Use the 'value' to update the overlays in the corresponding image 
+			if (detection.isStarted()) {
+				while (detection.isComputing()) {
+					SimpleMultiThreading.threadWait(10);
+				}
+				detection.updatePreview(value);
+			}
 		}
 	}
 	

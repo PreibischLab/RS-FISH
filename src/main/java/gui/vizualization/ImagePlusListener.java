@@ -20,7 +20,7 @@ public class ImagePlusListener implements SliceListener
 			while (parent.isComputing()) {
 				SimpleMultiThreading.threadWait(10);
 			}
-			parent.updatePreview();
+			parent.updatePreview(parent.getThreshold()); // TODO: better way to do this ? 
 		}
 	}
 }

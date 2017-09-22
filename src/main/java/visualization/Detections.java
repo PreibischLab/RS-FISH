@@ -25,8 +25,9 @@ public class Detections {
 	int numDimensions;
 	long [] dimensions;
 
-
 	SliceObserver sliceObserver;
+
+	double threshold; // show only corresponding spots from the histogram
 
 	// TODO: create getters and setters
 	boolean isComputing = false;
@@ -40,10 +41,17 @@ public class Detections {
 		return isStarted;
 	}
 
+	public double getThreshold(){
+		return threshold;
+	}
+	
 
 	public Detections(RandomAccessibleInterval <FloatType> img, ArrayList<Spot> spots){
 		this.numDimensions = img.numDimensions();
 		this.dimensions = new long[numDimensions];
+
+		this.threshold = 0; // we suppose that intensities are non-negative
+
 		// sort over z ? 
 		// show the corresponding overlay 
 
@@ -55,12 +63,7 @@ public class Detections {
 
 		HelperFunctions.copyToDouble(spots, peaks);
 		// sort by z in increasing order 
-		Collections.sort(peaks, new PosComparator());
-		
-//		for (double[] peak : peaks){
-//			System.out.println(peak[numDimensions - 1]);
-//		}
-		
+		Collections.sort(peaks, new PosComparator());		
 	}
 
 
@@ -71,12 +74,13 @@ public class Detections {
 		imp.show();
 
 		sliceObserver = new SliceObserver(imp, new ImagePlusListener( this ));
-		updatePreview();
+		updatePreview(threshold);
 		isStarted = true;
 	}
 
 	// will be triggered by the movement of the slider
-	public void updatePreview(){		
+	// TODO: add the threshold value for the overlays that you want to show
+	public void updatePreview(double threshold){		
 		Overlay overlay = imp.getOverlay();
 
 		if (overlay == null) {
@@ -92,26 +96,29 @@ public class Detections {
 
 		int[] indices = findIndices(zSlice); // contains indices of the lower and upper slices
 
-//		System.out.println(indices[0] + " " + indices[1]);
-
 		if (indices[0] >= 0 && indices[1] >= 0){
 			for (int curPeak = indices[0]; curPeak <= indices[1]; curPeak++){
 
-				double [] peak = peaks.get(curPeak);
+				System.out.println("th = " + threshold);
+				
+				
+				if (threshold > -1){ // this one should be the comparison with the current peak intensity
+					double [] peak = peaks.get(curPeak);
 
-				final double x = peak[0];
-				final double y = peak[1];
-				final long z = (long)peak[2];
+					final double x = peak[0];
+					final double y = peak[1];
+					final long z = (long)peak[2];
 
-				int initRadius = 5;
-				int radius = initRadius - (int)Math.abs(z - zSlice) ;
+					int initRadius = 5;
+					int radius = initRadius - (int)Math.abs(z - zSlice) ;
 
-				final OvalRoi or = new OvalRoi(x - radius + 0.5, y - radius + 0.5, radius * 2, radius * 2);
-				or.setStrokeColor(new Color(255, 0, 0));
-				overlay.add(or);
+					final OvalRoi or = new OvalRoi(x - radius + 0.5, y - radius + 0.5, radius * 2, radius * 2);
+					or.setStrokeColor(new Color(255, 0, 0));
+					overlay.add(or);
+				}
 			}
 		}
-		
+
 
 		imp.updateAndDraw();
 		isComputing = false;
@@ -123,10 +130,10 @@ public class Detections {
 		@Override
 		public int compare(double[] a, double [] b) {
 			int compareTo = 0;
-				
+
 			double az = a[numDimensions - 1];
 			double bz = b[numDimensions - 1];
-			
+
 			if (az < bz)
 				compareTo = -1;
 			if (az > bz)
@@ -147,7 +154,7 @@ public class Detections {
 		// FIXME: this imageJ problem slices vs channels!
 		double lowerBound = Math.max(zSlice - ds, 1);
 		double upperBound = Math.min(zSlice + ds, imp.getNSlices()); // imp.getNSlices());
-		
+
 		double [] tmp = new double[numDimensions];
 		tmp[numDimensions - 1] = lowerBound;
 		int idxLower = Collections.binarySearch(peaks, tmp, new PosComparator());
@@ -156,24 +163,24 @@ public class Detections {
 
 		// DEBUG: 
 		// System.out.println(idxLower + " "  + idxUpper);		
-		
+
 		if (idxLower < 0){
 			idxLower = -(idxLower + 1);
 			if (idxLower == peaks.size())
 				idxLower -= 1;
 		}
-		
+
 		if (idxUpper < 0){
 			idxUpper = -(idxUpper + 1);
 			if (idxUpper == peaks.size())
 				idxUpper -= 1;
 		}
-		
+
 		//TODO: Update this to have real O(lg n) complexity
 
 		indices[0] = idxLower;
 		indices[1] = idxUpper;
-		
+
 		if (idxLower >= 0 && idxUpper >= 0){
 			indices[0] = updateIdx(peaks, numDimensions, zSlice, idxLower, -1);
 			indices[1] = updateIdx(peaks, numDimensions, zSlice, idxUpper, 1);
@@ -196,7 +203,7 @@ public class Detections {
 
 			if((long)peaks.get(j)[numDimensions - 1] != zPos)
 				break;
-			
+
 			newIdx = j;
 			j += direction;
 		}

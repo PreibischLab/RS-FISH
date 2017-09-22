@@ -170,11 +170,15 @@ public class Radial_Symmetry implements PlugIn {
 
 			RadialSymmetry.ransacResultTable(allSpots, timePoint, channelPoint, intensity);
 
+			Detections detection = new Detections(ImageJFunctions.wrapReal(imp), allSpots);
+			
 			// Visualization incoming
 			if (showInliers)
 				Inliers.showInliers(ImageJFunctions.wrapReal(imp), allSpots);
-			if (showDetections)
-				new Detections(ImageJFunctions.wrapReal(imp), allSpots).showDetections();
+			if (showDetections){
+				// Detections detection = new Detections(ImageJFunctions.wrapReal(imp), allSpots);
+				detection.showDetections();
+			}
 			
 			// FIXME: make interactive
 			if (true){ // part for the histogram window 
@@ -184,7 +188,7 @@ public class Radial_Symmetry implements PlugIn {
 					values.add(i.doubleValue());
 				int numBins = 100;
 				
-				final Histogram demo = new Histogram( values, numBins, "Intensity distribution", "" );
+				final Histogram demo = new Histogram( values, numBins, "Intensity distribution", "", detection);
 				demo.showHistogram();
 			}
 		}

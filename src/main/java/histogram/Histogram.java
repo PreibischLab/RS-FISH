@@ -24,11 +24,14 @@ import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
 
 import ij.ImageJ;
+import visualization.Detections;
 
 public class Histogram extends ApplicationFrame
 {
 	private static final long serialVersionUID = 1L;
 	protected double min, max;
+	
+	final Detections detection; // contains the image with overlays 
 
 	public Histogram( final List< Double > values, final int numBins, final String title, final String units )
 	{
@@ -42,7 +45,26 @@ public class Histogram extends ApplicationFrame
 
 		chartPanel.setPreferredSize( new Dimension( 600, 270 ) );
 		setContentPane( chartPanel );
+		
+		detection = null;
 	}
+	
+	public Histogram( final List< Double > values, final int numBins, final String title, final String units, final Detections detection)
+	{
+		super( title );
+
+		final IntervalXYDataset dataset = createDataset( values, numBins, title );
+		final JFreeChart chart = createChart( dataset, title, units );
+		final ChartPanel chartPanel = new ChartPanel( chart );
+		
+		chartPanel.addChartMouseListener( new MouseListenerValue( chartPanel, getMin() + ( getMax() - getMin() ) / 2, detection));
+
+		chartPanel.setPreferredSize( new Dimension( 600, 270 ) );
+		setContentPane( chartPanel );
+		
+		this.detection = detection;
+	}
+	
 	
 	public void showHistogram()
 	{

@@ -19,16 +19,18 @@ public class BackgroundRANSACListener implements ItemListener
 	{
 		final String c = e.getItem().toString();
 
-		parent.params.setBsMethod(-1);
+		// no background by defaut
+		parent.params.setBsMethod( GUIParams.bsMethods[ 0 ] );	
 		for ( int i = 0; i < GUIParams.bsMethods.length; ++i )
 			if ( c.equals( GUIParams.bsMethods[ i ] ) )
-				parent.params.setBsMethod(i);
+				parent.params.setBsMethod( GUIParams.bsMethods[ i ] );
 
-		if ( parent.params.getBsMethod() == -1 )
-			throw new RuntimeException( "Unkown method: " + c  );
+		// FIXME: Adjust this check		
+//		if ( parent.params.getBsMethod() == -1 )
+//			throw new RuntimeException( "Unkown method: " + c  );
 		
 		// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" ;
-		if ( parent.params.getBsMethod() == 3 || parent.params.getBsMethod() == 4 )
+		if ( parent.params.getBsMethod().equals("RANSAC on Mean") || parent.params.getBsMethod().equals("RANSAC on Median") )
 		{
 			// RANSAC based, open window?
 			if ( parent.bkWindow == null )

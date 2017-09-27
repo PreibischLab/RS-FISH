@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import net.imagej.Dataset;
 import net.imagej.legacy.LegacyService;
@@ -31,6 +33,7 @@ import net.imglib2.view.Views;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
+import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
 import org.scijava.convert.ConvertService;
 import org.scijava.log.LogService;
@@ -130,8 +133,6 @@ public class Radial_Symmetry implements Command {
 
 		if (wasCanceled) return;
 
-		// wasCanceled = initialDialog();
-
 		if (!wasCanceled) // if user didn't cancel
 		{
 			if (imp.getNChannels() > 1) {
@@ -157,13 +158,24 @@ public class Radial_Symmetry implements Command {
 			if (parameterType.equals(paramChoice[0])) // manual
 			{
 				// set the parameters in the manual mode
-				GenericDialogGUIParams gdGUIParams = new GenericDialogGUIParams(params);
-				wasCanceled = gdGUIParams.automaticDialog();
+				// GenericDialogGUIParams gdGUIParams = new GenericDialogGUIParams(params);
+				Future<CommandModule> run = commandService.run(GenericDialogGUIParams.class, true, "guiParams", params);
+				try {
+					CommandModule commandModule = run.get();
+					if (commandModule.isCanceled()) return;
+				} catch (InterruptedException exc) {
+					// TODO Auto-generated catch block
+					exc.printStackTrace();
+				} catch (ExecutionException exc) {
+					// TODO Auto-generated catch block
+					exc.printStackTrace();
+				}
+				// wasCanceled = gdGUIParams.automaticDialog();
 				
 				// System.out.println("anisotropy: " + anisotropy);
 
-				if (wasCanceled)
-					return;
+				// if (wasCanceled)
+				//	return;
 				// calculations are performed further
 			} else // interactive
 			{

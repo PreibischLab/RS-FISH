@@ -280,15 +280,15 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		final NormalizedGradient ng;
 
 		// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median"
-		if ( params.getBsMethod() == 0 )
+		if ( params.getBsMethod().equals("No background subtraction"))
 			ng = null;
-		else if ( params.getBsMethod() == 1 )
+		else if ( params.getBsMethod().equals("Mean"))
 			ng = new NormalizedGradientAverage( derivative );
-		else if ( params.getBsMethod() == 2 )
+		else if ( params.getBsMethod().equals("Median") )
 			ng = new NormalizedGradientMedian( derivative );
-		else if ( params.getBsMethod() == 3 )
+		else if ( params.getBsMethod().equals("RANSAC on Mean") )
 			ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEAN, params.getBsMaxError(), params.getBsInlierRatio() );
-		else if ( params.getBsMethod() == 4 )
+		else if ( params.getBsMethod().equals("RANSAC on Median") )
 			ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEDIAN, params.getBsMaxError(), params.getBsInlierRatio() );
 		else
 			throw new RuntimeException( "Unknown bsMethod: " + params.getBsMethod() );

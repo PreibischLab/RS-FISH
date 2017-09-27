@@ -13,7 +13,7 @@ public class GUIParams
 	
 	public static float defaultBsInlierRatio = (float) (75.0 / 100.0);
 	public static float defaultBsMaxError = 0.05f;
-	public static int defaultBsMethod = 0;
+	public static String defaultBsMethod = "No background subtraction";
 	
 	public static boolean defaultRANSAC = true;
 	public static float defaultAnisotropy = 1.0f;
@@ -27,7 +27,7 @@ public class GUIParams
 	// Background Subtraction parameters 
 	// current values 
 	float bsMaxError, bsInlierRatio;
-	int bsMethod;
+	String bsMethod;
 
 	// DoG parameters
 	// current
@@ -102,7 +102,7 @@ public class GUIParams
 	
 	// background subtraction 
 	// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
-	public int getBsMethod(){
+	public String getBsMethod(){
 		return bsMethod;
 	}
 	
@@ -164,7 +164,7 @@ public class GUIParams
 	
 	// background subtraction 
 	// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
-	public void setBsMethod(int bsMethod){
+	public void setBsMethod(final String bsMethod){
 		this.bsMethod = bsMethod;
 	}
 	

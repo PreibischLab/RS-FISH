@@ -44,7 +44,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 	float inlierRatio;
 	float maxError;
 
-	int bsMethod;
+	String bsMethod;
 	float bsMaxError;
 	float bsInlierRatio;
 	
@@ -116,19 +116,20 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 
 			// "No background subtraction", "Mean", "Median", "RANSAC on Mean",
 			// "RANSAC on Median"
-			if (bsMethod == 0)
+			
+			if (bsMethod.equals("No background subtraction"))
 				ng = null;
-			else if (bsMethod == 1)
-				ng = new NormalizedGradientAverage(derivative);
-			else if (bsMethod == 2)
-				ng = new NormalizedGradientMedian(derivative);
-			else if (bsMethod == 3)
-				ng = new NormalizedGradientRANSAC(derivative, CenterMethod.MEAN, bsMaxError, bsInlierRatio);
-			else if (bsMethod == 4)
-				ng = new NormalizedGradientRANSAC(derivative, CenterMethod.MEDIAN, bsMaxError, bsInlierRatio);
+			else if ( bsMethod.equals("Mean"))
+				ng = new NormalizedGradientAverage( derivative );
+			else if ( bsMethod.equals("Median") )
+				ng = new NormalizedGradientMedian( derivative );
+			else if ( bsMethod.equals("RANSAC on Mean") )
+				ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEAN, bsMaxError, bsInlierRatio);
+			else if ( bsMethod.equals("RANSAC on Median") )
+				ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEDIAN, bsMaxError, bsInlierRatio);
 			else
 				throw new RuntimeException("Unknown bsMethod: " + bsMethod);
-
+			
 			// the size of the RANSAC area
 			final long[] range = new long[numDimensions];
 

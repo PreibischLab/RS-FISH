@@ -35,6 +35,7 @@ import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
+import org.scijava.command.ContextCommand;
 import org.scijava.convert.ConvertService;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
@@ -46,6 +47,7 @@ import gauss.GaussianMaskFit;
 import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
+import gui.vizualization.Visualization;
 import histogram.Histogram;
 
 import ij.ImagePlus;
@@ -61,7 +63,7 @@ import visualization.Detections;
 import visualization.Inliers;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Radial Symmetry")
-public class Radial_Symmetry implements Command {
+public class Radial_Symmetry extends ContextCommand {
 	// used to save previous values of the fields
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
@@ -76,23 +78,19 @@ public class Radial_Symmetry implements Command {
 	// steps per octave
 	public static int defaultSensitivity = 4;
 	
-	// Ref: https://imagej.net/Script_Parameters
-	// @Parameter(autoFill=false)
-	// Img<FloatType> img2;
-	
 	// TODO: used to choose the image
 	@Parameter(autoFill=false, label="Image")
 	ImagePlus imp;
 
 	@Parameter(choices={ "Manual", "Interactive" }, label="Parameter's mode")
 	String parameterType = paramChoice[defaultParam];
-	
+
 	@Parameter(label="Anisotropy coefficient")
 	float anisotropy = defaultAnisotropy;
-	
+
 	@Parameter(label=" ", visibility=ItemVisibility.MESSAGE, persist = false)
 	String anisotropyLabel = "<html>*Use the \"Anisotropy Coeffcient Plugin\"<br/>to calculate the anisotropy coefficient<br/> or leave 1.00 for a reasonable result.";
-	
+
 	// @Parameter
 	// int parameterType = defaultParam;
 	@Parameter(label="<html><b>Computation:</h>", visibility=ItemVisibility.MESSAGE)
@@ -102,159 +100,114 @@ public class Radial_Symmetry implements Command {
 	// use gauss fit 
 	@Parameter(label="Gaussian fitting")
 	boolean gaussFit = defaultGauss; // defines if we perform the gauss fit or linear interpolation for peak intensities
-	
+
 	@Parameter(label="<html><b>Visualization:</b>", visibility=ItemVisibility.MESSAGE)
 	String visualizationLabel = "";
 	@Parameter(label="Detections overlay")
 	boolean showDetections = defaultDetections;
 	@Parameter(label="RANSAC regions")
 	boolean showInliers = defaultInliers;	
-	
+
 	// defines the resolution in x y z dimensions
 	double[] calibration;
-	
-	// logging + error messages
+
+	// logging + error message; used instead of the IO.log
 	@Parameter
 	LogService logService;
-	
+
 	@Parameter
 	CommandService commandService;
-	
+
 	@Override
 	public void run() {
-//		convertService.convert(dataset, ImagePlus.class);
-// 		imp = ImageJFunctions.wrap(img2, "Test");
-		
-//		commandService.run(commandClass, process, inputMap)
-		
-		// TODO: change later
-		boolean wasCanceled = false; 
-		// boolean wasCanceled = chooseImageDialog();
 
-		if (wasCanceled) return;
+		if (this.isCanceled()) return;
 
-		if (!wasCanceled) // if user didn't cancel
-		{
-			if (imp.getNChannels() > 1) {
-				logService.info("Multichannel image detected. We recommend to adjust the parameters for each channel separately.");
-			}
-
-			long[] dimensions = new long[imp.getNDimensions()];
-			for (int d = 0; d < imp.getNDimensions(); ++d) {
-				dimensions[d] = imp.getDimensions()[d];
-			}
-
-			// make some dirty code as it is not defined at compile time, but
-			// for all subsequent code it is
-			double[] minmax = HelperFunctions.computeMinMax((Img) ImageJFunctions.wrapReal(imp));
-
-			float min = (float) minmax[0];
-			float max = (float) minmax[1];
-
-			// set all defaults + set RANSAC
-			final GUIParams params = new GUIParams(RANSAC);
-			
-			params.setAnisotropyCoefficient(anisotropy);
-			if (parameterType.equals(paramChoice[0])) // manual
-			{
-				// set the parameters in the manual mode
-				// GenericDialogGUIParams gdGUIParams = new GenericDialogGUIParams(params);
-				Future<CommandModule> run = commandService.run(GenericDialogGUIParams.class, true, "guiParams", params);
-				try {
-					CommandModule commandModule = run.get();
-					if (commandModule.isCanceled()) return;
-				} catch (InterruptedException exc) {
-					// TODO Auto-generated catch block
-					exc.printStackTrace();
-				} catch (ExecutionException exc) {
-					// TODO Auto-generated catch block
-					exc.printStackTrace();
-				}
-				// wasCanceled = gdGUIParams.automaticDialog();
-				
-				// System.out.println("anisotropy: " + anisotropy);
-
-				// if (wasCanceled)
-				//	return;
-				// calculations are performed further
-			} else // interactive
-			{
-				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, min, max);
-
-				do {
-					// TODO: change to something that is not deprecated
-					SimpleMultiThreading.threadWait(100);
-				} while (!irs.isFinished());
-
-				if (irs.wasCanceled())
-					return;
-			}
-
-			// back up the parameter values to the default variables
-			params.setDefaultValues();
-			calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); 
-
-			RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
-
-			// normalize the whole image if it is possible
-			RandomAccessibleInterval<FloatType> rai;
-			if (!Double.isNaN(min) && !Double.isNaN(max)) // if normalizable
-				rai = new TypeTransformingRandomAccessibleInterval<>(ImageJFunctions.wrap(imp),
-						new RealTypeNormalization<>(min, max - min), new FloatType());
-			else // otherwise use
-				rai = ImageJFunctions.wrap(imp);
-
-			// x y c z t
-			int[] impDim = imp.getDimensions();
-
-			long[] dim; // stores x y z dimensions
-			if (impDim[3] == 1) { // if there is no z dimension
-				dim = new long[] { impDim[0], impDim[1] };
-			} else { // 3D image
-				dim = new long[] { impDim[0], impDim[1], impDim[3] };
-			}
-
-			ArrayList<Spot> allSpots = new ArrayList<>(0);
-
-			// stores number of detected spots per time point
-			ArrayList<Long> timePoint = new ArrayList<>(0);
-			// stores number of detected spots per channel
-			ArrayList<Long> channelPoint = new ArrayList<>(0);
-			// stores the intensity values for gauss fitting
-			ArrayList<Float> intensity = new ArrayList<>(0);
-
-			processSliceBySlice(imp, rai, rsm, impDim, dim, gaussFit, params.getSigmaDoG(), allSpots, timePoint,
-					channelPoint, intensity);
-
-			// DEBUG:
-			// System.out.println("total # of channels " + channelPoint.size());
-			// System.out.println("total # of timepoits" + timePoint.size());
-
-			RadialSymmetry.ransacResultTable(allSpots, timePoint, channelPoint, intensity);
-
-			// TODO: make this thing computed locally because you don't need it every time!
-			Detections detection = new Detections(ImageJFunctions.wrapReal(imp), allSpots, intensity);
-
-			// Visualization incoming
-			if (showInliers)
-				Inliers.showInliers(ImageJFunctions.wrapReal(imp), allSpots);
-			if (showDetections){
-				// Detections detection = new Detections(ImageJFunctions.wrapReal(imp), allSpots);
-				detection.showDetections();
-			}
-
-			// FIXME: make interactive
-			if (false){ // part for the histogram window 
-				final List< Double > values = new ArrayList< Double >(intensity.size());
-
-				for (final Float i : intensity )
-					values.add(i.doubleValue());
-				int numBins = 100;
-
-				final Histogram demo = new Histogram( values, numBins, "Intensity distribution", "", detection);
-				demo.showHistogram();
-			}
+		if (imp.getNChannels() > 1) {
+			logService.info("Multichannel image detected. We recommend to adjust the parameters for each channel separately.");
 		}
+
+		long[] dimensions = new long[imp.getNDimensions()];
+		for (int d = 0; d < imp.getNDimensions(); ++d) {
+			dimensions[d] = imp.getDimensions()[d];
+		}
+
+		// make some dirty code as it is not defined at compile time, but
+		// for all subsequent code it is
+		double[] minmax = HelperFunctions.computeMinMax((Img) ImageJFunctions.wrapReal(imp));
+
+		float min = (float) minmax[0];
+		float max = (float) minmax[1];
+
+		// set all defaults + set RANSAC
+		final GUIParams params = new GUIParams(RANSAC);
+
+		params.setAnisotropyCoefficient(anisotropy);
+		if (parameterType.equals(paramChoice[0])) // manual
+		{
+			// set the parameters in the manual mode
+			Future<CommandModule> run = commandService.run(GenericDialogGUIParams.class, true, "guiParams", params);
+			try {
+				CommandModule commandModule = run.get();
+				if (commandModule.isCanceled()) return;
+			} catch (Exception e) {
+				logService.info("Internal exception caught");
+			}
+			// calculations are performed further
+		} else // interactive
+		{
+			InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, min, max);
+
+			do {
+				// TODO: change to something that is not deprecated
+				SimpleMultiThreading.threadWait(100);
+			} while (!irs.isFinished());
+
+			if (irs.wasCanceled()) return;
+		}
+
+		// back up the parameter values to the default variables
+		params.setDefaultValues();
+		calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); 
+
+		RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
+
+		// normalize the whole image if it is possible
+		RandomAccessibleInterval<FloatType> rai;
+		if (!Double.isNaN(min) && !Double.isNaN(max)) // if normalizable
+			rai = new TypeTransformingRandomAccessibleInterval<>(ImageJFunctions.wrap(imp),
+					new RealTypeNormalization<>(min, max - min), new FloatType());
+		else // otherwise use
+			rai = ImageJFunctions.wrap(imp);
+
+		// x y c z t
+		int[] impDim = imp.getDimensions();
+
+		long[] dim; // stores x y z dimensions
+		if (impDim[3] == 1) { // if there is no z dimension
+			dim = new long[] { impDim[0], impDim[1] };
+		} else { // 3D image
+			dim = new long[] { impDim[0], impDim[1], impDim[3] };
+		}
+
+		ArrayList<Spot> allSpots = new ArrayList<>(0);
+
+		// stores number of detected spots per time point
+		ArrayList<Long> timePoint = new ArrayList<>(0);
+		// stores number of detected spots per channel
+		ArrayList<Long> channelPoint = new ArrayList<>(0);
+		// stores the intensity values for gauss fitting
+		ArrayList<Float> intensity = new ArrayList<>(0);
+
+		processSliceBySlice(imp, rai, rsm, impDim, dim, gaussFit, params.getSigmaDoG(), allSpots, timePoint,
+				channelPoint, intensity);
+
+		// DEBUG:
+		// System.out.println("total # of channels " + channelPoint.size());
+		// System.out.println("total # of timepoits" + timePoint.size());
+		
+		RadialSymmetry.ransacResultTable(allSpots, timePoint, channelPoint, intensity);
+		Visualization.showVisualization(imp, allSpots, intensity, showInliers, showDetections);
 	}
 
 	// process each 2D/3D slice of the image to search for the spots
@@ -465,7 +418,7 @@ public class Radial_Symmetry implements Command {
 
 		return img;
 	}
-		
+
 	public static void main(String[] args) {
 		// for the historical reasons
 		System.out.println("DOGE!");

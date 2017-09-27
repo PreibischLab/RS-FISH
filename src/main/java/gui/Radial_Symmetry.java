@@ -56,6 +56,7 @@ import ij.gui.GenericDialog;
 
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
+import intensity.Intensity;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 import test.TestGauss3d;
@@ -206,6 +207,7 @@ public class Radial_Symmetry extends ContextCommand {
 		// System.out.println("total # of channels " + channelPoint.size());
 		// System.out.println("total # of timepoits" + timePoint.size());
 		
+		// FIXME: only show in the interactive mode 
 		RadialSymmetry.ransacResultTable(allSpots, timePoint, channelPoint, intensity);
 		Visualization.showVisualization(imp, allSpots, intensity, showInliers, showDetections);
 	}
@@ -238,46 +240,11 @@ public class Radial_Symmetry extends ContextCommand {
 
 				// user wants to have the gauss fit here
 				if (gaussFit) { // TODO: fix the problem with the computations of this one
-
-					double [] typicalSigmas = new double[numDimensions];
-					for (int d = 0; d < numDimensions; d++)
-						typicalSigmas[d] = sigma;
-
-					if (numDimensions == 3) typicalSigmas[numDimensions - 1] *= rsm.getParams().getAnisotropyCoefficient();
-
-					xyzImp = getXyz(imp); // grabbed the non-normalized xyz-stack  
-
-					PeakFitter<FloatType> pf = new PeakFitter<FloatType>(ImageJFunctions.wrap(xyzImp), (ArrayList)filteredSpots,
-							new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(), 
-							new MLEllipticGaussianEstimator(typicalSigmas)); // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
-					pf.process();
-
-					// TODO: make spot implement Localizable - then this is already a HashMap that maps Spot > double[]
-					// this is actually a Map< Spot, double[] >
-					final Map< Localizable, double[] > fits = pf.getResult();
-
-					// FIXME: is the order consistent
-					for ( final Spot spot : filteredSpots )
-					{
-						double[] params = fits.get( spot );
-						intensity.add(new Float(params[numDimensions]));
-					}
+					Intensity.calulateIntesitiesGF(imp, numDimensions, rsm.getParams().getAnisotropyCoefficient(),
+							sigma, filteredSpots, intensity);
 				}
-				else{
-					//  iterate over all points and perform the linear interpolation for each of the spots
-
-					xyzImp = getXyz(imp); // grabbed the non-normalized xyz-stack  
-					NLinearInterpolatorFactory<FloatType> factory = new NLinearInterpolatorFactory<>();
-					RealRandomAccessible<FloatType> interpolant = Views.interpolate(Views.extendMirrorSingle( ImageJFunctions.wrapFloat( xyzImp)), factory);
-
-					for (Spot fSpot : filteredSpots){
-						RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
-						double[] position = fSpot.getCenter();
-						rra.setPosition(position);
-						intensity.add(new Float(rra.get().get()));	
-					}
-
-				}
+				else //  iterate over all points and perform the linear interpolation for each of the spots
+					Intensity.calculateIntensitiesLinear(imp, filteredSpots, intensity);
 			}
 			if (c != 0)
 				channelPoint.add(new Long(allSpots.size() - channelPoint.get(c)));
@@ -357,6 +324,7 @@ public class Radial_Symmetry extends ContextCommand {
 		}
 	}
 
+	// TODO: remove once in another function
 	// returns only xyz stack from the ImagePlus object
 	public static ImagePlus getXyz(ImagePlus imp){
 		final ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight() );

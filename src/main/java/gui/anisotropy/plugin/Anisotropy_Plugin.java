@@ -2,7 +2,9 @@ package gui.anisotropy.plugin;
 
 import java.io.File;
 
+import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
+import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
@@ -26,32 +28,31 @@ public class Anisotropy_Plugin implements Command {
 
 	@Parameter(autoFill=false, label="Image")
 	ImagePlus imagePlus;
-	
+
 	@Parameter(choices={ "Gauss Fit", "Radial Symmetry" }, label="Detection method")
 	String paramType = paramChoice[defaultParam];
+	
+	@Parameter(visibility=ItemVisibility.INVISIBLE)
+	LogService logService;
 
 	@Override
 	public void run() {
-		boolean wasCanceled = false; 
-		// wasCanceled = chooseMethodDialog();
 
 		double bestScale = 1.0;
 		AParams ap = new AParams();
-		if (!wasCanceled){
-			
-			double [] minmax = calculateMinMax(imagePlus);
-			AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, paramType, minmax[0], minmax[1]);
-			
-			bestScale = ac.calculateAnisotropyCoefficient();	
-		}
-	
+
+		double [] minmax = calculateMinMax(imagePlus);
+		AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, paramType, minmax[0], minmax[1]);
+
+		bestScale = ac.calculateAnisotropyCoefficient();	
+
 		// TODO: write bestScale somewhere
 		ap.setAnisotropy((float)bestScale);
 		// TODO: will it work? Should not it be 1/bestScale ?
 		GUIParams.defaultAnisotropy = (float) bestScale; 
-		IJ.log("Anisotropy coefficient: " + bestScale);		
+		logService.info("Anisotropy coefficient: " + bestScale);		
 	}
-	
+
 	public static double[] calculateMinMax(ImagePlus imp){
 		float min = Float.MAX_VALUE;
 		float max = -Float.MAX_VALUE;

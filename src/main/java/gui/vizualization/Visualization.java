@@ -31,6 +31,7 @@ public class Visualization {
 
 				for (final Float i : intensity )
 					values.add(i.doubleValue());
+				// TODO: make this parameter dynamic ?
 				int numBins = 100;
 
 				final Histogram demo = new Histogram( values, numBins, "Intensity distribution", "", detection);

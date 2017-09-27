@@ -10,7 +10,7 @@ import net.imagej.Dataset;
  * New main class for testing, SUCKS
  * */
 
-public class main {
+public class TestRadialSymmetry {
 
 	public static void main(String[] args) {
 		File path = new File( "/Users/kkolyva/Desktop/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/Simulated_3D_2x.tif" );

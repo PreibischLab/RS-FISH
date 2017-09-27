@@ -37,7 +37,7 @@ public class GenericDialogGUIParams extends ContextCommand
 	@Parameter(label="Max error")
 	float maxError = GUIParams.defaultMaxError;
 	
-	@Parameter(label="Local background subtraction")
+	@Parameter( choices = {"No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" }, label="Local background subtraction")
 	String bsMethod = GUIParams.defaultBsMethod;
 	
 	@Parameter(label="Cancel?")

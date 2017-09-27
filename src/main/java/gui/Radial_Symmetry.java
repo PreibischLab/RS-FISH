@@ -455,24 +455,7 @@ public class Radial_Symmetry implements Command {
 	}
 		
 	public static void main(String[] args) {
-		File path = new File( "/Users/kkolyva/Desktop/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/Simulated_3D_2x.tif" );
-		// create the ImageJ application context with all available services
-		final net.imagej.ImageJ ij = new net.imagej.ImageJ();
-		ij.ui().showUI();
-
-		// load the dataset
-		Dataset dataset;
-		try {
-			dataset = ij.scifio().datasetIO().open(path.getAbsolutePath());
-			// show the image
-			ij.ui().show(dataset);
-			// invoke the plugin
-			ij.command().run(Radial_Symmetry.class, true);
-
-		} catch (IOException exc) {
-			System.out.println("LUL!");
-		}
-		
-		System.out.println("Doge!");
+		// for the historical reasons
+		System.out.println("DOGE!");
 	}
 }

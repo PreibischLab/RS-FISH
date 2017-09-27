@@ -73,49 +73,7 @@ public class Anisotropy_Plugin implements Command {
 
 	public static void main(String[] args)
 	{
-		// File path = new File( "/media/milkyklim/Samsung_T3/2017-08-18-radial-symmetry-test/gauss3d-1,2,3.tif" );
-		// File path = new File("/Users/kkolyva/Desktop/beads.tif");
-		File path = new File("/Users/kkolyva/Desktop/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/beads-cropped.tif");
-		// path = path.concat("test_background.tif");
-
-		if ( !path.exists() ) 
-			throw new RuntimeException( "'" + path.getAbsolutePath() + "' doesn't exist." );
-
-		new ImageJ();
-		System.out.println( "Opening '" + path + "'");
-
-		ImagePlus imp = new Opener().openImage( path.getAbsolutePath() );
-
-		if (imp == null)
-			throw new RuntimeException( "image was not loaded" );
-
-		float min = Float.MAX_VALUE;
-		float max = -Float.MAX_VALUE;
-
-		for ( int z = 1; z <= imp.getStack().getSize(); ++z )
-		{
-			final ImageProcessor ip = imp.getStack().getProcessor( z );
-
-			for ( int i = 0; i < ip.getPixelCount(); ++i )
-			{
-				final float v = ip.getf( i );
-				min = Math.min( min, v );
-				max = Math.max( max, v );
-			}
-		}
-
-		IJ.log( "min=" + min );
-		IJ.log( "max=" + max );
-
-		imp.show();
-
-		imp.setSlice(20);
-
-
-		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
-		// new AnisitropyCoefficient( imp, new AParams(), min, max );
-		new Anisotropy_Plugin().run();
-
+		// for the historical reasons
 		System.out.println("DOGE!");
 	}
 

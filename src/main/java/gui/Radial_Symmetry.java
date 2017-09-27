@@ -25,6 +25,9 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
+import org.scijava.command.Command;
+import org.scijava.plugin.Plugin;
+
 import compute.RadialSymmetry;
 import fit.Spot;
 import gauss.GaussianMaskFit;
@@ -48,7 +51,8 @@ import test.TestGauss3d;
 import visualization.Detections;
 import visualization.Inliers;
 
-public class Radial_Symmetry implements PlugIn {
+@Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Radial Symmetry")
+public class Radial_Symmetry implements Command {
 	// used to save previous values of the fields
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
@@ -77,7 +81,7 @@ public class Radial_Symmetry implements PlugIn {
 	double[] calibration;
 
 	@Override
-	public void run(String arg) {
+	public void run() {
 		boolean wasCanceled = chooseImageDialog();
 
 		if (wasCanceled) return;
@@ -442,7 +446,7 @@ public class Radial_Symmetry implements PlugIn {
 
 	/*
 	 * shows the initial GUI dialog user has to choose an image a processing
-	 * method -- advanced/interactive
+	 * method -- manual/interactive
 	 */
 	protected boolean initialDialog() {
 		boolean failed = false;
@@ -514,7 +518,7 @@ public class Radial_Symmetry implements PlugIn {
 
 		// new Radial_Symmetry().chooseImageDialog();
 
-		new Radial_Symmetry().run(new String());
+		new Radial_Symmetry().run();
 		System.out.println("Doge!");
 	}
 }

@@ -63,7 +63,7 @@ public class AnisitropyCoefficient {
 	final int type;
 	Rectangle rectangle;
 
-	final int paramType; // defines which method will be used: gauusfit or radial symmetry 
+	final String paramType; // defines which method will be used: gaussfit or radial symmetry 
 
 	ArrayList< Point > peaks;
 	ArrayList< RefinedPeak< Point> > refPeaks;
@@ -104,7 +104,7 @@ public class AnisitropyCoefficient {
 	}
 
 	// paramType defines if we use RS or Gaussian Fit
-	public AnisitropyCoefficient(ImagePlus imp, final AParams params, int paramType, final double min, final double max){
+	public AnisitropyCoefficient(ImagePlus imp, final AParams params, final String paramType, final double min, final double max){
 		this.imagePlus = imp;
 		this.paramType = paramType;
 
@@ -219,7 +219,7 @@ public class AnisitropyCoefficient {
 			// TODO: FIXME: Do we have to filter peaks here? 
 			// Otherwise we use all peaks that we detected! 
 
-			if (paramType == 0) // gauss fit 
+			if (paramType.equals("Gauss Fit")) // gauss fit 
 				bestScale = calculateAnisotropyCoefficientGF(img, threshold, sigma); 
 			else
 				bestScale = calculateAnisotropyCoefficientRS(img, threshold, sigma);
@@ -520,7 +520,7 @@ public class AnisitropyCoefficient {
 
 		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
-		new AnisitropyCoefficient( imp, new AParams(), 1, min, max );
+		new AnisitropyCoefficient( imp, new AParams(), "Gauss fit", min, max );
 
 		System.out.println("DOGE!");
 	}

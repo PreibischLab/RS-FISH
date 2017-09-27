@@ -3,10 +3,14 @@ package gui;
 import java.awt.Color;
 import java.awt.Font;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import net.imagej.Dataset;
+import net.imagej.legacy.LegacyService;
+import net.imagej.patcher.LegacyInjector;
 import net.imglib2.Cursor;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
@@ -25,7 +29,12 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
+import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
+import org.scijava.command.CommandService;
+import org.scijava.convert.ConvertService;
+import org.scijava.log.LogService;
+import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import compute.RadialSymmetry;
@@ -35,14 +44,11 @@ import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
 import histogram.Histogram;
-import ij.IJ;
-import ij.ImageJ;
+
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.WindowManager;
 import ij.gui.GenericDialog;
-import ij.io.Opener;
-import ij.plugin.PlugIn;
+
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
 import parameters.GUIParams;
@@ -66,32 +72,70 @@ public class Radial_Symmetry implements Command {
 
 	// steps per octave
 	public static int defaultSensitivity = 4;
-
+	
+	// Ref: https://imagej.net/Script_Parameters
+	// @Parameter(autoFill=false)
+	// Img<FloatType> img2;
+	
 	// TODO: used to choose the image
+	@Parameter(autoFill=false, label="Image")
 	ImagePlus imp;
-	int parameterType;
-	boolean RANSAC;
-	float anisotropy;
-	// use gaussfit 
-	boolean gaussFit; // defines if we perform the gauss fit or linear interpolation for peak intensities
-	boolean showDetections;
-	boolean showInliers;
 
+	@Parameter(choices={ "Manual", "Interactive" }, label="Parameter's mode")
+	String parameterType = paramChoice[defaultParam];
+	
+	@Parameter(label="Anisotropy coefficient")
+	float anisotropy = defaultAnisotropy;
+	
+	@Parameter(label=" ", visibility=ItemVisibility.MESSAGE, persist = false)
+	String anisotropyLabel = "<html>*Use the \"Anisotropy Coeffcient Plugin\"<br/>to calculate the anisotropy coefficient<br/> or leave 1.00 for a reasonable result.";
+	
+	// @Parameter
+	// int parameterType = defaultParam;
+	@Parameter(label="<html><b>Computation:</h>", visibility=ItemVisibility.MESSAGE)
+	String computationLabel = "";
+	@Parameter(label="RANSAC")
+	boolean RANSAC = defaultRANSAC;
+	// use gauss fit 
+	@Parameter(label="Gaussian fitting")
+	boolean gaussFit = defaultGauss; // defines if we perform the gauss fit or linear interpolation for peak intensities
+	
+	@Parameter(label="<html><b>Visualization:</b>", visibility=ItemVisibility.MESSAGE)
+	String visualizationLabel = "";
+	@Parameter(label="Detections overlay")
+	boolean showDetections = defaultDetections;
+	@Parameter(label="RANSAC regions")
+	boolean showInliers = defaultInliers;	
+	
 	// defines the resolution in x y z dimensions
 	double[] calibration;
-
+	
+	// logging + error messages
+	@Parameter
+	LogService logService;
+	
+	@Parameter
+	CommandService commandService;
+	
 	@Override
 	public void run() {
-		boolean wasCanceled = chooseImageDialog();
+//		convertService.convert(dataset, ImagePlus.class);
+// 		imp = ImageJFunctions.wrap(img2, "Test");
+		
+//		commandService.run(commandClass, process, inputMap)
+		
+		// TODO: change later
+		boolean wasCanceled = false; 
+		// boolean wasCanceled = chooseImageDialog();
 
 		if (wasCanceled) return;
 
-		wasCanceled = initialDialog();
+		// wasCanceled = initialDialog();
 
 		if (!wasCanceled) // if user didn't cancel
 		{
 			if (imp.getNChannels() > 1) {
-				IJ.log("Multichannel image detected. We recommend to adjust the parameters for each channel separately.");
+				logService.info("Multichannel image detected. We recommend to adjust the parameters for each channel separately.");
 			}
 
 			long[] dimensions = new long[imp.getNDimensions()];
@@ -108,19 +152,21 @@ public class Radial_Symmetry implements Command {
 
 			// set all defaults + set RANSAC
 			final GUIParams params = new GUIParams(RANSAC);
-
-			if (parameterType == 0) // manual
+			
+			params.setAnisotropyCoefficient(anisotropy);
+			if (parameterType.equals(paramChoice[0])) // manual
 			{
 				// set the parameters in the manual mode
 				GenericDialogGUIParams gdGUIParams = new GenericDialogGUIParams(params);
 				wasCanceled = gdGUIParams.automaticDialog();
+				
+				// System.out.println("anisotropy: " + anisotropy);
 
 				if (wasCanceled)
 					return;
 				// calculations are performed further
 			} else // interactive
 			{
-				params.setAnisotropyCoefficient(anisotropy);
 				InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, min, max);
 
 				do {
@@ -148,7 +194,7 @@ public class Radial_Symmetry implements Command {
 
 			// x y c z t
 			int[] impDim = imp.getDimensions();
-			
+
 			long[] dim; // stores x y z dimensions
 			if (impDim[3] == 1) { // if there is no z dimension
 				dim = new long[] { impDim[0], impDim[1] };
@@ -176,7 +222,7 @@ public class Radial_Symmetry implements Command {
 
 			// TODO: make this thing computed locally because you don't need it every time!
 			Detections detection = new Detections(ImageJFunctions.wrapReal(imp), allSpots, intensity);
-			
+
 			// Visualization incoming
 			if (showInliers)
 				Inliers.showInliers(ImageJFunctions.wrapReal(imp), allSpots);
@@ -184,15 +230,15 @@ public class Radial_Symmetry implements Command {
 				// Detections detection = new Detections(ImageJFunctions.wrapReal(imp), allSpots);
 				detection.showDetections();
 			}
-			
+
 			// FIXME: make interactive
-			if (true){ // part for the histogram window 
+			if (false){ // part for the histogram window 
 				final List< Double > values = new ArrayList< Double >(intensity.size());
-				
+
 				for (final Float i : intensity )
 					values.add(i.doubleValue());
 				int numBins = 100;
-				
+
 				final Histogram demo = new Histogram( values, numBins, "Intensity distribution", "", detection);
 				demo.showHistogram();
 			}
@@ -213,7 +259,7 @@ public class Radial_Symmetry implements Command {
 			for (int t = 0; t < impDim[4]; t++) {
 				// "-1" because of the imp offset
 				timeFrame = copyImg(rai, c, t, dim, impDim);
-						
+
 				RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
 
 				// TODO: if the detect spot has at least 1 inlier add it
@@ -227,15 +273,15 @@ public class Radial_Symmetry implements Command {
 
 				// user wants to have the gauss fit here
 				if (gaussFit) { // TODO: fix the problem with the computations of this one
-					
+
 					double [] typicalSigmas = new double[numDimensions];
 					for (int d = 0; d < numDimensions; d++)
 						typicalSigmas[d] = sigma;
-					
+
 					if (numDimensions == 3) typicalSigmas[numDimensions - 1] *= rsm.getParams().getAnisotropyCoefficient();
 
 					xyzImp = getXyz(imp); // grabbed the non-normalized xyz-stack  
-					
+
 					PeakFitter<FloatType> pf = new PeakFitter<FloatType>(ImageJFunctions.wrap(xyzImp), (ArrayList)filteredSpots,
 							new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(), 
 							new MLEllipticGaussianEstimator(typicalSigmas)); // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
@@ -254,18 +300,18 @@ public class Radial_Symmetry implements Command {
 				}
 				else{
 					//  iterate over all points and perform the linear interpolation for each of the spots
-				
+
 					xyzImp = getXyz(imp); // grabbed the non-normalized xyz-stack  
 					NLinearInterpolatorFactory<FloatType> factory = new NLinearInterpolatorFactory<>();
 					RealRandomAccessible<FloatType> interpolant = Views.interpolate(Views.extendMirrorSingle( ImageJFunctions.wrapFloat( xyzImp)), factory);
-					
+
 					for (Spot fSpot : filteredSpots){
 						RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
 						double[] position = fSpot.getCenter();
 						rra.setPosition(position);
 						intensity.add(new Float(rra.get().get()));	
 					}
-					
+
 				}
 			}
 			if (c != 0)
@@ -275,7 +321,7 @@ public class Radial_Symmetry implements Command {
 		}
 
 	}
-	
+
 
 	// triggers the gaussian fit if user wants it
 	// FIXME: Gauss fit should be performed only on the inliers
@@ -350,19 +396,19 @@ public class Radial_Symmetry implements Command {
 	public static ImagePlus getXyz(ImagePlus imp){
 		final ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight() );
 		int [] impDimensions = imp.getDimensions();
-	
+
 		for (int z = 0; z < impDimensions[3]; z++){
 			int id = imp.getStackIndex(1, z + 1, 1);
 			stack.addSlice(imp.getStack().getProcessor( id ));
 		}
-		
+
 		ImagePlus xyzImp = new ImagePlus("merge", stack );
 		// xyzImp.setDimensions( 1, impDimensions[3], 1 );
-	
+
 		return xyzImp;
 	}
-	
-	
+
+
 	// clunky function to handle different space-time cases
 	// TODO: check that it is working properly for all cases
 	// TODO: can be rewritten with ImagePlus operations
@@ -407,118 +453,26 @@ public class Radial_Symmetry implements Command {
 
 		return img;
 	}
-
-
-	// user chooses the image here
-	protected boolean chooseImageDialog(){
-		boolean failed = false;
-		// check that the are images
-		final int[] imgIdList = WindowManager.getIDList();
-		if (imgIdList == null || imgIdList.length < 1) {
-			IJ.error("You need at least one open image.");
-			failed = true;
-		}
-		else{
-			// titles of the images
-			final String[] imgList = new String[imgIdList.length];
-			for (int i = 0; i < imgIdList.length; ++i)
-				imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
-
-			if (defaultImg >= imgList.length)
-				defaultImg = 0;
-
-			GenericDialog gd = new GenericDialog("Choose the image");
-			gd.addChoice("Image_for_detection", imgList, imgList[defaultImg]);
-			gd.showDialog();
-
-			if (gd.wasCanceled()) {
-				failed = true;
-			} else {
-				int tmp = defaultImg = gd.getNextChoiceIndex();
-				this.imp = WindowManager.getImage(imgIdList[tmp]);
-			}
-		}
-
-		return failed;
-	}
-
-
-
-	/*
-	 * shows the initial GUI dialog user has to choose an image a processing
-	 * method -- manual/interactive
-	 */
-	protected boolean initialDialog() {
-		boolean failed = false;
-
-
-		// choose image to process and method to use
-		GenericDialog initialDialog = new GenericDialog("Initial setup");
-
-		initialDialog.addChoice("Parameter's_mode:", paramChoice, paramChoice[defaultParam]);
-		initialDialog.addMessage("Computation:");
-		initialDialog.addCheckbox("RANSAC", defaultRANSAC);
-		initialDialog.addCheckbox("Gaussian_fitting", defaultGauss);
-				
-		if (imp.getNDimensions() != 2){
-			initialDialog.addNumericField("Anisotropy_coefficient:", defaultAnisotropy, 2);
-		}
-			
-		initialDialog.addMessage("Visualization:");
-		initialDialog.addCheckbox("RANSAC_regions", defaultInliers);
-		initialDialog.addCheckbox("Detections_overlay", defaultDetections);
-
-		if (imp.getNDimensions() != 2){
-			initialDialog.addMessage("*Use the \"Anisotropy Coeffcient Plugin\"\nto calculate the anisotropy coefficient\n or leave 1.00 for a reasonable result.", new Font("Arial", 0, 10), new Color(255, 0, 0));
-		}
 		
-		initialDialog.showDialog();
-
-		if (initialDialog.wasCanceled()) {
-			failed = true;
-		} else {
-			// Save current index and current choice here
-			this.parameterType = defaultParam = initialDialog.getNextChoiceIndex();
-			this.RANSAC = defaultRANSAC = initialDialog.getNextBoolean();
-			this.gaussFit = defaultGauss = initialDialog.getNextBoolean();
-		
-		
-			if (imp.getNDimensions() != 2)
-				defaultAnisotropy = (float)initialDialog.getNextNumber();
-			this.anisotropy = defaultAnisotropy;
-		
-			this.showInliers = defaultInliers = initialDialog.getNextBoolean();
-			this.showDetections = defaultDetections = initialDialog.getNextBoolean();
-			
-		}
-
-		return failed;
-	}
-
 	public static void main(String[] args) {
-		// File path = new File( "/Users/kkolyva/Desktop/corr.tif");
 		File path = new File( "/Users/kkolyva/Desktop/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/Simulated_3D_2x.tif" );
-		// File path = new File( "/media/milkyklim/Samsung_T3/2017-08-24-intronic-probes/N2_dpy-23_ex_int_ama-1_015/channels/c3/N2_dpy-23_ex_int_ama-1_015.nd2 - N2_dpy-23_ex_int_ama-1_015.nd2 (series 03) - C=2-32.tif" );
-		// File path = new File( "/home/milkyklim/Desktop/Image 0-1-1000.tif" );
+		// create the ImageJ application context with all available services
+		final net.imagej.ImageJ ij = new net.imagej.ImageJ();
+		ij.ui().showUI();
+
+		// load the dataset
+		Dataset dataset;
+		try {
+			dataset = ij.scifio().datasetIO().open(path.getAbsolutePath());
+			// show the image
+			ij.ui().show(dataset);
+			// invoke the plugin
+			ij.command().run(Radial_Symmetry.class, true);
+
+		} catch (IOException exc) {
+			System.out.println("LUL!");
+		}
 		
-		if (!path.exists())
-			throw new RuntimeException("'" + path.getAbsolutePath() + "' doesn't exist.");
-
-		new ImageJ();
-		System.out.println("Opening '" + path + "'");
-
-		ImagePlus imp = new Opener().openImage(path.getAbsolutePath());
-
-		if (imp == null)
-			throw new RuntimeException("image was not loaded");
-
-		imp.show();
-
-		imp.setSlice(121);
-
-		// new Radial_Symmetry().chooseImageDialog();
-
-		new Radial_Symmetry().run();
 		System.out.println("Doge!");
 	}
 }

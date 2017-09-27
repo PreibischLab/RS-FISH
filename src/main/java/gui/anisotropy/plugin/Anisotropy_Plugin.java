@@ -3,6 +3,7 @@ package gui.anisotropy.plugin;
 import java.io.File;
 
 import org.scijava.command.Command;
+import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import anisotropy.parameters.AParams;
@@ -23,13 +24,16 @@ public class Anisotropy_Plugin implements Command {
 	public static int defaultParam = 0;
 	public static int defaultImg = 0;
 
+	@Parameter(autoFill=false, label="Image")
 	ImagePlus imagePlus;
-	int paramType;
+	
+	@Parameter(choices={ "Gauss Fit", "Radial Symmetry" }, label="Detection method")
+	String paramType = paramChoice[defaultParam];
 
 	@Override
 	public void run() {
 		boolean wasCanceled = false; 
-		wasCanceled = chooseMethodDialog();
+		// wasCanceled = chooseMethodDialog();
 
 		double bestScale = 1.0;
 		AParams ap = new AParams();
@@ -47,44 +51,7 @@ public class Anisotropy_Plugin implements Command {
 		GUIParams.defaultAnisotropy = (float) bestScale; 
 		IJ.log("Anisotropy coefficient: " + bestScale);		
 	}
-
-	// here user chooses the image and 
-	// the method for the calculation of the anisotropy coefficient
-	protected boolean chooseMethodDialog(){
-		boolean failed = false;
-		// check that the are images
-		final int[] imgIdList = WindowManager.getIDList();
-		if (imgIdList == null || imgIdList.length < 1) {
-			IJ.error("You need at least one open image.");
-			failed = true;
-		}
-		else{
-			// titles of the images
-			final String[] imgList = new String[imgIdList.length];
-			for (int i = 0; i < imgIdList.length; ++i)
-				imgList[i] = WindowManager.getImage(imgIdList[i]).getTitle();
-
-			if (defaultImg >= imgList.length)
-				defaultImg = 0;
-
-			GenericDialog gd = new GenericDialog("Choose the image");
-			gd.addChoice("Image", imgList, imgList[defaultImg]);
-			gd.addChoice("Detection_method", paramChoice, paramChoice[defaultParam]);
-
-			gd.showDialog();
-
-			if (gd.wasCanceled()) {
-				failed = true;
-			} else {
-				int tmp = defaultImg = gd.getNextChoiceIndex();
-				this.paramType = defaultParam = gd.getNextChoiceIndex();
-				this.imagePlus = WindowManager.getImage(imgIdList[tmp]);
-			}
-		}
-
-		return failed;
-	}
-
+	
 	public static double[] calculateMinMax(ImagePlus imp){
 		float min = Float.MAX_VALUE;
 		float max = -Float.MAX_VALUE;

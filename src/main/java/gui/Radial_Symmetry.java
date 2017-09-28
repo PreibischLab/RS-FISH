@@ -167,47 +167,6 @@ public class Radial_Symmetry extends ContextCommand {
 		}
 	}
 
-//	// TODO: move to computations to another class another 
-//	// process each 2D/3D slice of the image to search for the spots
-//	public static void processSliceBySlice(ImagePlus imp, RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
-//			int[] impDim, long[] dim, boolean gaussFit, double sigma, ArrayList<Spot> allSpots,
-//			ArrayList<Long> timePoint, ArrayList<Long> channelPoint, ArrayList<Float> intensity) {
-//		RandomAccessibleInterval<FloatType> timeFrame;
-//
-//		int numDimensions = dim.length;
-//
-//		// impDim <- x y c z t
-//		for (int c = 0; c < impDim[2]; c++) {
-//			for (int t = 0; t < impDim[4]; t++) {
-//				// "-1" because of the imp offset
-//				timeFrame = HelperFunctions.copyImg(rai, c, t, dim, impDim);
-//
-//				RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
-//
-//				// TODO: if the detect spot has at least 1 inlier add it
-//				// FIXME: is this part necessary? 
-//				ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), 1 );
-//
-//				allSpots.addAll(filteredSpots);
-//				// set the number of points found for the current time step
-//				timePoint.add(new Long(filteredSpots.size()));
-//
-//				// user wants to have the gauss fit here
-//				if (gaussFit) { // TODO: fix the problem with the computations of this one
-//					Intensity.calulateIntesitiesGF(imp, numDimensions, rsm.getParams().getAnisotropyCoefficient(),
-//							sigma, filteredSpots, intensity);
-//				}
-//				else //  iterate over all points and perform the linear interpolation for each of the spots
-//					Intensity.calculateIntensitiesLinear(imp, filteredSpots, intensity);
-//			}
-//			if (c != 0)
-//				channelPoint.add(new Long(allSpots.size() - channelPoint.get(c)));
-//			else
-//				channelPoint.add(new Long(allSpots.size()));
-//		}
-//
-//	}
-
 	public static void main(String[] args) {
 		// for the historical reasons
 		System.out.println("DOGE!");

@@ -56,8 +56,7 @@ public class Intensity {
 		//  iterate over all points and perform the linear interpolation for each of the spots
 		ImagePlus xyzImp = getXyz(imp); // grabbed the non-normalized xyz-stack  
 		NLinearInterpolatorFactory<FloatType> factory = new NLinearInterpolatorFactory<>();
-		RealRandomAccessible<FloatType> interpolant = Views.interpolate(Views.extendMirrorSingle( ImageJFunctions.wrapFloat( xyzImp)), factory);
-
+		RealRandomAccessible<FloatType> interpolant = Views.interpolate(Views.extendZero(ImageJFunctions.wrapFloat(xyzImp)), factory);
 		for (Spot fSpot : filteredSpots){
 			RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
 			double[] position = fSpot.getCenter();
@@ -77,7 +76,6 @@ public class Intensity {
 		}
 
 		ImagePlus xyzImp = new ImagePlus("merge", stack );
-
 		return xyzImp;
 	}
 }

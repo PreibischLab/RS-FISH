@@ -188,8 +188,8 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 		for (int c = 0; c < impDim[2]; c++) {
 			for (int t = 0; t < impDim[4]; t++) {
 				// "-1" because of the imp offset
-				timeFrame = HelperFunctions.copyImg(rai, c, t, dim, impDim);
-
+				timeFrame = HelperFunctions.copyImg(rai, c, t, impDim);
+				
 				RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
 
 				// TODO: if the detect spot has at least 1 inlier add it
@@ -209,7 +209,7 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 					Intensity.calculateIntensitiesLinear(imp, filteredSpots, intensity);
 			}
 			if (c != 0)
-				channelPoint.add(new Long(allSpots.size() - channelPoint.get(c)));
+				channelPoint.add(new Long(allSpots.size() - channelPoint.get(c - 1)));
 			else
 				channelPoint.add(new Long(allSpots.size()));
 		}

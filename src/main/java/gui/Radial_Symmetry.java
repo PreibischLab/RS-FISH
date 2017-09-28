@@ -1,32 +1,14 @@
 package gui;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import net.imagej.Dataset;
-import net.imagej.legacy.LegacyService;
-import net.imagej.patcher.LegacyInjector;
 import net.imglib2.Cursor;
-import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.RealRandomAccess;
-import net.imglib2.RealRandomAccessible;
-import net.imglib2.algorithm.localization.EllipticGaussianOrtho;
-import net.imglib2.algorithm.localization.LevenbergMarquardtSolver;
-import net.imglib2.algorithm.localization.MLEllipticGaussianEstimator;
-import net.imglib2.algorithm.localization.PeakFitter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
@@ -36,7 +18,6 @@ import org.scijava.command.Command;
 import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
 import org.scijava.command.ContextCommand;
-import org.scijava.convert.ConvertService;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -48,20 +29,15 @@ import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
 import gui.vizualization.Visualization;
-import histogram.Histogram;
-
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.gui.GenericDialog;
-
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
 import intensity.Intensity;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
+import result.output.ShowResult;
 import test.TestGauss3d;
-import visualization.Detections;
-import visualization.Inliers;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Radial Symmetry")
 public class Radial_Symmetry extends ContextCommand {
@@ -78,8 +54,7 @@ public class Radial_Symmetry extends ContextCommand {
 
 	// steps per octave
 	public static int defaultSensitivity = 4;
-	
-	// TODO: used to choose the image
+
 	@Parameter(autoFill=false, label="Image")
 	ImagePlus imp;
 
@@ -92,8 +67,6 @@ public class Radial_Symmetry extends ContextCommand {
 	@Parameter(label=" ", visibility=ItemVisibility.MESSAGE, persist = false)
 	String anisotropyLabel = "<html>*Use the \"Anisotropy Coeffcient Plugin\"<br/>to calculate the anisotropy coefficient<br/> or leave 1.00 for a reasonable result.";
 
-	// @Parameter
-	// int parameterType = defaultParam;
 	@Parameter(label="<html><b>Computation:</h>", visibility=ItemVisibility.MESSAGE)
 	String computationLabel = "";
 	@Parameter(label="RANSAC")
@@ -121,17 +94,9 @@ public class Radial_Symmetry extends ContextCommand {
 
 	@Override
 	public void run() {
-
 		if (this.isCanceled()) return;
-
-		if (imp.getNChannels() > 1) {
+		if (imp.getNChannels() > 1)
 			logService.info("Multichannel image detected. We recommend to adjust the parameters for each channel separately.");
-		}
-
-		long[] dimensions = new long[imp.getNDimensions()];
-		for (int d = 0; d < imp.getNDimensions(); ++d) {
-			dimensions[d] = imp.getDimensions()[d];
-		}
 
 		// make some dirty code as it is not defined at compile time, but
 		// for all subsequent code it is
@@ -147,18 +112,16 @@ public class Radial_Symmetry extends ContextCommand {
 		if (parameterType.equals(paramChoice[0])) // manual
 		{
 			// set the parameters in the manual mode
-			Future<CommandModule> run = commandService.run(GenericDialogGUIParams.class, true, "guiParams", params);
 			try {
-				CommandModule commandModule = run.get();
-				if (commandModule.isCanceled()) return;
-			} catch (Exception e) {
+				boolean isCanceled = commandService.run(GenericDialogGUIParams.class, true, "guiParams", params).get().isCanceled();
+				if (isCanceled) return;
+			} catch (Exception e){
 				logService.info("Internal exception caught");
 			}
 			// calculations are performed further
 		} else // interactive
 		{
 			InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, min, max);
-
 			do {
 				// TODO: change to something that is not deprecated
 				SimpleMultiThreading.threadWait(100);
@@ -181,21 +144,13 @@ public class Radial_Symmetry extends ContextCommand {
 		else // otherwise use
 			rai = ImageJFunctions.wrap(imp);
 
-		// x y c z t
-		int[] impDim = imp.getDimensions();
-
-		long[] dim; // stores x y z dimensions
-		if (impDim[3] == 1) { // if there is no z dimension
-			dim = new long[] { impDim[0], impDim[1] };
-		} else { // 3D image
-			dim = new long[] { impDim[0], impDim[1], impDim[3] };
-		}
+		int[] impDim = imp.getDimensions(); // x y c z t
+		long[] dim = getDimensions(impDim); // x y z 
 
 		ArrayList<Spot> allSpots = new ArrayList<>(0);
-
 		// stores number of detected spots per time point
 		ArrayList<Long> timePoint = new ArrayList<>(0);
-		// stores number of detected spots per channel
+		// stores number of detected spots per channel 
 		ArrayList<Long> channelPoint = new ArrayList<>(0);
 		// stores the intensity values for gauss fitting
 		ArrayList<Float> intensity = new ArrayList<>(0);
@@ -203,21 +158,31 @@ public class Radial_Symmetry extends ContextCommand {
 		processSliceBySlice(imp, rai, rsm, impDim, dim, gaussFit, params.getSigmaDoG(), allSpots, timePoint,
 				channelPoint, intensity);
 
-		// DEBUG:
-		// System.out.println("total # of channels " + channelPoint.size());
-		// System.out.println("total # of timepoits" + timePoint.size());
-		
-		// FIXME: only show in the interactive mode 
-		RadialSymmetry.ransacResultTable(allSpots, timePoint, channelPoint, intensity);
-		Visualization.showVisualization(imp, allSpots, intensity, showInliers, showDetections);
+		if (parameterType.equals("Interactive")){
+			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity);
+			Visualization.showVisualization(imp, allSpots, intensity, showInliers, showDetections);
+		}
+		else{ // manual 
+			//write the result to the csv file
+		}
+	}
+	public long [] getDimensions(int [] impDim){
+		// note the conversion int -> long 
+		// return only x y z 
+		long[] dim; // stores x y z dimensions
+		if (impDim[3] == 1) // if there is no z dimension
+			dim = new long[] { impDim[0], impDim[1] };
+		else // 3D image
+			dim = new long[] { impDim[0], impDim[1], impDim[3] };
+		return dim;
 	}
 
+	// TODO: move to computations to another class another 
 	// process each 2D/3D slice of the image to search for the spots
 	public static void processSliceBySlice(ImagePlus imp, RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
 			int[] impDim, long[] dim, boolean gaussFit, double sigma, ArrayList<Spot> allSpots,
 			ArrayList<Long> timePoint, ArrayList<Long> channelPoint, ArrayList<Float> intensity) {
 		RandomAccessibleInterval<FloatType> timeFrame;
-		ImagePlus xyzImp; // stores non-normalized xyz stack
 
 		int numDimensions = dim.length;
 
@@ -234,7 +199,6 @@ public class Radial_Symmetry extends ContextCommand {
 				ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), 1 );
 
 				allSpots.addAll(filteredSpots);
-
 				// set the number of points found for the current time step
 				timePoint.add(new Long(filteredSpots.size()));
 
@@ -253,94 +217,6 @@ public class Radial_Symmetry extends ContextCommand {
 		}
 
 	}
-
-
-	// triggers the gaussian fit if user wants it
-	// FIXME: Gauss fit should be performed only on the inliers
-	public static void fitGaussian(RandomAccessibleInterval<FloatType> timeFrame, ArrayList<Spot> spots, double sigma) {
-
-		int numDimensions = timeFrame.numDimensions();
-
-		// here we might have the 3D or 2D spot
-
-		// TODO: Check that this part is working
-		for (final Spot spot : spots) {
-			// TODO: check that center is correct
-			double[] location = new double[numDimensions];
-			double[] sigmaSpot = new double[numDimensions];
-
-			for (int d = 0; d < numDimensions; d++) {
-				sigmaSpot[d] = sigma;
-				location[d] = spot.getCenter()[d];
-			}
-
-			long[] minSpot = new long[numDimensions];
-			long[] maxSpot = new long[numDimensions];
-			HelperFunctions.setMinMaxLocation(location, sigmaSpot, minSpot, maxSpot);
-
-			GaussianMaskFit.gaussianMaskFit(Views.interval(timeFrame, minSpot, maxSpot), location, sigmaSpot, null);
-
-		}
-	}
-
-	// triggers the gaussian mask fit if user wants it
-	public static void fitGaussianMask(RandomAccessibleInterval<FloatType> timeFrame, ArrayList<Spot> spots,
-			double sigma) {
-
-		int numDimensions = timeFrame.numDimensions();
-
-		// here we might have the 3D or 2D spot
-
-		// TODO: Check that this part is working
-		for (final Spot spot : spots) {
-			// TODO: check that center is correct
-			double[] location = new double[numDimensions];
-			double[] sigmaSpot = new double[numDimensions];
-
-			for (int d = 0; d < numDimensions; d++) {
-				sigmaSpot[d] = sigma;
-				location[d] = spot.getCenter()[d];
-			}
-
-			long[] minSpot = new long[numDimensions];
-			long[] maxSpot = new long[numDimensions];
-			HelperFunctions.setMinMaxLocation(location, sigmaSpot, minSpot, maxSpot);
-
-			GaussianMaskFit.gaussianMaskFit(Views.interval(timeFrame, minSpot, maxSpot), location, sigmaSpot, null);
-		}
-	}
-
-	// DEBUG:
-	public static void showPoints(Img<FloatType> image, ArrayList<Spot> spots, double[] sigma) {
-		for (int i = 0; i < spots.size(); ++i) {
-			// final Spot spot = spots.get(i);
-			// if not discarded
-			if (spots.get(i).numRemoved != spots.get(i).candidates.size()) {
-				final double[] location = new double[] { spots.get(i).getFloatPosition(0),
-						spots.get(i).getFloatPosition(1), spots.get(i).getFloatPosition(2) };
-				TestGauss3d.addGaussian(image, location, sigma);
-			}
-
-		}
-	}
-
-	// TODO: remove once in another function
-	// returns only xyz stack from the ImagePlus object
-	public static ImagePlus getXyz(ImagePlus imp){
-		final ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight() );
-		int [] impDimensions = imp.getDimensions();
-
-		for (int z = 0; z < impDimensions[3]; z++){
-			int id = imp.getStackIndex(1, z + 1, 1);
-			stack.addSlice(imp.getStack().getProcessor( id ));
-		}
-
-		ImagePlus xyzImp = new ImagePlus("merge", stack );
-		// xyzImp.setDimensions( 1, impDimensions[3], 1 );
-
-		return xyzImp;
-	}
-
 
 	// clunky function to handle different space-time cases
 	// TODO: check that it is working properly for all cases

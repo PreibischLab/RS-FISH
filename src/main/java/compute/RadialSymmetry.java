@@ -178,11 +178,11 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 	
 	// process each 2D/3D slice of the image to search for the spots
 	public static void processSliceBySlice(ImagePlus imp, RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
-			int[] impDim, long[] dim, boolean gaussFit, double sigma, ArrayList<Spot> allSpots,
+			int[] impDim, boolean gaussFit, double sigma, ArrayList<Spot> allSpots,
 			ArrayList<Long> timePoint, ArrayList<Long> channelPoint, ArrayList<Float> intensity) {
 		RandomAccessibleInterval<FloatType> timeFrame;
 
-		int numDimensions = dim.length;
+		int numDimensions = rai.numDimensions();
 
 		// impDim <- x y c z t
 		for (int c = 0; c < impDim[2]; c++) {

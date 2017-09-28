@@ -36,11 +36,11 @@ public class GUIParams
 	// Z-scaling anisotropy calculation
 	float anisotropyCoefficient;
 
-	public GUIParams(boolean RANSAC)
+	public GUIParams()
 	{
 		setSigmaDog(defaultSigma);
 		setThresholdDoG(defaultThreshold);
-		setRANSAC(RANSAC);
+		setRANSAC(defaultRANSAC);
 		setMaxError(defaultMaxError);		
 		setInlierRatio(defaultInlierRatio);
 		setSupportRadius(defaultSupportRadius);

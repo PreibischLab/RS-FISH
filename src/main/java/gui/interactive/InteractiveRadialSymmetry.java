@@ -708,7 +708,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		imp.setSlice(20);
 
-		new InteractiveRadialSymmetry( imp, new GUIParams(true), min, max );
+		new InteractiveRadialSymmetry( imp, new GUIParams(), min, max );
 
 		System.out.println("DOGE!");
 	}

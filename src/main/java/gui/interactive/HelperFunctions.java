@@ -2,10 +2,13 @@ package gui.interactive;
 
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
+import net.imagej.Dataset;
 import net.imglib2.Cursor;
 import net.imglib2.Localizable;
 import net.imglib2.Point;
@@ -15,6 +18,7 @@ import net.imglib2.RealLocalizable;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
@@ -34,51 +38,28 @@ import ij.process.ImageProcessor;
 
 public class HelperFunctions {
 	
-	// clunky function to handle different space-time cases
-	// TODO: check that it is working properly for all cases
-	// TODO: can be rewritten with ImagePlus operations
 	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel,
-			long time, long[] dim, int[] impDim) {
-		// this one will be returned
-		RandomAccessibleInterval<FloatType> img = ArrayImgs.floats(dim);
-
-		Cursor<FloatType> cursor = Views.iterable(img).localizingCursor();
-		RandomAccess<FloatType> ra = rai.randomAccess();
-
-		long[] pos = new long[dim.length];
-
-		while (cursor.hasNext()) {
-			// move over output image
-			cursor.fwd();
-			cursor.localize(pos);
-			// set the corresponding position (channel + time)
-			if (impDim[2] != 1 && impDim[3] != 1 && impDim[4] != 1) { // full 5D
-				// stack
-				ra.setPosition(new long[] { pos[0], pos[1], channel, pos[2], time });
-			} else {
-				if (impDim[2] != 1 && impDim[3] != 1) { // channels + z
-					ra.setPosition(new long[] { pos[0], pos[1], channel, pos[2] });
-				} else if (impDim[2] != 1 && impDim[4] != 1) { // channels +
-					// time
-					ra.setPosition(new long[] { pos[0], pos[1], channel, time });
-				} else if (impDim[3] != 1 && impDim[4] != 1) { // z + time
-					ra.setPosition(new long[] { pos[0], pos[1], pos[2], time });
-				} else if (impDim[2] != 1) { // c
-					ra.setPosition(new long[] { pos[0], pos[1], pos[3] }); // fixed ?
-				} else if (impDim[3] != 1) { // z
-					ra.setPosition(new long[] { pos[0], pos[1], pos[2] });
-				} else if (impDim[4] != 1) { // t
-					ra.setPosition(new long[] { pos[0], pos[1], time }); // fix
-				} else // 2D image
-					ra.setPosition(new long[] { pos[0], pos[1] });
-			}
-
-			cursor.get().setReal(ra.get().getRealFloat());
+			long time, int[] impDim) {
+		
+		RandomAccessibleInterval<FloatType> img = rai;
+		// this one is always the loop over 5-dims
+		// cut 5-th, and 3-d and drop them after that 
+		int [] mapping = new int[5]; // mapping for all dimensions
+		int idx = 0;
+		for (int d = 0; d < impDim.length; d++){
+			mapping[d] = -1; // if -1 than doesn't exist for a given image
+			if (impDim[d] != 1)
+				mapping[d] = idx++; 
 		}
-
-		return img;
+		
+		if (mapping[2] != -1) // if there are channels
+			img = Views.hyperSlice(img, mapping[2], channel);
+		
+		if (mapping[4] != -1) // if there are channels
+			img = Views.hyperSlice(img, mapping[4], time);
+					
+		return Views.dropSingletonDimensions(img);
 	}
-	
 	
 	// return x y z 
 	public static long [] getDimensions(int [] impDim){

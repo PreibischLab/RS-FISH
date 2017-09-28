@@ -38,12 +38,15 @@ public class BatchProcessing {
 	 * Class to process multiple images in a batch mode
 	 * */
 
-	public static void startBatchProcessing(GUIParams params, String path) {
-		File folder = new File(path);
+	public static void startBatchProcessing(GUIParams params, String path, int channelId) {
+		File folder = new File(path + "subtracted/c" + channelId);
+		
+		System.out.println(folder.getAbsolutePath());		
+		
 		File[] listOfFiles = folder.listFiles();
 
 		for (File file : listOfFiles) {
-			if (file.isFile()) {
+			if (file.isFile() && !file.getName().startsWith(".")) {
 				System.out.println(file.getName());
 			
 				ImagePlus imp = new Opener().openImage(file.getAbsolutePath());
@@ -79,7 +82,7 @@ public class BatchProcessing {
 				boolean useGaussFit = false;
 				ArrayList<Spot> spots = processImage(imp, rai, rsm, dim, useGaussFit, params.getSigmaDoG(), intensity);
 				
-				saveResult(path + "/csv/", file.getName(), spots, intensity);
+				saveResult(path + "/results/c" + channelId, file.getName(), spots, intensity);
 				
 			}
 		}		
@@ -156,7 +159,7 @@ public class BatchProcessing {
 		String[] nextLine = new String [5];
 
 		try {
-			writer = new CSVWriter(new FileWriter(path + "/" + fileName + ".csv"), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+			writer = new CSVWriter(new FileWriter(path + "/" + fileName.substring(0, fileName.length() - 4) + ".csv"), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 			for (int j = 0; j < spots.size(); j++) {
 				double[] position = spots.get(j).getCenter();
 			
@@ -179,21 +182,25 @@ public class BatchProcessing {
 		new ImageJ();
 
 		boolean useRANSAC = true;
-		final GUIParams params = new GUIParams(useRANSAC);
+		final GUIParams params = new GUIParams();
 		// apparently the best value for now
-		params.setAnisotropyCoefficient(1.10f);
+		params.setAnisotropyCoefficient(1.09f);
+		params.setRANSAC(useRANSAC);
 		// pre-detection
-		params.setSigmaDog(1.5f);
-		params.setThresholdDoG(0.0033f);
+		params.setSigmaDog(1.50f);
+		params.setThresholdDoG(0.0083f);
 		// detection
 		params.setSupportRadius(3);
 		params.setInlierRatio(0.37f);
-		params.setMaxError(0.50f);
+		params.setMaxError(0.5034f);
+		// channel to process
+		int channelId = 3; // 1, 2 or 3
 
-		String path = "/media/milkyklim/Samsung_T3/2017-08-24-intronic-probes/N2_dpy-23_ex_int_ama-1_015/channels/c3";		
-		startBatchProcessing(params, path);
+		String path = "/Volumes/Samsung_T3/2017-08-24-intronic-probes/N2_dpy-23_ex_int_ama-1_016/";	
+		
+		startBatchProcessing(params, path, channelId);
 
-		System.out.println("DOGE! ");
+		System.out.println("DOGE!");
 		
 	}
 

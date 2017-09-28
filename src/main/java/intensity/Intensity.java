@@ -11,6 +11,7 @@ import net.imglib2.algorithm.localization.EllipticGaussianOrtho;
 import net.imglib2.algorithm.localization.LevenbergMarquardtSolver;
 import net.imglib2.algorithm.localization.MLEllipticGaussianEstimator;
 import net.imglib2.algorithm.localization.PeakFitter;
+import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.type.numeric.real.FloatType;
@@ -55,7 +56,9 @@ public class Intensity {
 	public static void calculateIntensitiesLinear(ImagePlus imp, ArrayList<Spot> filteredSpots, ArrayList<Float> intensity){
 		//  iterate over all points and perform the linear interpolation for each of the spots
 		ImagePlus xyzImp = getXyz(imp); // grabbed the non-normalized xyz-stack  
-		NLinearInterpolatorFactory<FloatType> factory = new NLinearInterpolatorFactory<>();
+		
+		// FIXME: the factory should depend on the imp > floatType, ByteType, etc.	
+		NLinearInterpolatorFactory<FloatType> factory = new NLinearInterpolatorFactory<>();	
 		RealRandomAccessible<FloatType> interpolant = Views.interpolate(Views.extendZero(ImageJFunctions.wrapFloat(xyzImp)), factory);
 		for (Spot fSpot : filteredSpots){
 			RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();

@@ -1,21 +1,15 @@
 package gui;
 
 import java.util.ArrayList;
-import java.util.concurrent.Future;
 
-import net.imglib2.Cursor;
-import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.Views;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
-import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
 import org.scijava.command.ContextCommand;
 import org.scijava.log.LogService;
@@ -24,24 +18,20 @@ import org.scijava.plugin.Plugin;
 
 import compute.RadialSymmetry;
 import fit.Spot;
-import gauss.GaussianMaskFit;
 import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
 import gui.vizualization.Visualization;
 import ij.ImagePlus;
-import ij.ImageStack;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
-import intensity.Intensity;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 import result.output.ShowResult;
-import test.TestGauss3d;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Radial Symmetry")
 public class Radial_Symmetry extends ContextCommand {
-	// used to save previous values of the fields
+	// Defaults: used to save previous values of the plugin fields
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
 	public static int defaultParam = 0;
@@ -52,7 +42,7 @@ public class Radial_Symmetry extends ContextCommand {
 	public static boolean defaultDetections = true;
 	public static boolean defaultInliers = false; 
 
-	// steps per octave
+	// steps per octave for DoG
 	public static int defaultSensitivity = 4;
 
 	@Parameter(autoFill=false, label="Image")
@@ -98,17 +88,18 @@ public class Radial_Symmetry extends ContextCommand {
 		if (imp.getNChannels() > 1)
 			logService.info("Multichannel image detected. We recommend to adjust the parameters for each channel separately.");
 
-		// make some dirty code as it is not defined at compile time, but
-		// for all subsequent code it is
+		// dirty cast that can't be avoided :( 
 		double[] minmax = HelperFunctions.computeMinMax((Img) ImageJFunctions.wrapReal(imp));
 
 		float min = (float) minmax[0];
 		float max = (float) minmax[1];
 
-		// set all defaults + set RANSAC
-		final GUIParams params = new GUIParams(RANSAC);
-
+		// set the parameters from the defaults
+		final GUIParams params = new GUIParams();
+		// the 2 below we adjust here because they are defined in the gui
 		params.setAnisotropyCoefficient(anisotropy);
+		params.setRANSAC(RANSAC);
+		
 		if (parameterType.equals(paramChoice[0])) // manual
 		{
 			// set the parameters in the manual mode
@@ -152,19 +143,21 @@ public class Radial_Symmetry extends ContextCommand {
 		ArrayList<Long> timePoint = new ArrayList<>(0);
 		// stores number of detected spots per channel 
 		ArrayList<Long> channelPoint = new ArrayList<>(0);
-		// stores the intensity values for gauss fitting
+		// stores the intensity values
 		ArrayList<Float> intensity = new ArrayList<>(0);
 
-		RadialSymmetry.processSliceBySlice(imp, rai, rsm, impDim, dim, gaussFit, params.getSigmaDoG(), allSpots, timePoint,
+		RadialSymmetry.processSliceBySlice(imp, rai, rsm, impDim, gaussFit, params.getSigmaDoG(), allSpots, timePoint,
 				channelPoint, intensity);
 
-		if (parameterType.equals("Interactive")){
+		if (parameterType.equals(paramChoice[1])){ // interactive
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity);
 			Visualization.showVisualization(imp, allSpots, intensity, showInliers, showDetections);
 		}
-		else{ // manual 
+		else if (parameterType.equals(paramChoice[0])){ // manual 
 			//write the result to the csv file
 		}
+		else
+			System.out.println("Wrong parameters' mode");
 	}
 
 	public static void main(String[] args) {

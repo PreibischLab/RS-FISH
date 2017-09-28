@@ -20,7 +20,9 @@ import gradient.GradientPreCompute;
 import gui.Radial_Symmetry;
 import gui.interactive.HelperFunctions;
 import ij.IJ;
+import ij.ImagePlus;
 import ij.measure.ResultsTable;
+import intensity.Intensity;
 import mpicbg.spim.io.IOFunctions;
 import parameters.RadialSymmetryParameters;
 
@@ -173,6 +175,47 @@ public class RadialSymmetry // < T extends RealType< T > & NativeType<T> >
 			// TODO: if the code is organized correctly this part should be removed 
 			System.out.println("Wrong dimensionality. Currently supported 2D/3D!");
 	}
+	
+	// process each 2D/3D slice of the image to search for the spots
+	public static void processSliceBySlice(ImagePlus imp, RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
+			int[] impDim, long[] dim, boolean gaussFit, double sigma, ArrayList<Spot> allSpots,
+			ArrayList<Long> timePoint, ArrayList<Long> channelPoint, ArrayList<Float> intensity) {
+		RandomAccessibleInterval<FloatType> timeFrame;
+
+		int numDimensions = dim.length;
+
+		// impDim <- x y c z t
+		for (int c = 0; c < impDim[2]; c++) {
+			for (int t = 0; t < impDim[4]; t++) {
+				// "-1" because of the imp offset
+				timeFrame = HelperFunctions.copyImg(rai, c, t, dim, impDim);
+
+				RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
+
+				// TODO: if the detect spot has at least 1 inlier add it
+				// FIXME: is this part necessary? 
+				ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), 1 );
+
+				allSpots.addAll(filteredSpots);
+				// set the number of points found for the current time step
+				timePoint.add(new Long(filteredSpots.size()));
+
+				// user wants to have the gauss fit here
+				if (gaussFit) { // TODO: fix the problem with the computations of this one
+					Intensity.calulateIntesitiesGF(imp, numDimensions, rsm.getParams().getAnisotropyCoefficient(),
+							sigma, filteredSpots, intensity);
+				}
+				else //  iterate over all points and perform the linear interpolation for each of the spots
+					Intensity.calculateIntensitiesLinear(imp, filteredSpots, intensity);
+			}
+			if (c != 0)
+				channelPoint.add(new Long(allSpots.size() - channelPoint.get(c)));
+			else
+				channelPoint.add(new Long(allSpots.size()));
+		}
+
+	}
+	
 
 	public ArrayList<RefinedPeak<Point>> getPeaks() {
 		return peaks;

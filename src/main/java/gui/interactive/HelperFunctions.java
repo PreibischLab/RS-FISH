@@ -9,6 +9,7 @@ import java.util.Iterator;
 import net.imglib2.Cursor;
 import net.imglib2.Localizable;
 import net.imglib2.Point;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
@@ -32,6 +33,64 @@ import ij.measure.Calibration;
 import ij.process.ImageProcessor;
 
 public class HelperFunctions {
+	
+	// clunky function to handle different space-time cases
+	// TODO: check that it is working properly for all cases
+	// TODO: can be rewritten with ImagePlus operations
+	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel,
+			long time, long[] dim, int[] impDim) {
+		// this one will be returned
+		RandomAccessibleInterval<FloatType> img = ArrayImgs.floats(dim);
+
+		Cursor<FloatType> cursor = Views.iterable(img).localizingCursor();
+		RandomAccess<FloatType> ra = rai.randomAccess();
+
+		long[] pos = new long[dim.length];
+
+		while (cursor.hasNext()) {
+			// move over output image
+			cursor.fwd();
+			cursor.localize(pos);
+			// set the corresponding position (channel + time)
+			if (impDim[2] != 1 && impDim[3] != 1 && impDim[4] != 1) { // full 5D
+				// stack
+				ra.setPosition(new long[] { pos[0], pos[1], channel, pos[2], time });
+			} else {
+				if (impDim[2] != 1 && impDim[3] != 1) { // channels + z
+					ra.setPosition(new long[] { pos[0], pos[1], channel, pos[2] });
+				} else if (impDim[2] != 1 && impDim[4] != 1) { // channels +
+					// time
+					ra.setPosition(new long[] { pos[0], pos[1], channel, time });
+				} else if (impDim[3] != 1 && impDim[4] != 1) { // z + time
+					ra.setPosition(new long[] { pos[0], pos[1], pos[2], time });
+				} else if (impDim[2] != 1) { // c
+					ra.setPosition(new long[] { pos[0], pos[1], pos[3] }); // fixed ?
+				} else if (impDim[3] != 1) { // z
+					ra.setPosition(new long[] { pos[0], pos[1], pos[2] });
+				} else if (impDim[4] != 1) { // t
+					ra.setPosition(new long[] { pos[0], pos[1], time }); // fix
+				} else // 2D image
+					ra.setPosition(new long[] { pos[0], pos[1] });
+			}
+
+			cursor.get().setReal(ra.get().getRealFloat());
+		}
+
+		return img;
+	}
+	
+	
+	// return x y z 
+	public static long [] getDimensions(int [] impDim){
+		// note the conversion int -> long 
+		long[] dim; // stores x y z dimensions
+		if (impDim[3] == 1) // if there is no z dimension
+			dim = new long[] { impDim[0], impDim[1] };
+		else // 3D image
+			dim = new long[] { impDim[0], impDim[1], impDim[3] };
+		return dim;
+	}
+	
 
 	public static ArrayList<RefinedPeak<Point>> filterPeaks(final ArrayList<RefinedPeak<Point>> peaks,
 			final Rectangle rectangle, final double threshold) {

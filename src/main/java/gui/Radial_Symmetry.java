@@ -145,7 +145,7 @@ public class Radial_Symmetry extends ContextCommand {
 			rai = ImageJFunctions.wrap(imp);
 
 		int[] impDim = imp.getDimensions(); // x y c z t
-		long[] dim = getDimensions(impDim); // x y z 
+		long[] dim = HelperFunctions.getDimensions(impDim); // x y z 
 
 		ArrayList<Spot> allSpots = new ArrayList<>(0);
 		// stores number of detected spots per time point
@@ -155,7 +155,7 @@ public class Radial_Symmetry extends ContextCommand {
 		// stores the intensity values for gauss fitting
 		ArrayList<Float> intensity = new ArrayList<>(0);
 
-		processSliceBySlice(imp, rai, rsm, impDim, dim, gaussFit, params.getSigmaDoG(), allSpots, timePoint,
+		RadialSymmetry.processSliceBySlice(imp, rai, rsm, impDim, dim, gaussFit, params.getSigmaDoG(), allSpots, timePoint,
 				channelPoint, intensity);
 
 		if (parameterType.equals("Interactive")){
@@ -166,102 +166,47 @@ public class Radial_Symmetry extends ContextCommand {
 			//write the result to the csv file
 		}
 	}
-	public long [] getDimensions(int [] impDim){
-		// note the conversion int -> long 
-		// return only x y z 
-		long[] dim; // stores x y z dimensions
-		if (impDim[3] == 1) // if there is no z dimension
-			dim = new long[] { impDim[0], impDim[1] };
-		else // 3D image
-			dim = new long[] { impDim[0], impDim[1], impDim[3] };
-		return dim;
-	}
 
-	// TODO: move to computations to another class another 
-	// process each 2D/3D slice of the image to search for the spots
-	public static void processSliceBySlice(ImagePlus imp, RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
-			int[] impDim, long[] dim, boolean gaussFit, double sigma, ArrayList<Spot> allSpots,
-			ArrayList<Long> timePoint, ArrayList<Long> channelPoint, ArrayList<Float> intensity) {
-		RandomAccessibleInterval<FloatType> timeFrame;
-
-		int numDimensions = dim.length;
-
-		// impDim <- x y c z t
-		for (int c = 0; c < impDim[2]; c++) {
-			for (int t = 0; t < impDim[4]; t++) {
-				// "-1" because of the imp offset
-				timeFrame = copyImg(rai, c, t, dim, impDim);
-
-				RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
-
-				// TODO: if the detect spot has at least 1 inlier add it
-				// FIXME: is this part necessary? 
-				ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), 1 );
-
-				allSpots.addAll(filteredSpots);
-				// set the number of points found for the current time step
-				timePoint.add(new Long(filteredSpots.size()));
-
-				// user wants to have the gauss fit here
-				if (gaussFit) { // TODO: fix the problem with the computations of this one
-					Intensity.calulateIntesitiesGF(imp, numDimensions, rsm.getParams().getAnisotropyCoefficient(),
-							sigma, filteredSpots, intensity);
-				}
-				else //  iterate over all points and perform the linear interpolation for each of the spots
-					Intensity.calculateIntensitiesLinear(imp, filteredSpots, intensity);
-			}
-			if (c != 0)
-				channelPoint.add(new Long(allSpots.size() - channelPoint.get(c)));
-			else
-				channelPoint.add(new Long(allSpots.size()));
-		}
-
-	}
-
-	// clunky function to handle different space-time cases
-	// TODO: check that it is working properly for all cases
-	// TODO: can be rewritten with ImagePlus operations
-	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel,
-			long time, long[] dim, int[] impDim) {
-		// this one will be returned
-		RandomAccessibleInterval<FloatType> img = ArrayImgs.floats(dim);
-
-		Cursor<FloatType> cursor = Views.iterable(img).localizingCursor();
-		RandomAccess<FloatType> ra = rai.randomAccess();
-
-		long[] pos = new long[dim.length];
-
-		while (cursor.hasNext()) {
-			// move over output image
-			cursor.fwd();
-			cursor.localize(pos);
-			// set the corresponding position (channel + time)
-			if (impDim[2] != 1 && impDim[3] != 1 && impDim[4] != 1) { // full 5D
-				// stack
-				ra.setPosition(new long[] { pos[0], pos[1], channel, pos[2], time });
-			} else {
-				if (impDim[2] != 1 && impDim[3] != 1) { // channels + z
-					ra.setPosition(new long[] { pos[0], pos[1], channel, pos[2] });
-				} else if (impDim[2] != 1 && impDim[4] != 1) { // channels +
-					// time
-					ra.setPosition(new long[] { pos[0], pos[1], channel, time });
-				} else if (impDim[3] != 1 && impDim[4] != 1) { // z + time
-					ra.setPosition(new long[] { pos[0], pos[1], pos[2], time });
-				} else if (impDim[2] != 1) { // c
-					ra.setPosition(new long[] { pos[0], pos[1], pos[3] }); // fixed ?
-				} else if (impDim[3] != 1) { // z
-					ra.setPosition(new long[] { pos[0], pos[1], pos[2] });
-				} else if (impDim[4] != 1) { // t
-					ra.setPosition(new long[] { pos[0], pos[1], time }); // fix
-				} else // 2D image
-					ra.setPosition(new long[] { pos[0], pos[1] });
-			}
-
-			cursor.get().setReal(ra.get().getRealFloat());
-		}
-
-		return img;
-	}
+//	// TODO: move to computations to another class another 
+//	// process each 2D/3D slice of the image to search for the spots
+//	public static void processSliceBySlice(ImagePlus imp, RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
+//			int[] impDim, long[] dim, boolean gaussFit, double sigma, ArrayList<Spot> allSpots,
+//			ArrayList<Long> timePoint, ArrayList<Long> channelPoint, ArrayList<Float> intensity) {
+//		RandomAccessibleInterval<FloatType> timeFrame;
+//
+//		int numDimensions = dim.length;
+//
+//		// impDim <- x y c z t
+//		for (int c = 0; c < impDim[2]; c++) {
+//			for (int t = 0; t < impDim[4]; t++) {
+//				// "-1" because of the imp offset
+//				timeFrame = HelperFunctions.copyImg(rai, c, t, dim, impDim);
+//
+//				RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
+//
+//				// TODO: if the detect spot has at least 1 inlier add it
+//				// FIXME: is this part necessary? 
+//				ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), 1 );
+//
+//				allSpots.addAll(filteredSpots);
+//				// set the number of points found for the current time step
+//				timePoint.add(new Long(filteredSpots.size()));
+//
+//				// user wants to have the gauss fit here
+//				if (gaussFit) { // TODO: fix the problem with the computations of this one
+//					Intensity.calulateIntesitiesGF(imp, numDimensions, rsm.getParams().getAnisotropyCoefficient(),
+//							sigma, filteredSpots, intensity);
+//				}
+//				else //  iterate over all points and perform the linear interpolation for each of the spots
+//					Intensity.calculateIntensitiesLinear(imp, filteredSpots, intensity);
+//			}
+//			if (c != 0)
+//				channelPoint.add(new Long(allSpots.size() - channelPoint.get(c)));
+//			else
+//				channelPoint.add(new Long(allSpots.size()));
+//		}
+//
+//	}
 
 	public static void main(String[] args) {
 		// for the historical reasons

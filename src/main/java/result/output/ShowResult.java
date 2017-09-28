@@ -7,9 +7,12 @@ import ij.measure.ResultsTable;
 import mpicbg.spim.io.IOFunctions;
 
 public class ShowResult {
-	// TODO: Put the table here 
-	// TODO: Put the writting part here, too (csv?)
+	public static void ransacResultCsv(final ArrayList<Spot> spots, final ArrayList<Long> timePoint, final ArrayList<Long> channelPoint, ArrayList<Float> intensity){
+		// TODO: Put the writting part here, too (csv?)
+	}
 	
+	
+	// ineractive mode 
 	// this function will show the result of RANSAC
 	// proper window -> dialog view with the columns
 	public static void ransacResultTable(final ArrayList<Spot> spots, final ArrayList<Long> timePoint, final ArrayList<Long> channelPoint, ArrayList<Float> intensity) {

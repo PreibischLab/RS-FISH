@@ -1,5 +1,6 @@
 package compute;
 
+import java.awt.Rectangle;
 import java.util.ArrayList;
 
 import net.imglib2.Point;
@@ -42,27 +43,26 @@ public class RadialSymmetry {
 
 	private static final boolean debug = true;
 	private static final long timingScale = 1000; // will result in seconds
-
+	// DOG:
 	float sigma;
 	float sigma2;
 	float threshold;
+	// RANSAC: 
+	boolean ransac;
 	int supportRadius;
 	float inlierRatio;
 	float maxError;
-
+	// Background subtratcion: 
 	String bsMethod;
 	float bsMaxError;
 	float bsInlierRatio;
-
+	// General image params: 
+	RandomAccessibleInterval<FloatType> img;
 	float anisotropy;
-
-	boolean ransac;
-
 	double[] calibration;
 
-	RandomAccessibleInterval<FloatType> img;
-
-	public RadialSymmetry(final RadialSymmetryParameters params, final RandomAccessibleInterval<FloatType> img) {
+	// set all parameters in the constructor 
+	public RadialSymmetry(final RandomAccessibleInterval<FloatType> img, final RadialSymmetryParameters params) {
 		this.img = img;
 		sigma = params.getParams().getSigmaDoG();
 		sigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
@@ -84,9 +84,8 @@ public class RadialSymmetry {
 	}
 
 	public void computeRadialSymmetry(final RandomAccessibleInterval<FloatType> pImg, float pSigma, float pThreshold,
-			int pSupportRadius, float pInlierRatio, float pMaxError, String bsMethod, float bsMaxError,
-			float bsInlierRatio, float anisotropy, boolean ransac) {
-		// TODO: is this check necessary ?
+			int pSupportRadius, float pInlierRatio, float pMaxError, String pBsMethod, float pBsMaxError,
+			float pBsInlierRatio, float pAnisotropy, boolean pRansac) {
 		if (pImg.numDimensions() == 2 || pImg.numDimensions() == 3) {
 			// IMP: in the 3D case the blobs will have lower contrast as a
 			// function of sigma(z) therefore we have to adjust the threshold;
@@ -94,66 +93,39 @@ public class RadialSymmetry {
 			// decrease the threshold value; this might help in some cases but
 			// z-extra smoothing is image depended
 
-			long sTime = System.currentTimeMillis();
+			// long sTime = System.currentTimeMillis();
 			final float tFactor = pImg.numDimensions() == 3 ? 0.5f : 1.0f;
 			final DogDetection<FloatType> dog2 = new DogDetection<>(pImg, calibration, pSigma, sigma2,
 					DogDetection.ExtremaType.MINIMA, tFactor * pThreshold / 2, false);
 			peaks = dog2.getSubpixelPeaks();
-
-			if (debug) {
-				System.out.println("Timing: DoG peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
-				sTime = System.currentTimeMillis();
-			}
-
+			
 			derivative = new GradientPreCompute(pImg);
-
-			if (debug) {
-				System.out.println("Timing: Derivative : " + (System.currentTimeMillis() - sTime) / timingScale);
-				sTime = System.currentTimeMillis();
-			}
 
 			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(0);
 			int numDimensions = pImg.numDimensions();
-			// copy all peaks
-			// TODO: USE FUNCTION FROM HELPERFUNCTIONS
-			for (final RefinedPeak<Point> peak : peaks) {
-				if (-peak.getValue() > pThreshold) {
-					final long[] coordinates = new long[numDimensions];
-					for (int d = 0; d < peak.numDimensions(); ++d)
-						coordinates[d] = Util.round(peak.getDoublePosition(d));
-					simplifiedPeaks.add(coordinates);
-				}
-			}
 
-			// HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions);
-			// IJ.log( "peaks: " + simplifiedPeaks.size() );
-
-			if (debug) {
-				System.out.println("Timing: Copying peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
-				sTime = System.currentTimeMillis();
-			}
+			Rectangle rectangle = new Rectangle(0, 0, (int)pImg.dimension(0), (int)pImg.dimension(1));
+			HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle, pThreshold);
 
 			final NormalizedGradient ng;
 
 			// "No background subtraction", "Mean", "Median", "RANSAC on Mean",
 			// "RANSAC on Median"
-
-			if (bsMethod.equals("No background subtraction"))
+			if (pBsMethod.equals("No background subtraction"))
 				ng = null;
-			else if (bsMethod.equals("Mean"))
+			else if (pBsMethod.equals("Mean"))
 				ng = new NormalizedGradientAverage(derivative);
-			else if (bsMethod.equals("Median"))
+			else if (pBsMethod.equals("Median"))
 				ng = new NormalizedGradientMedian(derivative);
-			else if (bsMethod.equals("RANSAC on Mean"))
-				ng = new NormalizedGradientRANSAC(derivative, CenterMethod.MEAN, bsMaxError, bsInlierRatio);
-			else if (bsMethod.equals("RANSAC on Median"))
-				ng = new NormalizedGradientRANSAC(derivative, CenterMethod.MEDIAN, bsMaxError, bsInlierRatio);
+			else if (pBsMethod.equals("RANSAC on Mean"))
+				ng = new NormalizedGradientRANSAC(derivative, CenterMethod.MEAN, pBsMaxError, pBsInlierRatio);
+			else if (pBsMethod.equals("RANSAC on Median"))
+				ng = new NormalizedGradientRANSAC(derivative, CenterMethod.MEDIAN, pBsMaxError, pBsInlierRatio);
 			else
-				throw new RuntimeException("Unknown bsMethod: " + bsMethod);
+				throw new RuntimeException("Unknown bsMethod: " + pBsMethod);
 
 			// the size of the RANSAC area
 			final long[] range = new long[numDimensions];
-
 			for (int d = 0; d < numDimensions; ++d)
 				range[d] = pSupportRadius;
 
@@ -164,17 +136,13 @@ public class RadialSymmetry {
 			// if the image is 3D
 			if (numDimensions == 3)
 				for (int j = 0; j < spots.size(); j++)
-					spots.get(j).updateScale(new float[] { 1, 1, anisotropy });
+					spots.get(j).updateScale(new float[] { 1, 1, pAnisotropy });
 
-			IJ.log("num spots: " + spots.size());
-			if (debug) {
-				System.out.println("Timing: Extract peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
-				sTime = System.currentTimeMillis();
-			}
+			IJ.log("DoG pre-detected spots: " + spots.size());
 
 			// TODO: IS THIS A PLACE WHERE YOU CAN SKIP RANSAC
-			if (ransac) {
-				Spot.ransac(spots, numIterations, maxError, pInlierRatio);
+			if (pRansac) {
+				Spot.ransac(spots, numIterations, pMaxError, pInlierRatio);
 			} else {
 				try {
 					Spot.fitCandidates(spots);
@@ -183,12 +151,6 @@ public class RadialSymmetry {
 					System.out.println("EXCEPTION CAUGHT");
 				}
 			}
-
-			if (debug) {
-				System.out.println("Timing : RANSAC peaks : " + (System.currentTimeMillis() - sTime) / timingScale);
-				sTime = System.currentTimeMillis();
-			}
-
 		} else
 			// TODO: if the code is organized correctly this part should be
 			// removed
@@ -209,7 +171,7 @@ public class RadialSymmetry {
 				// "-1" because of the imp offset
 				timeFrame = HelperFunctions.copyImg(rai, c, t, impDim);
 
-				RadialSymmetry rs = new RadialSymmetry(rsm, timeFrame);
+				RadialSymmetry rs = new RadialSymmetry(timeFrame, rsm);
 				rs.computeRadialSymmetry();
 
 				// TODO: if the detect spot has at least 1 inlier add it

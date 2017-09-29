@@ -80,6 +80,35 @@ public class RadialSymmetry {
 		computeRadialSymmetry(img, sigma, threshold, supportRadius, inlierRatio, maxError, bsMethod, bsMaxError,
 				bsInlierRatio, anisotropy, ransac);
 	}
+	
+	public void compute(final RandomAccessibleInterval<FloatType> pImg, float pSigma, float pThreshold,
+			int pSupportRadius, float pInlierRatio, float pMaxError, String pBsMethod, float pBsMaxError,
+			float pBsInlierRatio, float pAnisotropy, boolean pRansac){
+		// perform DOG
+		peaks = computeDog(pImg, pSigma, pThreshold);
+		// calculate (normalized) derivatives
+		derivative = new GradientPreCompute(pImg);
+		final NormalizedGradient ng = calculateNormalizedGradient(derivative, pBsMethod, pBsMaxError, pBsInlierRatio);
+		// trigger radial symmetry
+		
+	}
+	
+	public ArrayList<RefinedPeak<Point>> computeDog(final RandomAccessibleInterval<FloatType> pImg, float pSigma, float pThreshold){
+		float pSigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
+		final float tFactor = pImg.numDimensions() == 3 ? 0.5f : 1.0f;
+		final DogDetection<FloatType> dog2 = new DogDetection<>(pImg, calibration, pSigma, pSigma2,
+				DogDetection.ExtremaType.MINIMA, tFactor * pThreshold / 2, false);
+		ArrayList<RefinedPeak<Point>> peaks = dog2.getSubpixelPeaks();
+		return peaks;
+	}
+	
+	public void computeRadialSymmetry(final RandomAccessibleInterval<FloatType> pImg, int pSupportRadius, float pInlierRatio, 
+			float pMaxError, String pBsMethod, float pBsMaxError,
+			float pBsInlierRatio, float pAnisotropy, boolean pRansac){
+		
+	}
+	
+	
 
 	public void computeRadialSymmetry(final RandomAccessibleInterval<FloatType> pImg, float pSigma, float pThreshold,
 			int pSupportRadius, float pInlierRatio, float pMaxError, String pBsMethod, float pBsMaxError,
@@ -99,14 +128,13 @@ public class RadialSymmetry {
 			peaks = dog2.getSubpixelPeaks();
 			
 			derivative = new GradientPreCompute(pImg);
+			final NormalizedGradient ng = calculateNormalizedGradient(derivative, pBsMethod, pBsMaxError, pBsInlierRatio);
 
 			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(0);
 			int numDimensions = pImg.numDimensions();
 
 			Rectangle rectangle = new Rectangle(0, 0, (int)pImg.dimension(0), (int)pImg.dimension(1));
 			HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle, pThreshold);
-
-			final NormalizedGradient ng = calculateNormalizedGradient(derivative, pBsMethod, pBsMaxError, pBsInlierRatio);
 
 			// the size of the RANSAC area
 			final long[] range = new long[numDimensions];
@@ -154,7 +182,6 @@ public class RadialSymmetry {
 			ng = new NormalizedGradientRANSAC(pDerivative, CenterMethod.MEDIAN, pBsMaxError, pBsInlierRatio);
 		else
 			throw new RuntimeException("Unknown bsMethod: " + pBsMethod);
-		
 		return ng;
 	}
 	
@@ -170,21 +197,17 @@ public class RadialSymmetry {
 		// impDim <- x y c z t
 		for (int c = 0; c < impDim[2]; c++) {
 			for (int t = 0; t < impDim[4]; t++) {
-				// "-1" because of the imp offset
-				timeFrame = HelperFunctions.copyImg(rai, c, t, impDim);
-
+				timeFrame = HelperFunctions.copyImg(rai, c, t, impDim); // grab xy(z) part of the image
 				RadialSymmetry rs = new RadialSymmetry(timeFrame, rsm);
 				rs.computeRadialSymmetry();
 
 				int minNumInliers  = 1;
 				ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), minNumInliers);
 				allSpots.addAll(filteredSpots);
-				// set the number of points found for the current time step
 				timePoint.add(new Long(filteredSpots.size()));
 
-				// user wants to have the gauss fit here
 				if (gaussFit) { 
-					// TODO: fix the problem with the computations of this one
+					// FIXME: fix the problem with the computations of this one
 					Intensity.calulateIntesitiesGF(imp, numDimensions, rsm.getParams().getAnisotropyCoefficient(),
 							sigma, filteredSpots, intensity);
 				} else // iterate over all points and perform the linear

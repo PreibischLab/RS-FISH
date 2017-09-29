@@ -41,11 +41,10 @@ public class RadialSymmetry {
 
 	ArrayList<Spot> spots;
 
-	private static final boolean debug = true;
-	private static final long timingScale = 1000; // will result in seconds
+	// private static final boolean debug = true;
+	// private static final long timingScale = 1000; // will result in seconds
 	// DOG:
 	float sigma;
-	float sigma2;
 	float threshold;
 	// RANSAC: 
 	boolean ransac;
@@ -65,7 +64,6 @@ public class RadialSymmetry {
 	public RadialSymmetry(final RandomAccessibleInterval<FloatType> img, final RadialSymmetryParameters params) {
 		this.img = img;
 		sigma = params.getParams().getSigmaDoG();
-		sigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
 		threshold = params.getParams().getThresholdDoG();
 		supportRadius = params.getParams().getSupportRadius();
 		inlierRatio = params.getParams().getInlierRatio();
@@ -93,7 +91,8 @@ public class RadialSymmetry {
 			// decrease the threshold value; this might help in some cases but
 			// z-extra smoothing is image depended
 
-			// long sTime = System.currentTimeMillis();
+			float sigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
+			
 			final float tFactor = pImg.numDimensions() == 3 ? 0.5f : 1.0f;
 			final DogDetection<FloatType> dog2 = new DogDetection<>(pImg, calibration, pSigma, sigma2,
 					DogDetection.ExtremaType.MINIMA, tFactor * pThreshold / 2, false);
@@ -107,56 +106,59 @@ public class RadialSymmetry {
 			Rectangle rectangle = new Rectangle(0, 0, (int)pImg.dimension(0), (int)pImg.dimension(1));
 			HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle, pThreshold);
 
-			final NormalizedGradient ng;
-
-			// "No background subtraction", "Mean", "Median", "RANSAC on Mean",
-			// "RANSAC on Median"
-			if (pBsMethod.equals("No background subtraction"))
-				ng = null;
-			else if (pBsMethod.equals("Mean"))
-				ng = new NormalizedGradientAverage(derivative);
-			else if (pBsMethod.equals("Median"))
-				ng = new NormalizedGradientMedian(derivative);
-			else if (pBsMethod.equals("RANSAC on Mean"))
-				ng = new NormalizedGradientRANSAC(derivative, CenterMethod.MEAN, pBsMaxError, pBsInlierRatio);
-			else if (pBsMethod.equals("RANSAC on Median"))
-				ng = new NormalizedGradientRANSAC(derivative, CenterMethod.MEDIAN, pBsMaxError, pBsInlierRatio);
-			else
-				throw new RuntimeException("Unknown bsMethod: " + pBsMethod);
+			final NormalizedGradient ng = calculateNormalizedGradient(derivative, pBsMethod, pBsMaxError, pBsInlierRatio);
 
 			// the size of the RANSAC area
 			final long[] range = new long[numDimensions];
 			for (int d = 0; d < numDimensions; ++d)
 				range[d] = pSupportRadius;
 
-			if (debug)
-				System.out.println("Range: " + Util.printCoordinates(range));
 			spots = Spot.extractSpots(pImg, simplifiedPeaks, derivative, ng, range);
 			// scale the z-component according to the anisotropy coefficient
-			// if the image is 3D
-			if (numDimensions == 3)
-				for (int j = 0; j < spots.size(); j++)
-					spots.get(j).updateScale(new float[] { 1, 1, pAnisotropy });
+			if (numDimensions == 3) 
+				fixAnisotropy(spots, pAnisotropy);
 
 			IJ.log("DoG pre-detected spots: " + spots.size());
 
-			// TODO: IS THIS A PLACE WHERE YOU CAN SKIP RANSAC
 			if (pRansac) {
 				Spot.ransac(spots, numIterations, pMaxError, pInlierRatio);
 			} else {
 				try {
 					Spot.fitCandidates(spots);
-					// IJ.log( "inliers: " + spots.get(0).inliers.size() );
 				} catch (Exception e) {
-					System.out.println("EXCEPTION CAUGHT");
+					System.out.println("Something went wrong, please report the bug.");
 				}
 			}
 		} else
-			// TODO: if the code is organized correctly this part should be
-			// removed
-			System.out.println("Wrong dimensionality. Currently supported 2D/3D!");
+			System.out.println("Something went wrong, please report the bug.");
 	}
 
+	public static void fixAnisotropy(ArrayList<Spot> spots, float pAnisotropy){
+		for (int j = 0; j < spots.size(); j++)
+			spots.get(j).updateScale(new float[] { 1, 1, pAnisotropy });
+	}
+	
+	public static NormalizedGradient calculateNormalizedGradient(Gradient pDerivative, String pBsMethod, float pBsMaxError, float pBsInlierRatio){
+		final NormalizedGradient ng;
+		// "No background subtraction", "Mean", "Median", "RANSAC on Mean",
+		// "RANSAC on Median"
+		if (pBsMethod.equals("No background subtraction"))
+			ng = null;
+		else if (pBsMethod.equals("Mean"))
+			ng = new NormalizedGradientAverage(pDerivative);
+		else if (pBsMethod.equals("Median"))
+			ng = new NormalizedGradientMedian(pDerivative);
+		else if (pBsMethod.equals("RANSAC on Mean"))
+			ng = new NormalizedGradientRANSAC(pDerivative, CenterMethod.MEAN, pBsMaxError, pBsInlierRatio);
+		else if (pBsMethod.equals("RANSAC on Median"))
+			ng = new NormalizedGradientRANSAC(pDerivative, CenterMethod.MEDIAN, pBsMaxError, pBsInlierRatio);
+		else
+			throw new RuntimeException("Unknown bsMethod: " + pBsMethod);
+		
+		return ng;
+	}
+	
+	
 	// process each 2D/3D slice of the image to search for the spots
 	public static void processSliceBySlice(ImagePlus imp, RandomAccessibleInterval<FloatType> rai,
 			RadialSymmetryParameters rsm, int[] impDim, boolean gaussFit, double sigma, ArrayList<Spot> allSpots,
@@ -174,17 +176,15 @@ public class RadialSymmetry {
 				RadialSymmetry rs = new RadialSymmetry(timeFrame, rsm);
 				rs.computeRadialSymmetry();
 
-				// TODO: if the detect spot has at least 1 inlier add it
-				// FIXME: is this part necessary?
-				ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), 1);
-
+				int minNumInliers  = 1;
+				ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), minNumInliers);
 				allSpots.addAll(filteredSpots);
 				// set the number of points found for the current time step
 				timePoint.add(new Long(filteredSpots.size()));
 
 				// user wants to have the gauss fit here
-				if (gaussFit) { // TODO: fix the problem with the computations
-								// of this one
+				if (gaussFit) { 
+					// TODO: fix the problem with the computations of this one
 					Intensity.calulateIntesitiesGF(imp, numDimensions, rsm.getParams().getAnisotropyCoefficient(),
 							sigma, filteredSpots, intensity);
 				} else // iterate over all points and perform the linear

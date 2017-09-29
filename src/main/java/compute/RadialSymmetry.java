@@ -77,10 +77,12 @@ public class RadialSymmetry {
 	}
 
 	public void computeRadialSymmetry() {
-		computeRadialSymmetry(img, sigma, threshold, supportRadius, inlierRatio, maxError, bsMethod, bsMaxError,
-				bsInlierRatio, anisotropy, ransac);
+		compute(img, sigma, threshold, supportRadius, inlierRatio, maxError, bsMethod, bsMaxError,
+				bsInlierRatio, anisotropy, ransac); 
+		//computeRadialSymmetry(img, sigma, threshold, supportRadius, inlierRatio, maxError, bsMethod, bsMaxError,
+		//		bsInlierRatio, anisotropy, ransac);
 	}
-	
+
 	public void compute(final RandomAccessibleInterval<FloatType> pImg, float pSigma, float pThreshold,
 			int pSupportRadius, float pInlierRatio, float pMaxError, String pBsMethod, float pBsMaxError,
 			float pBsInlierRatio, float pAnisotropy, boolean pRansac){
@@ -89,10 +91,16 @@ public class RadialSymmetry {
 		// calculate (normalized) derivatives
 		derivative = new GradientPreCompute(pImg);
 		final NormalizedGradient ng = calculateNormalizedGradient(derivative, pBsMethod, pBsMaxError, pBsInlierRatio);
+		// use light weighted structure for the radial symmetry computations 
+		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(0);
+		int numDimensions = pImg.numDimensions();
+		Rectangle rectangle = new Rectangle(0, 0, (int)pImg.dimension(0), (int)pImg.dimension(1));
+		HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle, pThreshold);
 		// trigger radial symmetry
-		
+		computeRadialSymmetry(pImg, ng, derivative, simplifiedPeaks, pSupportRadius, pInlierRatio, 
+				pMaxError, pAnisotropy, pRansac);
 	}
-	
+
 	public ArrayList<RefinedPeak<Point>> computeDog(final RandomAccessibleInterval<FloatType> pImg, float pSigma, float pThreshold){
 		float pSigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
 		final float tFactor = pImg.numDimensions() == 3 ? 0.5f : 1.0f;
@@ -101,71 +109,90 @@ public class RadialSymmetry {
 		ArrayList<RefinedPeak<Point>> peaks = dog2.getSubpixelPeaks();
 		return peaks;
 	}
-	
-	public void computeRadialSymmetry(final RandomAccessibleInterval<FloatType> pImg, int pSupportRadius, float pInlierRatio, 
-			float pMaxError, String pBsMethod, float pBsMaxError,
-			float pBsInlierRatio, float pAnisotropy, boolean pRansac){
-		
-	}
-	
-	
 
-	public void computeRadialSymmetry(final RandomAccessibleInterval<FloatType> pImg, float pSigma, float pThreshold,
-			int pSupportRadius, float pInlierRatio, float pMaxError, String pBsMethod, float pBsMaxError,
-			float pBsInlierRatio, float pAnisotropy, boolean pRansac) {
-		if (pImg.numDimensions() == 2 || pImg.numDimensions() == 3) {
-			// IMP: in the 3D case the blobs will have lower contrast as a
-			// function of sigma(z) therefore we have to adjust the threshold;
-			// to fix the problem we use an extra factor = 0.5 which will
-			// decrease the threshold value; this might help in some cases but
-			// z-extra smoothing is image depended
+	public void computeRadialSymmetry(final RandomAccessibleInterval<FloatType> pImg, NormalizedGradient ng, Gradient derivative, ArrayList<long[]> simplifiedPeaks, int pSupportRadius, float pInlierRatio, 
+			float pMaxError, float pAnisotropy, boolean useRansac){
+		int numDimensions = pImg.numDimensions();
 
-			float sigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
-			
-			final float tFactor = pImg.numDimensions() == 3 ? 0.5f : 1.0f;
-			final DogDetection<FloatType> dog2 = new DogDetection<>(pImg, calibration, pSigma, sigma2,
-					DogDetection.ExtremaType.MINIMA, tFactor * pThreshold / 2, false);
-			peaks = dog2.getSubpixelPeaks();
-			
-			derivative = new GradientPreCompute(pImg);
-			final NormalizedGradient ng = calculateNormalizedGradient(derivative, pBsMethod, pBsMaxError, pBsInlierRatio);
+		// the size of the RANSAC area
+		final long[] range = new long[numDimensions];
+		for (int d = 0; d < numDimensions; ++d)
+			range[d] = pSupportRadius;
 
-			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(0);
-			int numDimensions = pImg.numDimensions();
+		spots = Spot.extractSpots(pImg, simplifiedPeaks, derivative, ng, range);
+		// scale the z-component according to the anisotropy coefficient
+		if (numDimensions == 3) 
+			fixAnisotropy(spots, pAnisotropy);
 
-			Rectangle rectangle = new Rectangle(0, 0, (int)pImg.dimension(0), (int)pImg.dimension(1));
-			HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle, pThreshold);
+		IJ.log("DoG pre-detected spots: " + spots.size());
 
-			// the size of the RANSAC area
-			final long[] range = new long[numDimensions];
-			for (int d = 0; d < numDimensions; ++d)
-				range[d] = pSupportRadius;
-
-			spots = Spot.extractSpots(pImg, simplifiedPeaks, derivative, ng, range);
-			// scale the z-component according to the anisotropy coefficient
-			if (numDimensions == 3) 
-				fixAnisotropy(spots, pAnisotropy);
-
-			IJ.log("DoG pre-detected spots: " + spots.size());
-
-			if (pRansac) {
-				Spot.ransac(spots, numIterations, pMaxError, pInlierRatio);
-			} else {
-				try {
-					Spot.fitCandidates(spots);
-				} catch (Exception e) {
-					System.out.println("Something went wrong, please report the bug.");
-				}
+		if (useRansac)
+			Spot.ransac(spots, numIterations, pMaxError, pInlierRatio);
+		else
+			try {
+				Spot.fitCandidates(spots);
+			} catch (Exception e) {
+				System.out.println("Something went wrong, please report the bug.");
 			}
-		} else
-			System.out.println("Something went wrong, please report the bug.");
 	}
+
+//	// TODO: remove once verified that everything is working 
+//	public void computeRadialSymmetry(final RandomAccessibleInterval<FloatType> pImg, float pSigma, float pThreshold,
+//			int pSupportRadius, float pInlierRatio, float pMaxError, String pBsMethod, float pBsMaxError,
+//			float pBsInlierRatio, float pAnisotropy, boolean pRansac) {
+//		if (pImg.numDimensions() == 2 || pImg.numDimensions() == 3) {
+//			// IMP: in the 3D case the blobs will have lower contrast as a
+//			// function of sigma(z) therefore we have to adjust the threshold;
+//			// to fix the problem we use an extra factor = 0.5 which will
+//			// decrease the threshold value; this might help in some cases but
+//			// z-extra smoothing is image depended
+//
+//			float sigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
+//
+//			final float tFactor = pImg.numDimensions() == 3 ? 0.5f : 1.0f;
+//			final DogDetection<FloatType> dog2 = new DogDetection<>(pImg, calibration, pSigma, sigma2,
+//					DogDetection.ExtremaType.MINIMA, tFactor * pThreshold / 2, false);
+//			peaks = dog2.getSubpixelPeaks();
+//
+//			derivative = new GradientPreCompute(pImg);
+//			final NormalizedGradient ng = calculateNormalizedGradient(derivative, pBsMethod, pBsMaxError, pBsInlierRatio);
+//
+//			final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(0);
+//			int numDimensions = pImg.numDimensions();
+//
+//			Rectangle rectangle = new Rectangle(0, 0, (int)pImg.dimension(0), (int)pImg.dimension(1));
+//			HelperFunctions.copyPeaks(peaks, simplifiedPeaks, numDimensions, rectangle, pThreshold);
+//
+//			// the size of the RANSAC area
+//			final long[] range = new long[numDimensions];
+//			for (int d = 0; d < numDimensions; ++d)
+//				range[d] = pSupportRadius;
+//
+//			spots = Spot.extractSpots(pImg, simplifiedPeaks, derivative, ng, range);
+//			// scale the z-component according to the anisotropy coefficient
+//			if (numDimensions == 3) 
+//				fixAnisotropy(spots, pAnisotropy);
+//
+//			IJ.log("DoG pre-detected spots: " + spots.size());
+//
+//			if (pRansac) {
+//				Spot.ransac(spots, numIterations, pMaxError, pInlierRatio);
+//			} else {
+//				try {
+//					Spot.fitCandidates(spots);
+//				} catch (Exception e) {
+//					System.out.println("Something went wrong, please report the bug.");
+//				}
+//			}
+//		} else
+//			System.out.println("Something went wrong, please report the bug.");
+//	}
 
 	public static void fixAnisotropy(ArrayList<Spot> spots, float pAnisotropy){
 		for (int j = 0; j < spots.size(); j++)
 			spots.get(j).updateScale(new float[] { 1, 1, pAnisotropy });
 	}
-	
+
 	public static NormalizedGradient calculateNormalizedGradient(Gradient pDerivative, String pBsMethod, float pBsMaxError, float pBsInlierRatio){
 		final NormalizedGradient ng;
 		// "No background subtraction", "Mean", "Median", "RANSAC on Mean",
@@ -184,8 +211,8 @@ public class RadialSymmetry {
 			throw new RuntimeException("Unknown bsMethod: " + pBsMethod);
 		return ng;
 	}
-	
-	
+
+
 	// process each 2D/3D slice of the image to search for the spots
 	public static void processSliceBySlice(ImagePlus imp, RandomAccessibleInterval<FloatType> rai,
 			RadialSymmetryParameters rsm, int[] impDim, boolean gaussFit, double sigma, ArrayList<Spot> allSpots,
@@ -211,7 +238,7 @@ public class RadialSymmetry {
 					Intensity.calulateIntesitiesGF(imp, numDimensions, rsm.getParams().getAnisotropyCoefficient(),
 							sigma, filteredSpots, intensity);
 				} else // iterate over all points and perform the linear
-						// interpolation for each of the spots
+					// interpolation for each of the spots
 					Intensity.calculateIntensitiesLinear(imp, filteredSpots, intensity);
 			}
 			if (c != 0) // FIXME: formula is wrong

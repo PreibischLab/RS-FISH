@@ -28,7 +28,7 @@ public class ShowResult {
 
 		for (Spot spot : spots) {	
 			// if spot was not discarded
-			if (spot.inliers.size() != 0){
+			if (spot.inliers.size() != 0){ // TODO: filtered already?
 				rt.incrementCounter();
 				double[] pos = spot.getCenter();	
 				for (int d = 0; d < spot.numDimensions(); ++d) {
@@ -38,19 +38,17 @@ public class ShowResult {
 				totalSpotsPerTimePoint++;
 				if (totalSpotsPerTimePoint > timePoint.get(currentTimePoint)){
 					currentTimePoint++;
-					totalSpotsPerTimePoint = 0;
+					totalSpotsPerTimePoint = 1;
 				}
 				rt.addValue("t", currentTimePoint + 1); // user-friendly, starting the counting from 1
 
 				totalSpotsPerChannelPoint++;
 				if (totalSpotsPerChannelPoint > channelPoint.get(currentChannelPoint)){
 					currentChannelPoint++;
-					totalSpotsPerChannelPoint = 0;
+					totalSpotsPerChannelPoint = 1;
 				}
 				rt.addValue("c", currentChannelPoint + 1); // user-friendly, starting the counting from 1				
 
-				// TODO: REMOVE THIS IF - show the result always
-				// if (gaussFit)
 				rt.addValue("intensity",  String.format(java.util.Locale.US, "%.4f", intensity.get(rt.getCounter() - 1)) );
 
 			}

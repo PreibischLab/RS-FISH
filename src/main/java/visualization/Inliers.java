@@ -34,10 +34,11 @@ public class Inliers {
 		if (dimensions.length == 5)
 			System.out.println("only 1 channel images are supported");
 				
-		// TODO: for the images with time have to make a loop
+		// FIXME: for the images with time have to make a loop
 		
 		final boolean encodeErrors = false;
 		Img<FloatType> imgInliers = new ArrayImgFactory<FloatType>().create(dimensions, new FloatType());
+		
 		Spot.drawRANSACArea(spots, imgInliers, encodeErrors);
 		// TODO: (re)-move 
 		ImageJFunctions.show(imgInliers).setTitle("RANSAC inliers");
@@ -59,27 +60,6 @@ public class Inliers {
 		CompositeImage ci = new CompositeImage( merged );
 		ci.setDisplayMode( CompositeImage.COMPOSITE );
 		ci.show();
-	}
-	
-	
-	// TODO: not used in the script anymore!
-	public static <T extends NativeType<T>> boolean isSameSize(RandomAccessibleInterval<T> img1, RandomAccessibleInterval<T> img2){
-		
-		boolean isSame = true; 
-		
-		if (img1.numDimensions() != img2.numDimensions())
-			isSame = false;
-		else{
-			for (int d = 0; d < img1.numDimensions(); d++){
-				if(img1.dimension(d) != img2.dimension(d)){
-					isSame = false;
-					break;
-				}
-					
-			}
-		}
-		
-		return isSame;
 	}
 	
 	

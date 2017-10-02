@@ -35,42 +35,49 @@ public class Radial_Symmetry extends ContextCommand {
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
 	public static int defaultParam = 0;
-	public static boolean defaultGauss = false; 
+	public static boolean defaultGauss = false;
 	public static boolean defaultRANSAC = true;
-	public static float defaultAnisotropy = 1.0f; 
+	public static float defaultAnisotropy = 1.0f;
 
 	public static boolean defaultDetections = true;
-	public static boolean defaultInliers = false; 
+	public static boolean defaultInliers = false;
 
 	// steps per octave for DoG
 	public static int defaultSensitivity = 4;
 
-	@Parameter(autoFill=false, label="Image")
+	// TODO:
+	// https://github.com/scijava/scijava-common/issues/42#issuecomment-332724692
+	// that the answer to the question how to hide some of the elements of the
+	// gui
+
+	@Parameter(autoFill = false, label = "Image")
 	ImagePlus imp;
 
-	@Parameter(choices={ "Manual", "Interactive" }, label="Parameter's mode")
+	@Parameter(choices = { "Manual", "Interactive" }, label = "Parameter's mode")
 	String parameterType = paramChoice[defaultParam];
 
-	@Parameter(label="Anisotropy coefficient")
+	@Parameter(label = "Anisotropy coefficient")
 	float anisotropy = defaultAnisotropy;
 
-	@Parameter(label=" ", visibility=ItemVisibility.MESSAGE, persist = false)
+	@Parameter(label = " ", visibility = ItemVisibility.MESSAGE, persist = false)
 	String anisotropyLabel = "<html>*Use the \"Anisotropy Coeffcient Plugin\"<br/>to calculate the anisotropy coefficient<br/> or leave 1.00 for a reasonable result.";
 
-	@Parameter(label="<html><b>Computation:</h>", visibility=ItemVisibility.MESSAGE)
+	@Parameter(label = "<html><b>Computation:</h>", visibility = ItemVisibility.MESSAGE)
 	String computationLabel = "";
-	@Parameter(label="RANSAC")
+	@Parameter(label = "RANSAC")
 	boolean RANSAC = defaultRANSAC;
-	// use gauss fit 
-	@Parameter(label="Gaussian fitting")
-	boolean gaussFit = defaultGauss; // defines if we perform the gauss fit or linear interpolation for peak intensities
+	// use gauss fit
+	// defines if we perform the gauss fit or
+	// linear interpolation for peak intensities
+	@Parameter(label = "Gaussian fitting")
+	boolean gaussFit = defaultGauss;
 
-	@Parameter(label="<html><b>Visualization:</b>", visibility=ItemVisibility.MESSAGE)
+	@Parameter(label = "<html><b>Visualization:</b>", visibility = ItemVisibility.MESSAGE)
 	String visualizationLabel = "";
-	@Parameter(label="Detections overlay")
+	@Parameter(label = "Detections overlay")
 	boolean showDetections = defaultDetections;
-	@Parameter(label="RANSAC regions")
-	boolean showInliers = defaultInliers;	
+	@Parameter(label = "RANSAC regions")
+	boolean showInliers = defaultInliers;
 
 	// defines the resolution in x y z dimensions
 	double[] calibration;
@@ -84,11 +91,13 @@ public class Radial_Symmetry extends ContextCommand {
 
 	@Override
 	public void run() {
-		if (this.isCanceled()) return;
+		if (this.isCanceled())
+			return;
 		if (imp.getNChannels() > 1)
-			logService.info("Multichannel image detected. We recommend to adjust the parameters for each channel separately.");
+			logService.info(
+					"Multichannel image detected. We recommend to adjust the parameters for each channel separately.");
 
-		// dirty cast that can't be avoided :( 
+		// dirty cast that can't be avoided :(
 		double[] minmax = HelperFunctions.computeMinMax((Img) ImageJFunctions.wrapReal(imp));
 
 		float min = (float) minmax[0];
@@ -99,14 +108,16 @@ public class Radial_Symmetry extends ContextCommand {
 		// the 2 below we adjust here because they are defined in the gui
 		params.setAnisotropyCoefficient(anisotropy);
 		params.setRANSAC(RANSAC);
-		
+
 		if (parameterType.equals(paramChoice[0])) // manual
 		{
 			// set the parameters in the manual mode
 			try {
-				boolean isCanceled = commandService.run(GenericDialogGUIParams.class, true, "guiParams", params).get().isCanceled();
-				if (isCanceled) return;
-			} catch (Exception e){
+				boolean isCanceled = commandService.run(GenericDialogGUIParams.class, true, "guiParams", params).get()
+						.isCanceled();
+				if (isCanceled)
+					return;
+			} catch (Exception e) {
 				logService.info("Internal exception caught");
 			}
 			// calculations are performed further
@@ -118,12 +129,13 @@ public class Radial_Symmetry extends ContextCommand {
 				SimpleMultiThreading.threadWait(100);
 			} while (!irs.isFinished());
 
-			if (irs.wasCanceled()) return;
+			if (irs.wasCanceled())
+				return;
 		}
 
 		// back up the parameter values to the default variables
 		params.setDefaultValues();
-		calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); 
+		calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions());
 
 		RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
 
@@ -136,27 +148,24 @@ public class Radial_Symmetry extends ContextCommand {
 			rai = ImageJFunctions.wrap(imp);
 
 		int[] impDim = imp.getDimensions(); // x y c z t
-		long[] dim = HelperFunctions.getDimensions(impDim); // x y z 
 
 		ArrayList<Spot> allSpots = new ArrayList<>(0);
 		// stores number of detected spots per time point
 		ArrayList<Long> timePoint = new ArrayList<>(0);
-		// stores number of detected spots per channel 
+		// stores number of detected spots per channel
 		ArrayList<Long> channelPoint = new ArrayList<>(0);
 		// stores the intensity values
 		ArrayList<Float> intensity = new ArrayList<>(0);
 
-		RadialSymmetry.processSliceBySlice(imp, rai, rsm, impDim, gaussFit, params.getSigmaDoG(), allSpots, timePoint,
+		RadialSymmetry.processSliceBySlice(ImageJFunctions.wrap(imp), rai, rsm, impDim, gaussFit, params.getSigmaDoG(), allSpots, timePoint,
 				channelPoint, intensity);
 
-		if (parameterType.equals(paramChoice[1])){ // interactive
+		if (parameterType.equals(paramChoice[1])) { // interactive
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity);
 			Visualization.showVisualization(imp, allSpots, intensity, showInliers, showDetections);
-		}
-		else if (parameterType.equals(paramChoice[0])){ // manual 
-			//write the result to the csv file
-		}
-		else
+		} else if (parameterType.equals(paramChoice[0])) { // manual
+			// write the result to the csv file
+		} else
 			System.out.println("Wrong parameters' mode");
 	}
 

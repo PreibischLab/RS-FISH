@@ -95,6 +95,7 @@ public class BatchProcessing {
 		int numDimensions = dim.length;
 
 		RadialSymmetry rs = new RadialSymmetry(rai, rsm);
+		rs.compute();
 
 		// TODO: Check if this part is redundant 
 		// TODO: if the detect spot has at least 1 inlier add it

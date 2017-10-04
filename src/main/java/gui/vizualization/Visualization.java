@@ -19,7 +19,8 @@ public class Visualization {
 
 		// show the initial images overlapped with ransac regions
 		if (showInliers)
-			Inliers.showInliers(ImageJFunctions.wrapReal(imp), allSpots);
+			Inliers.showInliersNew(imp, allSpots);
+			// Inliers.showInliers(imp, allSpots);
 		// show the detections + the histogram (doesn't make sense to show it without the detections)
 		if (showDetections){
 			detection = new Detections(ImageJFunctions.wrapReal(imp), allSpots, intensity);

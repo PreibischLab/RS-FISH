@@ -52,6 +52,7 @@ public class Detections {
 	}
 
 
+	// TODO: the image might be xy t, switch to the imagePlus and adjust the numDimensions accordingly
 	public Detections(RandomAccessibleInterval <FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity){
 		this.numDimensions = img.numDimensions();
 		this.dimensions = new long[numDimensions];
@@ -103,7 +104,7 @@ public class Detections {
 
 	// will be triggered by the movement of the slider
 	// TODO: add the threshold value for the overlays that you want to show
-	public void updatePreview(double threshold){	
+	public void updatePreview(double threshold){
 		
 		this.threshold = threshold;
 		

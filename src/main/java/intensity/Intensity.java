@@ -77,62 +77,33 @@ public class Intensity {
 			sr.addData(z, I);
 		}
 
-		// no reason to trigger the computations 
-		// System.out.println(sr.getSlope());
-		// System.out.println(sr.getIntercept());
-
 		double slope = sr.getSlope();
 		double intercept = sr.getIntercept();
-		
-		
-		double zMin =getZMin(spots, numDimensions);
-		
+
+		double zMin = getZMin(spots, numDimensions);
+
 		for (int j = 0; j < spots.size(); ++j) {
 			double I = intensity.get(j);
 			float z = spots.get(j).getFloatPosition(numDimensions - 1);
-			double dI = linearFunc(zMin, slope, intercept) - linearFunc(z, slope, intercept);		
-			intensity.set(j, (float)(I + dI));
+			double dI = linearFunc(zMin, slope, intercept) - linearFunc(z, slope, intercept);	
+			intensity.set(j, (float) (I + dI));
 		}
-		
+
 	}
-	
+
+	// return the minimum z 
 	public static double getZMin(ArrayList<Spot> spots, int numDimensions) {
 		double zMin = Double.MAX_VALUE;
-		
+
 		for (Spot spot : spots)
 			if (zMin > spot.getDoublePosition(numDimensions - 1))
 				zMin = spot.getDoublePosition(numDimensions - 1);
 		return zMin;
 	}
-	
-	
-	// return y for y = kx + b 
+
+	// return y for y = kx + b
 	public static double linearFunc(double x, double k, double b) {
-		return k*x + b;
+		return k * x + b;
 	}
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

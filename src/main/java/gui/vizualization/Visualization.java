@@ -13,14 +13,13 @@ import visualization.Inliers;
 
 public class Visualization {
 
-	public static void showVisualization(ImagePlus imp, ArrayList<Spot> allSpots, ArrayList<Float> intensity, boolean showInliers, boolean showDetections){
+	public static void showVisualization(ImagePlus imp, ArrayList<Spot> allSpots, ArrayList<Float> intensity, ArrayList<Long> timePoint, boolean showInliers, boolean showDetections){
 
 		Detections detection;
 
 		// show the initial images overlapped with ransac regions
 		if (showInliers) {
-			// Inliers.showInliersNew(imp, allSpots);
-			Inliers.showInliers(imp, allSpots);
+			Inliers.showInliers(imp, allSpots, timePoint);
 		}
 		// show the detections + the histogram (doesn't make sense to show it without the detections)
 		if (showDetections){

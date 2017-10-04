@@ -1,6 +1,7 @@
 package fit;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
@@ -327,7 +328,7 @@ public class Spot implements RealLocalizable, Localizable
 	}
 
 	public static <T extends RealType<T> > void drawRANSACArea(
-			final ArrayList< Spot > spots,
+			final List< Spot > spots,
 			final RandomAccessibleInterval< T > draw,
 			final boolean encodeError )
 	{

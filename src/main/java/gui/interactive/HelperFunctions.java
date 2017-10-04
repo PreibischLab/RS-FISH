@@ -55,11 +55,28 @@ public class HelperFunctions {
 		if (mapping[2] != -1) // if there are channels
 			img = Views.hyperSlice(img, mapping[2], channel);
 		
-		if (mapping[4] != -1) // if there are channels
+		if (mapping[4] != -1) // if there are timepoints
 			img = Views.hyperSlice(img, mapping[4], time);
 					
 		return Views.dropSingletonDimensions(img);
 	}
+
+	// returns the index of time dimension
+	public static int getTidx(ImagePlus imp){
+		int t = 4;
+		int numDimensions = 5; 
+		int [] dimensions = imp.getDimensions();
+		
+		if (dimensions[4] == 1)
+				t = -1;
+		else {
+			for (int d = 2; d < numDimensions; d++)
+				if (dimensions[d] == 1) t--;
+			// 2D image
+			if (t == 1) t = -1;
+		}
+		return t;
+	} 
 	
 	// return x y z 
 	public static long [] getDimensions(int [] impDim){
@@ -72,7 +89,18 @@ public class HelperFunctions {
 		return dim;
 	}
 	
-
+	public static long[] getAllDimensions(ImagePlus imagePlus){
+		long[] fullDimensions = new long [imagePlus.getNDimensions()];
+		int[] dimensions = imagePlus.getDimensions();
+		
+		int idx = 0;
+		for (int d = 0; d < dimensions.length; d++)
+			if(dimensions[d] != 1) 
+				fullDimensions[idx++] = dimensions[d];
+		
+		return fullDimensions;
+	}
+	
 	public static ArrayList<RefinedPeak<Point>> filterPeaks(final ArrayList<RefinedPeak<Point>> peaks,
 			final Rectangle rectangle, final double threshold) {
 		final ArrayList<RefinedPeak<Point>> filtered = new ArrayList<>();

@@ -186,6 +186,11 @@ public class RadialSymmetry {
 				} else // iterate over all points and perform the linear
 						// interpolation for each of the spots
 					Intensity.calculateIntensitiesLinear(timeFrame, filteredSpots, intensity);
+				
+				// FIXME: make this a parameter 
+				if (true)
+					Intensity.fixIntensities(filteredSpots, intensity);
+				
 			}
 			if (c != 0) // FIXME: formula is wrong
 				channelPoint.add(new Long(allSpots.size() - channelPoint.get(c - 1)));

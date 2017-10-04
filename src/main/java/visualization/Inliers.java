@@ -6,7 +6,7 @@ import fit.Spot;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.ImageStack;
-
+import ij.gui.Roi;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
@@ -30,6 +30,12 @@ public class Inliers {
 		// figure put if we have xy or xyz image
 		int numDimensions = imagePlus.getNSlices() == 1 ? 2 : 3; 
 		long [] dimensions = new long [numDimensions];
+		
+		// FIXME: ugly adjust
+		dimensions[0] = imagePlus.getDimensions()[0];
+		dimensions[1] = imagePlus.getDimensions()[1];
+		if (numDimensions == 3)
+			dimensions[2] = imagePlus.getDimensions()[3];
 
 		// TODO: doesn't fix all the cases! 
 		if (dimensions.length == 5)
@@ -44,19 +50,18 @@ public class Inliers {
 		// TODO: (re)-move 
 		ImageJFunctions.show(imgInliers).setTitle("RANSAC inliers");
 
-		final ImagePlus imp = imagePlus.duplicate();
+		// final ImagePlus imp = imagePlus.duplicate();
 		final ImagePlus impInliers = ImageJFunctions.wrap(imgInliers, "inliers" ).duplicate();
+		final ImageStack stack = new ImageStack(imagePlus.getWidth(), imagePlus.getHeight() );
 
-		final ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight() );
-
-		for ( int i = 0; i < imp.getStackSize(); ++i )
+		for ( int i = 0; i < imagePlus.getStackSize(); ++i )
 		{
-			stack.addSlice( imp.getStack().getProcessor( i + 1 ) );
+			stack.addSlice( imagePlus.getStack().getProcessor( i + 1 ) );
 			stack.addSlice( impInliers.getStack().getProcessor( i + 1 ) );
 		}
 
 		ImagePlus merged = new ImagePlus("merge", stack );
-		merged.setDimensions( 2, imp.getStack().getSize(), 1 );
+		merged.setDimensions( 2, imagePlus.getStack().getSize(), 1 );
 
 		CompositeImage ci = new CompositeImage( merged );
 		ci.setDisplayMode( CompositeImage.COMPOSITE );

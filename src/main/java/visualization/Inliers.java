@@ -31,7 +31,7 @@ public class Inliers {
 		int numDimensions = imagePlus.getNSlices() == 1 ? 2 : 3; 
 		long [] dimensions = new long [numDimensions];
 		
-		// FIXME: ugly adjust
+		// FIXME: ugly, fix this one 
 		dimensions[0] = imagePlus.getDimensions()[0];
 		dimensions[1] = imagePlus.getDimensions()[1];
 		if (numDimensions == 3)
@@ -48,7 +48,7 @@ public class Inliers {
 
 		Spot.drawRANSACArea(spots, imgInliers, encodeErrors);
 		// TODO: (re)-move 
-		ImageJFunctions.show(imgInliers).setTitle("RANSAC inliers");
+		// ImageJFunctions.show(imgInliers).setTitle("RANSAC inliers");
 
 		// final ImagePlus imp = imagePlus.duplicate();
 		final ImagePlus impInliers = ImageJFunctions.wrap(imgInliers, "inliers" ).duplicate();
@@ -60,7 +60,7 @@ public class Inliers {
 			stack.addSlice( impInliers.getStack().getProcessor( i + 1 ) );
 		}
 
-		ImagePlus merged = new ImagePlus("merge", stack );
+		ImagePlus merged = new ImagePlus("Initial spots and RANSAC inliers", stack );
 		merged.setDimensions( 2, imagePlus.getStack().getSize(), 1 );
 
 		CompositeImage ci = new CompositeImage( merged );

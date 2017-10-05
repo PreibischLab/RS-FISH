@@ -9,7 +9,7 @@ import org.scijava.plugin.Plugin;
 import parameters.GUIParams;
 
 // used for the advanced option of the initial dialog
-@Plugin(type = Command.class, name="LUL!")
+@Plugin(type = Command.class, name="Set parameters")
 public class GenericDialogGUIParams extends ContextCommand
 {
 	// TODO: This one use useless

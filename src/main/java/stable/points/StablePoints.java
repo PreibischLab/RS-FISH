@@ -124,7 +124,7 @@ public class StablePoints {
 		// resort (don't sort just take the largest one )
 		
 		
-		new Detections(img, goodSpots).showDetections();
+		// new Detections(img, goodSpots).showDetections();
 
 	}
 

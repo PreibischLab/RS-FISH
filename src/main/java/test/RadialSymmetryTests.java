@@ -26,7 +26,7 @@ public class RadialSymmetryTests {
 		imp.show();
 		imp.setSlice(121);
 
-		new Radial_Symmetry().run(new String());
+		// new Radial_Symmetry().run(new String());
 	}
 	
 	

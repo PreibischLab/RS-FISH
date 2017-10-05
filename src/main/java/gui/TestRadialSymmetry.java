@@ -13,8 +13,15 @@ import net.imagej.Dataset;
 public class TestRadialSymmetry {
 
 	public static void main(String[] args) {
-		File path = new File( "/Users/kkolyva/Desktop/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/all-cases-test/image-xyt.tif" );
-		File path2 = new File( "/Users/kkolyva/Desktop/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/Simulated_3D_4x.tif" );
+		String sysPath = "";
+		System.out.println(System.getProperty("os.name"));
+		if (System.getProperty("os.name").equals("Linux"))
+			sysPath = "/media/milkyklim/Samsung_T3";
+		else
+			sysPath = "/Users/kkolyva/Desktop";
+				
+		File path = new File( sysPath + "/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/all-cases-test/image-xyt.tif" );
+		File path2 = new File( sysPath + "/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/Simulated_3D_4x.tif" );
 		// create the ImageJ application context with all available services
 		final net.imagej.ImageJ ij = new net.imagej.ImageJ();
 		ij.ui().showUI();

@@ -79,6 +79,7 @@ public class Detections {
 		sortedIndices = comparator.createIndexArray();
 		Arrays.sort(sortedIndices, comparator);
 		// sort by z in increasing order
+		// TODO: Perfom for 3D images only ? 
 		Collections.sort(peaks, new PosComparator());
 
 		permuteIntensities(intensity, this.intensity, sortedIndices);
@@ -109,10 +110,8 @@ public class Detections {
 			tmp.add((long) curTimePointIdx);
 		}
 
-		for (int j = 0; j < idx.length; j++) {
+		for (int j = 0; j < idx.length; j++) 
 			timePointIndices.add(tmp.get(idx[j]) - 1); // IMP! 0-notation
-			System.out.println(timePointIndices.get(j));
-		}
 	}
 
 	// shows the detected blobs

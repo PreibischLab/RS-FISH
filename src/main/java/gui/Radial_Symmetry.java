@@ -163,6 +163,7 @@ public class Radial_Symmetry extends ContextCommand {
 		if (parameterType.equals(paramChoice[1])) { // interactive
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity);
 			Visualization.showVisualization(imp, allSpots, intensity, timePoint, showInliers, showDetections);
+			imp.deleteRoi();
 		} else if (parameterType.equals(paramChoice[0])) { // manual
 			// write the result to the csv file
 		} else

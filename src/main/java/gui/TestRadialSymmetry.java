@@ -14,7 +14,7 @@ public class TestRadialSymmetry {
 
 	public static void main(String[] args) {
 		String sysPath = "";
-		System.out.println(System.getProperty("os.name"));
+		// System.out.println(System.getProperty("os.name"));
 		if (System.getProperty("os.name").equals("Linux"))
 			sysPath = "/media/milkyklim/Samsung_T3";
 		else

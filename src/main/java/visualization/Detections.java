@@ -24,12 +24,13 @@ import util.ImgLib2Util;
 public class Detections {
 
 	ImagePlus imp;
-	ArrayList<double []> peaks;
+	ArrayList<double[]> peaks;
 	ArrayList<Float> intensity;
-	Integer [] sortedIndices; // sorting order in increasing z-dim
+	ArrayList<Long> timePointIndices;
+	Integer[] sortedIndices; // sorting order in increasing z-dim
 
 	int numDimensions;
-	long [] dimensions;
+	long[] dimensions;
 
 	SliceObserver sliceObserver;
 
@@ -39,103 +40,142 @@ public class Detections {
 	boolean isComputing = false;
 	boolean isStarted = false;
 
-	public boolean isComputing(){
+	public boolean isComputing() {
 		return isComputing;
 	}
 
-	public boolean isStarted(){
+	public boolean isStarted() {
 		return isStarted;
 	}
 
-	public double getThreshold(){
+	public double getThreshold() {
 		return threshold;
 	}
 
-
-	// TODO: the image might be xy t, switch to the imagePlus and adjust the numDimensions accordingly
-	public Detections(RandomAccessibleInterval <FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity){
-		this.numDimensions = img.numDimensions();
-		this.dimensions = new long[numDimensions];
+	// TODO: the image might be xy t, switch to the imagePlus and adjust the
+	// numDimensions accordingly
+	public Detections(ImagePlus imp, ArrayList<Spot> spots, ArrayList<Float> intensity, ArrayList<Long> timePoint) {
+		this.dimensions = HelperFunctions.getDimensions(imp.getDimensions());
+		this.numDimensions = dimensions.length; // stores x y (z) only
 
 		this.threshold = 0; // we suppose that intensities are non-negative
 
-		// sort over z ? 
-		// show the corresponding overlay 
+		// sort over z ?
+		// show the corresponding overlay
 
 		// TODO: add the check for the 2-4D different cases
 
-		this.imp = ImageJFunctions.wrap(img, "");
-		this.imp.setDimensions( 1, (int)img.dimension( 2 ), 1 );
-		
+		this.imp = imp;
+		// this.imp.setDimensions( 1, (int)img.dimension( 2 ), 1 );
+
 		this.peaks = new ArrayList<>(spots.size());
 		this.intensity = new ArrayList<>(intensity.size());
+		this.timePointIndices = new ArrayList<>(intensity.size());
 
 		HelperFunctions.copyToDouble(spots, peaks);
-		
+
 		// sorts the indices to be able to get the intensities
 		IndexComparator comparator = new IndexComparator(peaks);
 		sortedIndices = comparator.createIndexArray();
 		Arrays.sort(sortedIndices, comparator);
-		// sort by z in increasing order 
+		// sort by z in increasing order
 		Collections.sort(peaks, new PosComparator());
-		
+
 		permuteIntensities(intensity, this.intensity, sortedIndices);
-		
+		permuteTimePoints(timePoint, this.timePointIndices, sortedIndices);
+
 	}
 
-	public static void permuteIntensities(ArrayList<Float> from, ArrayList<Float> to, Integer[] idx ){
+	public static void permuteIntensities(ArrayList<Float> from, ArrayList<Float> to, Integer[] idx) {
 		// from and to are of the same sizes
-		for( int j = 0; j < from.size(); j++){
+		for (int j = 0; j < from.size(); j++)
 			to.add(from.get(idx[j]));
+	}
+
+	public static void permuteTimePoints(ArrayList<Long> timePoint, ArrayList<Long> timePointIndices, Integer[] idx) {
+		// from and to are NOT of the same sizes
+
+		ArrayList<Long> tmp = new ArrayList<>(timePointIndices.size());
+
+		// go over all indices
+		int curTimePointIdx = 0;
+		long totalSpots = 0;
+		for (int j = 0; j < idx.length; j++) {
+			if (totalSpots <= j) {
+				totalSpots += timePoint.get(curTimePointIdx);
+				curTimePointIdx++;
+			}
+			// timePointIndices.add((long) curTimePointIdx);
+			tmp.add((long) curTimePointIdx);
+		}
+
+		for (int j = 0; j < idx.length; j++) {
+			timePointIndices.add(tmp.get(idx[j]) - 1); // IMP! 0-notation
+			System.out.println(timePointIndices.get(j));
 		}
 	}
-	
 
 	// shows the detected blobs
 	// images can be 2,3,4D
 	// in general x y c z t
-	public void showDetections(){
+	public void showDetections() {
 		imp.show();
 
-		sliceObserver = new SliceObserver(imp, new ImagePlusListener( this ));
+		sliceObserver = new SliceObserver(imp, new ImagePlusListener(this));
 		updatePreview(threshold);
 		isStarted = true;
 	}
 
 	// will be triggered by the movement of the slider
 	// TODO: add the threshold value for the overlays that you want to show
-	public void updatePreview(double threshold){
-		
+	public void updatePreview(double threshold) {
+
 		this.threshold = threshold;
-		
-		Overlay overlay = imp.getOverlay();
+
+		Overlay overlay = imp.getOverlay(); // contains marked spots
 
 		if (overlay == null) {
 			overlay = new Overlay();
 			imp.setOverlay(overlay);
 		}
 
-		overlay.clear();		
+		overlay.clear();
 
-		int zSlice = imp.getCurrentSlice(); // getZ() ? 
+		int zSlice = imp.getZ();
+		int tSlice = imp.getT();
+		int[] indices = new int[2];
 
-		int[] indices = findIndices(zSlice); // contains indices of the lower and upper slices
+		// image hax z ?
+		if (imp.getDimensions()[3] != 1) {
+			// FIXME: should work in 2D + time, too
+			indices = findIndices(zSlice); // contains indices of the lower and upper slices
+		} else {
+			indices[0] = 0;
+			indices[1] = peaks.size();
+		}
 
-		if (indices[0] >= 0 && indices[1] >= 0){
-			for (int curPeakIdx = indices[0]; curPeakIdx <= indices[1]; curPeakIdx++){			
-				if (intensity.get(curPeakIdx) > threshold){ // this one should be the comparison with the current peak intensity
-					double [] peak = peaks.get(curPeakIdx);
+		if (indices[0] >= 0 && indices[1] >= 0) {
+			for (int curPeakIdx = indices[0]; curPeakIdx < indices[1]; curPeakIdx++) {
+				if (timePointIndices.get(curPeakIdx) + 1 == tSlice) { // filter corresponding time points
+					if (intensity.get(curPeakIdx) > threshold) { // this one should be the comparison with the current
+																	// peak intensity
+						double[] peak = peaks.get(curPeakIdx);
 
-					final double x = peak[0];
-					final double y = peak[1];
-					final long z = (long)peak[2];
+						final double x = peak[0];
+						final double y = peak[1];
 
-					int initRadius = 5;
-					int radius = initRadius - (int)Math.abs(z - zSlice) ;
+						int initRadius = 5;
+						int radius = initRadius;
 
-					final OvalRoi or = new OvalRoi(x - radius + 0.5, y - radius + 0.5, radius * 2, radius * 2);
-					or.setStrokeColor(new Color(255, 0, 0));
-					overlay.add(or);
+						if (numDimensions == 3) {
+							final long z = (long) peak[2];
+							radius -= (int) Math.abs(z - zSlice);
+						}
+
+						final OvalRoi or = new OvalRoi(x - radius + 0.5, y - radius + 0.5, radius * 2, radius * 2);
+						or.setStrokeColor(new Color(255, 0, 0));
+						overlay.add(or);
+					}
 				}
 			}
 		}
@@ -145,10 +185,10 @@ public class Detections {
 	}
 
 	// TODO: maybe possible speed up and not necessary to sort in longs
-	public class PosComparator implements Comparator<double []>{
+	public class PosComparator implements Comparator<double[]> {
 
 		@Override
-		public int compare(double[] a, double [] b) {
+		public int compare(double[] a, double[] b) {
 			int compareTo = 0;
 
 			double az = a[numDimensions - 1];
@@ -162,14 +202,14 @@ public class Detections {
 		}
 	}
 
-	public class IndexComparator implements Comparator<Integer>{
-		private final ArrayList<double []> peaks; 
+	public class IndexComparator implements Comparator<Integer> {
+		private final ArrayList<double[]> peaks;
 
-		public IndexComparator(ArrayList<double []> peaks){
+		public IndexComparator(ArrayList<double[]> peaks) {
 			this.peaks = peaks;
 		}
 
-		public Integer [] createIndexArray(){
+		public Integer[] createIndexArray() {
 			Integer[] indexes = new Integer[peaks.size()];
 			for (int i = 0; i < peaks.size(); i++)
 				indexes[i] = i; // Autoboxing
@@ -177,8 +217,7 @@ public class Detections {
 		}
 
 		@Override
-		public int compare(Integer index1, Integer index2)
-		{
+		public int compare(Integer index1, Integer index2) {
 			// Autounbox from Integer to int to use as array indexes
 			int compareTo = 0;
 
@@ -193,13 +232,11 @@ public class Detections {
 		}
 	}
 
+	// searches for the min[IDX_1] and max[IDX_2]
+	public int[] findIndices(long zSlice) {
+		int[] indices = new int[2]; //
 
-
-	// searches for the min[IDX_1] and max[IDX_2] 
-	public int[] findIndices(long zSlice){
-		int[] indices = new int[2]; // 
-
-		// TODO: MAKE THE THIS THE PARAMETER THAT IS PASSED 
+		// TODO: MAKE THE THIS THE PARAMETER THAT IS PASSED
 		// THIS IS THE SCALE THAT YOU COMPUTE
 		int ds = 5; // how many extra slices to consider = ds*2
 
@@ -207,33 +244,33 @@ public class Detections {
 		double lowerBound = Math.max(zSlice - ds, 1);
 		double upperBound = Math.min(zSlice + ds, imp.getNSlices()); // imp.getNSlices());
 
-		double [] tmp = new double[numDimensions];
+		double[] tmp = new double[numDimensions];
 		tmp[numDimensions - 1] = lowerBound;
 		int idxLower = Collections.binarySearch(peaks, tmp, new PosComparator());
 		tmp[numDimensions - 1] = upperBound;
 		int idxUpper = Collections.binarySearch(peaks, tmp, new PosComparator());
 
-		// DEBUG: 
-		// System.out.println(idxLower + " "  + idxUpper);		
+		// DEBUG:
+		// System.out.println(idxLower + " " + idxUpper);
 
-		if (idxLower < 0){
+		if (idxLower < 0) {
 			idxLower = -(idxLower + 1);
 			if (idxLower == peaks.size())
 				idxLower -= 1;
 		}
 
-		if (idxUpper < 0){
+		if (idxUpper < 0) {
 			idxUpper = -(idxUpper + 1);
 			if (idxUpper == peaks.size())
 				idxUpper -= 1;
 		}
 
-		//TODO: Update this to have real O(lg n) complexity
+		// TODO: Update this to have real O(lg n) complexity
 
 		indices[0] = idxLower;
 		indices[1] = idxUpper;
 
-		if (idxLower >= 0 && idxUpper >= 0){
+		if (idxLower >= 0 && idxUpper >= 0) {
 			indices[0] = updateIdx(peaks, numDimensions, zSlice, idxLower, -1);
 			indices[1] = updateIdx(peaks, numDimensions, zSlice, idxUpper, 1);
 		}
@@ -241,7 +278,7 @@ public class Detections {
 		return indices;
 	}
 
-	public static int updateIdx(ArrayList<double[]> peaks, int numDimensions, long zSlice, int idx, int direction){
+	public static int updateIdx(ArrayList<double[]> peaks, int numDimensions, long zSlice, int idx, int direction) {
 		int newIdx = idx;
 
 		int from = idx;
@@ -249,11 +286,11 @@ public class Detections {
 		long zPos = (long) peaks.get(idx)[numDimensions - 1]; // current zPosition
 
 		int j = from;
-		while(zSlice == zPos){
+		while (zSlice == zPos) {
 			if (j < 0 || j == peaks.size())
 				break;
 
-			if((long)peaks.get(j)[numDimensions - 1] != zPos)
+			if ((long) peaks.get(j)[numDimensions - 1] != zPos)
 				break;
 
 			newIdx = j;
@@ -265,8 +302,7 @@ public class Detections {
 		return newIdx;
 	}
 
-
-	public static void main(String [] args){
+	public static void main(String[] args) {
 
 	}
 }

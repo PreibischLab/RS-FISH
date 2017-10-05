@@ -23,7 +23,7 @@ public class Visualization {
 		}
 		// show the detections + the histogram (doesn't make sense to show it without the detections)
 		if (showDetections){
-			detection = new Detections(ImageJFunctions.wrapReal(imp), allSpots, intensity);
+			detection = new Detections(imp, allSpots, intensity, timePoint);
 			detection.showDetections();
 			
 			// do not show histogram if you have zero spots

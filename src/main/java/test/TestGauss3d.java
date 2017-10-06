@@ -233,7 +233,7 @@ public class TestGauss3d
 		return Math.sqrt( sum );
 	}
 
-	final public static void addGaussian( final Img< FloatType > image, final double[] location, final double[] sigma, float A )
+	final public static void addGaussian( final RandomAccessibleInterval< FloatType > image, final double[] location, final double[] sigma, float A )
 	{
 		final int numDimensions = image.numDimensions();
 		final int[] size = new int[ numDimensions ];

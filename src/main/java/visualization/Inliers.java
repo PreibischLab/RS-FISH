@@ -16,53 +16,9 @@ import net.imglib2.view.Views;
 
 public class Inliers {
 
-	// ImagePlus imp; // initial image
-
 	public Inliers() {
 
 	}
-
-// TODO remove with the next commit 
-//	public static void showInliersOld(ImagePlus imagePlus, ArrayList<Spot> spots) {
-//		// figure put if we have xy or xyz image
-//		int numDimensions = imagePlus.getNSlices() == 1 ? 2 : 3;
-//		long[] dimensions = new long[numDimensions];
-//
-//		// FIXME: ugly, fix this one
-//		dimensions[0] = imagePlus.getDimensions()[0];
-//		dimensions[1] = imagePlus.getDimensions()[1];
-//		if (numDimensions == 3)
-//			dimensions[2] = imagePlus.getDimensions()[3];
-//
-//		// TODO: doesn't fix all the cases!
-//		if (dimensions.length == 5)
-//			System.out.println("only 1 channel images are supported");
-//
-//		// FIXME: for the images with time have to make a loop
-//
-//		final boolean encodeErrors = false;
-//		Img<FloatType> imgInliers = new ArrayImgFactory<FloatType>().create(dimensions, new FloatType());
-//
-//		Spot.drawRANSACArea(spots, imgInliers, encodeErrors);
-//		// TODO: (re)-move
-//		// ImageJFunctions.show(imgInliers).setTitle("RANSAC inliers");
-//
-//		// final ImagePlus imp = imagePlus.duplicate();
-//		final ImagePlus impInliers = ImageJFunctions.wrap(imgInliers, "inliers").duplicate();
-//		final ImageStack stack = new ImageStack(imagePlus.getWidth(), imagePlus.getHeight());
-//
-//		for (int i = 0; i < imagePlus.getStackSize(); ++i) {
-//			stack.addSlice(imagePlus.getStack().getProcessor(i + 1));
-//			stack.addSlice(impInliers.getStack().getProcessor(i + 1));
-//		}
-//
-//		ImagePlus merged = new ImagePlus("Initial spots and RANSAC inliers", stack);
-//		merged.setDimensions(2, imagePlus.getStack().getSize(), 1);
-//
-//		CompositeImage ci = new CompositeImage(merged);
-//		ci.setDisplayMode(CompositeImage.COMPOSITE);
-//		ci.show();
-//	}
 
 	public static void showInliers(ImagePlus imagePlus, ArrayList<Spot> spots, ArrayList<Long> timePoint) {
 		if (imagePlus.getNChannels() != 1)

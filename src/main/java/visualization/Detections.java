@@ -36,6 +36,9 @@ public class Detections {
 
 	double threshold; // show only corresponding spots from the histogram
 
+	float sigma;
+	float anisotropy;
+	
 	// TODO: create getters and setters
 	boolean isComputing = false;
 	boolean isStarted = false;
@@ -54,11 +57,14 @@ public class Detections {
 
 	// TODO: the image might be xy t, switch to the imagePlus and adjust the
 	// numDimensions accordingly
-	public Detections(ImagePlus imp, ArrayList<Spot> spots, ArrayList<Float> intensity, ArrayList<Long> timePoint) {
+	public Detections(ImagePlus imp, ArrayList<Spot> spots, ArrayList<Float> intensity, ArrayList<Long> timePoint, float sigma, float anisotropy) {
 		this.dimensions = HelperFunctions.getDimensions(imp.getDimensions());
 		this.numDimensions = dimensions.length; // stores x y (z) only
 
 		this.threshold = 0; // we suppose that intensities are non-negative
+		
+		this.sigma = sigma;
+		this.anisotropy = anisotropy;
 
 		// sort over z ?
 		// show the corresponding overlay
@@ -147,7 +153,7 @@ public class Detections {
 		// image hax z ?
 		if (imp.getDimensions()[3] != 1) {
 			// FIXME: should work in 2D + time, too
-			indices = findIndices(zSlice); // contains indices of the lower and upper slices
+			indices = findIndices(zSlice, sigma, anisotropy); // contains indices of the lower and upper slices
 		} else {
 			indices[0] = 0;
 			indices[1] = peaks.size();
@@ -163,12 +169,12 @@ public class Detections {
 						final double x = peak[0];
 						final double y = peak[1];
 
-						int initRadius = 5;
-						int radius = initRadius;
+						float initRadius = sigma + 1; // make radius a bit larger than DoG sigma
+						float radius = initRadius;
 
 						if (numDimensions == 3) {
 							final long z = (long) peak[2];
-							radius -= (int) Math.abs(z - zSlice);
+							radius -= Math.abs(z - (zSlice - 1));
 						}
 
 						final OvalRoi or = new OvalRoi(x - radius + 0.5, y - radius + 0.5, radius * 2, radius * 2);
@@ -232,12 +238,12 @@ public class Detections {
 	}
 
 	// searches for the min[IDX_1] and max[IDX_2]
-	public int[] findIndices(long zSlice) {
+	public int[] findIndices(long zSlice, float sigma, float anisotropy) {
 		int[] indices = new int[2]; //
 
 		// TODO: MAKE THE THIS THE PARAMETER THAT IS PASSED
 		// THIS IS THE SCALE THAT YOU COMPUTE
-		int ds = 5; // how many extra slices to consider = ds*2
+		int ds =  (int)(sigma*anisotropy) + 1;// 5; // how many extra slices to consider = ds*2
 
 		// FIXME: this imageJ problem slices vs channels!
 		double lowerBound = Math.max(zSlice - ds, 1);

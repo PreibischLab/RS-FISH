@@ -13,7 +13,7 @@ import visualization.Inliers;
 
 public class Visualization {
 
-	public static void showVisualization(ImagePlus imp, ArrayList<Spot> allSpots, ArrayList<Float> intensity, ArrayList<Long> timePoint, boolean showInliers, boolean showDetections){
+	public static void showVisualization(ImagePlus imp, ArrayList<Spot> allSpots, ArrayList<Float> intensity, ArrayList<Long> timePoint, boolean showInliers, boolean showDetections, float sigma, float anisotropy){
 
 		Detections detection;
 
@@ -23,7 +23,7 @@ public class Visualization {
 		}
 		// show the detections + the histogram (doesn't make sense to show it without the detections)
 		if (showDetections){
-			detection = new Detections(imp, allSpots, intensity, timePoint);
+			detection = new Detections(imp, allSpots, intensity, timePoint, sigma, anisotropy);
 			detection.showDetections();
 			
 			// do not show histogram if you have zero spots

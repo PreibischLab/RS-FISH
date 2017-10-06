@@ -13,36 +13,38 @@ import net.imagej.Dataset;
 public class TestRadialSymmetry {
 
 	public static void main(String[] args) {
-		String sysPath = "";
-		// System.out.println(System.getProperty("os.name"));
-		if (System.getProperty("os.name").equals("Linux"))
-			sysPath = "/media/milkyklim/Samsung_T3";
-		else
-			sysPath = "/Users/kkolyva/Desktop";
-				
-		File path = new File( sysPath + "/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/all-cases-test/image-xyt.tif" );
-		File path2 = new File( sysPath + "/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/Simulated_3D_4x.tif" );
-		// create the ImageJ application context with all available services
 		final net.imagej.ImageJ ij = new net.imagej.ImageJ();
 		ij.ui().showUI();
 
-		// load the dataset
-		Dataset dataset;
-		Dataset dataset2;
-		try {
-			dataset = ij.scifio().datasetIO().open(path.getAbsolutePath());
-			dataset2 = ij.scifio().datasetIO().open(path2.getAbsolutePath());
-			
-			// show the image
-			ij.ui().show(dataset);
-			ij.ui().show(dataset2);
-			// invoke the plugin
-			ij.command().run(Radial_Symmetry.class, true);
+		String sysPath = "src/main/resources/rs-test/";
+		String testType = "vizualisation"; // algorithm
+		String isRandom = true ? "random-" : ""; 
 
-		} catch (IOException exc) {
-			System.out.println("LUL!");
+		int numTests = 4;
+		File [] paths = new File[numTests];
+		Dataset [] datasets = new Dataset[numTests];
+
+		int idx = 0; 
+		for (int d = 2; d <= 3; d++) {
+			for(int t = 0; t <= 1; t++){
+				String spatial = (d == 2 ? "xy" : "xyz");
+				String temporal = (t == 0 ? "" : "t");
+				String fullPath = sysPath + testType + "/test-" + isRandom + spatial + temporal + ".tif";
+
+				System.out.println(fullPath);
+				paths[idx] = new File(fullPath);
+				try {
+					datasets[idx] = ij.scifio().datasetIO().open(paths[idx].getAbsolutePath());
+					// show the image
+					ij.ui().show(datasets[idx]);
+				}
+				catch(IOException e){
+					System.out.println("LUL!");
+				}
+			}
 		}
-		
+
+		ij.command().run(Radial_Symmetry.class, true);
 		System.out.println("Doge!");
 	}
 }

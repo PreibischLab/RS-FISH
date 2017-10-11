@@ -26,16 +26,7 @@ public class MouseListenerValue implements ChartMouseListener
 	
 	final Detections detection; // contains the image with overlays 	
 	
-	MouseListenerValue( final ChartPanel panel, final double startValue)
-	{
-		this.panel = panel;
-		this.valueMarker = makeMarker( startValue );
-		((XYPlot)panel.getChart().getPlot()).addDomainMarker( valueMarker );
-		
-		this.detection = null; // for back support
-	}
-	
-	// this constructor is used by the to sync the histogram and the overlay image
+	// this constructor is used to sync the histogram and the overlay image
 	MouseListenerValue( final ChartPanel panel, final double startValue, final Detections detection)
 	{
 		this.panel = panel;
@@ -43,13 +34,14 @@ public class MouseListenerValue implements ChartMouseListener
 		this.detection = detection;
 		((XYPlot)panel.getChart().getPlot()).addDomainMarker( valueMarker );
 		
-		// first "update" so that the histogram and the overlays are consistennt in values
-		if (detection.isStarted()) {
-			while (detection.isComputing()) {
-				SimpleMultiThreading.threadWait(10);
+		// first "update" so that the histogram and the overlays are consistent in values
+		if (detection != null)
+			if (detection.isStarted()) {
+				while (detection.isComputing()) {
+					SimpleMultiThreading.threadWait(10);
+				}
+				detection.updatePreview(startValue);
 			}
-			detection.updatePreview(startValue);
-		}
 		
 	}
 
@@ -79,12 +71,13 @@ public class MouseListenerValue implements ChartMouseListener
 			valueMarker.setLabel( " I = " + String.format(java.util.Locale.US,"%.2f", value) );
 			
 			// TODO: Use the 'value' to update the overlays in the corresponding image 
-			if (detection.isStarted()) {
-				while (detection.isComputing()) {
-					SimpleMultiThreading.threadWait(10);
+			if (detection != null)
+				if (detection.isStarted()) {
+					while (detection.isComputing()) {
+						SimpleMultiThreading.threadWait(10);
+					}
+					detection.updatePreview(value);
 				}
-				detection.updatePreview(value);
-			}
 		}
 	}
 	

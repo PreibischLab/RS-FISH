@@ -1,11 +1,15 @@
 package histogram;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import javax.swing.JButton;
+import javax.swing.JPanel;
 
 import net.imglib2.util.ValuePair;
 
@@ -35,18 +39,7 @@ public class Histogram extends ApplicationFrame
 
 	public Histogram( final List< Double > values, final int numBins, final String title, final String units )
 	{
-		super( title );
-
-		final IntervalXYDataset dataset = createDataset( values, numBins, title );
-		final JFreeChart chart = createChart( dataset, title, units );
-		final ChartPanel chartPanel = new ChartPanel( chart );
-		
-		chartPanel.addChartMouseListener( new MouseListenerValue( chartPanel, getMin() + ( getMax() - getMin() ) / 2 ));
-
-		chartPanel.setPreferredSize( new Dimension( 600, 270 ) );
-		setContentPane( chartPanel );
-		
-		detection = null;
+		this(values, numBins, title, units, null); 
 	}
 	
 	public Histogram( final List< Double > values, final int numBins, final String title, final String units, final Detections detection)
@@ -62,9 +55,18 @@ public class Histogram extends ApplicationFrame
 		chartPanel.setPreferredSize( new Dimension( 600, 270 ) );
 		setContentPane( chartPanel );
 		
+		final JButton button = new JButton("OK");
+		// TODO: add the listener
+		// button.addActionListener();
+		// create a wrapper panel that contains graph and button 
+		final JPanel content = new JPanel(new BorderLayout());
+		content.add(chartPanel);
+		content.add(button, BorderLayout.SOUTH);
+		chartPanel.setPreferredSize( new Dimension( 620, 270 ) );
+		setContentPane(content);
+		
 		this.detection = detection;
 	}
-	
 	
 	public void showHistogram()
 	{

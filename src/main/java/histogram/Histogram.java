@@ -36,6 +36,7 @@ public class Histogram extends ApplicationFrame
 	protected double min, max;
 	
 	final Detections detection; // contains the image with overlays 
+	boolean isFinished = false;
 
 	public Histogram( final List< Double > values, final int numBins, final String title, final String units )
 	{
@@ -56,8 +57,8 @@ public class Histogram extends ApplicationFrame
 		setContentPane( chartPanel );
 		
 		final JButton button = new JButton("OK");
-		// TODO: add the listener
-		// button.addActionListener();
+		button.addActionListener( new ButtonFinishedListener(this) );
+		
 		// create a wrapper panel that contains graph and button 
 		final JPanel content = new JPanel(new BorderLayout());
 		content.add(chartPanel);
@@ -165,6 +166,10 @@ public class Histogram extends ApplicationFrame
 	{
 		if( evt.getWindow() == this )
 			dispose();
+	}
+	
+	public boolean isFinished(){
+		return isFinished;
 	}
 	
 	public static void main( final String[] args )

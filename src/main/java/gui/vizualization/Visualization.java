@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
 
 import fit.Spot;
 import histogram.Histogram;
@@ -34,9 +35,14 @@ public class Visualization {
 					values.add(i.doubleValue());
 				// TODO: make this parameter dynamic ?
 				int numBins = 100;
-
+				
 				final Histogram demo = new Histogram( values, numBins, "Intensity distribution", "", detection);
 				demo.showHistogram();
+				
+				do {
+					// TODO: change to something that is not deprecated
+					SimpleMultiThreading.threadWait(100);
+				} while (!demo.isFinished());
 			}
 		}		
 	}

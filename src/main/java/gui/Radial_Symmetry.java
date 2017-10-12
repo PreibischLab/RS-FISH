@@ -35,7 +35,7 @@ public class Radial_Symmetry extends ContextCommand {
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	public static int defaultImg = 0;
 	public static int defaultParam = 0;
-	public static boolean defaultGauss = false;
+	public static boolean defaultGauss = true;
 	public static boolean defaultRANSAC = true;
 	public static float defaultAnisotropy = 1.0f;
 

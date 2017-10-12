@@ -21,14 +21,16 @@ import visualization.Detections;
 
 public class MouseListenerValue implements ChartMouseListener
 {
+	Histogram histogram;
 	final ChartPanel panel;
 	ValueMarker valueMarker;
 	
 	final Detections detection; // contains the image with overlays 	
 	
 	// this constructor is used to sync the histogram and the overlay image
-	MouseListenerValue( final ChartPanel panel, final double startValue, final Detections detection)
+	MouseListenerValue( Histogram histogram, final ChartPanel panel, final double startValue, final Detections detection)
 	{
+		this.histogram = histogram;
 		this.panel = panel;
 		this.valueMarker = makeMarker( startValue );
 		this.detection = detection;
@@ -64,8 +66,9 @@ public class MouseListenerValue implements ChartMouseListener
 		// left mouse click
 		if ( e.getTrigger().getButton() == MouseEvent.BUTTON1 )
 		{
-			double value = getChartXLocation( e.getTrigger().getPoint(), panel );			
+			double value = getChartXLocation( e.getTrigger().getPoint(), panel );
 			// System.out.println("value = " + value);
+			histogram.histThresold = value;
 			
 			valueMarker.setValue( value );
 			valueMarker.setLabel( " I = " + String.format(java.util.Locale.US,"%.2f", value) );

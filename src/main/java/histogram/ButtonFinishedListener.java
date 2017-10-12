@@ -14,7 +14,6 @@ public class ButtonFinishedListener implements ActionListener {
 	@Override
 	public void actionPerformed(final ActionEvent arg0) {
 		parent.isFinished = true;
-		// FIXME: verify
 		parent.dispose();
 	}
 }

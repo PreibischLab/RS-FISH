@@ -27,6 +27,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
 
+import gui.vizualization.Visualization;
 import ij.ImageJ;
 import visualization.Detections;
 
@@ -37,6 +38,8 @@ public class Histogram extends ApplicationFrame
 	
 	final Detections detection; // contains the image with overlays 
 	boolean isFinished = false;
+	
+	double histThresold;
 
 	public Histogram( final List< Double > values, final int numBins, final String title, final String units )
 	{
@@ -46,12 +49,15 @@ public class Histogram extends ApplicationFrame
 	public Histogram( final List< Double > values, final int numBins, final String title, final String units, final Detections detection)
 	{
 		super( title );
-
+		
 		final IntervalXYDataset dataset = createDataset( values, numBins, title );
 		final JFreeChart chart = createChart( dataset, title, units );
 		final ChartPanel chartPanel = new ChartPanel( chart );
 		
-		chartPanel.addChartMouseListener( new MouseListenerValue( chartPanel, getMin() + ( getMax() - getMin() ) / 2, detection));
+		double startValue = getMin() + ( getMax() - getMin() ) / 2;
+		this.histThresold = startValue;
+		
+		chartPanel.addChartMouseListener( new MouseListenerValue( this, chartPanel, startValue, detection));
 
 		chartPanel.setPreferredSize( new Dimension( 600, 270 ) );
 		setContentPane( chartPanel );
@@ -164,12 +170,18 @@ public class Histogram extends ApplicationFrame
 	@Override
 	public void windowClosing( final WindowEvent evt )
 	{
-		if( evt.getWindow() == this )
+		if( evt.getWindow() == this ){
+			
 			dispose();
+		}
 	}
 	
 	public boolean isFinished(){
 		return isFinished;
+	}
+	
+	public double getHistThreshold(){
+		return histThresold;
 	}
 	
 	public static void main( final String[] args )

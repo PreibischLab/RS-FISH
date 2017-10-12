@@ -162,9 +162,12 @@ public class Radial_Symmetry extends ContextCommand {
 				channelPoint, intensity);
 
 		if (parameterType.equals(paramChoice[1])) { // interactive
-			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity);
-			Visualization.showVisualization(imp, allSpots, intensity, timePoint, showInliers, showDetections, params.getSigmaDoG(), params.getAnisotropyCoefficient());
+			// TODO: keep here? 
 			imp.deleteRoi();
+			 
+			Visualization.showVisualization(imp, allSpots, intensity, timePoint, showInliers, showDetections, params.getSigmaDoG(), params.getAnisotropyCoefficient());
+			double histThreshold = Visualization.getHistThreshold(); // used to show the overlays
+			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
 		} else if (parameterType.equals(paramChoice[0])) { // manual
 			// write the result to the csv file
 		} else

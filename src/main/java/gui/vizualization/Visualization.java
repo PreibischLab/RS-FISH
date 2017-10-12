@@ -13,6 +13,8 @@ import visualization.Detections;
 import visualization.Inliers;
 
 public class Visualization {
+	
+	public static double histThreshold = 0;
 
 	public static void showVisualization(ImagePlus imp, ArrayList<Spot> allSpots, ArrayList<Float> intensity, ArrayList<Long> timePoint, boolean showInliers, boolean showDetections, float sigma, float anisotropy){
 
@@ -43,7 +45,14 @@ public class Visualization {
 					// TODO: change to something that is not deprecated
 					SimpleMultiThreading.threadWait(100);
 				} while (!demo.isFinished());
+				
+				histThreshold = demo.getHistThreshold();
 			}
 		}		
 	}
+	
+	public static double getHistThreshold(){
+		return histThreshold;
+	}
+	
 }

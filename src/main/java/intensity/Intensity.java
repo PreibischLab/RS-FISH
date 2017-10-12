@@ -22,36 +22,6 @@ import fit.Spot;
 
 public class Intensity {
 
-	// FIXME: This one is buggy!!! fix it before using
-	// FIXME: OLD
-	public static void calulateIntesitiesGF2(RandomAccessibleInterval<FloatType> xyz, int numDimensions,
-			float anisotropy, double sigma, ArrayList<Spot> filteredSpots, ArrayList<Float> intensity) {
-		double[] typicalSigmas = new double[numDimensions];
-		for (int d = 0; d < numDimensions; d++)
-			typicalSigmas[d] = sigma;
-
-		// adjust 3d dimension if image is 3D
-		if (numDimensions == 3)
-			typicalSigmas[numDimensions - 1] *= anisotropy;
-
-		PeakFitter<FloatType> pf = new PeakFitter<FloatType>(xyz, (ArrayList) filteredSpots,
-				new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(),
-				new MLEllipticGaussianEstimator(typicalSigmas)); // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z
-																	// or sigma_xy & sigma_z)
-		pf.process();
-
-		// TODO: make spot implement Localizable - then this is already a HashMap that
-		// maps Spot > double[]
-		// this is actually a Map< Spot, double[] >
-		final Map<Localizable, double[]> fits = pf.getResult();
-
-		// FIXME: is the order consistent
-		for (final Spot spot : filteredSpots) {
-			double[] params = fits.get(spot);
-			intensity.add(new Float(params[numDimensions]));
-		}
-	}
-	
 	public static void calulateIntesitiesGF(RandomAccessibleInterval<FloatType> xyz, int numDimensions,
 			float anisotropy, double sigma, ArrayList<Spot> filteredSpots, ArrayList<Float> intensity) {
 		double[] typicalSigmas = new double[numDimensions];

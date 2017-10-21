@@ -170,6 +170,8 @@ public class Radial_Symmetry extends ContextCommand {
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
 		} else if (parameterType.equals(paramChoice[0])) { // manual
 			// write the result to the csv file
+			double histThreshold = 0; // take all of the points that were detected
+			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
 		} else
 			System.out.println("Wrong parameters' mode");
 	}

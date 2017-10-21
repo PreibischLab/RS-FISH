@@ -27,7 +27,6 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
 
-import gui.vizualization.Visualization;
 import ij.ImageJ;
 import visualization.Detections;
 

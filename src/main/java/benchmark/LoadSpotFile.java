@@ -5,8 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import net.imglib2.util.Util;
-
 import fit.Spot;
 
 /**

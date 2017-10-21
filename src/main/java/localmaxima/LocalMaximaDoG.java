@@ -2,12 +2,13 @@ package localmaxima;
 
 import java.util.ArrayList;
 
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.real.FloatType;
+
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.wrapper.ImgLib2;
-import net.imglib2.img.Img;
-import net.imglib2.type.numeric.real.FloatType;
 
 /**
  * Radial Symmetry Package

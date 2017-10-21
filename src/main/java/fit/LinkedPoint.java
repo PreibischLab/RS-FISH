@@ -1,6 +1,7 @@
 package fit;
 
 import net.imglib2.util.Util;
+
 import mpicbg.models.Point;
 
 /**

@@ -1,6 +1,5 @@
 package milkyklim.algorithm.localization;
 
-import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;

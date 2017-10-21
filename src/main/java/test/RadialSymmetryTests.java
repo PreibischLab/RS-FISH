@@ -2,7 +2,6 @@ package test;
 
 import java.io.File;
 
-import gui.Radial_Symmetry;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.io.Opener;

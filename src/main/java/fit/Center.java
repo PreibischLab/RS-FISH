@@ -3,10 +3,11 @@ package fit;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import net.imglib2.util.Util;
+
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
-import net.imglib2.util.Util;
 
 public class Center extends AbstractFunction< Center >
 {

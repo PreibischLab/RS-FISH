@@ -3,7 +3,6 @@ package gui.vizualization;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 
 import fit.Spot;

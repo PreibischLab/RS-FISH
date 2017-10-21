@@ -3,10 +3,14 @@ package test;
 import java.util.ArrayList;
 import java.util.Random;
 
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
+
 import background.NormalizedGradient;
 import background.NormalizedGradientAverage;
-import background.NormalizedGradientMedian;
-import background.NormalizedGradientRANSAC;
 import fit.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
@@ -15,12 +19,6 @@ import localmaxima.LocalMaxima;
 import localmaxima.LocalMaximaNeighborhood;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
-import net.imglib2.Cursor;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Util;
 
 /**
  * Radial Symmetry Package

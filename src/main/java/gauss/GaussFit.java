@@ -1,10 +1,11 @@
 package gauss;
 
+import net.imglib2.img.Img;
+
 import mpicbg.imglib.algorithm.math.LocalizablePoint;
 import mpicbg.imglib.algorithm.peak.GaussianPeakFitterND;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import net.imglib2.img.Img;
 
 /**
  * Radial Symmetry Package

@@ -1,6 +1,7 @@
 package fit;
 
 import net.imglib2.EuclideanSpace;
+
 import mpicbg.models.Model;
 import mpicbg.models.Point;
 

@@ -3,7 +3,6 @@ package intensity;
 import java.util.ArrayList;
 import java.util.Map;
 
-import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
@@ -18,7 +17,6 @@ import milkyklim.algorithm.localization.EllipticGaussianOrtho;
 import milkyklim.algorithm.localization.GenericPeakFitter;
 import milkyklim.algorithm.localization.LevenbergMarquardtSolver;
 import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
-import milkyklim.algorithm.localization.PeakFitter;
 import milkyklim.algorithm.localization.SparseObservationGatherer;
 
 public class Intensity {

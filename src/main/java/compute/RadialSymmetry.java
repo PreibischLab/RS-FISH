@@ -19,7 +19,6 @@ import gradient.Gradient;
 import gradient.GradientPreCompute;
 import gui.interactive.HelperFunctions;
 import ij.IJ;
-import ij.ImagePlus;
 import intensity.Intensity;
 import parameters.RadialSymmetryParameters;
 

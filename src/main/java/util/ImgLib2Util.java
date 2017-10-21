@@ -1,10 +1,5 @@
 package util;
 
-import ij.ImageJ;
-import ij.ImagePlus;
-import ij.io.Opener;
-import ij.process.ImageProcessor;
-
 import java.io.File;
 import java.util.ArrayList;
 
@@ -14,6 +9,11 @@ import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
+
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.io.Opener;
+import ij.process.ImageProcessor;
 
 public class ImgLib2Util
 {

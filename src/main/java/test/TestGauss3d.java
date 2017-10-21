@@ -1,25 +1,8 @@
 package test;
 
-import fit.OrientedPoint;
-import fit.Spot;
-import fit.Center.CenterMethod;
-import gradient.Gradient;
-import gradient.GradientPreCompute;
-import ij.ImageJ;
-
-import java.io.File;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Random;
 
-import background.NormalizedGradient;
-import background.NormalizedGradientAverage;
-import background.NormalizedGradientRANSAC;
-import localmaxima.LocalMaxima;
-import localmaxima.LocalMaximaDoG;
-import mpicbg.models.IllDefinedDataPointsException;
-import mpicbg.models.NotEnoughDataPointsException;
-import mpicbg.models.Point;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessible;
@@ -27,10 +10,21 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
+
+import background.NormalizedGradient;
+import background.NormalizedGradientRANSAC;
+import fit.Center.CenterMethod;
+import fit.Spot;
+import gradient.Gradient;
+import gradient.GradientPreCompute;
+import ij.ImageJ;
+import localmaxima.LocalMaxima;
+import localmaxima.LocalMaximaDoG;
+import mpicbg.models.IllDefinedDataPointsException;
+import mpicbg.models.NotEnoughDataPointsException;
 
 /**
  * Radial Symmetry Package

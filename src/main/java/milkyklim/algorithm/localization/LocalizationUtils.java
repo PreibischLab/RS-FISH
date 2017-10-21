@@ -38,7 +38,6 @@ import net.imglib2.algorithm.localization.Gaussian;
 import net.imglib2.algorithm.localization.Observation;
 import net.imglib2.algorithm.region.localneighborhood.RectangleCursor;
 import net.imglib2.algorithm.region.localneighborhood.RectangleNeighborhoodGPL;
-import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 

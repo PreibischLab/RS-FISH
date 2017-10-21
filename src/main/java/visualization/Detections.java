@@ -10,16 +10,9 @@ import fiji.tool.SliceObserver;
 import fit.Spot;
 import gui.interactive.HelperFunctions;
 import gui.vizualization.ImagePlusListener;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Overlay;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.ValuePair;
-
-import util.ImgLib2Util;
 
 public class Detections {
 

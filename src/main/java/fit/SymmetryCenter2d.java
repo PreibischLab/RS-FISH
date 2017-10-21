@@ -4,9 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
 
+import net.imglib2.util.Util;
+
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
-import net.imglib2.util.Util;
 
 /**
  * Radial Symmetry Package

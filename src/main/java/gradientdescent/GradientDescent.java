@@ -4,12 +4,9 @@ import java.util.ArrayList;
 
 import net.imglib2.util.Util;
 
+import fit.Spot;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
-
-import fit.OrientedPoint;
-import fit.PointFunctionMatch;
-import fit.Spot;
 
 /**
  * Radial Symmetry Package

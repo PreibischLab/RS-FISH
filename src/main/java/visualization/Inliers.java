@@ -2,17 +2,17 @@ package visualization;
 
 import java.util.ArrayList;
 
-import fit.Spot;
-import gui.interactive.HelperFunctions;
-import ij.CompositeImage;
-import ij.ImagePlus;
-import ij.ImageStack;
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+
+import fit.Spot;
+import gui.interactive.HelperFunctions;
+import ij.CompositeImage;
+import ij.ImagePlus;
+import ij.ImageStack;
 
 public class Inliers {
 

@@ -1,7 +1,5 @@
 package gui.anisotropy.plugin;
 
-import java.io.File;
-
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
@@ -10,12 +8,7 @@ import org.scijava.plugin.Plugin;
 
 import anisotropy.parameters.AParams;
 import gui.anisotropy.AnisitropyCoefficient;
-import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
-import ij.io.Opener;
 import ij.process.ImageProcessor;
 import parameters.GUIParams;
 

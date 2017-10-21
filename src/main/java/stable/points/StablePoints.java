@@ -9,7 +9,6 @@ import net.imglib2.KDTree.KDTreeCursor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.neighborsearch.KNearestNeighborSearch;
 import net.imglib2.neighborsearch.KNearestNeighborSearchOnKDTree;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
@@ -20,7 +19,6 @@ import gradient.Gradient;
 import gradient.GradientPreCompute;
 import ij.ImageJ;
 import util.ImgLib2Util;
-import visualization.Detections;
 
 public class StablePoints {
 

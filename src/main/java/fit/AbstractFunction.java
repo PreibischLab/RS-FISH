@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import mpicbg.models.AbstractModel;
-import mpicbg.models.CoordinateTransform;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;

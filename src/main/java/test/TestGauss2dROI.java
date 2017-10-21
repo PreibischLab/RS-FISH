@@ -4,17 +4,6 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Random;
 
-import background.NormalizedGradient;
-import fit.Spot;
-import gradient.Gradient;
-import gradient.GradientPreCompute;
-import gui.interactive.HelperFunctions;
-import gui.interactive.InteractiveRadialSymmetry;
-import ij.ImageJ;
-import ij.ImagePlus;
-import ij.WindowManager;
-import mpicbg.models.IllDefinedDataPointsException;
-import mpicbg.models.NotEnoughDataPointsException;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
@@ -25,6 +14,17 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
+
+import background.NormalizedGradient;
+import fit.Spot;
+import gradient.Gradient;
+import gradient.GradientPreCompute;
+import gui.interactive.HelperFunctions;
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+import mpicbg.models.IllDefinedDataPointsException;
+import mpicbg.models.NotEnoughDataPointsException;
 
 /**
  * Radial Symmetry Package

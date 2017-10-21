@@ -5,14 +5,8 @@ import java.io.IOException;
 
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
 
 import gui.Radial_Symmetry;
-import test.TestGauss3d;
-import util.ImgLib2Util;
 
 public class TestRun {
 	

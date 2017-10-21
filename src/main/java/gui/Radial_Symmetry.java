@@ -69,8 +69,7 @@ public class Radial_Symmetry extends ContextCommand {
 	// use gauss fit
 	// defines if we perform the gauss fit or
 	// linear interpolation for peak intensities
-	// FIXME: uncomment when this part is fixed
-	// @Parameter(label = "Gaussian fitting")
+	@Parameter(label = "Gaussian fitting")
 	boolean gaussFit = defaultGauss;
 
 	@Parameter(label = "<html><b>Visualization:</b>", visibility = ItemVisibility.MESSAGE)

@@ -25,7 +25,9 @@
  * #L%
  */
 
-package net.imglib2.algorithm.localization;
+package milkyklim.algorithm.localization;
+
+import net.imglib2.algorithm.localization.FitFunction;
 
 /**
  * A n-dimensional Gaussian peak function, representing an elliptical Gaussian,

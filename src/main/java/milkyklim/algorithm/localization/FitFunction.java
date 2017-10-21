@@ -25,7 +25,7 @@
  * #L%
  */
 
-package net.imglib2.algorithm.localization;
+package milkyklim.algorithm.localization;
 
 /**
  * Interface for fitting-target functions.

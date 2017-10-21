@@ -24,8 +24,11 @@
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  * #L%
  */
-package net.imglib2.algorithm.localization;
+package milkyklim.algorithm.localization;
 
+import net.imglib2.algorithm.localization.FitFunction;
+import net.imglib2.algorithm.localization.FunctionFitter;
+import net.imglib2.algorithm.localization.StartPointEstimator;
 
 /**
  * A dummy {@link FunctionFitter} that simply skips the fitting process and leaves

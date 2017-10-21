@@ -24,7 +24,7 @@
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  * #L%
  */
-package net.imglib2.algorithm.localization;
+package milkyklim.algorithm.localization;
 
 /**
  * A general-use class that can store the observations as a double array, and their 

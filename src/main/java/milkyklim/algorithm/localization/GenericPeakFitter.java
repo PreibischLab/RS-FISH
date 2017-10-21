@@ -25,7 +25,7 @@
  * #L%
  */
 
-package net.imglib2.algorithm.localization;
+package milkyklim.algorithm.localization;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,22 +40,25 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.Benchmark;
 import net.imglib2.algorithm.MultiThreaded;
 import net.imglib2.algorithm.OutputAlgorithm;
-import net.imglib2.img.Img;
+import net.imglib2.algorithm.localization.FitFunction;
+import net.imglib2.algorithm.localization.FunctionFitter;
+import net.imglib2.algorithm.localization.Observation;
+import net.imglib2.algorithm.localization.StartPointEstimator;
 import net.imglib2.type.numeric.RealType;
 
 /**
  * @author Jean-Yves Tinevez - 2013
  */
-public class PeakFitter <T extends RealType<T>> implements MultiThreaded, OutputAlgorithm<Map<Localizable, double[]>>, Benchmark {
+public class GenericPeakFitter <T extends RealType<T>, L extends Localizable > implements MultiThreaded, OutputAlgorithm<Map<L, double[]>>, Benchmark {
 
 	private static final String BASE_ERROR_MESSAGE = "PeakFitter: ";
 
-	private final ObservationGatherer gatherer;
-	private final ArrayList<Localizable> peaks;
+	private final ObservationGatherer< L > gatherer;
+	private final ArrayList<L> peaks;
 	private final FunctionFitter fitter;
 	private final FitFunction peakFunction;
 	private final StartPointEstimator estimator;
-	private ConcurrentHashMap<Localizable, double[]> results;
+	private ConcurrentHashMap<L, double[]> results;
 	private int numThreads;
 	private final StringBuffer errorHolder = new StringBuffer();
 
@@ -71,16 +74,16 @@ public class PeakFitter <T extends RealType<T>> implements MultiThreaded, Output
 	/**
 	 * @param image the image to operate on.
 	 */
-	public PeakFitter(final RandomAccessibleInterval<T> image, Collection<? extends Localizable> peaks, FunctionFitter fitter, FitFunction peakFunction, StartPointEstimator estimator) {
+	public GenericPeakFitter(final RandomAccessibleInterval<T> image, Collection< L > peaks, FunctionFitter fitter, FitFunction peakFunction, StartPointEstimator estimator) {
 
 		this(
-				new WindowObservationGatherer<>( image, estimator.getDomainSpan() ),
+				new WindowObservationGatherer< T, L >( image, estimator.getDomainSpan() ),
 				peaks,
 				fitter,
 				peakFunction, estimator );
 	}
 
-	public PeakFitter(final ObservationGatherer observationGatherer, Collection<? extends Localizable> peaks, FunctionFitter fitter, FitFunction peakFunction, StartPointEstimator estimator) {
+	public GenericPeakFitter(final ObservationGatherer< L > observationGatherer, Collection< L > peaks, FunctionFitter fitter, FitFunction peakFunction, StartPointEstimator estimator) {
 		this.gatherer = observationGatherer;
 		this.fitter = fitter;
 		this.peakFunction = peakFunction;
@@ -120,11 +123,10 @@ public class PeakFitter <T extends RealType<T>> implements MultiThreaded, Output
 	public boolean process() {
 		
 		long start = System.currentTimeMillis();
-
-		results = new ConcurrentHashMap<Localizable, double[]>(peaks.size());
+		results = new ConcurrentHashMap<>(peaks.size());
 
 		ExecutorService workers = Executors.newFixedThreadPool(numThreads);
-		for (final Localizable peak : peaks) {
+		for (final L peak : peaks) {
 			Runnable task = new Runnable() {
 
 				@Override
@@ -165,7 +167,7 @@ public class PeakFitter <T extends RealType<T>> implements MultiThreaded, Output
 	}
 
 	@Override
-	public Map<Localizable, double[]> getResult() {
+	public Map<L, double[]> getResult() {
 		return results;
 	}
 

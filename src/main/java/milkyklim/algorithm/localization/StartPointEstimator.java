@@ -24,9 +24,11 @@
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  * #L%
  */
-package net.imglib2.algorithm.localization;
+package milkyklim.algorithm.localization;
 
 import net.imglib2.Localizable;
+import net.imglib2.algorithm.localization.FunctionFitter;
+import net.imglib2.algorithm.localization.Observation;
 
 /**
  * Interface for classes that are able to provide a start point for the parameters

@@ -25,7 +25,7 @@
  * #L%
  */
 
-package net.imglib2.algorithm.localization;
+package milkyklim.algorithm.localization;
 
 import java.util.Random;
 
@@ -33,6 +33,9 @@ import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.localization.EllipticGaussianOrtho;
+import net.imglib2.algorithm.localization.Gaussian;
+import net.imglib2.algorithm.localization.Observation;
 import net.imglib2.algorithm.region.localneighborhood.RectangleCursor;
 import net.imglib2.algorithm.region.localneighborhood.RectangleNeighborhoodGPL;
 import net.imglib2.img.Img;

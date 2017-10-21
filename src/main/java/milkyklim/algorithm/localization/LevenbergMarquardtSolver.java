@@ -25,7 +25,10 @@
  * #L%
  */
 
-package net.imglib2.algorithm.localization;
+package milkyklim.algorithm.localization;
+
+import net.imglib2.algorithm.localization.FitFunction;
+import net.imglib2.algorithm.localization.FunctionFitter;
 
 import Jama.Matrix;
 

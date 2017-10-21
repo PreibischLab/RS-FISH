@@ -1,10 +1,12 @@
-package net.imglib2.algorithm.localization;
+package milkyklim.algorithm.localization;
 
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.localization.LocalizationUtils;
+import net.imglib2.algorithm.localization.Observation;
 import net.imglib2.type.numeric.RealType;
 
-public class WindowObservationGatherer<T extends RealType<T>> implements ObservationGatherer
+public class WindowObservationGatherer<T extends RealType<T>, L extends Localizable > implements ObservationGatherer< L >
 {
 	final RandomAccessibleInterval<T> image;
 	final long[] padSize;
@@ -16,7 +18,7 @@ public class WindowObservationGatherer<T extends RealType<T>> implements Observa
 	}
 
 	@Override
-	public Observation gatherObservationData( final Localizable peak)
+	public Observation gatherObservationData( final L peak )
 	{
 		return LocalizationUtils.gatherObservationData( image, peak, padSize );
 	}

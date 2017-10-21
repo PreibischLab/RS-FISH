@@ -11,10 +11,6 @@ import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
-import net.imglib2.algorithm.localization.EllipticGaussianOrtho;
-import net.imglib2.algorithm.localization.LevenbergMarquardtSolver;
-import net.imglib2.algorithm.localization.MLEllipticGaussianEstimator;
-import net.imglib2.algorithm.localization.PeakFitter;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
@@ -37,6 +33,10 @@ import ij.io.Opener;
 import ij.process.ImageProcessor;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
+import milkyklim.algorithm.localization.EllipticGaussianOrtho;
+import milkyklim.algorithm.localization.LevenbergMarquardtSolver;
+import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
+import milkyklim.algorithm.localization.PeakFitter;
 
 public class AnisitropyCoefficient {
 

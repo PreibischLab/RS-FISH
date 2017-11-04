@@ -168,6 +168,7 @@ public class Radial_Symmetry extends ContextCommand {
 			double histThreshold = Visualization.getHistThreshold(); // used to show the overlays
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
 		} else if (parameterType.equals(paramChoice[0])) { // manual
+			// TODO: add support for the ROI files
 			// write the result to the csv file
 			double histThreshold = 0; // take all of the points that were detected
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);

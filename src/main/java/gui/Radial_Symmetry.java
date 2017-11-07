@@ -28,6 +28,7 @@ import imglib2.TypeTransformingRandomAccessibleInterval;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 import result.output.ShowResult;
+import roi.process.RoiProcess;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Radial Symmetry")
 public class Radial_Symmetry extends ContextCommand {
@@ -163,14 +164,32 @@ public class Radial_Symmetry extends ContextCommand {
 		if (parameterType.equals(paramChoice[1])) { // interactive
 			// TODO: keep here? 
 			imp.deleteRoi();
-			 
+			
 			Visualization.showVisualization(imp, allSpots, intensity, timePoint, showInliers, showDetections, params.getSigmaDoG(), params.getAnisotropyCoefficient());
 			double histThreshold = Visualization.getHistThreshold(); // used to show the overlays
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
 		} else if (parameterType.equals(paramChoice[0])) { // manual
-			// TODO: add support for the ROI files
 			// write the result to the csv file
 			double histThreshold = 0; // take all of the points that were detected
+			// TODO: add support for the ROI files
+			// 0.1 if there is a roi folder
+			// 1 read all roi's 
+			// 2 start the loop 
+			// 3 filter the spots with respect to the roi
+			// 4 show the result using tables 
+			// Grab the points that are in the roi file 
+			// 0.2 otherwise just show the table with all spots
+			
+			if (false){
+				String roiFolder = params.getRoiFolder();
+				ArrayList<String> listRoiPath = RoiProcess.readRoi(roiFolder);
+				RoiProcess.processRoi(allSpots, roiFolder);
+				
+				
+			}
+			
+			
+			
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
 		} else
 			System.out.println("Wrong parameters' mode");

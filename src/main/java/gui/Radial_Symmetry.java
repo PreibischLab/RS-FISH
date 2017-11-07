@@ -34,7 +34,7 @@ import roi.process.RoiProcess;
 public class Radial_Symmetry extends ContextCommand {
 	// Defaults: used to save previous values of the plugin fields
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
-	public static int defaultImg = 0;
+	// public static int defaultImg = 0;
 	public static int defaultParam = 0;
 	public static boolean defaultGauss = true;
 	public static boolean defaultRANSAC = true;
@@ -107,6 +107,7 @@ public class Radial_Symmetry extends ContextCommand {
 		// set the parameters from the defaults
 		final GUIParams params = new GUIParams();
 		// the 2 below we adjust here because they are defined in the gui
+		setDefaultParams();
 		params.setAnisotropyCoefficient(anisotropy);
 		params.setRANSAC(RANSAC);
 
@@ -193,6 +194,19 @@ public class Radial_Symmetry extends ContextCommand {
 		} else
 			System.out.println("Wrong parameters' mode");
 	}
+	
+	public void setDefaultParams() {
+		// defaultImg = ; // TODO: 
+		// defaultParam = 0;
+		defaultGauss = gaussFit;
+		defaultRANSAC = RANSAC;
+		defaultAnisotropy = anisotropy;
+		defaultDetections = showDetections;
+		defaultInliers = showInliers;
+
+	}
+	
+	
 
 	public static void main(String[] args) {
 		// for the historical reasons

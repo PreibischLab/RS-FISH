@@ -2,6 +2,8 @@ package gui.interactive;
 
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -29,13 +31,81 @@ import ij.gui.OvalRoi;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.measure.Calibration;
+import ij.measure.ResultsTable;
 import ij.process.ImageProcessor;
+import util.opencsv.CSVWriter;
 
 public class HelperFunctions {
-	
+
+	// function to save the ArrayList to the csv files
+	public static void writeCSV(final String filePath,  final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
+			final ArrayList<Long> channelPoint, ArrayList<Float> intensity, double histThreshold, int[] roiIndices,
+			int currentRoiIdx) {
+		CSVWriter writer = null;
+
+		try {
+			// System.out.println(filePath.substring(0, filePath.length() - 4) + "-"+ currentRoiIdx +".csv");
+			writer = new CSVWriter(new FileWriter(filePath.substring(0, filePath.length() - 4) + "-"+ currentRoiIdx + ".csv"), ',', CSVWriter.NO_QUOTE_CHARACTER);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
+
+		int currentTimePoint = 0;
+		int totalSpotsPerTimePoint = 0;
+
+		int currentChannelPoint = 0;
+		int totalSpotsPerChannelPoint = 0;
+
+		try {
+			int idx = 0;
+			for (Spot spot : spots) {
+				int lineLength = spot.numDimensions() == 3 ? 7 : 6; // idx , xy(z), c, t, intensity
+				String[] nextLine = new String[lineLength];
+
+				// if spot was not discarded
+				if (spot.inliers.size() != 0) { // TODO: filtered already?
+					if (roiIndices[idx] == currentRoiIdx) {
+						if (intensity.get(idx) >= histThreshold) {
+							double[] pos = spot.getCenter();
+							nextLine[0] = Integer.toString(idx + 1); // get index
+							// save the coordinates
+							for (int d = 0; d < spot.numDimensions(); ++d)
+								nextLine[d + 1] = String.format(java.util.Locale.US, "%.4f", pos[d]);
+
+							totalSpotsPerTimePoint++;
+							if (totalSpotsPerTimePoint > timePoint.get(currentTimePoint)) {
+								currentTimePoint++;
+								totalSpotsPerTimePoint = 1;
+							}
+							// add the time point
+							nextLine[1 + spot.numDimensions()] = Integer.toString(currentTimePoint + 1);
+							// 
+							totalSpotsPerChannelPoint++;
+							if (totalSpotsPerChannelPoint > channelPoint.get(currentChannelPoint)) {
+								currentChannelPoint++;
+								totalSpotsPerChannelPoint = 1;
+							}
+							// add the channel
+							nextLine[2 + spot.numDimensions()] = Integer.toString(currentChannelPoint + 1);
+							// add intensity value
+							nextLine[3 + spot.numDimensions()] = String.format(java.util.Locale.US, "%.4f", intensity.get(idx));
+						}
+					}
+				}
+				writer.writeNext(nextLine);
+				idx++;
+			}
+			writer.close();
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+
 	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel,
 			long time, int[] impDim) {
-		
+
 		RandomAccessibleInterval<FloatType> img = rai;
 		// this one is always the loop over 5-dims
 		// cut 5-th, and 3-d and drop them after that 
@@ -46,13 +116,13 @@ public class HelperFunctions {
 			if (impDim[d] != 1)
 				mapping[d] = idx++; 
 		}
-		
+
 		if (mapping[2] != -1) // if there are channels
 			img = Views.hyperSlice(img, mapping[2], channel);
-		
+
 		if (mapping[4] != -1) // if there are timepoints
 			img = Views.hyperSlice(img, mapping[4], time);
-					
+
 		return Views.dropSingletonDimensions(img);
 	}
 
@@ -61,9 +131,9 @@ public class HelperFunctions {
 		int t = 4;
 		int numDimensions = 5; 
 		int [] dimensions = imp.getDimensions();
-		
+
 		if (dimensions[4] == 1)
-				t = -1;
+			t = -1;
 		else {
 			for (int d = 2; d < numDimensions; d++)
 				if (dimensions[d] == 1) t--;
@@ -72,7 +142,7 @@ public class HelperFunctions {
 		}
 		return t;
 	} 
-	
+
 	// return x y z 
 	public static long [] getDimensions(int [] impDim){
 		// note the conversion int -> long 
@@ -83,19 +153,19 @@ public class HelperFunctions {
 			dim = new long[] { impDim[0], impDim[1], impDim[3] };
 		return dim;
 	}
-	
+
 	public static long[] getAllDimensions(ImagePlus imagePlus){
 		long[] fullDimensions = new long [imagePlus.getNDimensions()];
 		int[] dimensions = imagePlus.getDimensions();
-		
+
 		int idx = 0;
 		for (int d = 0; d < dimensions.length; d++)
 			if(dimensions[d] != 1) 
 				fullDimensions[idx++] = dimensions[d];
-		
+
 		return fullDimensions;
 	}
-	
+
 	public static ArrayList<RefinedPeak<Point>> filterPeaks(final ArrayList<RefinedPeak<Point>> peaks,
 			final Rectangle rectangle, final double threshold) {
 		final ArrayList<RefinedPeak<Point>> filtered = new ArrayList<>();
@@ -107,32 +177,32 @@ public class HelperFunctions {
 
 		return filtered;
 	}
-	
+
 	// TODO: code might be reused instead of copy\pasting
 	public static ArrayList<RefinedPeak<Point>> filterPeaks(final ArrayList<RefinedPeak<Point>> peaks, final double threshold) {
 		final ArrayList<RefinedPeak<Point>> filtered = new ArrayList<>();
-		
+
 		for (final RefinedPeak<Point> peak : peaks)
 			if (-peak.getValue() > threshold)
 				filtered.add(peak);
-		
+
 		return filtered;
 	}
-	
+
 	// TODO: Create a more sophisticated way to filter the peaks
 	public static ArrayList<Point> resavePeaks(final ArrayList<RefinedPeak<Point>> peaks, final double threshold, int numDimensions) {
 		final ArrayList<Point> filtered = new ArrayList<>();
-		
+
 		double [] pos = new double[numDimensions];
 		long [] iPos = new long [numDimensions];
-	
+
 		for (final RefinedPeak<Point> peak : peaks)
 			if (-peak.getValue() > threshold){
 				peak.localize(pos);
 				for (int d = 0; d < numDimensions; d ++)
 					iPos[d] = (long)pos[d];		
 				filtered.add(new Point(iPos));
-				
+
 			}		
 		return filtered;
 	}
@@ -275,8 +345,8 @@ public class HelperFunctions {
 	 */
 	public static double[] setCalibration(ImagePlus imagePlus, int numDimensions) {
 		double[] calibration = new double[numDimensions]; // should always be 2
-															// for the
-															// interactive mode
+		// for the
+		// interactive mode
 		// if there is something reasonable in x-axis calibration use this value
 		if ((imagePlus.getCalibration().pixelWidth >= 1e-13) && imagePlus.getCalibration().pixelWidth != Double.NaN) {
 			calibration[0] = imagePlus.getCalibration().pixelWidth / imagePlus.getCalibration().pixelWidth;
@@ -477,7 +547,7 @@ public class HelperFunctions {
 		}
 		return integerPeaks;
 	}	
-	
+
 	// used to copy Spots to Peaks
 	public static void copyToLocalizable(final ArrayList<Spot> spots, Collection<Localizable> peaks ) {
 		for (final Spot spot : spots) {
@@ -486,7 +556,7 @@ public class HelperFunctions {
 			//peaks.add(pos);
 		}
 	}
-	
+
 	// used to copy Spots to long []
 	public static void copyToLong(final ArrayList<Spot> spots, ArrayList<long[]> peaks ) {
 		for (final Spot spot : spots)
@@ -498,7 +568,7 @@ public class HelperFunctions {
 		for (final Spot spot : spots)
 			peaks.add(spot.getCenter());
 	}
-	
+
 
 	public static class PointSpot extends Point
 	{

@@ -1,5 +1,6 @@
 package gui;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import org.scijava.ItemVisibility;
@@ -16,6 +17,7 @@ import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
 import gui.vizualization.Visualization;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import imglib2.RealTypeNormalization;
@@ -90,6 +92,11 @@ public class Radial_Symmetry extends ContextCommand {
 	@Parameter(visibility = ItemVisibility.INVISIBLE)
 	CommandService commandService;
 
+	// FIXME: DRESDEN 
+	// this parameter is only used in macro scripting
+	//	@Parameter(visibility = ItemVisibility.INVISIBLE)
+	//	String resultFolder = "";
+
 	@Override
 	public void run() {
 		if (this.isCanceled())
@@ -110,11 +117,9 @@ public class Radial_Symmetry extends ContextCommand {
 		params.setAnisotropyCoefficient(anisotropy);
 		params.setRANSAC(RANSAC);
 
-		
 		// DEBUG: 
 		// System.out.println(gaussFit + " " + RANSAC);
-		
-		
+
 		if (parameterType.equals(paramChoice[0])) // manual
 		{
 			// set the parameters in the manual mode
@@ -190,10 +195,33 @@ public class Radial_Symmetry extends ContextCommand {
 				RoiProcess.processRoi(allSpots, roiList, roiIndices);
 			}
 
-			for (int roiIdx = 0; roiIdx < roiList.size(); roiIdx++) {
-				// System.out.println("Roi #" + roiIdx);
-				ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold, roiIndices,
-						roiIdx);
+			// FIXME: dirty hack for the batch mode
+			// check if the macro mode is really working 
+			if (ij.IJ.isMacro()){
+
+				logService.info("Check you home directory for the results: radial-symmetry-results");
+				String title = imp.getTitle();
+
+				String pathToTheResults = System.getProperty("user.home") + "/radial-symmetry-results/";
+
+				if ( new File(pathToTheResults).mkdirs() || new File(pathToTheResults).exists())
+				{
+					System.out.println("Results saved to: " + pathToTheResults);
+					for (int roiIdx = 0; roiIdx < roiList.size(); roiIdx++) {
+						HelperFunctions.writeCSV(pathToTheResults + title, allSpots, timePoint, channelPoint, intensity, histThreshold, roiIndices,
+								roiIdx);
+					}
+				}
+				else{
+					System.out.println("The result was not saved!");
+				}
+			}
+			else{ // do not show the table in the macro mode and save the data directly to the file
+				for (int roiIdx = 0; roiIdx < roiList.size(); roiIdx++) {
+					// System.out.println("Roi #" + roiIdx);
+					ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold, roiIndices,
+							roiIdx);
+				}
 			}
 		} else
 			System.out.println("Wrong parameters' mode");

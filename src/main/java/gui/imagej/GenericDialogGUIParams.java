@@ -1,6 +1,7 @@
 package gui.imagej;
 
 import org.scijava.ItemIO;
+import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
@@ -12,7 +13,7 @@ import parameters.GUIParams;
 @Plugin(type = Command.class, name = "Set parameters")
 public class GenericDialogGUIParams extends ContextCommand {
 	// TODO: This one use useless
-	@Parameter(type = ItemIO.INPUT)
+	@Parameter(type = ItemIO.INPUT, visibility = ItemVisibility.INVISIBLE)
 	private GUIParams guiParams;
 
 	@Parameter(label = "Sigma")
@@ -28,7 +29,7 @@ public class GenericDialogGUIParams extends ContextCommand {
 	@Parameter(label = "Max error")
 	float maxError = GUIParams.defaultMaxError;
 
-	@Parameter(choices = { "No background subtraction", "Mean", "Median", "RANSAC on Mean",
+	@Parameter(choices = { "No background subtraction", "Mean", "Median", "RANSAC on Mean",                      
 			"RANSAC on Median" }, label = "Local background subtraction")
 	String bsMethod = GUIParams.defaultBsMethod;
 
@@ -47,5 +48,8 @@ public class GenericDialogGUIParams extends ContextCommand {
 		guiParams.setBsMethod(bsMethod);
 
 		guiParams.setRoiFolder(roiFolder);
+		
+		// also back up the defaults
+		guiParams.setDefaultValues();
 	}
 }

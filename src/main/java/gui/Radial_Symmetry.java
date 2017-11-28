@@ -73,7 +73,7 @@ public class Radial_Symmetry extends ContextCommand {
 	@Parameter(label = "Gaussian fitting")
 	boolean gaussFit = defaultGauss;
 
-	@Parameter(label = "<html><b>Visualization:</b>", visibility = ItemVisibility.MESSAGE)
+	@Parameter(label = "<html><b>Visualization:</b>", visibility = org.scijava.ItemVisibility.MESSAGE)
 	String visualizationLabel = "";
 	@Parameter(label = "Detections overlay")
 	boolean showDetections = defaultDetections;
@@ -84,10 +84,10 @@ public class Radial_Symmetry extends ContextCommand {
 	double[] calibration;
 
 	// logging + error message; used instead of the IO.log
-	@Parameter
+	@Parameter(visibility = org.scijava.ItemVisibility.INVISIBLE)
 	LogService logService;
 
-	@Parameter
+	@Parameter(visibility = ItemVisibility.INVISIBLE)
 	CommandService commandService;
 
 	@Override
@@ -107,10 +107,14 @@ public class Radial_Symmetry extends ContextCommand {
 		// set the parameters from the defaults
 		final GUIParams params = new GUIParams();
 		// the 2 below we adjust here because they are defined in the gui
-		setDefaultParams();
 		params.setAnisotropyCoefficient(anisotropy);
 		params.setRANSAC(RANSAC);
 
+		
+		// DEBUG: 
+		// System.out.println(gaussFit + " " + RANSAC);
+		
+		
 		if (parameterType.equals(paramChoice[0])) // manual
 		{
 			// set the parameters in the manual mode
@@ -136,7 +140,7 @@ public class Radial_Symmetry extends ContextCommand {
 		}
 
 		// back up the parameter values to the default variables
-		params.setDefaultValues();
+		// params.setDefaultValues();
 		calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions());
 
 		RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
@@ -181,7 +185,7 @@ public class Radial_Symmetry extends ContextCommand {
 			ArrayList<Roi> roiList = new ArrayList<>();
 			roiList.add(new Roi(0, 0, imp.getWidth() + 1, imp.getHeight() + 1));
 
-			if (!params.getRoiFolder().equals("")) { // user wants rois
+			if (!params.getRoiFolder().trim().equals("")) { // user wants rois
 				roiList = RoiProcess.readRoiList(roiFolder);
 				RoiProcess.processRoi(allSpots, roiList, roiIndices);
 			}
@@ -193,8 +197,9 @@ public class Radial_Symmetry extends ContextCommand {
 			}
 		} else
 			System.out.println("Wrong parameters' mode");
+
 	}
-	
+
 	public void setDefaultParams() {
 		// defaultImg = ; // TODO: 
 		// defaultParam = 0;
@@ -203,10 +208,9 @@ public class Radial_Symmetry extends ContextCommand {
 		defaultAnisotropy = anisotropy;
 		defaultDetections = showDetections;
 		defaultInliers = showInliers;
-
 	}
-	
-	
+
+
 
 	public static void main(String[] args) {
 		// for the historical reasons

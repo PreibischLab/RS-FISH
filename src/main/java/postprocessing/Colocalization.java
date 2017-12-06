@@ -6,10 +6,8 @@ import net.imglib2.KDTree;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
-import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.neighborsearch.NearestNeighborSearchOnKDTree;
-import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 
@@ -17,16 +15,19 @@ import fit.Spot;
 
 public class Colocalization {
 	// functions in this class check that intronic and exonic probs are co-localized 
-	private static boolean debug = true;
+	private static boolean debug = false;
 
 	// error defines how far the corresponding points can be from each other!
-	public static <T extends RealType<T>> void findColocalization(RandomAccessibleInterval<T> img, ArrayList<Spot> ex, ArrayList<Spot> in, float error){
+	public static <T extends RealType<T>> ArrayList<Spot> findColocalization(RandomAccessibleInterval<T> img, ArrayList<Spot> ex, ArrayList<Spot> in, float error){
+		
+		ArrayList<Spot> overlapingSpots = new ArrayList<>();
+		
 		// construct the KDTree on the intronic spots
 		KDTree<Spot> inTree = new KDTree<>(in, in);
 		// define the search on the intronic probes 
 		NearestNeighborSearchOnKDTree<Spot> search = new NearestNeighborSearchOnKDTree<>(inTree);
 
-		for (Spot spot : ex){ // iterate through the exonic spots
+		for (final Spot spot : ex){ // iterate through the exonic spots
 
 			if (debug)
 				System.out.println("spot: " + spot.getIntPosition(0) + " " + spot.getIntPosition(1));
@@ -35,14 +36,11 @@ public class Colocalization {
 			// and has the corresponding intron signal
 			if (isInNuclei(img, spot) && isNextIntron(search, spot, error)){
 				// TODO: some type of processing here 
-			}
-			else{
-				// TODO: guess do nothing here 
-				System.out.println("NOT IN!");
+				overlapingSpots.add(spot);
 			}
 		}
+		return overlapingSpots;
 	}
-
 
 	// check if the signal is inside of the nuclei
 	public static <T extends RealType<T>> boolean isInNuclei(RandomAccessibleInterval<T> img, Spot spot){
@@ -82,7 +80,8 @@ public class Colocalization {
 		return res;
 	}
 
-	public static void main(String [] args){
+	// test case; TODO: move once done
+	public static void testCase(){
 		Img<FloatType> img = new ArrayImgFactory<FloatType>().create(new long[]{64, 64, 64}, new FloatType());
 		ArrayList<Spot> ex = new ArrayList<>();
 		ArrayList<Spot> in = new ArrayList<>();
@@ -102,14 +101,19 @@ public class Colocalization {
 				ex.get(j).center.setSymmetryCenter(j, d);
 				in.get(j).center.setSymmetryCenter(totalNum - j + 0.01, d);
 			}
-
 		}
 
 		float error = 0.5f;
-		findColocalization(img, ex, in, error);
-
+		ArrayList<Spot> result = findColocalization(img, ex, in, error);
+		
+		for (Spot spot : result){
+			System.out.println(spot.center.getSymmetryCenter(0) + " " + spot.center.getSymmetryCenter(1) + " " + spot.center.getSymmetryCenter(2));
+		}
+	}
+	
+	public static void main(String [] args){
+		testCase();
 		System.out.println("DOGE!");
-
 	}
 
 }

@@ -66,4 +66,25 @@ public class ShowResult {
 		IOFunctions.println("Spots found = " + rt.getCounter());
 		rt.show("Results-" + (currentRoiIdx + 1));
 	}
+
+	/**
+	 * @param intensity - list of the intensities
+	 * @return - returns the min and max allowed intensities for the +/-35% offset
+	 * */
+	public static float [] filter70percent(final ArrayList<Float> intensity) {
+		float [] thresholdVal = new float[]{0, 0};
+		double mean = 0;
+		
+		for (float f : intensity)
+			mean += f;
+		
+		mean /= intensity.size();
+		
+		// agree that we have to take +/- 35% from the median value => 70% in total
+		float borderVal = 0.35f;  
+		thresholdVal[0] = (float) ((1 - borderVal)*mean);
+		thresholdVal[1] = (float) ((1 + borderVal)*mean);
+		
+		return thresholdVal;
+	}
 }

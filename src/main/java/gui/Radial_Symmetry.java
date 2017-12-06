@@ -170,7 +170,6 @@ public class Radial_Symmetry extends ContextCommand {
 
 		RadialSymmetry.processSliceBySlice(ImageJFunctions.wrap(imp), rai, rsm, impDim, gaussFit, params.getSigmaDoG(),
 				allSpots, timePoint, channelPoint, intensity);
-
 		// stores the roi value (by default everything belongs to 0'th roi)
 		int[] roiIndices = new int[allSpots.size()];
 
@@ -197,7 +196,7 @@ public class Radial_Symmetry extends ContextCommand {
 
 			// FIXME: dirty hack for the batch mode
 			// check if the macro mode is really working 
-			if (ij.IJ.isMacro()){
+			if (ij.IJ.isMacro()){ // do not show the table in the macro mode and save the data directly to the file
 
 				logService.info("Check you home directory for the results: radial-symmetry-results");
 				String title = imp.getTitle();
@@ -206,9 +205,12 @@ public class Radial_Symmetry extends ContextCommand {
 
 				if ( new File(pathToTheResults).mkdirs() || new File(pathToTheResults).exists())
 				{
+					// take only part of the results 
+					// TODO: make a parameter, too? 
+					float [] thresholdVal = ShowResult.filter70percent(intensity);
 					System.out.println("Results saved to: " + pathToTheResults);
 					for (int roiIdx = 0; roiIdx < roiList.size(); roiIdx++) {
-						HelperFunctions.writeCSV(pathToTheResults + title, allSpots, timePoint, channelPoint, intensity, histThreshold, roiIndices,
+						HelperFunctions.writeCSV(pathToTheResults + title, allSpots, timePoint, channelPoint, intensity, thresholdVal, roiIndices,
 								roiIdx);
 					}
 				}
@@ -216,7 +218,7 @@ public class Radial_Symmetry extends ContextCommand {
 					System.out.println("The result was not saved!");
 				}
 			}
-			else{ // do not show the table in the macro mode and save the data directly to the file
+			else{
 				for (int roiIdx = 0; roiIdx < roiList.size(); roiIdx++) {
 					// System.out.println("Roi #" + roiIdx);
 					ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold, roiIndices,

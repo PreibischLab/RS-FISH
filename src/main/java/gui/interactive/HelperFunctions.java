@@ -39,7 +39,7 @@ public class HelperFunctions {
 
 	// function to save the ArrayList to the csv files
 	public static void writeCSV(final String filePath,  final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
-			final ArrayList<Long> channelPoint, ArrayList<Float> intensity, double histThreshold, int[] roiIndices,
+			final ArrayList<Long> channelPoint, ArrayList<Float> intensity, float[] histThreshold, int[] roiIndices,
 			int currentRoiIdx) {
 		CSVWriter writer = null;
 
@@ -66,7 +66,7 @@ public class HelperFunctions {
 				// if spot was not discarded
 				if (spot.inliers.size() != 0) { // TODO: filtered already?
 					if (roiIndices[idx] == currentRoiIdx) {
-						if (intensity.get(idx) >= histThreshold) {
+						if ((intensity.get(idx) >= histThreshold[0]) && (intensity.get(idx) <= histThreshold[1])) {
 							double[] pos = spot.getCenter();
 							nextLine[0] = Integer.toString(idx + 1); // get index
 							// save the coordinates

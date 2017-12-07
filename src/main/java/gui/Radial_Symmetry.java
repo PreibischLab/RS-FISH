@@ -10,6 +10,7 @@ import org.scijava.command.ContextCommand;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.widget.FileWidget;
 
 import compute.RadialSymmetry;
 import fit.Spot;
@@ -61,12 +62,13 @@ public class Radial_Symmetry extends ContextCommand {
 
 	@Parameter(label = "Anisotropy coefficient")
 	float anisotropy = defaultAnisotropy;
-
+	
 	@Parameter(label = " ", visibility = ItemVisibility.MESSAGE, persist = false)
 	String anisotropyLabel = "<html>*Use the \"Anisotropy Coeffcient Plugin\"<br/>to calculate the anisotropy coefficient<br/> or leave 1.00 for a reasonable result.";
 
-	@Parameter(label = "<html><b>Computation:</h>", visibility = ItemVisibility.MESSAGE)
+	@Parameter(label = "<html><b>Computation:</b>", visibility = ItemVisibility.MESSAGE)
 	String computationLabel = "";
+	
 	@Parameter(label = "RANSAC")
 	boolean RANSAC = defaultRANSAC;
 	// use gauss fit
@@ -86,16 +88,16 @@ public class Radial_Symmetry extends ContextCommand {
 	double[] calibration;
 
 	// logging + error message; used instead of the IO.log
-	@Parameter(visibility = org.scijava.ItemVisibility.INVISIBLE)
+	@Parameter
 	LogService logService;
 
-	@Parameter(visibility = ItemVisibility.INVISIBLE)
+	@Parameter
 	CommandService commandService;
 
 	// FIXME: DRESDEN 
 	// this parameter is only used in macro scripting
-	//	@Parameter(visibility = ItemVisibility.INVISIBLE)
-	//	String resultFolder = "";
+	@Parameter(visibility = ItemVisibility.INVISIBLE, style=FileWidget.DIRECTORY_STYLE)
+	File resultFolder;
 
 	@Override
 	public void run() {

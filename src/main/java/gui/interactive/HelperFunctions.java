@@ -2,6 +2,7 @@ package gui.interactive;
 
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,8 +32,8 @@ import ij.gui.OvalRoi;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.measure.Calibration;
-import ij.measure.ResultsTable;
 import ij.process.ImageProcessor;
+import util.opencsv.CSVReader;
 import util.opencsv.CSVWriter;
 
 public class HelperFunctions {
@@ -99,6 +100,56 @@ public class HelperFunctions {
 			writer.close();
 		}catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	// function to save the ArrayList to the csv files
+	public static void readCSV(final String filePath, final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
+			final ArrayList<Long> channelPoint, ArrayList<Float> intensity) {
+		CSVReader reader = null;
+		String[] nextLine;
+
+		try {
+			// System.out.println(filePath.substring(0, filePath.length() - 4) + "-"+ currentRoiIdx +".csv");
+			reader = new CSVReader(new FileReader(filePath), ',');
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
+
+		try{
+			int idx = 0;
+			while ((nextLine = reader.readNext()) != null) {
+				if (idx == 0) // skip the first line 
+					System.out.println("Read the header of the file");
+				else{
+					// idx, xy(z), t, c, intensity
+					int numDimensions = nextLine.length == 7 ? 3 : 2;
+					int shift = numDimensions == 3 ? 1 : 0; // take into account that the data can be 2D/3D
+					double [] xyz = new double [numDimensions];
+					// set the coordinates
+					xyz[0] = Double.valueOf(nextLine[1]); 
+					xyz[1] = Double.valueOf(nextLine[2]); 
+					if (numDimensions == 3)
+						xyz[2] = Double.valueOf(nextLine[3]); 
+
+					final Spot spot = new Spot(numDimensions);
+					spot.setOriginalLocation(new long[numDimensions]); // the original location is empty!
+					spots.add(spot); 
+
+					for (int d = 0; d < numDimensions; d++){
+						spots.get(idx - 1).center.setSymmetryCenter(xyz[d], d);
+					}
+
+					timePoint.add(Long.valueOf(nextLine[3 + shift])); 
+					channelPoint.add(Long.valueOf(nextLine[4 + shift])); 
+					intensity.add(Float.valueOf(nextLine[5 + shift])); 
+				}
+				idx++;
+			}
+			reader.close();
+		}catch(Exception e){
+			System.out.println("HELPERFUNCTIONS.JAVA: EXCEPTION CAUGHT!");
 		}
 	}
 

@@ -6,13 +6,21 @@ import net.imagej.Dataset;
 
 public class TestPostprocessing {
 
-	public static void main(String [] args){
+	public static void main(String[] args) {
 		final net.imagej.ImageJ ij = new net.imagej.ImageJ();
 		ij.ui().showUI();
 		// open one test image
+		// try {
+		// String path =
+		// "src/main/resources/rs-test/vizualisation/test-random-xy.tif";
+		// Dataset dataset = ij.scifio().datasetIO().open(path);
+		// ij.ui().show(dataset);
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
+
 		try {
-			String path = "src/main/resources/rs-test/vizualisation/test-random-xy.tif";
-			Dataset dataset = ij.scifio().datasetIO().open(path);
+			Dataset dataset = ij.scifio().datasetIO().open("/Users/kkolyva/Desktop/mask.tif");
 			ij.ui().show(dataset);
 		} catch (IOException e) {
 			e.printStackTrace();

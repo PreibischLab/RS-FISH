@@ -96,7 +96,7 @@ public class Radial_Symmetry extends ContextCommand {
 
 	// FIXME: DRESDEN 
 	// this parameter is only used in macro scripting
-	@Parameter(visibility = ItemVisibility.INVISIBLE, style=FileWidget.DIRECTORY_STYLE)
+	@Parameter(visibility = ItemVisibility.INVISIBLE, style=FileWidget.DIRECTORY_STYLE, required=false)
 	File resultFolder;
 
 	@Override

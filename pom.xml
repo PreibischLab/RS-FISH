@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>16.1.0</version>
+		<version>17.1.1</version>
 		<relativePath />
 	</parent>
 
@@ -92,6 +92,8 @@
 		<scijava.jvm.version>1.8</scijava.jvm.version>
 		<license.licenseName>gpl_v2</license.licenseName>
 		<license.copyrightOwners>Developers.</license.copyrightOwners>
+		<imagej-common.version>0.24.9</imagej-common.version>
+		<imagej-legacy.version>0.26.0</imagej-legacy.version>
 	</properties>
 	<repositories>
 		<!-- NB: for project parent -->

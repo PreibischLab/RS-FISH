@@ -55,6 +55,15 @@ public class Postprocessing extends ContextCommand {
 		// for (int [] indices : overlayedIndices)
 		// System.out.println(exSpots.get(indices[0]).getDoublePosition(0) + " "
 		// + inSpots.get(indices[1]).getDoublePosition(0));
+		
+		String exonPathFiltered = exonPath.getAbsolutePath().substring(0, exonPath.getAbsolutePath().length() - 4) + "-filtered.csv";
+		HelperFunctions.writeCSVIdx(exonPathFiltered, exSpots, exTimePoint,
+				exChannelPoint, exIntensity, overlayedIndices, 0); 
+		
+		String intronPathFiltered = intronPath.getAbsolutePath().substring(0, intronPath.getAbsolutePath().length() - 4) + "-filtered.csv";
+		HelperFunctions.writeCSVIdx(intronPathFiltered, inSpots, inTimePoint,
+				inChannelPoint, inIntensity, overlayedIndices, 1); 
+		
 
 		System.out.println("The plugin triggered!");
 	}

@@ -39,7 +39,7 @@ import util.opencsv.CSVWriter;
 public class HelperFunctions {
 
 	// function to save the ArrayList to the csv files
-	public static void writeCSV(final String filePath,  final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
+	public static void writeCSV(final String filePath, final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
 			final ArrayList<Long> channelPoint, ArrayList<Float> intensity, float[] histThreshold, int[] roiIndices,
 			int currentRoiIdx) {
 		CSVWriter writer = null;
@@ -153,6 +153,53 @@ public class HelperFunctions {
 		}
 	}
 
+	// function to save the ArrayList to the csv files
+	public static void writeCSVIdx(final String filePath, final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
+			final ArrayList<Long> channelPoint, ArrayList<Float> intensity, ArrayList<int[]> indices, int signalIdx) {
+		CSVWriter writer = null;
+
+		try {
+			// System.out.println(filePath.substring(0, filePath.length() - 4) + "-"+ currentRoiIdx +".csv");
+			writer = new CSVWriter(new FileWriter(filePath), ',', CSVWriter.NO_QUOTE_CHARACTER);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
+
+		try {
+			int idx = 0;
+			for (int [] index : indices){
+				idx = index[signalIdx];
+				Spot spot = spots.get(idx);
+				
+				int numDimensions = spot.numDimensions();
+
+				int lineLength = numDimensions == 3 ? 7 : 6; // idx , xy(z), c, t, intensity
+				String[] nextLine = new String[lineLength];
+
+				double[] pos = spot.getCenter();
+				nextLine[0] = Integer.toString(idx + 1); // get index
+				// save the coordinates
+				for (int d = 0; d < numDimensions; ++d)
+					nextLine[d + 1] = String.format(java.util.Locale.US, "%.4f", pos[d]);
+
+				int shift = numDimensions == 3 ? 1 : 0; // take into account that the data can be 2D/3D
+				// add the time point
+				nextLine[numDimensions + shift] = Long.toString(timePoint.get(idx));
+				// add the channel
+				nextLine[1 + numDimensions + shift] = Long.toString(channelPoint.get(idx));
+				// add intensity value
+				nextLine[2 + numDimensions + shift] = String.format(java.util.Locale.US, "%.4f", intensity.get(idx));
+
+				writer.writeNext(nextLine);
+				idx++;
+			}
+
+			writer.close();
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel,
 			long time, int[] impDim) {

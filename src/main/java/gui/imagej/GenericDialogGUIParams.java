@@ -1,5 +1,7 @@
 package gui.imagej;
 
+import java.io.File;
+
 import org.scijava.ItemIO;
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
@@ -34,7 +36,7 @@ public class GenericDialogGUIParams extends ContextCommand {
 	String bsMethod = GUIParams.defaultBsMethod;
 
 	@Parameter(label = "ROI folder")
-	String roiFolder = GUIParams.defaultRoiFolder; // by default no roi folder
+	File roiFolder = new File(GUIParams.defaultRoiFolder); // by default no roi folder
 													// is used
 
 	@Override
@@ -47,7 +49,7 @@ public class GenericDialogGUIParams extends ContextCommand {
 		guiParams.setMaxError(maxError);
 		guiParams.setBsMethod(bsMethod);
 
-		guiParams.setRoiFolder(roiFolder);
+		guiParams.setRoiFolder(roiFolder.getAbsolutePath());
 		
 		// also back up the defaults
 		guiParams.setDefaultValues();

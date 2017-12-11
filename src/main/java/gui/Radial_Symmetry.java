@@ -3,6 +3,12 @@ package gui;
 import java.io.File;
 import java.util.ArrayList;
 
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.real.FloatType;
+
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.command.CommandService;
@@ -18,16 +24,10 @@ import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
 import gui.vizualization.Visualization;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.numeric.real.FloatType;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 import result.output.ShowResult;
@@ -62,13 +62,13 @@ public class Radial_Symmetry extends ContextCommand {
 
 	@Parameter(label = "Anisotropy coefficient")
 	float anisotropy = defaultAnisotropy;
-	
+
 	@Parameter(label = " ", visibility = ItemVisibility.MESSAGE, persist = false)
 	String anisotropyLabel = "<html>*Use the \"Anisotropy Coeffcient Plugin\"<br/>to calculate the anisotropy coefficient<br/> or leave 1.00 for a reasonable result.";
 
 	@Parameter(label = "<html><b>Computation:</b>", visibility = ItemVisibility.MESSAGE)
 	String computationLabel = "";
-	
+
 	@Parameter(label = "RANSAC")
 	boolean RANSAC = defaultRANSAC;
 	// use gauss fit
@@ -96,7 +96,7 @@ public class Radial_Symmetry extends ContextCommand {
 
 	// FIXME: DRESDEN 
 	// this parameter is only used in macro scripting
-	@Parameter(visibility = ItemVisibility.INVISIBLE, style=FileWidget.DIRECTORY_STYLE, required=false)
+	@Parameter(visibility = ItemVisibility.INVISIBLE, style=FileWidget.DIRECTORY_STYLE, required=true)
 	File resultFolder;
 
 	@Override
@@ -184,9 +184,7 @@ public class Radial_Symmetry extends ContextCommand {
 			double histThreshold = Visualization.getHistThreshold(); // used to show the overlays
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold, roiIndices, 0);
 		} else if (parameterType.equals(paramChoice[0])) { // manual
-			// write the result to the csv file
-			double histThreshold = 0; // take all of the points that were detected
-
+			// write the result to the csv file without showing the table
 			String roiFolder = params.getRoiFolder();
 			ArrayList<Roi> roiList = new ArrayList<>();
 			roiList.add(new Roi(0, 0, imp.getWidth() + 1, imp.getHeight() + 1));
@@ -196,37 +194,25 @@ public class Radial_Symmetry extends ContextCommand {
 				RoiProcess.processRoi(allSpots, roiList, roiIndices);
 			}
 
-			// FIXME: dirty hack for the batch mode
-			// check if the macro mode is really working 
-			if (ij.IJ.isMacro()){ // do not show the table in the macro mode and save the data directly to the file
+			logService.info("The results were written to " + resultFolder);
+			String title = imp.getTitle();
 
-				logService.info("Check you home directory for the results: radial-symmetry-results");
-				String title = imp.getTitle();
-
-				String pathToTheResults = System.getProperty("user.home") + "/radial-symmetry-results/";
-
-				if ( new File(pathToTheResults).mkdirs() || new File(pathToTheResults).exists())
-				{
-					// take only part of the results 
-					// TODO: make a parameter, too? 
-					float [] thresholdVal = ShowResult.filter70percent(intensity);
-					System.out.println("Results saved to: " + pathToTheResults);
-					for (int roiIdx = 0; roiIdx < roiList.size(); roiIdx++) {
-						HelperFunctions.writeCSV(pathToTheResults + title, allSpots, timePoint, channelPoint, intensity, thresholdVal, roiIndices,
-								roiIdx);
-					}
-				}
-				else{
-					System.out.println("The result was not saved!");
-				}
-			}
-			else{
+			String pathToTheResults = resultFolder.getAbsolutePath() + "/" + title.substring(0, title.length() - 4) + "/";
+			if ( new File(pathToTheResults).mkdirs() || new File(pathToTheResults).exists())
+			{
+				// take only part of the results 
+				// TODO: make a parameter, too? 
+				float [] thresholdVal = ShowResult.filter70percent(intensity);
+				System.out.println("Results saved to: " + pathToTheResults);
 				for (int roiIdx = 0; roiIdx < roiList.size(); roiIdx++) {
-					// System.out.println("Roi #" + roiIdx);
-					ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold, roiIndices,
+					HelperFunctions.writeCSV(pathToTheResults + title, allSpots, timePoint, channelPoint, intensity, thresholdVal, roiIndices,
 							roiIdx);
 				}
 			}
+			else{
+				System.out.println("The result was not saved!");
+			}
+
 		} else
 			System.out.println("Wrong parameters' mode");
 

@@ -35,6 +35,8 @@ public class RoiProcess {
 		ArrayList<Roi> roiList = new ArrayList<>();
 		File roiFolder = new File(roiFolderPath);
 
+		try{
+		
 		for (final File roiFile : roiFolder.listFiles()) {
 			if (roiFile.isFile()) {
 				// System.out.println(roiFile.getName());
@@ -47,6 +49,11 @@ public class RoiProcess {
 					e.printStackTrace();
 				}
 			}
+		}
+		}
+		catch(Exception e){
+			System.out.println("Exception caught");
+			System.out.println("roiFolderPath:" + roiFolderPath);
 		}
 		return roiList;
 	}

@@ -93,7 +93,7 @@
 		<license.licenseName>gpl_v2</license.licenseName>
 		<license.copyrightOwners>Developers.</license.copyrightOwners>
 		<imagej-common.version>0.24.9</imagej-common.version>
-		<imagej-legacy.version>0.26.0</imagej-legacy.version>
+		<imagej-legacy.version>0.26.1-SNAPSHOT</imagej-legacy.version>
 		<scijava-ui-swing.version>0.9.4</scijava-ui-swing.version>
 		<scijava-common.version>2.67.1-SNAPSHOT</scijava-common.version>
 		<enforcer.skip>true</enforcer.skip>

@@ -91,10 +91,10 @@ public class HelperFunctions {
 							nextLine[2 + spot.numDimensions()] = Integer.toString(currentChannelPoint + 1);
 							// add intensity value
 							nextLine[3 + spot.numDimensions()] = String.format(java.util.Locale.US, "%.4f", intensity.get(idx));
+							writer.writeNext(nextLine);
 						}
 					}
 				}
-				writer.writeNext(nextLine);
 				idx++;
 			}
 			writer.close();

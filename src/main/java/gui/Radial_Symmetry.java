@@ -49,11 +49,7 @@ public class Radial_Symmetry extends ContextCommand {
 	// steps per octave for DoG
 	public static int defaultSensitivity = 4;
 
-	// TODO:
-	// https://github.com/scijava/scijava-common/issues/42#issuecomment-332724692
-	// that the answer to the question how to hide some of the elements of the
-	// gui
-
+	// false gives user the possibility to choose the image
 	@Parameter(autoFill = false, label = "Image")
 	ImagePlus imp;
 
@@ -146,6 +142,8 @@ public class Radial_Symmetry extends ContextCommand {
 				return;
 		}
 
+		// FIXME: move the code below to the separate function 
+		
 		// back up the parameter values to the default variables
 		// params.setDefaultValues();
 		calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions());

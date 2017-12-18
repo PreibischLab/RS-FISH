@@ -3,6 +3,7 @@ package gui.postprocessing;
 import java.io.File;
 import java.util.ArrayList;
 
+import net.imagej.Dataset;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
@@ -20,7 +21,8 @@ import postprocessing.Colocalization;
 public class Postprocessing extends ContextCommand {
 
 	@Parameter(autoFill = false, label = "Nuclei mask:")
-	Img<UnsignedByteType> img;
+	Dataset dataset;
+	// change to the 
 
 	@Parameter(label = "Intron results:", style = FileWidget.OPEN_STYLE)
 	File intronPath = new File("/Users/kkolyva/Desktop/05.nd2 - C=2-1.csv");
@@ -49,7 +51,12 @@ public class Postprocessing extends ContextCommand {
 		HelperFunctions.readCSV(intronPath.getAbsolutePath(), inSpots, inTimePoint, inChannelPoint, inIntensity);
 
 		System.out.println("in: " + inSpots.size());
-
+		Img<UnsignedByteType> img = dataset.typedImg(new UnsignedByteType());
+		if (img == null){
+			return; 
+			// TODO: sys out
+		}
+		
 		ArrayList<int[]> overlayedIndices = Colocalization.findColocalization(img, exSpots, inSpots, error);
 
 		// for (int [] indices : overlayedIndices)

@@ -44,7 +44,7 @@ public class TestRadialSymmetry {
 			}
 		}
 		try {
-			Dataset dataset = ij.scifio().datasetIO().open("/Users/kkolyva/Desktop/2017-12-11-14-26-11-test-rs-headless/input/test-random-xyz.tif");
+			Dataset dataset = ij.scifio().datasetIO().open("/Users/kkolyva/Downloads/test.tif");
 			ij.ui().show(dataset);
 		} catch (IOException e) {
 			e.printStackTrace();

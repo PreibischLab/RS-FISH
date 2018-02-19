@@ -43,13 +43,13 @@ public class TestRadialSymmetry {
 				}
 			}
 		}
+		try {
+			Dataset dataset = ij.scifio().datasetIO().open("/Users/kkolyva/Downloads/test.tif");
+			ij.ui().show(dataset);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-//		try {
-//			Dataset dataset = ij.scifio().datasetIO().open("/Volumes/Samsung_T3/2017-10-15-Dhana-radial-symmetry-test/Example_3dt_Dhana.tif");
-//			ij.ui().show(dataset);
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
 
 
 

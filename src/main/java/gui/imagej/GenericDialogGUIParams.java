@@ -9,28 +9,32 @@ import org.scijava.plugin.Plugin;
 import parameters.GUIParams;
 
 // used for the advanced option of the initial dialog
-@Plugin(type = Command.class, name="Set parameters")
-public class GenericDialogGUIParams extends ContextCommand
-{
+@Plugin(type = Command.class, name = "Set parameters")
+public class GenericDialogGUIParams extends ContextCommand {
 	// TODO: This one use useless
-	@Parameter(type=ItemIO.INPUT)
+	@Parameter(type = ItemIO.INPUT)
 	private GUIParams guiParams;
 
-	@Parameter(label="Sigma")
+	@Parameter(label = "Sigma")
 	float sigma = GUIParams.defaultSigma;
-	@Parameter(label="Threshold")
+	@Parameter(label = "Threshold")
 	float threshold = GUIParams.defaultThreshold;
 
-	@Parameter(label="Support region radius")
+	@Parameter(label = "Support region radius")
 	int supportRadius = GUIParams.defaultSupportRadius;
 
-	@Parameter(label="Inlier ratio")
+	@Parameter(label = "Inlier ratio")
 	float inlierRatio = GUIParams.defaultInlierRatio;
-	@Parameter(label="Max error")
+	@Parameter(label = "Max error")
 	float maxError = GUIParams.defaultMaxError;
 
-	@Parameter( choices = {"No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" }, label="Local background subtraction")
+	@Parameter(choices = { "No background subtraction", "Mean", "Median", "RANSAC on Mean",
+			"RANSAC on Median" }, label = "Local background subtraction")
 	String bsMethod = GUIParams.defaultBsMethod;
+
+	@Parameter(label = "ROI folder")
+	String roiFolder = GUIParams.defaultRoiFolder; // by default no roi folder
+													// is used
 
 	@Override
 	public void run() {
@@ -41,5 +45,7 @@ public class GenericDialogGUIParams extends ContextCommand
 		guiParams.setInlierRatio(inlierRatio);
 		guiParams.setMaxError(maxError);
 		guiParams.setBsMethod(bsMethod);
+
+		guiParams.setRoiFolder(roiFolder);
 	}
 }

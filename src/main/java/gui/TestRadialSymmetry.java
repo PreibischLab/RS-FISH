@@ -43,15 +43,13 @@ public class TestRadialSymmetry {
 				}
 			}
 		}
+
 		try {
 			Dataset dataset = ij.scifio().datasetIO().open("/Users/kkolyva/Downloads/test.tif");
 			ij.ui().show(dataset);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-
-
 
 		ij.command().run(Radial_Symmetry.class, true);
 		System.out.println("Doge!");

@@ -4,7 +4,6 @@
 	<artifactId>Radial_SymmetryLocalization</artifactId>
 
 	<version>1.0.2</version>
-
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>

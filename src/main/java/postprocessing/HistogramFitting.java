@@ -1,6 +1,7 @@
 package postprocessing;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 
 import fit.Spot;
@@ -18,11 +19,13 @@ import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.RealSum;
 import net.imglib2.view.Views;
 
 public class HistogramFitting {
 
 	public static float eps = 1e-7f;
+	public static boolean debug = false;
 
 	public static void testRun() {
 		int totalBins = 20;
@@ -74,6 +77,7 @@ public class HistogramFitting {
 		int filterSize = 5;
 		float[] kernel = new float[filterSize];
 
+		// TODO: adjust these values for smoothing of the data
 		kernel[0] = kernel[filterSize - 1] = 0.05f;
 		kernel[1] = kernel[filterSize - 2] = 0.15f;
 		kernel[2] = 0.6f;
@@ -102,6 +106,16 @@ public class HistogramFitting {
 
 	}
 
+	public static void copyArrayListToImg(long[] from, Img<FloatType> to) {
+
+		RandomAccess<FloatType> ra = to.randomAccess();
+		for (int j = 0; j < from.length; j++) {
+			float val = from[j];
+			ra.setPosition(j, 0); // image is always 1D
+			ra.get().set(val);
+		}
+	}
+
 	public static <T extends Type<T>> void copy(final RandomAccessible<T> source, final IterableInterval<T> target) {
 		// create a cursor that automatically localizes itself on every move
 		Cursor<T> targetCursor = target.localizingCursor();
@@ -119,33 +133,95 @@ public class HistogramFitting {
 		}
 	}
 
-	public static void run(Img<FloatType> img) {
-		if (true)
+	public static double[] run(Img<FloatType> img, boolean smoothen) {
+		if (smoothen)
 			smoothenData(img);
-		run(img);
+		double [] params = runFit(img);
+		return params;
 	}
 
-	public static float[] runFit(Img<FloatType> img) {
+	public static float getMean(Img<FloatType> img) {
+		long total = 0;
+		
+		// Count all values using the RealSum class.
+		// It prevents numerical instabilities when adding up millions of pixels
+		final RealSum realSum = new RealSum();
+
+		for (final FloatType val : img)
+			if (val.getRealDouble() > 0){
+				realSum.add(val.getRealDouble());
+				total++;
+			}
+
+		return (float) (realSum.getSum() / total);
+
+	}
+
+	// TODO: finish! 
+	public static float getMedian(Img<FloatType> img){
+		float center = 0;
+		
+		ArrayList<Float> values = new ArrayList<>((int) img.size());
+		Cursor<FloatType> cursor = img.cursor();
+		
+		System.out.println(img.size() + " : " + values.size());
+		
+		int idx = 0;
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			values.add(idx, cursor.get().get());
+			idx++;
+		}
+		
+		Collections.sort(values);
+		center = values.get(values.size() / 2).floatValue();
+		
+		return center;
+	}
+
+	public static float getStd(Img<FloatType> img, float mean) {
+		float res = 0;
+		long total = 0;
+		
+		// std = sqrt(mean(abs(x - x.mean())**2))
+		Cursor<FloatType> cursor = img.cursor();
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			if (cursor.get().get() > 0){
+				res += Math.abs(cursor.get().get() - mean);
+				total++;
+			}
+		}
+
+		res /= total;
+
+		return res;
+	}
+
+	public static double[] runFit(Img<FloatType> img) {
 		int numDimensions = 1; // fitting the peak on the 1D data
 
-		long[] minmax = findMinMax(img);
-		long min = minmax[0];
-		long max = minmax[1];
+//		long[] minmax = findMinMax(img);
+//		long min = minmax[0];
+//		long max = minmax[1];
+//		System.out.println(minmax[0] + " : " + minmax[1]);
 
-		System.out.println(minmax[0] + " : " + minmax[1]);
+		float mean = getMean(img);
+		float sigma = getStd(img, mean);
+		
+		if (debug)
+			System.out.println("mean: " + mean + " sigma: " + sigma);
 
 		double[] typicalSigmas = new double[numDimensions];
-		typicalSigmas[0] = (max - min) / 2;
-
-		// TODO: implement the background subtraction here, otherwise peakfitter
-		// will
-		// give the wrong result
+		typicalSigmas[0] = sigma;
 
 		ArrayList<Point> peaks = new ArrayList<>();
 
-		peaks.add(new Point(new long[] { min + (max - min) / 2 }));
+		// peaks.add(new Point(new long[] { min + (max - min) / 2 }));
+		// peaks.add(new Point(new long[] { (long) median }));
+		peaks.add(new Point(new long[] { (long) mean }));
 
-		PeakFitter<FloatType> pf = new PeakFitter<FloatType>(img, (ArrayList) peaks, new LevenbergMarquardtSolver(),
+		PeakFitter<FloatType> pf = new PeakFitter<>(img, (ArrayList) peaks, new LevenbergMarquardtSolver(),
 				new EllipticGaussianOrtho(), // use a
 				// non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy &
 				// sigma_z)
@@ -157,22 +233,19 @@ public class HistogramFitting {
 		// is presented in the histogram
 		// System.out.println(pf.getResult().values());
 
-		// TODO: make spot implement Localizable - then this is already a
-		// HashMap that maps Spot > double[]
-		// this is actually a Map< Spot, double[] >
 		final Map<Localizable, double[]> fits = pf.getResult();
 
-		for (Point peak : peaks) {
-			double[] params = fits.get(peak);
-			for (int j = 0; j < params.length; j++)
-				System.out.println(j != 2 ? params[j] : Math.sqrt(1 / (2 * params[j])));
-		}
+		if (debug)
+			for (Point peak : peaks) {
+				double[] params = fits.get(peak);
+				for (int j = 0; j < params.length; j++)
+					System.out.println(params[j]);
+			}
 
 		// there is only one peak that you are looking for
-		float center = (float) fits.get(peaks.get(0))[0];
+		// float center = (float) fits.get(peaks.get(0))[0];
 
-		float border = 0.35f;
-		return new float[] { (1 - border) * center, (1 + border) * center };
+		return fits.get(peaks.get(0));
 	}
 
 	// works only on the 1D images

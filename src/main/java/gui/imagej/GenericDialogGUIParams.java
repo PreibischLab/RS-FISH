@@ -32,10 +32,6 @@ public class GenericDialogGUIParams extends ContextCommand {
 			"RANSAC on Median" }, label = "Local background subtraction")
 	String bsMethod = GUIParams.defaultBsMethod;
 
-	@Parameter(label = "ROI folder")
-	String roiFolder = GUIParams.defaultRoiFolder; // by default no roi folder
-													// is used
-
 	@Override
 	public void run() {
 		guiParams.setSigmaDog(sigma);
@@ -45,7 +41,5 @@ public class GenericDialogGUIParams extends ContextCommand {
 		guiParams.setInlierRatio(inlierRatio);
 		guiParams.setMaxError(maxError);
 		guiParams.setBsMethod(bsMethod);
-
-		guiParams.setRoiFolder(roiFolder);
 	}
 }

@@ -2,6 +2,12 @@ package gui;
 
 import java.util.ArrayList;
 
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.real.FloatType;
+
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.command.CommandService;
@@ -20,15 +26,9 @@ import ij.ImagePlus;
 import ij.gui.Roi;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.numeric.real.FloatType;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 import result.output.ShowResult;
-import roi.process.RoiProcess;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Radial Symmetry")
 public class Radial_Symmetry extends ContextCommand {
@@ -161,9 +161,6 @@ public class Radial_Symmetry extends ContextCommand {
 		RadialSymmetry.processSliceBySlice(ImageJFunctions.wrap(imp), rai, rsm, impDim, gaussFit, params.getSigmaDoG(),
 				allSpots, timePoint, channelPoint, intensity);
 
-		// stores the roi value (by default everything belongs to 0'th roi)
-		int[] roiIndices = new int[allSpots.size()];
-
 		if (parameterType.equals(paramChoice[1])) { // interactive
 			// TODO: keep here?
 			imp.deleteRoi();
@@ -171,25 +168,15 @@ public class Radial_Symmetry extends ContextCommand {
 			Visualization.showVisualization(imp, allSpots, intensity, timePoint, showInliers, showDetections,
 					params.getSigmaDoG(), params.getAnisotropyCoefficient());
 			double histThreshold = Visualization.getHistThreshold(); // used to show the overlays
-			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold, roiIndices, 0);
+			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
 		} else if (parameterType.equals(paramChoice[0])) { // manual
 			// write the result to the csv file
 			double histThreshold = 0; // take all of the points that were detected
 
-			String roiFolder = params.getRoiFolder();
 			ArrayList<Roi> roiList = new ArrayList<>();
 			roiList.add(new Roi(0, 0, imp.getWidth() + 1, imp.getHeight() + 1));
 
-			if (!params.getRoiFolder().equals("")) { // user wants rois
-				roiList = RoiProcess.readRoiList(roiFolder);
-				RoiProcess.processRoi(allSpots, roiList, roiIndices);
-			}
-
-			for (int roiIdx = 0; roiIdx < roiList.size(); roiIdx++) {
-				// System.out.println("Roi #" + roiIdx);
-				ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold, roiIndices,
-						roiIdx);
-			}
+			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
 		} else
 			System.out.println("Wrong parameters' mode");
 	}

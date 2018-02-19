@@ -18,8 +18,6 @@ public class GUIParams {
 	public static boolean defaultRANSAC = true;
 	public static float defaultAnisotropy = 1.0f;
 
-	public static String defaultRoiFolder = "";
-
 	// RANSAC parameters
 	// current value
 	boolean RANSAC;
@@ -38,9 +36,6 @@ public class GUIParams {
 	// Z-scaling anisotropy calculation
 	float anisotropyCoefficient;
 
-	// path to the folder with ROI's for images
-	String roiFolder;
-
 	public GUIParams() {
 		setSigmaDog(defaultSigma);
 		setThresholdDoG(defaultThreshold);
@@ -54,8 +49,6 @@ public class GUIParams {
 		setBsMethod(defaultBsMethod);
 		setBsMaxError(defaultBsMaxError);
 		setBsInlierRatio(defaultBsInlierRatio);
-		//
-		setRoiFolder(defaultRoiFolder);
 	}
 
 	public void printParams() {
@@ -65,7 +58,6 @@ public class GUIParams {
 		System.out.println("MaxError      : " + maxError);
 		System.out.println("InlierRatio   : " + inlierRatio);
 		System.out.println("supportRadius : " + supportRadius);
-		System.out.println("RoiFolder     : " + roiFolder);
 	}
 
 	public void printDefaultParams() {
@@ -75,7 +67,6 @@ public class GUIParams {
 		System.out.println("DMaxError      : " + defaultMaxError);
 		System.out.println("DInlierRatio   : " + defaultInlierRatio);
 		System.out.println("DSupportRadius : " + defaultSupportRadius);
-		System.out.println("DRoiFolder     : " + defaultRoiFolder);
 	}
 
 	// getters
@@ -125,10 +116,6 @@ public class GUIParams {
 		return bsInlierRatio;
 	}
 
-	public String getRoiFolder() {
-		return roiFolder;
-	}
-
 	/**
 	 * back up the default values
 	 */
@@ -144,8 +131,6 @@ public class GUIParams {
 		defaultBsInlierRatio = bsInlierRatio;
 		defaultBsMaxError = bsMaxError;
 		defaultBsMethod = bsMethod;
-
-		defaultRoiFolder = roiFolder;
 	}
 
 	// to be used by the listeners
@@ -192,10 +177,6 @@ public class GUIParams {
 
 	public void setBsInlierRatio(float bsInlierRatio) {
 		this.bsInlierRatio = bsInlierRatio;
-	}
-
-	public void setRoiFolder(String roiFolder) {
-		this.roiFolder = roiFolder;
 	}
 
 }

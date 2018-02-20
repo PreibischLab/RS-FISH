@@ -269,6 +269,9 @@ public class TestGauss3d
 		}
 	}
 
+	final public static void addGaussian( final RandomAccessibleInterval< FloatType > image, final double[] location, final double[] sigma, float A){
+		addGaussian(image, location, sigma, A, true);
+	}
 	
 	final public static void addGaussian( final RandomAccessibleInterval< FloatType > image, final double[] location, final double[] sigma){
 		addGaussian(image, location, sigma, 1, true);

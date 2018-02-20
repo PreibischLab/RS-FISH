@@ -1,5 +1,6 @@
 package paper.test.radialsymmetry;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import net.imagej.ImageJ;
@@ -18,12 +19,13 @@ public class ProcessInput {
 
 	// TODO: 
 	// [x] Simulated data in 2D 
+	// [ ] Add function to keep track of the detections
 	// [] Real data in 2D
 	// [] Real data in 3D 
 	// [] Anisotropic images in 3D
 
 	// generate the 2D image
-	public static void generate2dRandom(String path, String name, long [] dims, double [] sigma, long numSpots, int seed, boolean padding) {
+	public static void generate2dRandom(String path, String imgName, String posName, long [] dims, double [] sigma, long numSpots, int seed, boolean padding) {
 		int numDimensions = dims.length;
 		final Img<FloatType> img = new ArrayImgFactory<FloatType>().create(dims, new FloatType());
 		final Random rnd = new Random(seed);
@@ -43,34 +45,41 @@ public class ProcessInput {
 			}
 		}
 
-		final double[] location = new double[numDimensions];
+		// will be used to save the data
+		ArrayList <double[]> positions = new ArrayList<>();
 		for (int i = 0; i < numSpots; ++i) {
+			final double[] pos = new double[numDimensions];
 			// small adjustment to have a padding around all points
 			// (int)(Math.random() * ((Max - Min) + 1)) + Min
-			for (int d = 0; d < numDimensions; d++) {
-				location[d] = rnd.nextDouble() * ((maxValue[d] - minValue[d]) + 1) + minValue[d];
-			}
-			TestGauss3d.addGaussian(img, location, sigma, 1, false);
+			for (int d = 0; d < numDimensions; d++)
+				pos[d] = rnd.nextDouble() * ((maxValue[d] - minValue[d]) + 1) + minValue[d];
+			positions.add(pos);
+			TestGauss3d.addGaussian(img, pos, sigma, 1, false); // false indicates to take the max intensity instead of the cumulative
 		}
-
-		ImageJFunctions.show(img).setTitle(name);
+		
+		// save data to .csv file
+		String fullPosPath = path + posName + "-" + numSpots + "-" + sigma[0] + "-" + sigma[1] + "-" + seed + ".csv";
+		IOFunctions.writeCSV(positions, fullPosPath);
+		// show the resulting image
+		ImageJFunctions.show(img).setTitle(imgName);
 		// saving part
-		FileSaver fs = new FileSaver(ImageJFunctions.wrap(img, name));
-		String fullPath = path + name + "-" + numSpots + "-" + sigma[0] + "-" + sigma[1] + "-" + seed + ".tif";
-		fs.saveAsTiff(fullPath);
+		FileSaver fs = new FileSaver(ImageJFunctions.wrap(img, imgName));
+		String fullImgPath = path + imgName + "-" + numSpots + "-" + sigma[0] + "-" + sigma[1] + "-" + seed + ".tif";
+		fs.saveAsTiff(fullImgPath);
 		
 	}
 
 	public static void runGenerate2dRandom() {
 		String path = "/Users/kkolyva/Desktop/";
-		String name = "test-image";
+		String imgName = "test-2D-image";
+		String posName = "test-2D-pos";
 		long [] dims = new long[] {512, 512};
 		double [] sigma = new double[] {3, 3}; 
 		long numSpots = 800;
 		int seed = 42;
 		boolean padding = false;
 		
-		generate2dRandom(path, name, dims, sigma, numSpots, seed, padding);
+		generate2dRandom(path, imgName, posName, dims, sigma, numSpots, seed, padding);
 	}
 
 	public static void main(String[] args) {

@@ -16,7 +16,6 @@ import test.TestGauss3d;
 
 public class ProcessInput {
 	// either read or generate test images
-
 	// TODO: 
 	// [x] Simulated data in 2D 
 	// [ ] Add function to keep track of the detections
@@ -70,14 +69,14 @@ public class ProcessInput {
 	}
 
 	public static void runGenerate2dRandom() {
-		String path = "/Users/kkolyva/Desktop/";
-		String imgName = "test-2D-image";
-		String posName = "test-2D-pos";
-		long [] dims = new long[] {512, 512};
-		double [] sigma = new double[] {3, 3}; 
-		long numSpots = 800;
-		int seed = 42;
-		boolean padding = false;
+		String path = InputParams.path;
+		String imgName = InputParams.imgName;
+		String posName = InputParams.posName;
+		long [] dims = InputParams.dims;
+		double [] sigma = InputParams.sigma; 
+		long numSpots = InputParams.numSpots;
+		int seed = InputParams.seed;
+		boolean padding = InputParams.padding;
 		
 		generate2dRandom(path, imgName, posName, dims, sigma, numSpots, seed, padding);
 	}

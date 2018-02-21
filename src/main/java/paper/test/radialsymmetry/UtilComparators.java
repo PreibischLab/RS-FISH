@@ -48,17 +48,9 @@ public class UtilComparators {
 		@Override
 		public int compare(double[] e1, double[] e2) {
 			int result = 0; // same 
-			if (dist(e1, e2) > eps) 
+			if (Utils.dist(e1, e2) > eps) 
 				result = 1;
 			return result;
 		}
 	}
-	
-	public static double dist(double[] e1, double[] e2){
-		double dist = 0;
-		for (int j = 0; j < e1.length; j++)
-			dist += (e1[j] - e2[j])*(e1[j] - e2[j]);
-		return Math.sqrt(dist);
-	}
-
 }

@@ -189,7 +189,7 @@ public class BatchProcessing {
 		params.setRANSAC(useRANSAC);
 		// pre-detection
 		params.setSigmaDog(1.50f);
-		params.setThresholdDoG(0.0083f);
+		params.setThresholdDog(0.0083f);
 		// detection
 		params.setSupportRadius(3);
 		params.setInlierRatio(0.37f);

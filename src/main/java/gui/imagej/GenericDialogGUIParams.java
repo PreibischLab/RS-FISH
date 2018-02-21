@@ -35,7 +35,7 @@ public class GenericDialogGUIParams extends ContextCommand {
 	@Override
 	public void run() {
 		guiParams.setSigmaDog(sigma);
-		guiParams.setThresholdDoG(threshold);
+		guiParams.setThresholdDog(threshold);
 		guiParams.setSupportRadius(supportRadius);
 
 		guiParams.setInlierRatio(inlierRatio);

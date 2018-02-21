@@ -38,7 +38,7 @@ public class GUIParams {
 
 	public GUIParams() {
 		setSigmaDog(defaultSigma);
-		setThresholdDoG(defaultThreshold);
+		setThresholdDog(defaultThreshold);
 		setRANSAC(defaultRANSAC);
 		setMaxError(defaultMaxError);
 		setInlierRatio(defaultInlierRatio);
@@ -138,7 +138,7 @@ public class GUIParams {
 		this.sigma = sigmaDog;
 	}
 
-	public void setThresholdDoG(float threshold) {
+	public void setThresholdDog(float threshold) {
 		this.threshold = threshold;
 	}
 

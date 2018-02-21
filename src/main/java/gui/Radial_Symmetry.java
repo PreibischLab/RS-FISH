@@ -109,6 +109,7 @@ public class Radial_Symmetry extends ContextCommand {
 		// the 2 below we adjust here because they are defined in the gui
 		params.setAnisotropyCoefficient(anisotropy);
 		params.setRANSAC(RANSAC);
+		params.setGaussFit(gaussFit);
 
 		if (parameterType.equals(paramChoice[0])) // manual
 		{
@@ -158,8 +159,7 @@ public class Radial_Symmetry extends ContextCommand {
 		// stores the intensity values
 		ArrayList<Float> intensity = new ArrayList<>(0);
 
-		RadialSymmetry.processSliceBySlice(ImageJFunctions.wrap(imp), rai, rsm, impDim, gaussFit, params.getSigmaDoG(),
-				allSpots, timePoint, channelPoint, intensity);
+		RadialSymmetry.processSliceBySlice(ImageJFunctions.wrap(imp), rai, rsm, impDim, allSpots, timePoint, channelPoint, intensity);
 
 		if (parameterType.equals(paramChoice[1])) { // interactive
 			// TODO: keep here?

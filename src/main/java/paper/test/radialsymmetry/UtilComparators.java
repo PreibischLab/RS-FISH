@@ -54,7 +54,7 @@ public class UtilComparators {
 		}
 	}
 	
-	public double dist(double[] e1, double[] e2){
+	public static double dist(double[] e1, double[] e2){
 		double dist = 0;
 		for (int j = 0; j < e1.length; j++)
 			dist += (e1[j] - e2[j])*(e1[j] - e2[j]);

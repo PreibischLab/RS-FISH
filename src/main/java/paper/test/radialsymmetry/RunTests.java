@@ -25,57 +25,14 @@ import util.ImgLib2Util;
 public class RunTests {
 	// here we actually run the tests 
 
-	public static void test(Img<FloatType> img, ArrayList <double[] > positions, int numDimensions, long [] dimensions) {
+	public static void test(Img<FloatType> img, ArrayList <double[] > positions, RadialSymmetryParameters rsm, int numDimensions, long [] dimensions) {
 		// 1. find the spots using RS 
 		int numRealSpots = positions.size();
 
-		// TODO: move the inits to the separate file
-		// this parameters should come from the manual adjustment
-		// DoG parameters
-		// current
-		float sigmaDog = 1.5f; 
-		float threshold = 0.015f;
-		
-		// RANSAC parameters
-		// current value
-		boolean RANSAC = true;
-		int supportRadius = 3; // this one I know
-		float maxError = 0.3f; 
-		float inlierRatio = 0.60f;
-
-		// Background Subtraction parameters
-		// current values
-		float bsMaxError = 0.05f;
-		float bsInlierRatio = 0.75f;
-		String bsMethod = "No background subtraction";
-
-		// Gauss Fit over intensities
-		boolean gaussFit = false;
 		double[] minmax = HelperFunctions.computeMinMax(img);
 
 		float min = (float) minmax[0];
 		float max = (float) minmax[1];
-		// set the parameters from the defaults
-		final GUIParams params = new GUIParams();
-		
-		params.setRANSAC(RANSAC);
-		params.setMaxError(maxError);
-		params.setInlierRatio(inlierRatio);
-		params.setSupportRadius(supportRadius);
-		params.setBsMaxError(bsMaxError);
-		params.setBsInlierRatio(bsInlierRatio);
-		params.setBsMethod(bsMethod);
-		params.setSigmaDog(sigmaDog);
-		params.setThresholdDog(threshold);
-		
-		// TODO: 
-		// back up the parameter values to the default variables
-		params.setDefaultValues();
-
-		double [] calibration  = new double[numDimensions];
-		for (int d = 0; d < numDimensions; d++)
-			calibration[d] = 1;
-		RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
 
 		// normalize the whole image if it is possible
 		RandomAccessibleInterval<FloatType> rai;
@@ -93,14 +50,14 @@ public class RunTests {
 		ArrayList<Float> intensity = new ArrayList<>(0);
 
 		int [] fullDim = new int[] {(int)dimensions[0], (int)dimensions[1], 1, 1, 1};
-
-		RadialSymmetry.processSliceBySlice(img, rai, rsm, fullDim, gaussFit, params.getSigmaDoG(),
+		
+		RadialSymmetry.processSliceBySlice(img, rai, rsm, fullDim,
 			spots, timePoint, channelPoint, intensity);
 
 		if (false) {
 			// some feedback
 			Visualization.showVisualization(ImageJFunctions.wrap(img, ""), spots, intensity, timePoint, true, true,
-				params.getSigmaDoG(), params.getAnisotropyCoefficient());
+				rsm.getParams().getSigmaDoG(), rsm.getParams().getAnisotropyCoefficient());
 			double histThreshold = Visualization.getHistThreshold(); // used to show the overlays
 			ShowResult.ransacResultTable(spots, timePoint, channelPoint, intensity, histThreshold);
 		}
@@ -118,13 +75,12 @@ public class RunTests {
 		}
 
 		// 3. compare how far away are spots from the initial dots
-		// 
 		int [] pos2spot = new int [numRealSpots];
 		for (int j = 0; j < numRealSpots; j++)
 			pos2spot[j] = -1;
 		
 		// defines how far are the spots from the correct spots
-		double eps = maxError; 
+		double eps = rsm.getParams().getMaxError(); 
 		long numRealDetections = 0;
 		for (int j = 0; j < spots.size(); j++) {
 			Spot spot = spots.get(j);
@@ -136,22 +92,20 @@ public class RunTests {
 			final double[] location = new double [numDimensions];
 			spot.localize(location);
 			
-			if (UtilComparators.dist(location, positions.get(idx - 1)) < eps && pos2spot[idx - 1] == -1) {
+			if (Utils.dist(location, positions.get(idx - 1)) < eps && pos2spot[idx - 1] == -1) {
 				pos2spot[idx - 1] = j;
-				// System.out.println(spot.getDoublePosition(0) + " " + spot.getDoublePosition(1));
 				numRealDetections++;
-			} else if (UtilComparators.dist(location, positions.get(idx)) < eps && pos2spot[idx] == -1) {
+			} else if (Utils.dist(location, positions.get(idx)) < eps && pos2spot[idx] == -1) {
 				pos2spot[idx] = j;
-				// System.out.println(spot.getDoublePosition(0) + " " + spot.getDoublePosition(1));
 				numRealDetections++;
 			}
 		}
-		System.out.println("Total detections:" + numRealDetections);
-		
+		System.out.println("total detections: " + numRealDetections);
+		double rmse = Utils.rmse(positions, spots, pos2spot);
+		System.out.println("rmse: " + rmse);
 	}
-
+	
 	public static void runTest() {
-
 		// initialize the parameters
 		String path = InputParams.path;
 		String imgName = InputParams.imgName;
@@ -173,9 +127,9 @@ public class RunTests {
 
 		IOFunctions.readCSV(positions, fullPosPath, numDimensions);
 
-
 		ImageJFunctions.show(img);
-		test(img, positions, numDimensions, dims);
+		RadialSymmetryParameters rsm = InputParams.setParameters(numDimensions);
+		test(img, positions, rsm, numDimensions, dims);
 	}
 
 	public static void main(String [] args) {

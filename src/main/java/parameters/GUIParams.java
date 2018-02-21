@@ -18,6 +18,8 @@ public class GUIParams {
 	public static boolean defaultRANSAC = true;
 	public static float defaultAnisotropy = 1.0f;
 
+	public static boolean defaultGaussFit = false;
+	
 	// RANSAC parameters
 	// current value
 	boolean RANSAC;
@@ -35,6 +37,8 @@ public class GUIParams {
 
 	// Z-scaling anisotropy calculation
 	float anisotropyCoefficient;
+	// use gauss fit
+	boolean gaussFit;
 
 	public GUIParams() {
 		setSigmaDog(defaultSigma);
@@ -45,10 +49,13 @@ public class GUIParams {
 		setSupportRadius(defaultSupportRadius);
 		// anisotropy in z
 		setAnisotropyCoefficient(defaultAnisotropy);
+		// gaussfit over the detected spots to find intensity values 
+		setGaussFit(defaultGaussFit);
 		// what do you do with this values here
 		setBsMethod(defaultBsMethod);
 		setBsMaxError(defaultBsMaxError);
 		setBsInlierRatio(defaultBsInlierRatio);
+		
 	}
 
 	public void printParams() {
@@ -58,15 +65,17 @@ public class GUIParams {
 		System.out.println("MaxError      : " + maxError);
 		System.out.println("InlierRatio   : " + inlierRatio);
 		System.out.println("supportRadius : " + supportRadius);
+		System.out.println("GaussFit      : " + gaussFit);
 	}
 
 	public void printDefaultParams() {
 		System.out.println("DSigmaDoG      : " + defaultSigma);
 		System.out.println("DThresholdDoG  : " + defaultThreshold);
-		System.out.println("DRANSAC 	   : " + defaultRANSAC);
+		System.out.println("DRANSAC        : " + defaultRANSAC);
 		System.out.println("DMaxError      : " + defaultMaxError);
 		System.out.println("DInlierRatio   : " + defaultInlierRatio);
 		System.out.println("DSupportRadius : " + defaultSupportRadius);
+		System.out.println("DGaussFit      : " + defaultGaussFit);
 	}
 
 	// getters
@@ -98,7 +107,10 @@ public class GUIParams {
 
 	public float getAnisotropyCoefficient() {
 		return anisotropyCoefficient;
-
+	}
+	
+	public boolean getGaussFit() {
+		return gaussFit;
 	}
 
 	// background subtraction
@@ -131,6 +143,8 @@ public class GUIParams {
 		defaultBsInlierRatio = bsInlierRatio;
 		defaultBsMaxError = bsMaxError;
 		defaultBsMethod = bsMethod;
+		
+		defaultAnisotropy = anisotropyCoefficient;
 	}
 
 	// to be used by the listeners
@@ -161,7 +175,10 @@ public class GUIParams {
 
 	public void setAnisotropyCoefficient(float anisotropyCoefficient) {
 		this.anisotropyCoefficient = anisotropyCoefficient;
-
+	}
+	
+	public void setGaussFit(boolean gaussFit) {
+		this.gaussFit = gaussFit;
 	}
 
 	// background subtraction

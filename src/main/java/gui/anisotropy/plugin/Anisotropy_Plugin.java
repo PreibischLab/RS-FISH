@@ -38,12 +38,11 @@ public class Anisotropy_Plugin implements Command {
 		AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, paramType, minmax[0], minmax[1]);
 
 		bestScale = ac.calculateAnisotropyCoefficient();	
-
 		// TODO: write bestScale somewhere
 		ap.setAnisotropy((float)bestScale);
 		// TODO: will it work? Should not it be 1/bestScale ?
 		GUIParams.defaultAnisotropy = (float) bestScale; 
-		logService.info("Anisotropy coefficient: " + bestScale);		
+		logService.info("Anisotropy coefficient: " + bestScale);
 	}
 
 	public static double[] calculateMinMax(ImagePlus imp){

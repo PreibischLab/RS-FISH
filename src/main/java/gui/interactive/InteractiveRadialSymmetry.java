@@ -33,7 +33,7 @@ import fit.PointFunctionMatch;
 import fit.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
-import gui.Radial_Symmetry;
+import gui.radial.symmetry.plugin.Radial_Symmetry;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;

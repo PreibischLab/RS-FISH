@@ -5,7 +5,7 @@ import java.io.IOException;
 
 import net.imagej.Dataset;
 
-public class main {
+public class TestAnisotropyPlugin {
 	
 	public static void main(String[] args)
 	{

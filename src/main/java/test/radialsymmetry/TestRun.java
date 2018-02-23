@@ -3,10 +3,9 @@ package test.radialsymmetry;
 import java.io.File;
 import java.io.IOException;
 
+import gui.radial.symmetry.plugin.Radial_Symmetry;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
-
-import gui.Radial_Symmetry;
 
 public class TestRun {
 	

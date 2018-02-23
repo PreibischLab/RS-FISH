@@ -106,42 +106,45 @@ public class RunTests {
 	}
 	
 	public static void runTestMax2D() {
-		InputParams.setParametersMax2D();
+		
+		// initialize params for this specific test case
+		InputParamsReal ipg = new InputParamsReal("", 0);
+		// InputParamsGenerated.setParameters2D();
 		// initialize the parameters
-		String path = InputParams.path;
-		String imgName = InputParams.imgName;
-		String posName = InputParams.posName;
-
+		String path = ipg.path;
+		String imgName = ipg.imgName;
+		int numDimensions = ipg.numDimensions;
+		
 		// paths to the data
 		String fullImgPath = path + imgName + ".tif";
-		String fullPosPath = path + posName + ".csv";
 
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File(fullImgPath));
 		ArrayList<double[]> positions = new ArrayList<>();
 		
-		int numDimensions = img.numDimensions();
 		long [] dims = new long [numDimensions];
 		img.dimensions(dims);
 
 		ImageJFunctions.show(img);
-		RadialSymmetryParameters rsm = InputParams.setParameters(numDimensions);
+		RadialSymmetryParameters rsm = ipg.rsm;
 		test(img, positions, rsm, numDimensions, dims);
 	}
 	
 	
 	public static void runTest2D() {
-		InputParams.setParameters2D();
+		// initialize params for this specific test case
+		InputParamsGenerated ipg = new InputParamsGenerated("");
+		// InputParamsGenerated.setParameters2D();
 		// initialize the parameters
-		String path = InputParams.path;
-		String imgName = InputParams.imgName;
-		String posName = InputParams.posName;
-		long [] dims = InputParams.dims;
-		double [] sigma = InputParams.sigma; 
-		long numSpots = InputParams.numSpots;
-		int seed = InputParams.seed;
-		boolean padding = InputParams.padding;
+		String path = ipg.path;
+		String imgName = ipg.imgName;
+		String posName = ipg.posName;
+		long [] dims = ipg.dims;
+		double [] sigma = ipg.sigma; 
+		long numSpots = ipg.numSpots;
+		int seed = ipg.seed;
+		boolean padding = ipg.padding;
 
-		int numDimensions = InputParams.numDimensions;
+		int numDimensions = ipg.numDimensions;
 
 		// paths to the data
 		String fullImgPath = path + imgName + "-" + numSpots + "-" + sigma[0] + "-" + sigma[1] + "-" + seed + ".tif";
@@ -153,12 +156,12 @@ public class RunTests {
 		IOFunctions.readCSV(positions, fullPosPath, numDimensions);
 
 		ImageJFunctions.show(img);
-		RadialSymmetryParameters rsm = InputParams.setParameters(numDimensions);
+		RadialSymmetryParameters rsm = ipg.rsm;
 		test(img, positions, rsm, numDimensions, dims);
 	}
 
 	public static void main(String [] args) {
 		new ImageJ();
-		runTest2D();
+		runTestMax2D();
 	}
 }

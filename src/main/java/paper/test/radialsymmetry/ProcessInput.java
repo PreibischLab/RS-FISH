@@ -69,14 +69,16 @@ public class ProcessInput {
 	}
 
 	public static void runGenerate2dRandom() {
-		String path = InputParams.path;
-		String imgName = InputParams.imgName;
-		String posName = InputParams.posName;
-		long [] dims = InputParams.dims;
-		double [] sigma = InputParams.sigma; 
-		long numSpots = InputParams.numSpots;
-		int seed = InputParams.seed;
-		boolean padding = InputParams.padding;
+		InputParamsGenerated ipg = new InputParamsGenerated("");
+		
+		String path = ipg.path;
+		String imgName = ipg.imgName;
+		String posName = ipg.posName;
+		long [] dims = ipg.dims;
+		double [] sigma = ipg.sigma; 
+		long numSpots = ipg.numSpots;
+		int seed = ipg.seed;
+		boolean padding = ipg.padding;
 		
 		generate2dRandom(path, imgName, posName, dims, sigma, numSpots, seed, padding);
 	}

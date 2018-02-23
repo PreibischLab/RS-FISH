@@ -105,7 +105,32 @@ public class RunTests {
 		System.out.println("rmse: " + rmse);
 	}
 	
-	public static void runTest() {
+	public static void runTestMax2D() {
+		InputParams.setParametersMax2D();
+		// initialize the parameters
+		String path = InputParams.path;
+		String imgName = InputParams.imgName;
+		String posName = InputParams.posName;
+
+		// paths to the data
+		String fullImgPath = path + imgName + ".tif";
+		String fullPosPath = path + posName + ".csv";
+
+		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File(fullImgPath));
+		ArrayList<double[]> positions = new ArrayList<>();
+		
+		int numDimensions = img.numDimensions();
+		long [] dims = new long [numDimensions];
+		img.dimensions(dims);
+
+		ImageJFunctions.show(img);
+		RadialSymmetryParameters rsm = InputParams.setParameters(numDimensions);
+		test(img, positions, rsm, numDimensions, dims);
+	}
+	
+	
+	public static void runTest2D() {
+		InputParams.setParameters2D();
 		// initialize the parameters
 		String path = InputParams.path;
 		String imgName = InputParams.imgName;
@@ -134,6 +159,6 @@ public class RunTests {
 
 	public static void main(String [] args) {
 		new ImageJ();
-		runTest();
+		runTest2D();
 	}
 }

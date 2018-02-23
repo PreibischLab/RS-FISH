@@ -55,6 +55,22 @@ public class HelperFunctions {
 					
 		return Views.dropSingletonDimensions(img);
 	}
+	
+	public static double[] calculateMinMax(ImagePlus imp){
+		float min = Float.MAX_VALUE;
+		float max = -Float.MAX_VALUE;
+		for ( int z = 1; z <= imp.getStack().getSize(); ++z )
+		{
+			final ImageProcessor ip = imp.getStack().getProcessor( z );
+			for ( int i = 0; i < ip.getPixelCount(); ++i )
+			{
+				final float v = ip.getf( i );
+				min = Math.min( min, v );
+				max = Math.max( max, v );
+			}
+		}
+		return new double[]{min, max};
+	}
 
 	// returns the index of time dimension
 	public static int getTidx(ImagePlus imp){

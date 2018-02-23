@@ -8,8 +8,8 @@ import org.scijava.plugin.Plugin;
 
 import anisotropy.parameters.AParams;
 import gui.anisotropy.AnisitropyCoefficient;
+import gui.interactive.HelperFunctions;
 import ij.ImagePlus;
-import ij.process.ImageProcessor;
 import parameters.GUIParams;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Calculate Anisotropy Coefficient")
@@ -30,38 +30,17 @@ public class Anisotropy_Plugin implements Command {
 
 	@Override
 	public void run() {
-
-		double bestScale = 1.0;
+		float bestScale = 1.0f;
 		AParams ap = new AParams();
-
-		double [] minmax = calculateMinMax(imagePlus);
+		double [] minmax = HelperFunctions.calculateMinMax(imagePlus);
 		AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, paramType, minmax[0], minmax[1]);
-
-		bestScale = ac.calculateAnisotropyCoefficient();	
-		// TODO: write bestScale somewhere
-		ap.setAnisotropy((float)bestScale);
-		// TODO: will it work? Should not it be 1/bestScale ?
-		GUIParams.defaultAnisotropy = (float) bestScale; 
+		bestScale = (float) ac.calculateAnisotropyCoefficient();	
+		// write bestScale somewhere
+		ap.setAnisotropy(bestScale);
+		// save default and calculated anisotropy coefficient
+		GUIParams.defaultAnisotropy = bestScale; 
+		ap.setDefaultValues();
 		logService.info("Anisotropy coefficient: " + bestScale);
-	}
-
-	public static double[] calculateMinMax(ImagePlus imp){
-		float min = Float.MAX_VALUE;
-		float max = -Float.MAX_VALUE;
-
-		for ( int z = 1; z <= imp.getStack().getSize(); ++z )
-		{
-			final ImageProcessor ip = imp.getStack().getProcessor( z );
-
-			for ( int i = 0; i < ip.getPixelCount(); ++i )
-			{
-				final float v = ip.getf( i );
-				min = Math.min( min, v );
-				max = Math.max( max, v );
-			}
-		}
-
-		return new double[]{min, max};
 	}
 
 	public static void main(String[] args)

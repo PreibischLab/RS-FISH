@@ -2,7 +2,7 @@ package anisotropy.parameters;
 
 public class AParams {
 	public static float defaultSigma = 1.5f;
-	public static float defaultThreshold = 0.0001f;
+	public static float defaultThreshold = 0.0050f;
 
 	public static float defaultAnisotropy = 1.0f;
 

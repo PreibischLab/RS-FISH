@@ -38,8 +38,8 @@ public class InputParamsReal {
 		
 		if (type == 0) {
 			// input data params
-			path = localPath.equals("") ? "/Users/kkolyva/Desktop/2018-02-21-paper-radial-symmetry-test/" : localPath;
-			imgName = "test-2D-image";
+			path = localPath.equals("") ? "/Users/kkolyva/Desktop/2018-02-21-paper-radial-symmetry-test/max-project-images/" : localPath;
+			imgName = "MAX_Result of C3-N2_dpy-23_ex_int_ama-1_014.nd2 - N2_dpy-23_ex_int_ama-1_014.nd2 (series 01)";
 			numDimensions = 2;
 			
 			// radial symmetry params

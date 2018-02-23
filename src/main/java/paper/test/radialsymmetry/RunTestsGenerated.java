@@ -22,7 +22,7 @@ import parameters.RadialSymmetryParameters;
 import result.output.ShowResult;
 import util.ImgLib2Util;
 
-public class RunTests {
+public class RunTestsGenerated {
 	// here we actually run the tests 
 
 	public static void test(Img<FloatType> img, ArrayList <double[] > positions, RadialSymmetryParameters rsm, int numDimensions, long [] dimensions) {
@@ -105,31 +105,6 @@ public class RunTests {
 		System.out.println("rmse: " + rmse);
 	}
 	
-	public static void runTestMax2D() {
-		
-		// initialize params for this specific test case
-		InputParamsReal ipg = new InputParamsReal("", 0);
-		// InputParamsGenerated.setParameters2D();
-		// initialize the parameters
-		String path = ipg.path;
-		String imgName = ipg.imgName;
-		int numDimensions = ipg.numDimensions;
-		
-		// paths to the data
-		String fullImgPath = path + imgName + ".tif";
-
-		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File(fullImgPath));
-		ArrayList<double[]> positions = new ArrayList<>();
-		
-		long [] dims = new long [numDimensions];
-		img.dimensions(dims);
-
-		ImageJFunctions.show(img);
-		RadialSymmetryParameters rsm = ipg.rsm;
-		test(img, positions, rsm, numDimensions, dims);
-	}
-	
-	
 	public static void runTest2D() {
 		// initialize params for this specific test case
 		InputParamsGenerated ipg = new InputParamsGenerated("");
@@ -162,6 +137,6 @@ public class RunTests {
 
 	public static void main(String [] args) {
 		new ImageJ();
-		runTestMax2D();
+		runTest2D();
 	}
 }

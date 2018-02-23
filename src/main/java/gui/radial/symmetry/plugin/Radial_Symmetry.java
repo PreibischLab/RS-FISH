@@ -1,4 +1,4 @@
-package gui;
+package gui.radial.symmetry.plugin;
 
 import java.util.ArrayList;
 

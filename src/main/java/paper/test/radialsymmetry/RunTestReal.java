@@ -69,7 +69,6 @@ public class RunTestReal {
 	public static void runTest3D() {
 		// initialize params for this specific test case
 		InputParamsReal ipg = new InputParamsReal("/media/milkyklim/1TB/2018-02-21-paper-radial-symmetry-test/filtered-images/", "Result of C3-N2_dpy-23_ex_int_ama-1_014.nd2 - N2_dpy-23_ex_int_ama-1_014.nd2 (series 01)-1.tif", 1);
-		// InputParamsGenerated.setParameters2D();
 		// initialize the parameters
 		String path = ipg.path;
 		String imgName = ipg.imgName;
@@ -92,7 +91,6 @@ public class RunTestReal {
 
 		// initialize params for this specific test case
 		InputParamsReal ipg = new InputParamsReal("/media/milkyklim/1TB/2018-02-21-paper-radial-symmetry-test/max-project-images/", "MAX_Result of C3-N2_dpy-23_ex_int_ama-1_014.nd2 - N2_dpy-23_ex_int_ama-1_014.nd2 (series 01).tif", 0);
-		// InputParamsGenerated.setParameters2D();
 		// initialize the parameters
 		String path = ipg.path;
 		String imgName = ipg.imgName;

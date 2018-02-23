@@ -133,11 +133,12 @@ public class InputParamsReal {
 
 			// back up the parameter values to the default variables
 			params.setDefaultValues();
-
-			// TODO: FIX THE CALIBRATION HERE
+			
 			double [] calibration  = new double[numDimensions];
 			for (int d = 0; d < numDimensions; d++)
 				calibration[d] = 1;
+			// fix calibration in z0direction 
+			calibration[numDimensions - 1] = 1.5384614;
 			rsm = new RadialSymmetryParameters(params, calibration);
 		}
 		else if (type == 2 ) {

@@ -9,6 +9,7 @@ import java.util.Iterator;
 import net.imglib2.Cursor;
 import net.imglib2.Localizable;
 import net.imglib2.Point;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
@@ -30,6 +31,7 @@ import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
+import mpicbg.util.RealSum;
 
 public class HelperFunctions {
 	
@@ -527,7 +529,45 @@ public class HelperFunctions {
 		}
 		public Spot getSpot() { return spot; }
 	}
-
+	
+	public static void subtractValue(Img<FloatType> bg, double value){			
+		Cursor<FloatType> cursor = bg.cursor();
+		
+		while(cursor.hasNext()){
+			cursor.fwd();
+			float val = (float) (cursor.get().get() - value);
+			cursor.get().set(val);
+		}
+	}
+	
+	public static double getImageAverage(Img<FloatType> bg){
+		// compute average over all pixels
+		double sum = sumImage(bg);
+		for (int d = 0; d < bg.numDimensions(); ++d)
+			sum /= bg.dimension(d);
+		return sum;
+	}
+	
+	public static double sumImage(Img<FloatType> img)
+	{
+		final RealSum sum = new RealSum();		
+		for ( final FloatType t : img )
+			sum.add( t.get() );
+		return sum.getSum();
+	}
+	
+	public static void subtractImg(Img<FloatType> img, Img<FloatType> bg){
+		Cursor<FloatType> cursor = img.cursor();
+		RandomAccess<FloatType> ra = bg.randomAccess();
+		
+		while(cursor.hasNext()){
+			cursor.fwd();		
+			ra.setPosition(cursor);			
+			float val = cursor.get().get() - ra.get().get();			
+			cursor.get().set(val);
+		}
+	}
+	
 	/*
 	 * used by background subtraction to calculate the boundaries of the spot
 	 */

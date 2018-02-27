@@ -1,5 +1,6 @@
 package process.radialsymmetry.cluster;
 
+import java.io.File;
 import java.io.IOException;
 
 import net.imagej.Dataset;
@@ -19,7 +20,7 @@ public class TestPreprocess {
 //			e.printStackTrace();
 //		}
 
-		Preprocess.runPreprocess(); 
+		Preprocess.runPreprocess(new File("/home/milkyklim/Desktop/test")); 
 		
 		System.out.println("Doge!");
 	}

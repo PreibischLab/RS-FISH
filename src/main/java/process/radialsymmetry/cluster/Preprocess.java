@@ -1,102 +1,86 @@
 package process.radialsymmetry.cluster;
 
 import java.io.File;
+import java.util.ArrayList;
 
-import net.imglib2.Cursor;
-import net.imglib2.RandomAccess;
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
-
+import gui.interactive.HelperFunctions;
 import ij.ImageJ;
-import mpicbg.util.RealSum;
+import net.imglib2.algorithm.stats.Normalize;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.type.numeric.real.FloatType;
+import parameters.GUIParams;
 import util.ImgLib2Util;
+import util.MedianFilter;
 
 public class Preprocess {
-	// class to preporcess images that will be used for radial symmetry
-	// - median filter + background subtraction 
-	// - illumination check (intensities between planes should not change drastically)
-	// - normalize the image if valid 
-	// - run radial symmetry on the resulting image
-	// - gauss fit on the intensity values 
-	// - take only spots that are in the given region
-	// - save as csv?
+	// String path - path to the folder with the images
+	// String ext - image extension
+	public static ArrayList<File> readFolder(File folder, String ext) {
+		ArrayList<File> images= new ArrayList<>();
+		System.out.println("Grab images from " + folder.getAbsolutePath());		
+		for (File file : folder.listFiles())
+			// if the file is not hidden and ends with .tif we take it 
+			if (file.isFile() && !file.getName().startsWith(".") && file.getName().endsWith(ext))
+				images.add(file);
+		return images;
+	}
 
-	
-	public static void readFolder() {
+	public static void runPreprocess(File folder) {
+		// set the parameters that we define manually first
+		boolean useRANSAC = true;
+		final GUIParams params = new GUIParams();
+		// apparently the best value for now
+		params.setAnisotropyCoefficient(1.09f);
+		params.setRANSAC(useRANSAC);
+		// pre-detection
+		params.setSigmaDog(1.50f);
+		params.setThresholdDoG(0.0083f);
+		// detection
+		params.setSupportRadius(3);
+		params.setInlierRatio(0.37f);
+		params.setMaxError(0.5034f);
 		
-	}
-	
-	public static void runPreprocess() {
 		// grab all file path to the images in the folder
+		ArrayList<File> paths = readFolder(folder, ".tif");
+		for (File imgPath : paths) {
+			System.out.println(imgPath.getName());
+			File outputPath = new File(imgPath.getAbsolutePath().substring(0, imgPath.getAbsolutePath().length() - 4));
+			preprocessImage(imgPath, params, outputPath);
+		}
 		new ImageJ();
-		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File("/Users/kkolyva/Downloads/test.tif"));//path + file + ".tif"));
-		
-		
 		// iterate over each image in the folder
-		
+	}
+
+	public static void preprocessImage(File imgPath, GUIParams params, File outputPath){
+		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
+		Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType()); 		
+
+		// 1. get the background
+		int [] kernelDim = new int []{21, 21}; 
+		MedianFilter.medianFilterSliced(img, bg, kernelDim);
+
+		// 2. subtract the background
+		HelperFunctions.subtractImg(img, bg);
+
+		// 3. run the validation step here 
+		boolean isValid = true;
+		if (!isValid) return;
+
+		// 4. normalize image 
+		float min = 0;
+		float max = 1;
+		Normalize.normalize(img, new FloatType(min), new FloatType(max));
+
 		// perform the processing steps from above
+		// 5. run radial symmetry 
+		// 6. filter the spot and save them 
+		BatchProcess.runProcess(img, params, outputPath);
 	}
-	
-	public static void preprocessImage(){
-		new ImageJ();
-		String path = "";
-		String file = "";
-		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File("/Volumes/Samsung_T3/2017-04-25-beads/cropped/tif-14-c.tif"));//path + file + ".tif"));
-		Img<FloatType> bg  = ImgLib2Util.openAs32Bit(new File("/Volumes/Samsung_T3/2017-04-25-beads/cropped/bg/tif-14-c-m.tif"));//path + "bg/" + file + "-m.tif"));
-		
-		double average = getImageAverage(bg);	
-		System.out.println(average);
-		
-		subtractValue(bg, average);
-		subtractImg(img, bg);	
-		
-		ImageJFunctions.show(img);
-		
-		// ImagePlus towrite = ImageJFunctions.wrap(img, "hi").duplicate();
-		// new FileSaver(towrite).saveAsTiffStack( "file.tif");
-	}
-		
-	public static void subtractValue(Img<FloatType> bg, double value){			
-		Cursor<FloatType> cursor = bg.cursor();
-		
-		while(cursor.hasNext()){
-			cursor.fwd();
-			float val = (float) (cursor.get().get() - value);
-			cursor.get().set(val);
-		}
-	}
-	
-	public static double getImageAverage(Img<FloatType> bg){
-		// compute average over all pixels
-		double sum = sumImage(bg);
-		for (int d = 0; d < bg.numDimensions(); ++d)
-			sum /= bg.dimension(d);
-		return sum;
-	}
-	
-	public static double sumImage(Img<FloatType> img)
-	{
-		final RealSum sum = new RealSum();		
-		for ( final FloatType t : img )
-			sum.add( t.get() );
-		return sum.getSum();
-	}
-	
-	public static void subtractImg(Img<FloatType> img, Img<FloatType> bg){
-		Cursor<FloatType> cursor = img.cursor();
-		RandomAccess<FloatType> ra = bg.randomAccess();
-		
-		while(cursor.hasNext()){
-			cursor.fwd();		
-			ra.setPosition(cursor);			
-			float val = cursor.get().get() - ra.get().get();			
-			cursor.get().set(val);
-		}
-	}
-	
+
 	public static void main(String [] args){
-		preprocessImage();
+		File folder = new File("");
+		runPreprocess(folder);
 	}
-	
+
 }

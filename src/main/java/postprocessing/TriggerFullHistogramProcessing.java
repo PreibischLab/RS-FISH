@@ -63,6 +63,7 @@ public class TriggerFullHistogramProcessing {
 			double[] params = HistogramFitting.run(img, false);
 			return params;
 		}
+		
 		return null;
 	}
 
@@ -146,10 +147,10 @@ public class TriggerFullHistogramProcessing {
 
 	// triggers the computations
 	public static void runMultiple(){
-		String inPath = "/Users/kkolyva/Desktop/results/processed";
-		String outPath = "/Users/kkolyva/Desktop/results/gauss";
+		String inPath = "/Users/kkolyva/Desktop/wow-desktop/results/processed";
+		String outPath = "/Users/kkolyva/Desktop/wow-desktop/results/gauss";
 
-		String[] folders = new String[]{"MK4_DPY23-ex-int_mdh1_003"}; /*, 
+		String[] folders = new String[]{"N2_DPY23-ex-int_mdh1_004"}; /*"MK4_DPY23-ex-int_mdh1_003"}; /*, 
 										"N2_DPY23-ex-int_mdh1_003","N2_DPY23-ex-int_mdh1_004",
 										"N2_DPY23-ex-int_mdh1_005","N2_DPY23-ex-int_mdh1_006"};*/
 		

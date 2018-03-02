@@ -25,7 +25,7 @@ import net.imglib2.view.Views;
 public class HistogramFitting {
 
 	public static float eps = 1e-7f;
-	public static boolean debug = false;
+	public static boolean debug = true;
 
 	public static void testRun() {
 		int totalBins = 20;
@@ -107,7 +107,6 @@ public class HistogramFitting {
 	}
 
 	public static void copyArrayListToImg(long[] from, Img<FloatType> to) {
-
 		RandomAccess<FloatType> ra = to.randomAccess();
 		for (int j = 0; j < from.length; j++) {
 			float val = from[j];
@@ -141,17 +140,37 @@ public class HistogramFitting {
 	}
 
 	public static float getMean(Img<FloatType> img) {
-		long total = 0;
+		double total = 0;
+		// long idx = 0;
 		
 		// Count all values using the RealSum class.
 		// It prevents numerical instabilities when adding up millions of pixels
 		final RealSum realSum = new RealSum();
 
-		for (final FloatType val : img)
-			if (val.getRealDouble() > 0){
-				realSum.add(val.getRealDouble());
-				total++;
+		// Cursor<FloatType> cursor = img.localizingCursor();
+		RandomAccess<FloatType> ra = img.randomAccess();
+		
+		// seems fine
+		for (int j = 0; j < img.dimension(0); j++) {
+			ra.setPosition(j, 0);
+			double val = ra.get().getRealDouble(); // non-empty bins
+			if(val > 0) { 
+				realSum.add(val*j);
+				total += val;
 			}
+		}
+		
+//		while(cursor.hasNext()) {
+//			double val = cursor.next().get();
+//			realSum.add(val*idx);
+//			idx++; 
+//			total += val;
+//		}
+		
+//			if (val.getRealDouble() > 0){
+//				realSum.add(val.getRealDouble());
+//				total++;
+//			}
 
 		return (float) (realSum.getSum() / total);
 
@@ -183,19 +202,33 @@ public class HistogramFitting {
 		float res = 0;
 		long total = 0;
 		
-		// std = sqrt(mean(abs(x - x.mean())**2))
-		Cursor<FloatType> cursor = img.cursor();
-		while (cursor.hasNext()) {
-			cursor.fwd();
-			if (cursor.get().get() > 0){
-				res += Math.abs(cursor.get().get() - mean);
-				total++;
+		final RealSum realSum = new RealSum();
+		RandomAccess<FloatType> ra = img.randomAccess();
+		
+		// seems fine
+		for (int j = 0; j < img.dimension(0); j++) {
+			ra.setPosition(j, 0);
+			double val = ra.get().getRealDouble(); // non-empty bins
+			if(val > 0) { 
+				realSum.add(Math.pow(j - mean, 2)*val);
+				total += val;
 			}
 		}
+		
+//		// std = sqrt(mean(abs(x - x.mean())**2))
+//		Cursor<FloatType> cursor = img.cursor();
+//		while (cursor.hasNext()) {
+//			cursor.fwd();
+//			if (cursor.get().get() > 0){
+//				res += Math.pow(cursor.get().get() - mean, 2);
+//				total++;
+//			}
+//		}
+//
+//		res /= total;
 
-		res /= total;
-
-		return res;
+		// return (float) Math.sqrt(res);
+		return (float) Math.sqrt(realSum.getSum() / total);
 	}
 
 	public static double[] runFit(Img<FloatType> img) {
@@ -221,6 +254,8 @@ public class HistogramFitting {
 		// peaks.add(new Point(new long[] { (long) median }));
 		peaks.add(new Point(new long[] { (long) mean }));
 
+		// TODO: update the code to GenericPeakFitter
+		
 		PeakFitter<FloatType> pf = new PeakFitter<>(img, (ArrayList) peaks, new LevenbergMarquardtSolver(),
 				new EllipticGaussianOrtho(), // use a
 				// non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy &

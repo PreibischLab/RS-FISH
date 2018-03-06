@@ -50,6 +50,8 @@ public class RunTestsGenerated {
 		ArrayList<Float> intensity = new ArrayList<>(0);
 
 		int [] fullDim = new int[] {(int)dimensions[0], (int)dimensions[1], 1, 1, 1};
+		if (numDimensions == 3)
+			fullDim[3] = (int)dimensions[2];
 		
 		RadialSymmetry.processSliceBySlice(img, rai, rsm, fullDim,
 			spots, timePoint, channelPoint, intensity);
@@ -107,7 +109,37 @@ public class RunTestsGenerated {
 	
 	public static void runTest2D() {
 		// initialize params for this specific test case
-		InputParamsGenerated ipg = new InputParamsGenerated("");
+		InputParamsGenerated ipg = new InputParamsGenerated("", 0);
+		// InputParamsGenerated.setParameters2D();
+		// initialize the parameters
+		String path = ipg.path;
+		String imgName = ipg.imgName;
+		String posName = ipg.posName;
+		long [] dims = ipg.dims;
+		double [] sigma = ipg.sigma; 
+		long numSpots = ipg.numSpots;
+		int seed = ipg.seed;
+		boolean padding = ipg.padding;
+
+		int numDimensions = ipg.numDimensions;
+
+		// paths to the data
+		String fullImgPath = path + imgName + "-" + numSpots + "-" + sigma[0] + "-" + sigma[1] + "-" + seed + ".tif";
+		String fullPosPath = path + posName + "-" + numSpots + "-" + sigma[0] + "-" + sigma[1] + "-" + seed + ".csv";
+
+		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File(fullImgPath));
+		ArrayList<double[]> positions = new ArrayList<>();
+
+		IOFunctions.readCSV(positions, fullPosPath, numDimensions);
+
+		ImageJFunctions.show(img);
+		RadialSymmetryParameters rsm = ipg.rsm;
+		test(img, positions, rsm, numDimensions, dims);
+	}
+	
+	public static void runTest3D(){
+		// initialize params for this specific test case
+		InputParamsGenerated ipg = new InputParamsGenerated("", 1);
 		// InputParamsGenerated.setParameters2D();
 		// initialize the parameters
 		String path = ipg.path;

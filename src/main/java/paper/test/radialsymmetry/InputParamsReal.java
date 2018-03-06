@@ -36,7 +36,7 @@ public class InputParamsReal {
 	
 	public InputParamsReal(String localPath, String localImgName, int type) {
 		// 0 - 2D max projection
-		// 1 - 3D image isotropic
+		// 1 - 3D image anisotropic
 		// 2 - 3D image anisotropic
 		
 		if (type == 0) {
@@ -140,9 +140,6 @@ public class InputParamsReal {
 			// fix calibration in z0direction 
 			calibration[numDimensions - 1] = 1.5384614;
 			rsm = new RadialSymmetryParameters(params, calibration);
-		}
-		else if (type == 2 ) {
-			
 		}
 		else 
 			System.out.println("Wrong data type");

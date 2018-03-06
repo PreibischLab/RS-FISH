@@ -26,7 +26,7 @@ public class Preprocess {
 		return images;
 	}
 
-	public static void runPreprocess(File folder) {
+	public static void runPreprocess(File iFolder, File oFolder) {
 		// set the parameters that we define manually first
 		boolean useRANSAC = true;
 		final GUIParams params = new GUIParams();
@@ -42,10 +42,13 @@ public class Preprocess {
 		params.setMaxError(0.5034f);
 		
 		// grab all file path to the images in the folder
-		ArrayList<File> paths = readFolder(folder, ".tif");
+		ArrayList<File> paths = readFolder(iFolder, ".tif");
 		for (File imgPath : paths) {
 			System.out.println(imgPath.getName());
-			File outputPath = new File(imgPath.getAbsolutePath().substring(0, imgPath.getAbsolutePath().length() - 4));
+			// File outputPath = new File(imgPath.getAbsolutePath().substring(0, imgPath.getAbsolutePath().length() - 4));
+			
+			File outputPath = new File(oFolder.getAbsolutePath() + "/" + imgPath.getName()); 
+			// System.out.println(outputPath.getAbsolutePath());
 			preprocessImage(imgPath, params, outputPath);
 		}
 		new ImageJ();
@@ -71,16 +74,19 @@ public class Preprocess {
 		float min = 0;
 		float max = 1;
 		Normalize.normalize(img, new FloatType(min), new FloatType(max));
+		
+		// 4.* just resave the images at the moment
+		IOFunctions.saveResult(img, outputPath.getAbsolutePath());
 
 		// perform the processing steps from above
 		// 5. run radial symmetry 
 		// 6. filter the spot and save them 
-		BatchProcess.runProcess(img, params, outputPath);
+		// BatchProcess.runProcess(img, params, outputPath);
 	}
 
 	public static void main(String [] args){
 		File folder = new File("");
-		runPreprocess(folder);
+		// runPreprocess(folder);
 	}
 
 }

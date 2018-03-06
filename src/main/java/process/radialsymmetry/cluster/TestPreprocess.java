@@ -20,7 +20,8 @@ public class TestPreprocess {
 //			e.printStackTrace();
 //		}
 
-		Preprocess.runPreprocess(new File("/home/milkyklim/Desktop/test")); 
+		Preprocess.runPreprocess(new File("/Volumes/1TB/2018-03-06-laura-rs-numbers/SEA-12-32-channels"), 
+														new File("/Volumes/1TB/2018-03-06-laura-rs-numbers/SEA-12-32-channels-preprocessed")); 
 		
 		System.out.println("Doge!");
 	}

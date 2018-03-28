@@ -33,7 +33,7 @@ public class IOFunctions {
 	
 	public static ArrayList<File> readFolder(File folder, String ext) {
 		ArrayList<File> images = new ArrayList<>();
-		System.out.println("Grab images from " + folder.getAbsolutePath());		
+		System.out.println("Grab images from " + folder.getAbsolutePath());
 		for (File file : folder.listFiles())
 			// if the file is not hidden and ends with .tif we take it 
 			if (file.isFile() && !file.getName().startsWith(".") && file.getName().endsWith(ext))

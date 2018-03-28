@@ -20,8 +20,9 @@ public class TestPreprocess {
 //			e.printStackTrace();
 //		}
 
-		Preprocess.runPreprocess(new File("/Volumes/1TB/2018-03-06-laura-rs-numbers/SEA-12-32-channels"), 
-														new File("/Volumes/1TB/2018-03-06-laura-rs-numbers/SEA-12-32-channels-preprocessed")); 
+		Preprocess.runPreprocess(new File("/Volumes/1TB/2018-03-20-laura-radial-symmetry-numbers/SEA-12-channels"), 
+														new File("/Volumes/1TB/2018-03-20-laura-radial-symmetry-numbers/SEA-12-channels-preprocessed-test"), 
+														new File("/Volumes/1TB/2018-03-20-laura-radial-symmetry-numbers/smFISH-database/SEA-12-Table 1.csv")); 
 		
 		System.out.println("Doge!");
 	}

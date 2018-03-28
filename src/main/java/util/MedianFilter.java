@@ -353,7 +353,7 @@ public class MedianFilter
 	 */
 	public static <T extends RealType<T> & Comparable<T>> void medianFilterSliced(final RandomAccessibleInterval< T > src, final RandomAccessibleInterval< T > dst, final int[] kernelDim){
 		int zDim = 2;
-		for (long z = src.min(zDim); z < src.max(zDim); ++z){
+		for (long z = src.min(zDim); z <= src.max(zDim); ++z){
 			System.out.println("z coordinate processed: " + z);
 			medianFilter(Views.hyperSlice(src, zDim, z), Views.hyperSlice(dst, zDim, z), kernelDim);
 		}

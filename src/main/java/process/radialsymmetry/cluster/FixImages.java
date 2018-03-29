@@ -21,7 +21,7 @@ public class FixImages {
 	private static boolean debug = false;
 
 	// here process only one image
-	public static void reshapeImage(File imgPath) {
+	public static void reshapeImage(File imgPath, File outputPath) {
 		System.out.println(imgPath.getName());
 		// open the image
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
@@ -30,7 +30,7 @@ public class FixImages {
 		imp.setDimensions(1, imp.getNSlices(), 1);
 
 		// TODO: uncomment when the code is working to have proper saving 
-		// IOFunctions.saveResult(imp, "");
+		IOFunctions.saveResult(imp, outputPath.getAbsolutePath());
 	}
 	
 	public static void addRoi(File imgPath, ArrayList<File> roiPaths, File oFolder) {
@@ -61,8 +61,8 @@ public class FixImages {
 		ArrayList<File> paths = IOFunctions.readFolder(iFolder, ".tif");
 		ArrayList<File> roiPaths = IOFunctions.readFolder(roiFolder, ".tif");
 		for (File imgPath : paths) {
-			// File outputPath = new File(imgPath.getAbsolutePath().substring(0, imgPath.getAbsolutePath().length() - 4));
-			// reshapeImage(imgPath);
+			File outputPath = new File(imgPath.getAbsolutePath().substring(0, imgPath.getAbsolutePath().length() - 4));
+			reshapeImage(imgPath, new File(outputPath.getAbsoluteFile() + ".tif"));
 			addRoi(imgPath, roiPaths, oFolder);
 		}
 	}
@@ -71,11 +71,11 @@ public class FixImages {
 		// TODO: move this part from here 
 		new ImageJ();
 		// no roi folder:
-		File iFolder = new File("/Volumes/1TB/2018-03-20-laura-radial-symmetry-numbers/SEA-12-channels-preprocessed-1");
+		File iFolder = new File("/Volumes/1TB/2018-03-20-laura-radial-symmetry-numbers/SEA-12-channels-correct");
 		// roi folder:
 		File roiFolder = new File("/Volumes/1TB/2018-03-20-laura-radial-symmetry-numbers/SEA-12");
 		// roi folder:
-		File oFolder = new File("/Volumes/1TB/2018-03-20-laura-radial-symmetry-numbers/SEA-12-channels-preprocessed-2");
+		File oFolder = new File("/Volumes/1TB/2018-03-20-laura-radial-symmetry-numbers/SEA-12-channels-correct");
 		
 		// ArrayList<File> list = new ArrayList<>();
 		// list.add(folderRoi);

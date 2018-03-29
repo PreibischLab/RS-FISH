@@ -8,8 +8,11 @@ import java.util.ArrayList;
 import compute.RadialSymmetry;
 import fit.Spot;
 import gui.interactive.HelperFunctions;
+import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.gui.Roi;
+
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
@@ -20,15 +23,18 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
+import util.ImgLib2Util;
 import util.opencsv.CSVWriter;
 
 public class BatchProcess {
 
-	public static void runProcess(Img<FloatType> img, GUIParams params, File outputPath) {
-		process(img, params, outputPath);
+	public static void runProcess(String imgPath, GUIParams params, File outputPath) {
+		process(imgPath, params, outputPath);
 	}
 
-	public static void process(Img<FloatType> img, GUIParams params, File outputPath) {
+	public static void process(String imgPath, GUIParams params, File outputPath) {
+		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File(imgPath));
+
 		ImagePlus imp = ImageJFunctions.wrap(img, "");
 		// convert to 3D stack
 		imp.setDimensions(1, imp.getNSlices(), 1);
@@ -46,16 +52,41 @@ public class BatchProcess {
 		// stores the intensity values for gauss fitting
 		ArrayList<Float> intensity = new ArrayList<>(0);
 		ArrayList<Spot> spots = processImage(img, img, rsm, dims, params.getSigmaDoG(), intensity);
-		
-		// TODO: filter the spot with the gaussian fit
-		saveResult(outputPath, spots, intensity);
+
+		// TODO: filter the spots that are inside of the roi
+		ImagePlus impRoi = IJ.openImage(imgPath);
+		Roi roi = impRoi.getRoi();
+
+		// filtered images
+		ArrayList<Float> fIntensity = new ArrayList<>(0);
+		ArrayList<Spot> fSpots = new ArrayList<>(0);
+
+		if (roi == null) {
+			System.out.println("smth is wrong. roi is null");
+		}
+		else {
+			for (Spot spot : spots) {
+				int x = spot.getIntPosition(0);
+				int y = spot.getIntPosition(1);
+				// filter spots that are not in the roi
+				if (roi.contains(x, y)) {
+					int idx = spots.indexOf(spot);
+
+					fSpots.add(spots.get(idx));
+					fIntensity.add(intensity.get(idx));
+				}
+			}
+
+			// TODO: filter the spot with the gaussian fit
+			saveResult(outputPath, fSpots, fIntensity);
+		}
 	}
 
 	/*
 	 * Class to process multiple images in a batch mode
 	 * */
 	public static ArrayList<Spot> processImage(Img<FloatType> img, RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
-			long[] dims, double sigma, ArrayList<Float> intensity) {
+		long[] dims, double sigma, ArrayList<Float> intensity) {
 		RadialSymmetry rs = new RadialSymmetry(rai, rsm);
 		rs.compute();
 
@@ -86,11 +117,11 @@ public class BatchProcess {
 				double[] position = spots.get(j).getCenter();
 
 				nextLine = new String[]{
-						String.valueOf(j + 1), 
-						String.format(java.util.Locale.US, "%.2f", position[0]), 
-						String.format(java.util.Locale.US, "%.2f", position[1]), 
-						String.format(java.util.Locale.US, "%.2f", position[2]),
-						String.format(java.util.Locale.US, "%.2f", intensity.get(j))
+					String.valueOf(j + 1), 
+					String.format(java.util.Locale.US, "%.2f", position[0]), 
+					String.format(java.util.Locale.US, "%.2f", position[1]), 
+					String.format(java.util.Locale.US, "%.2f", position[2]),
+					String.format(java.util.Locale.US, "%.2f", intensity.get(j))
 				}; 	
 				writer.writeNext(nextLine);
 			}

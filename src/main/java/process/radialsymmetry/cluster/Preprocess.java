@@ -5,7 +5,10 @@ import java.io.FileReader;
 import java.util.ArrayList;
 
 import gui.interactive.HelperFunctions;
+import ij.IJ;
 import ij.ImageJ;
+import ij.ImagePlus;
+
 import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -28,48 +31,100 @@ public class Preprocess {
 		return images;
 	}
 
-	public static void runPreprocess(File iFolder, File oFolder, File databasePath) {
-		// set the parameters that we define manually first
-		boolean useRANSAC = true;
+
+	public static GUIParams setParameters(int lambda) {
+		// set the parameters according to the lambda value
 		final GUIParams params = new GUIParams();
-		// apparently the best value for now
-		params.setAnisotropyCoefficient(1.09f);
+
+		// same for all lambda values
+		params.setAnisotropyCoefficient(1.08f);
+		boolean useRANSAC = true;
 		params.setRANSAC(useRANSAC);
-		// pre-detection
-		params.setSigmaDog(1.50f);
-		params.setThresholdDog(0.0083f);
-		// detection
-		params.setSupportRadius(3);
-		params.setInlierRatio(0.37f);
-		params.setMaxError(0.5034f);
-		
+
+		// FIXME: Check that the values for the params are correct
+		// Larger support radius smaller number of inliers
+		if (lambda == 570) {
+			
+			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
+			// CHECK ON THE CROWDED ONE
+			
+			// pre-detection
+			params.setSigmaDog(1.50f);
+			params.setThresholdDog(0.0081f);
+			// detection
+			params.setSupportRadius(3);
+			params.setInlierRatio(0.37f);
+			params.setMaxError(0.5075f);
+		} else if(lambda == 610){
+			
+			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
+			// CHECK ON THE CROWDED ONE
+			
+			// pre-detection
+			params.setSigmaDog(1.50f);
+			params.setThresholdDog(0.0081f);
+			// detection
+			params.setSupportRadius(3);
+			params.setInlierRatio(0.37f);
+			params.setMaxError(0.5075f);
+		} else if(lambda == 670){
+			
+			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
+			// CHECK ON THE CROWDED ONE
+			
+			// pre-detection
+			params.setSigmaDog(1.50f);
+			params.setThresholdDog(0.0051f);
+			// detection
+			params.setSupportRadius(4);
+			params.setInlierRatio(0.20f);
+			params.setMaxError(0.5075f);
+		} else {
+			System.out.println("This is the wave length value that you didn't use before. Check the results carefully");
+		}
+
+		return params;
+	}
+
+	public static void runPreprocess(File iFolder, File oFolder, File databasePath) {
 		// grab all file path to the images in the folder
 		ArrayList<File> paths = readFolder(iFolder, ".tif");
 		// parse the db with smFish labels
 		ArrayList<ImageData> imageData = readDb(databasePath);
-		
+
 		for (ImageData imageD : imageData) {
 			String inputPath = iFolder.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
 			String outputPath = oFolder.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
-		
+
 			// check that the corresponding files is not missing
 			if (new File(inputPath).exists()) {
-			
+
+				GUIParams params = setParameters(imageD.getLambda());
 				// File outputPath = new File(imgPath.getAbsolutePath().substring(0, imgPath.getAbsolutePath().length() - 4));
-			
+
 				// File outputPath = new File(oFolder.getAbsolutePath() + "/" + imgPath.getName()); 
 				// System.out.println(outputPath.getAbsolutePath());
-			
+
 				// IMP: 1 stage where we drop dome of the images
 				// we don't take into account those that are you marked as smFISH signal
-				System.out.println(inputPath);
+				System.out.println(inputPath + " : " + imageD.getLambda());
+				// remove the params 
 				// preprocessImage(new File(inputPath), params, new File(outputPath));
+				// continue with 
+				// 5. run radial symmetry 
+				// 6. filter the spot and save them 
+				
+				// output path for csv
+				
+				String outputPathCsv = oFolder.getAbsolutePath() + "/" + imageD.getFilename() + ".csv";
+				// FIX THE ROI FOLDER
+				BatchProcess.runProcess(inputPath, params, new File(outputPathCsv) );
 			}
 		}
 		new ImageJ();
 		// iterate over each image in the folder
 	}
-	
+
 	public static ArrayList <ImageData> readDb(File databasePath) {
 
 		ArrayList <ImageData> imageData = new ArrayList<>(); 
@@ -80,10 +135,10 @@ public class Preprocess {
 		final int [] stainIndices = new int[] {3, 6, 9, 12, 15};
 		// index for the column with the new name
 		final int newFilenameIndex = 23;
-		
+
 		CSVReader reader = null;
 		String[] nextLine = new String [nColumns];
-		
+
 		try {
 			int toSkip = 1; 
 			reader = new CSVReader(new FileReader(databasePath), ',', CSVReader.DEFAULT_QUOTE_CHARACTER, toSkip);
@@ -106,12 +161,12 @@ public class Preprocess {
 			e.printStackTrace();
 		}
 
-//		for (ImageData id : imageData)
-//			System.out.println(id.getLambda() + " " + id.getFilename());
-		
+		//		for (ImageData id : imageData)
+		//			System.out.println(id.getLambda() + " " + id.getFilename());
+
 		return imageData;
 	}
-	
+
 	// verify that the given image is smFish
 	public static void checkThatTheImageIsSmFish(File databasePath) {
 		// TODO:
@@ -189,14 +244,11 @@ public class Preprocess {
 		float min = 0;
 		float max = 1;
 		Normalize.normalize(img, new FloatType(min), new FloatType(max));
-		
+
 		// 4.* just resave the images at the moment
 		IOFunctions.saveResult(img, outputPath.getAbsolutePath());
 
 		// perform the processing steps from above
-		// 5. run radial symmetry 
-		// 6. filter the spot and save them 
-		// BatchProcess.runProcess(img, params, outputPath);
 	}
 
 	public static void main(String [] args){

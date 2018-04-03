@@ -20,42 +20,44 @@ public class FixImages {
 	
 	private static boolean debug = false;
 
-	// here process only one image
-	public static void reshapeImage(File imgPath, File outputPath) {
-		if (debug)
-			System.out.println(imgPath.getName());
-		// open the image
-		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
-		// save the image at the same location but with the roi on it
-		ImagePlus imp = ImageJFunctions.wrap(img, "");
-		imp.setDimensions(1, imp.getNSlices(), 1);
+// outdated	
+//	// here process only one image
+//	public static void reshapeImage(File imgPath, File outputPath) {
+//		if (debug)
+//			System.out.println(imgPath.getName());
+//		// open the image
+//		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
+//		// save the image at the same location but with the roi on it
+//		ImagePlus imp = ImageJFunctions.wrap(img, "");
+//		imp.setDimensions(1, imp.getNSlices(), 1);
+//
+//		IOFunctions.saveResult(imp, outputPath.getAbsolutePath());
+//	}
 
-		IOFunctions.saveResult(imp, outputPath.getAbsolutePath());
-	}
-	
-	public static void addRoi(File imgPath, ArrayList<File> roiPaths, File oFolder) {
-		String imageName = imgPath.getName().substring(3);
-		for (File imageRoi : roiPaths) {
-			if (imageRoi.getName().equalsIgnoreCase(imageName)){
-				System.out.println("fixed: " + imgPath.getName());
-				// open both images
-				ImagePlus impNoRoi = IJ.openImage(imgPath.getAbsolutePath());
-				ImagePlus impRoi = IJ.openImage(imageRoi.getAbsolutePath());
-				// grab and copy roi
-				Roi roi = impRoi.getRoi();
-				impNoRoi.setRoi(roi);
-				
-				if (debug) {
-					impRoi.show();
-					impNoRoi.show();
-				}
-				
-				IJ.save(impNoRoi, oFolder.getAbsolutePath() + "/" + imgPath.getName());
-				
-				break; // iterate till the first hit 
-			}
-		}
-	}
+// out dated
+//	public static void addRoi(File imgPath, ArrayList<File> roiPaths, File oFolder) {
+//		String imageName = imgPath.getName().substring(3);
+//		for (File imageRoi : roiPaths) {
+//			if (imageRoi.getName().equalsIgnoreCase(imageName)){
+//				System.out.println("fixed: " + imgPath.getName());
+//				// open both images
+//				ImagePlus impNoRoi = IJ.openImage(imgPath.getAbsolutePath());
+//				ImagePlus impRoi = IJ.openImage(imageRoi.getAbsolutePath());
+//				// grab and copy roi
+//				Roi roi = impRoi.getRoi();
+//				impNoRoi.setRoi(roi);
+//				
+//				if (debug) {
+//					impRoi.show();
+//					impNoRoi.show();
+//				}
+//				
+//				IJ.save(impNoRoi, oFolder.getAbsolutePath() + "/" + imgPath.getName());
+//				
+//				break; // iterate till the first hit 
+//			}
+//		}
+//	}
 
 	public static void reshapeAndAddRoi(File pathImage, ArrayList<File> pathImagesRoi, File pathImageFixed) {
 		
@@ -81,7 +83,7 @@ public class FixImages {
 					impRoi.show();
 					impNoRoi.show();
 				}
-				IJ.save(impNoRoi, pathImageFixed.getAbsolutePath() + "/" + pathImage.getName() + ".tif");
+				IJ.save(impNoRoi, pathImageFixed.getAbsolutePath() + "/" + pathImage.getName());
 				break; // iterate till the first hit 
 			}
 		}

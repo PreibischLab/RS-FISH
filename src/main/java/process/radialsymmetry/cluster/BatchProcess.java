@@ -27,15 +27,145 @@ import util.ImgLib2Util;
 import util.opencsv.CSVWriter;
 
 public class BatchProcess {
+	
+	// N2 parameters
+	public static GUIParams setParameters(int lambda) {
+		// set the parameters according to the lambda value
+		final GUIParams params = new GUIParams();
 
-	public static void runProcess(String imgPath, GUIParams params, File outputPath) {
-		process(imgPath, params, outputPath);
+		// same for all lambda values
+		params.setAnisotropyCoefficient(1.08f);
+		boolean useRANSAC = true;
+		params.setRANSAC(useRANSAC);
+
+		// FIXME: Check that the values for the params are correct
+		// Larger support radius smaller number of inliers
+		if (lambda == 670) {
+			
+			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
+			// CHECK ON THE CROWDED ONE
+			
+			// pre-detection
+			params.setSigmaDog(1.50f);
+			params.setThresholdDog(0.0081f);
+			// detection
+			params.setSupportRadius(3);
+			params.setInlierRatio(0.37f);
+			params.setMaxError(0.5034f);
+		} else if(lambda == 610){
+			
+			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
+			// CHECK ON THE CROWDED ONE
+			
+			// pre-detection
+			params.setSigmaDog(1.50f);
+			params.setThresholdDog(0.0081f);
+			// detection
+			params.setSupportRadius(3);
+			params.setInlierRatio(0.37f);
+			params.setMaxError(0.5034f);
+		} else if(lambda == 570){
+			
+			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
+			// CHECK ON THE CROWDED ONE
+			
+			// pre-detection
+			params.setSigmaDog(1.50f);
+			params.setThresholdDog(0.0081f);
+			// detection
+			params.setSupportRadius(3);
+			params.setInlierRatio(0.37f);
+			params.setMaxError(0.5034f);
+		} else {
+			System.out.println("This is the wave length value that you didn't use before. Check the results carefully");
+		}
+
+		return params;
+	}
+	
+	// SEA-12 parameters
+	public static GUIParams setParameters2(int lambda) {
+		// set the parameters according to the lambda value
+		final GUIParams params = new GUIParams();
+
+		// same for all lambda values
+		params.setAnisotropyCoefficient(1.08f);
+		boolean useRANSAC = true;
+		params.setRANSAC(useRANSAC);
+
+		// FIXME: Check that the values for the params are correct
+		// Larger support radius smaller number of inliers
+		if (lambda == 670) {
+			
+			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
+			// CHECK ON THE CROWDED ONE
+			
+			// pre-detection
+			params.setSigmaDog(1.50f);
+			params.setThresholdDog(0.0081f);
+			// detection
+			params.setSupportRadius(3);
+			params.setInlierRatio(0.37f);
+			params.setMaxError(0.5034f);
+		} else if(lambda == 610){
+			
+			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
+			// CHECK ON THE CROWDED ONE
+			
+			// pre-detection
+			params.setSigmaDog(1.50f);
+			params.setThresholdDog(0.0081f);
+			// detection
+			params.setSupportRadius(3);
+			params.setInlierRatio(0.37f);
+			params.setMaxError(0.5034f);
+		} else if(lambda == 570){
+			
+			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
+			// CHECK ON THE CROWDED ONE
+			
+			// pre-detection
+			params.setSigmaDog(1.50f);
+			params.setThresholdDog(0.0081f);
+			// detection
+			params.setSupportRadius(3);
+			params.setInlierRatio(0.37f);
+			params.setMaxError(0.5034f);
+		} else {
+			System.out.println("This is the wave length value that you didn't use before. Check the results carefully");
+		}
+
+		return params;
+	}
+	
+	public static void runProcess(File pathImagesMedian, File pathDatabase, File pathResultCsv) {
+		// parse the db with smFish labels and good looking images
+		ArrayList<ImageData> imageData = Preprocess.readDb(pathDatabase);
+		
+		long currentIndex = 0;
+		
+		for (ImageData imageD : imageData) {
+			currentIndex++;
+			// path to the processed image
+			String inputImagePath = pathImagesMedian.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
+			System.out.println(currentIndex + "/" + imageData.size());
+			if (new File(inputImagePath).exists()){
+				// table to store the results for each channel
+				String outputPathCsv = pathResultCsv.getAbsolutePath() + "/" + imageD.getFilename() + ".csv";
+				// set the params according to the way length
+				GUIParams params = setParameters(imageD.getLambda());
+				BatchProcess.process(inputImagePath, params, new File(outputPathCsv));
+			}
+			else {
+				System.out.println("Missing file: " + inputImagePath);
+			}
+		}
 	}
 
 	public static void process(String imgPath, GUIParams params, File outputPath) {
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File(imgPath));
-
 		ImagePlus imp = ImageJFunctions.wrap(img, "");
+		// TODO: might be redundant
 		// convert to 3D stack
 		imp.setDimensions(1, imp.getNSlices(), 1);
 		// set the calibration for the given image
@@ -69,6 +199,7 @@ public class BatchProcess {
 				int x = spot.getIntPosition(0);
 				int y = spot.getIntPosition(1);
 				// filter spots that are not in the roi
+				// TODO: this one can be improved if rewritten with getMask() 
 				if (roi.contains(x, y)) {
 					int idx = spots.indexOf(spot);
 

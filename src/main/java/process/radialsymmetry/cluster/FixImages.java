@@ -22,14 +22,14 @@ public class FixImages {
 
 	// here process only one image
 	public static void reshapeImage(File imgPath, File outputPath) {
-		System.out.println(imgPath.getName());
+		if (debug)
+			System.out.println(imgPath.getName());
 		// open the image
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
 		// save the image at the same location but with the roi on it
 		ImagePlus imp = ImageJFunctions.wrap(img, "");
 		imp.setDimensions(1, imp.getNSlices(), 1);
 
-		// TODO: uncomment when the code is working to have proper saving 
 		IOFunctions.saveResult(imp, outputPath.getAbsolutePath());
 	}
 	
@@ -57,13 +57,45 @@ public class FixImages {
 		}
 	}
 
+	public static void reshapeAndAddRoi(File pathImage, ArrayList<File> pathImagesRoi, File pathImageFixed) {
+		
+		if (debug)
+			System.out.println(pathImage.getName());
+		
+		String imageName = pathImage.getName().substring(3);
+		for (File imageRoi : pathImagesRoi) {
+			if (imageRoi.getName().equalsIgnoreCase(imageName)){
+				System.out.println("fixed: " + pathImage.getName());
+				// open both images
+				ImagePlus impNoRoi = IJ.openImage(pathImage.getAbsolutePath());
+				ImagePlus impRoi = IJ.openImage(imageRoi.getAbsolutePath());
+				
+				// reslice!
+				impNoRoi.setDimensions(1, impNoRoi.getNSlices(), 1);
+				
+				// grab and copy roi
+				Roi roi = impRoi.getRoi();
+				impNoRoi.setRoi(roi);
+				
+				if (debug) {
+					impRoi.show();
+					impNoRoi.show();
+				}
+				IJ.save(impNoRoi, pathImageFixed.getAbsolutePath() + "/" + pathImage.getName() + ".tif");
+				break; // iterate till the first hit 
+			}
+		}
+	}
+	
 	public static void runFixImages(File iFolder, File roiFolder, File oFolder) {
 		ArrayList<File> paths = IOFunctions.readFolder(iFolder, ".tif");
 		ArrayList<File> roiPaths = IOFunctions.readFolder(roiFolder, ".tif");
 		for (File imgPath : paths) {
-			File outputPath = new File(imgPath.getAbsolutePath().substring(0, imgPath.getAbsolutePath().length() - 4));
-			reshapeImage(imgPath, new File(outputPath.getAbsoluteFile() + ".tif"));
-			addRoi(imgPath, roiPaths, oFolder);
+			// File outputPath = new File(imgPath.getAbsolutePath().substring(0, imgPath.getAbsolutePath().length() - 4));
+			// reshapeImage(imgPath, new File(outputPath.getAbsoluteFile() + ".tif"));
+			// addRoi(imgPath, roiPaths, oFolder);
+			
+			reshapeAndAddRoi(imgPath, roiPaths, oFolder);
 		}
 	}
 

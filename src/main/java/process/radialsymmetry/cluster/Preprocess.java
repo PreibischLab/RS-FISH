@@ -77,50 +77,6 @@ public class Preprocess {
 		}
 	}
 
-// MIGHT BE out-dated	
-//	public static void runPreprocess1(File pathImages, File pathImagesRoi, File pathImagesMedian, File pathDb) {
-//		// TODO: Remove this one it is not necessary
-//		// grab all file paths to the images in the folder
-//		// ArrayList<File> paths = readFolder(pathImages, ".tif");
-//		
-//		// parse the db with smFish labels and good looking images
-//		ArrayList<ImageData> imageData = readDb(pathDb);
-//
-//		for (ImageData imageD : imageData) {
-//			// unprocessed path
-//			String inputImagePath = pathImages.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
-//			// processed path 
-//			String outputImagePath = pathImagesMedian.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
-//
-//			// check that the corresponding files is not missing
-//			if (new File(inputImagePath).exists()) {
-//
-//				// File outputPath = new File(imgPath.getAbsolutePath().substring(0, imgPath.getAbsolutePath().length() - 4));
-//
-//				// File outputPath = new File(oFolder.getAbsolutePath() + "/" + imgPath.getName()); 
-//				// System.out.println(outputPath.getAbsolutePath());
-//
-//				// IMP: 1 stage where we drop dome of the images
-//				// we don't take into account those that are you marked as smFISH signal
-//				System.out.println(inputImagePath + " : " + imageD.getLambda());
-//				// remove the params 
-//				preprocessImage(new File(inputImagePath), new File(outputImagePath));
-//				// continue with 
-//				// 5. run radial symmetry 
-//				// 6. filter the spot and save them 
-//				
-//				// output path for csv
-//				
-//				String outputPathCsv = pathImagesMedian.getAbsolutePath() + "/" + imageD.getFilename() + ".csv";
-//				GUIParams params = setParameters(imageD.getLambda());
-//				// FIX THE ROI FOLDER
-//				// BatchProcess.runProcess(inputPath, params, new File(outputPathCsv) );
-//			}
-//		}
-//		new ImageJ();
-//		// iterate over each image in the folder
-//	}
-
 	public static ArrayList <ImageData> readDb(File databasePath) {
 
 		ArrayList <ImageData> imageData = new ArrayList<>(); 
@@ -165,60 +121,6 @@ public class Preprocess {
 		System.out.println("Done reading the databse");
 		return imageData;
 	}
-
-// REMOVE: out-dated
-//	// verify that the given image is smFish
-//	public static void checkThatTheImageIsSmFish(File databasePath) {
-//		// TODO:
-//		// iterate over xls 
-//		// iterate over the columns 
-//		// if column is smfish add the file to the process file set 
-//		// otherwise ignore
-//
-//		// TODO: always check the input folder 
-//		// File path = new File("/Users/kkolyva/Desktop/smFISH-database/SEA-12-Table 1.csv");
-//
-//		// files that we will consider in the end
-//		// ArrayList <String> files = new ArrayList<>();
-//		// TODO: add the length wave check here, too
-//		ArrayList <ImageData> imageData = new ArrayList<>(); 
-//
-//		CSVReader reader = null;
-//		int nColumns = 24;
-//		String[] nextLine = new String [nColumns];
-//		// columns: 3, 6, 9, 12, 15 
-//		int [] lambdaIndices = new int[] {2, 5, 8, 11, 14};
-//		int [] stainIndices = new int[] {3, 6, 9, 12, 15};
-//		final int qualityIndex = 20;
-//		// index for the column with the new name
-//		int newFilenameIndex = 23;
-//
-//		try {
-//			int toSkip = 1; 
-//			reader = new CSVReader(new FileReader(databasePath), ',', CSVReader.DEFAULT_QUOTE_CHARACTER, toSkip);
-//			// while there are rows in the file
-//			while ((nextLine = reader.readNext()) != null) {
-//				// iterate over the row; that is 25 elements long
-//				for (int j = 0; j < stainIndices.length; j++) {
-//					// 
-//					if (nextLine[stainIndices[j]].equals("FISH") && conditionalPick(nextLine, qualityIndex)) {
-//						// TODO: Check the naming for the files!
-//						// files.add(new String(nextLine[newFilenameIndex] + "-C" + j));
-//
-//						int lambda = Integer.parseInt(nextLine[lambdaIndices[j]]);
-//						String filename = nextLine[newFilenameIndex] + "-C" + j;
-//
-//						imageData.add(new ImageData(lambda, false, filename));
-//					}
-//				}
-//			}
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//
-//		for (ImageData id : imageData)
-//			System.out.println(id.getLambda() + " " + id.getFilename());
-//	}
 
 	// drop bad quality images
 	public static boolean conditionalPick(String[] nextLine, int qualityIndex) {

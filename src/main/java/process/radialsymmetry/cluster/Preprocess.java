@@ -42,8 +42,6 @@ public class Preprocess {
 		ArrayList<ImageData> imageData = readDb(pathDb);
 		// to see the feedback
 		long currentIdx = 0;
-		
-		boolean flag = false;
 		for (ImageData imageD : imageData) {
 			currentIdx++;			
 			// unprocessed path
@@ -52,20 +50,11 @@ public class Preprocess {
 			String outputImagePath = pathImagesMedian.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
 			// image that contains roi 
 			String roiImagePath = pathImagesRoi.getAbsolutePath() + "/" + imageD.getFilename().substring(3) + ".tif";
-		
+
 			System.out.println( currentIdx + "/" + imageData.size() + ": " + inputImagePath);
 			// System.out.println(outputImagePath);
 			// System.out.println(roiImagePath);
-			
-			if (!inputImagePath.equals("/home/milkyklim/Desktop/2018-04-03-laura-radial-symmetry-numbers/N2-channels-correct/C1-N2_241.tif")) {
-				// 
-			}
-			else {
-				flag = true;
-			}
-			
-			if (!flag) continue;
-			
+
 			// check that the corresponding files is not missing
 			if (new File(inputImagePath).exists() && new File(roiImagePath).exists()) {
 				// run full stack preprocess
@@ -77,6 +66,28 @@ public class Preprocess {
 		}
 	}
 
+	public static ArrayList<ImageData> readCenters(File filePath) {
+		ArrayList <ImageData> imageData = new ArrayList<>(); 
+		final int nColumns = 2;
+
+		CSVReader reader = null;
+		String[] nextLine = new String [nColumns];
+
+		try {
+			int toSkip = 1; 
+			reader = new CSVReader(new FileReader(filePath), ',', CSVReader.DEFAULT_QUOTE_CHARACTER, toSkip);
+			// while there are rows in the file
+			while ((nextLine = reader.readNext()) != null) {
+				String filename = nextLine[0];
+				float center = Float.parseFloat(nextLine[1]);
+				imageData.add(new ImageData(filename, center));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return imageData;
+	}
+
 	public static ArrayList <ImageData> readDb(File databasePath) {
 
 		ArrayList <ImageData> imageData = new ArrayList<>(); 
@@ -86,6 +97,9 @@ public class Preprocess {
 		final int [] lambdaIndices = new int[] {2, 5, 8, 11, 14};
 		final int [] stainIndices = new int[] {3, 6, 9, 12, 15};
 		final int qualityIndex = 20;
+		final int stageIndex = 19;
+		final int integrityIndex = 18;
+		final int signalIndex = 17;
 		// index for the column with the new name
 		final int newFilenameIndex = 23;
 
@@ -99,7 +113,7 @@ public class Preprocess {
 			while ((nextLine = reader.readNext()) != null) {
 				// iterate over the row; that is 25 elements long
 				for (int j = 0; j < stainIndices.length; j++) {
-					if (nextLine[stainIndices[j]].equals("FISH") && conditionalPick(nextLine, qualityIndex)) {
+					if (nextLine[stainIndices[j]].equals("FISH") && conditionalPick(nextLine, signalIndex, integrityIndex, stageIndex, qualityIndex)) {
 						// TODO: Check the naming for the files!
 						// files.add(new String(nextLine[newFilenameIndex] + "-C" + j));
 
@@ -123,14 +137,23 @@ public class Preprocess {
 	}
 
 	// drop bad quality images
-	public static boolean conditionalPick(String[] nextLine, int qualityIndex) {
+	public static boolean conditionalPick(String[] nextLine, int signalIndex, int integrityIndex, int stageIndex, int qualityIndex) {
 		// true -> good quality
+		// some parameters that are coming from Laura: 
+		// integrity == 1 
+		// signal in {3,4,5}
 		boolean isGood = true;
-		if (!nextLine[qualityIndex].trim().equals("")) 
+		// if (!nextLine[qualityIndex].trim().equals("")) 
+		if (Integer.parseInt(nextLine[signalIndex].trim()) >= 3 // good signal
+				&& Integer.parseInt(nextLine[integrityIndex].trim()) == 1 // embryo looks fine
+				&& nextLine[stageIndex].trim().equals("E") // only embryos
+				&& !nextLine[qualityIndex].trim().contains("z jumps") // skip
+				&& !nextLine[qualityIndex].trim().contains("z cut") // skip
+				)
 			isGood = false;
 		return isGood;
 	}
-	
+
 	// use only pixels that are inside roi for normalization 
 	public static void normalize( Img <FloatType> img, ImagePlus imp, float min, float max )
 	{	
@@ -138,19 +161,19 @@ public class Preprocess {
 		Rectangle bounds = imp.getRoi().getBounds();
 		// System.out.println(ip.getWidth() + " : " + ip.getHeight());
 		// System.out.println(imp.getWidth() + " : " + imp.getHeight());
-		
+
 		System.out.println(bounds.x + " : " + bounds.y);
-		
+
 		final Cursor< FloatType > cursor = img.cursor();
 		float currentMin = Float.MAX_VALUE;
 		float currentMax = -Float.MAX_VALUE;
-		
+
 		while(cursor.hasNext()) {
 			cursor.fwd();
-			
+
 			int x = cursor.getIntPosition(0) - bounds.x;
 			int y = cursor.getIntPosition(1) - bounds.y;
-			
+
 			if (ip != null && ip.getPixel(x, y) != 0) {
 				float currentValue = cursor.get().get();
 				if (currentValue < currentMin)
@@ -159,20 +182,20 @@ public class Preprocess {
 					currentMax = currentValue;
 			}
 		}
-		
+
 		// no roi in the image case
 		if (currentMin == Float.MAX_VALUE || currentMax == -Float.MAX_VALUE) {
 			currentMax = 1;
 			currentMin = 0;
 		}
-		
+
 		float scale = currentMax;
 		scale -= currentMin;
-		
+
 		cursor.reset();
 		while(cursor.hasNext()) {
 			cursor.fwd();
-			
+
 			float currentVal = cursor.get().get();
 			currentVal -= currentMin;
 			currentVal /= scale;
@@ -180,11 +203,54 @@ public class Preprocess {
 		}
 	}
 
+	// the =1 values that we will use for the second run of the radial symmetry
+	public static float findMaxValue(Img <FloatType> img, ImagePlus imp, float center) {
+		// take the corresponding image name 
+		// pull the corresponding value
+		// profit
+
+		ImageProcessor ip = imp.getMask();
+		Rectangle bounds = imp.getRoi().getBounds();
+
+		System.out.println(bounds.x + " : " + bounds.y);
+
+		final Cursor< FloatType > cursor = img.cursor();
+		float currentMin = Float.MAX_VALUE;
+		float currentMax = -Float.MAX_VALUE;
+
+		while(cursor.hasNext()) {
+			cursor.fwd();
+
+			int x = cursor.getIntPosition(0) - bounds.x;
+			int y = cursor.getIntPosition(1) - bounds.y;
+
+			if (ip != null && ip.getPixel(x, y) != 0) {
+				float currentValue = cursor.get().get();
+				if (currentValue < currentMin)
+					currentMin = currentValue;
+				if (currentValue > currentMax)
+					currentMax = currentValue;
+			}
+		}
+
+		float newMaxValue = (currentMax - currentMin)*center + currentMin;
+		return newMaxValue;
+	}
+
+	// reads the corresponding value for the center of the peak and returns it here 
+	public static float findCenterValue(File filePath) {
+		float center = 1; // default value 
+
+
+
+	}
+
+
 	public static void preprocessImage(File imgPath, File roiPath, File outputPath){
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
 		Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
 		ImagePlus imp = IJ.openImage(roiPath.getAbsolutePath());
-		
+
 		// 1. get the background
 		// TODO: move kernel size as the parameter
 		int [] kernelDim = new int []{19, 19}; 

@@ -37,9 +37,15 @@ public class Preprocess {
 		return images;
 	}
 
-	public static void runPreprocess(File pathImages, File pathImagesRoi, File pathImagesMedian, File pathDb) {
+	public static void runPreprocess(File pathImages, File pathImagesRoi, File pathImagesMedian, File pathDb, File pathCenters, int centerIndex) {
 		// parse the db with smFish labels and good looking images
 		ArrayList<ImageData> imageData = readDb(pathDb);
+		
+		// parse the centers of the histograms
+		ArrayList<ImageData> centerData = null;
+		if (centerIndex == 2)
+			centerData = readCenters(pathCenters);
+		
 		// to see the feedback
 		long currentIdx = 0;
 		for (ImageData imageD : imageData) {
@@ -57,8 +63,28 @@ public class Preprocess {
 
 			// check that the corresponding files is not missing
 			if (new File(inputImagePath).exists() && new File(roiImagePath).exists()) {
+				
+				float normMax = 1; // default value is 1; corresponds to normal workflow
+				
+				boolean isInList = false;
+				// check that the image is in histogram centers
+				if (centerIndex == 2) {
+					// find the intensity value in the list
+					for (ImageData items : centerData) {
+						if (imageD.getFilename().equals(items.getFilename())){
+							normMax = items.getCenter();
+							isInList = true; 
+							break;
+						}
+					}
+					if (!isInList)
+						System.out.println("Could not find " + imageD.getFilename() + " in the list.");
+				}
+					
+				
 				// run full stack preprocess
-				preprocessImage(new File(inputImagePath), new File(roiImagePath), new File(outputImagePath));
+				if (centerIndex == 2 && isInList)
+					preprocessImage(new File(inputImagePath), new File(roiImagePath), new File(outputImagePath), normMax);
 			}
 			else {
 				System.out.println("Preprocess.java: " + inputImagePath + " file is missing");
@@ -142,20 +168,24 @@ public class Preprocess {
 		// some parameters that are coming from Laura: 
 		// integrity == 1 
 		// signal in {3,4,5}
-		boolean isGood = true;
+		boolean isGood = false;
 		// if (!nextLine[qualityIndex].trim().equals("")) 
-		if (Integer.parseInt(nextLine[signalIndex].trim()) >= 3 // good signal
-				&& Integer.parseInt(nextLine[integrityIndex].trim()) == 1 // embryo looks fine
-				&& nextLine[stageIndex].trim().equals("E") // only embryos
-				&& !nextLine[qualityIndex].trim().contains("z jumps") // skip
-				&& !nextLine[qualityIndex].trim().contains("z cut") // skip
-				)
-			isGood = false;
+
+		int signalQuality = nextLine[signalIndex].trim().equals("") ? 0 : Integer.parseInt(nextLine[signalIndex].trim());
+		int integrity = nextLine[integrityIndex].trim().equals("") ? 0 : Integer.parseInt(nextLine[integrityIndex].trim());
+		
+		if (signalQuality >= 3 // good signal
+		 && integrity == 1 // embryo looks fine
+		 && nextLine[stageIndex].trim().equals("E") // only embryos
+		 && !nextLine[qualityIndex].trim().contains("z jumps") // skip
+		 && !nextLine[qualityIndex].trim().contains("z cut") // skip
+		)
+			isGood = true;
 		return isGood;
 	}
 
 	// use only pixels that are inside roi for normalization 
-	public static void normalize( Img <FloatType> img, ImagePlus imp, float min, float max )
+	public static void normalize( Img <FloatType> img, ImagePlus imp, float min, float max, float center)
 	{	
 		ImageProcessor ip = imp.getMask();
 		Rectangle bounds = imp.getRoi().getBounds();
@@ -189,6 +219,10 @@ public class Preprocess {
 			currentMin = 0;
 		}
 
+		if (center > 0)
+			currentMax = (currentMax - currentMin)*center - currentMin;
+		
+		
 		float scale = currentMax;
 		scale -= currentMin;
 
@@ -238,15 +272,15 @@ public class Preprocess {
 	}
 
 	// reads the corresponding value for the center of the peak and returns it here 
-	public static float findCenterValue(File filePath) {
+	public static float findCenterValue() {
 		float center = 1; // default value 
 
-
-
+		
+		return center;
 	}
 
 
-	public static void preprocessImage(File imgPath, File roiPath, File outputPath){
+	public static void preprocessImage(File imgPath, File roiPath, File outputPath, float newMax){
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
 		Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
 		ImagePlus imp = IJ.openImage(roiPath.getAbsolutePath());
@@ -266,8 +300,9 @@ public class Preprocess {
 		// 4. normalize image 
 		float min = 0;
 		float max = 1;
-		// normalize ove roi only
-		normalize(img, imp, min, max);
+		
+		// normalize over roi only
+		normalize(img, imp, min, max, newMax);
 		// Normalize.normalize(img, new FloatType(min), new FloatType(max));
 
 		// 4.* just resave the images at the moment

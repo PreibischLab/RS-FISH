@@ -12,6 +12,8 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
+import imglib2.RealTypeNormalization;
+import imglib2.TypeTransformingRandomAccessibleInterval;
 
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
@@ -227,16 +229,29 @@ public class BatchProcess {
 		double[] calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); 
 		// set the parameters for the radial symmetry 
 		RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
+		// FIXME: MAYBE WE ACTUALLY HAVE TO
 		// don't have to normalize the image and can use it directly
-		RandomAccessibleInterval<FloatType> rai = img;
 
+		// dirty cast that can't be avoided :(
+		double[] minmax = HelperFunctions.computeMinMax(img);
+
+		float min = (float) minmax[0];
+		float max = (float) minmax[1];
+		
+		RandomAccessibleInterval<FloatType> rai;
+		if (!Double.isNaN(min) && !Double.isNaN(max)) // if normalizable
+			rai = new TypeTransformingRandomAccessibleInterval<>(img,
+					new RealTypeNormalization<>(min, max - min), new FloatType());
+		else // otherwise use
+			rai = img;
+		
 		// x y z
 		long[] dims = new long[img.numDimensions()];
 		img.dimensions(dims);
 
 		// stores the intensity values for gauss fitting
 		ArrayList<Float> intensity = new ArrayList<>(0);
-		ArrayList<Spot> spots = processImage(img, img, rsm, dims, params.getSigmaDoG(), intensity);
+		ArrayList<Spot> spots = processImage(img, rai, rsm, dims, params.getSigmaDoG(), intensity);
 
 		// TODO: filter the spots that are inside of the roi
 		ImagePlus impRoi = IJ.openImage(imgPath);
@@ -318,5 +333,16 @@ public class BatchProcess {
 	}
 
 	public static void main(String[] args) {
+		
+		// test run that the correct values are written to the csv file
+		
+		
+		String outputPathCsv = "/Volumes/1TB/test/test-out/data.csv";
+		// set the params according to the way length
+		GUIParams params = setParametersN2Second(670);
+		String inputImagePath = "/Volumes/1TB/test/2/C1-N2_96-p.tif";
+		
+		BatchProcess.process(inputImagePath, params, new File(outputPathCsv));
+		System.out.println("DONE!");
 	}
 }

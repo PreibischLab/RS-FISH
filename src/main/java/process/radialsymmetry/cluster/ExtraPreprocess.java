@@ -1,0 +1,510 @@
+package process.radialsymmetry.cluster;
+
+import java.awt.Rectangle;
+import java.io.File;
+import java.io.FileReader;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import net.imglib2.Cursor;
+import net.imglib2.RandomAccess;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
+
+import org.apache.commons.math3.stat.regression.SimpleRegression;
+
+import fit.Spot;
+import ij.IJ;
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.io.FileSaver;
+import ij.process.ImageProcessor;
+import util.opencsv.CSVReader;
+
+public class ExtraPreprocess {
+	// this class performs extra preprocessing of the images: 
+	// 1. calculate the median intensity per plane (consider only roi pixels) = S_i
+	// 2. subtract min (or median) of S_i from each pixel including outer roi
+	// 3. multiple the whole image by a factor p so that 1 values are 1's again
+	// 4. perform the plane dependent multiplication (z-plane fix of the intensity drop) 
+
+	public static void runExtraPreprocess(File pathImages, File pathDb, File pathImagesMedian) {
+		// parse the db with smFish labels and good looking images
+		ArrayList<ImageData> imageData = Preprocess.readDb(pathDb);
+
+		// to see the feedback
+		long currentIdx = 0;
+		for (ImageData imageD : imageData) {
+			currentIdx++;
+			// unprocessed path
+			String inputImagePath = pathImages.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
+			// processed path 
+			String outputImagePath = pathImagesMedian.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
+
+			System.out.println( currentIdx + "/" + imageData.size() + ": " + inputImagePath);
+			// System.out.println(outputImagePath);
+			// System.out.println(roiImagePath);
+
+			// check that the corresponding files is not missing
+			if (new File(inputImagePath).exists()) {
+				medianOfMedian(new File(inputImagePath), new File(outputImagePath));
+			}
+			else {
+				System.out.println("Preprocess.java: " + inputImagePath + " file is missing");
+			}
+		}
+	}
+
+
+	// read the z and I values from the csbv file 
+	public static ArrayList<float []> readCsv(File path) {
+		final int nColumns = 5;
+		final int zIndex = 3;
+		final int iIndex = 4;
+
+		CSVReader reader = null;
+		String[] nextLine = new String [nColumns];
+
+		ArrayList<float []> zI = new ArrayList<>();
+
+		try {
+			int toSkip = 1; 
+			reader = new CSVReader(new FileReader(path), '\t', CSVReader.DEFAULT_QUOTE_CHARACTER, toSkip);
+			// while there are rows in the file
+			while ((nextLine = reader.readNext()) != null) {
+
+				float z = Float.parseFloat(nextLine[zIndex]);
+				float I = Float.parseFloat(nextLine[iIndex]);
+
+				zI.add(new float[] {z, I});
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return zI;
+	}
+
+
+
+	public static ArrayList<float[]> sortValues(ArrayList<float[]> zI) {
+		Collections.sort(zI, new zComparator());
+		return zI;
+	}
+
+	public static ArrayList<float []> getMedianPerSlice(ArrayList<float[]> zI, long zSlices){
+
+		ArrayList<float[]> medianZI = new ArrayList<>();
+
+		for (int z = 0; z < zSlices; z++) {
+			ArrayList<float[]> list = new ArrayList<>();
+			for (float [] item : zI) {
+				if(Math.round(item[0]) == z) {
+					list.add(item);
+				}
+			}
+			if (!list.isEmpty()) {
+				Collections.sort(list, new iComparator());
+				medianZI.add(list.get(list.size()/2));
+				System.out.println(list.get(list.size()/2)[0] + ", "+ list.get(list.size()/2)[1]);
+			}
+		}
+		return medianZI;
+	}
+
+	
+	// FIXME: CHECK THAT THIS ONE IS ACTUALLY WORKING
+	// calculates the median intensity per-slice and returns the set of z-points and intensities
+	public static ArrayList<float []> getMedianPerSlice(ArrayList<Spot> spots, ArrayList<Float> intensity, long zSlices){
+		ArrayList<float[]> medianZI = new ArrayList<>();
+
+		for (int z = 0; z < zSlices; z++) {
+			ArrayList<Integer> indices = new ArrayList<>();
+			for (int j = 0; j < spots.size(); j++) {
+				if(spots.get(j).getIntPosition(2) == z) {
+					indices.add(j);
+				}
+			}
+
+			// there are points for this specific zSlice
+			if (!indices.isEmpty()) {
+				// grabs only necessary intensity values
+				List<Float> fIntensity = indices.stream().map(intensity::get).collect(Collectors.toList());
+				List<Spot> fSpots = indices.stream().map(spots::get).collect(Collectors.toList());
+				// sort according to the intensities
+				IndexComparator comparator = new IndexComparator(fIntensity);
+				Integer[] intensityIndices = comparator.createIndexArray();
+				Arrays.sort(intensityIndices, comparator);
+				// now indices will give me the result I am looking for 
+				int id = intensityIndices[intensityIndices.length/2];
+				
+				medianZI.add(new float[]{fSpots.get(id).getFloatPosition(2), fIntensity.get(id)});
+			} 
+		}
+		return medianZI;
+	}
+
+	public static class zComparator implements Comparator<float[]>{
+		@Override
+		public int compare(float[] e1, float[] e2) {
+			int result = 0; // same 
+			if (e1[0] < e2[0]) {
+				result = -1;
+			} else if (e1[0] > e2[0]) {
+				result = 1;
+			}
+			return result;
+		}
+	}
+
+	public static class iComparator implements Comparator<float[]>{
+		@Override
+		public int compare(float[] e1, float[] e2) {
+			int result = 0; // same 
+			if (e1[1] < e2[1]) {
+				result = -1;
+			} else if (e1[1] > e2[1]) {
+				result = 1;
+			}
+			return result;
+		}
+	}
+
+	public static class IndexComparator implements Comparator<Integer>
+	{
+		private List<Float> intensity;
+
+		public IndexComparator(List<Float> intensity)
+		{
+			this.intensity = intensity;
+		}
+
+		public Integer[] createIndexArray()
+		{
+			int n = intensity.size();
+			Integer[] indexes = new Integer[n];
+			for (int i = 0; i < n; i++)
+				indexes[i] = i; // Autoboxing
+			return indexes;
+		}
+
+		@Override
+		public int compare(Integer index1, Integer index2)
+		{
+			// Autounbox from Integer to int to use as array indexes
+			return intensity.get(index1).compareTo(intensity.get(index2));
+		}
+	}
+
+	// FIXME: Check that this function is actually working
+	public static ImagePlus fixIntensitiesOnlySpots(ImagePlus imp, ArrayList<Spot> spots, ArrayList<Float> intensity) {
+		Img<FloatType> img = ImageJFunctions.wrap(imp);
+		
+		// fitting part
+		boolean includeIntercept = true;
+		SimpleRegression sr = new SimpleRegression(includeIntercept);
+		// perform correction in 3D only
+		int numDimensions = 3;
+
+		double zMin = Double.MAX_VALUE;
+		// double zMin = getZMin(spots, numDimensions);
+		
+		ArrayList<float[]> medianZI =  getMedianPerSlice(spots, intensity, img.dimension(numDimensions - 1));
+
+		// for (int j = 0; j < spots.size(); ++j) {
+		for (int j = 0; j < medianZI.size(); ++j) {
+			float z = medianZI.get(j)[0];
+			float I = medianZI.get(j)[1];
+			sr.addData(z, I);
+			if (z < zMin)
+				zMin = z;
+		}
+
+		double slope = sr.getSlope();
+		double intercept = sr.getIntercept();
+
+		// at this point the fitting i already done
+
+		System.out.println("zMin:" + zMin);
+		System.out.println("params are:" + slope + " : " + intercept);
+
+		// we z correct the whole image, not only the embryo
+		Cursor<FloatType> c = img.cursor();
+		while(c.hasNext()) {
+			c.fwd();
+			int z = c.getIntPosition(numDimensions - 1);
+			float I = c.get().get();
+			double dI = linearFunc(zMin, slope, intercept) - linearFunc(z, slope, intercept);
+
+			NumberFormat formatter = new DecimalFormat("0.#####E0");
+			// System.out.println(formatter.format((float)(I)) +" => " + formatter.format((float)(I + dI)));
+			c.get().set((float)(I + dI));
+		}
+
+		return imp;
+	}
+
+	public static ImagePlus fixIntensitiesOnlySpots(ImagePlus imp, File spotsFirstRunFilename) {
+		Img<FloatType> img = ImageJFunctions.wrap(imp);
+
+		// System.out.println(ip.getWidth() + " : " + ip.getHeight());
+		// System.out.println(imp.getWidth() + " : " + imp.getHeight());
+
+		// we expect this values to be in the ROI
+		ArrayList<float []> zI = readCsv(spotsFirstRunFilename);
+
+		// fitting part
+		boolean includeIntercept = true; // use constant term
+		SimpleRegression sr = new SimpleRegression(includeIntercept);
+		// perform correction in 3D only
+		int numDimensions = 3;
+
+		double zMin = Double.MAX_VALUE;
+
+		//		for (float [] item : zI) {
+		//			float z = item[0];
+		//			float I = item[1];
+		//			sr.addData(z, I);
+		//			if (z < zMin)
+		//				zMin = z;
+		//		}
+
+		ArrayList<float[]> medianZI =  getMedianPerSlice(zI,img.dimension(numDimensions - 1));
+
+		for (float [] item : medianZI) {
+			float z = item[0];
+			float I = item[1];
+			sr.addData(z, I);
+			if (z < zMin)
+				zMin = z;
+		}
+
+
+		double slope = sr.getSlope();
+		double intercept = sr.getIntercept();
+		// at this point the fitting i already done
+
+		// double zMin = getZMin(pixi, numDimensions);
+
+		System.out.println("zMin:" + zMin);
+		System.out.println("params are:" + slope + " : " + intercept);
+
+
+		Cursor<FloatType> c = img.cursor();
+
+		while(c.hasNext()) {
+			c.fwd();
+
+			int z = c.getIntPosition(2);
+			float I = c.get().get();
+			double dI = linearFunc(zMin, slope, intercept) - linearFunc(z, slope, intercept);
+
+			NumberFormat formatter = new DecimalFormat("0.#####E0");
+			// System.out.println(formatter.format((float)(I)) +" => " + formatter.format((float)(I + dI)));
+
+			c.get().set((float)(I + dI));
+		}
+
+		return imp;
+	}
+
+	public static float calculateMedianIntensity(ImagePlus imp) {
+		// used for iterating
+		Img<FloatType> img = ImageJFunctions.wrap(imp);
+
+		ImageProcessor ip = imp.getMask();
+		Rectangle bounds = imp.getRoi().getBounds();
+		// System.out.println(ip.getWidth() + " : " + ip.getHeight());
+		// System.out.println(imp.getWidth() + " : " + imp.getHeight());
+
+		float [] medianPerPlane = new float[imp.getNSlices()];
+
+		// System.out.println(bounds.x + " : " + bounds.y);
+		// will be used for median filtering
+		// float [] pixels = new float [(int)(img.dimension(0)*img.dimension(1))];
+
+		for(int z = 0; z < img.dimension(2); z++) {
+			// iterator over the slice
+			final Cursor< FloatType > cursor = 	Views.hyperSlice(img, 2, z).cursor();
+			ArrayList<Float> pixels = new ArrayList<>();
+
+			while(cursor.hasNext()) {
+				cursor.fwd();
+
+				int x = cursor.getIntPosition(0) - bounds.x;
+				int y = cursor.getIntPosition(1) - bounds.y;
+
+				if (ip != null && ip.getPixel(x, y) != 0) {
+					pixels.add(cursor.get().get());
+				}
+			}
+
+			Collections.sort(pixels);
+			medianPerPlane[z] = pixels.get(pixels.size() / 2);
+		}
+
+
+		Arrays.sort(medianPerPlane);
+		float medianMedianPerPlane = medianPerPlane[medianPerPlane.length / 2];
+
+		System.out.println("medianMedianPerPlane: " + medianMedianPerPlane);
+
+		return medianMedianPerPlane;
+	}
+
+	public static ImagePlus subtractValue(ImagePlus imp, float value) {
+		Img<FloatType> img = ImageJFunctions.wrap(imp);
+		Cursor<FloatType> cursor = img.cursor();
+
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			cursor.get().sub(new FloatType(value));
+		}
+
+		return imp;
+	}
+
+	public static ImagePlus multiplyByValue(ImagePlus imp, float value) {
+		Img<FloatType> img = ImageJFunctions.wrap(imp);
+		Cursor<FloatType> cursor = img.cursor();
+
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			cursor.get().mul(new FloatType(value));
+		}
+
+		return imp;
+	}
+
+	// consider all pixels in the roi image
+	public static ImagePlus fixIntensitiesAllPixels(ImagePlus imp) {
+		boolean includeIntercept = true; // use constant term
+		SimpleRegression sr = new SimpleRegression(includeIntercept);
+		// perform correction in 3D only
+		int numDimensions = 3;
+
+		Img<FloatType> img = ImageJFunctions.wrap(imp);
+
+		ImageProcessor ip = imp.getMask();
+		Rectangle bounds = imp.getRoi().getBounds();
+		// System.out.println(ip.getWidth() + " : " + ip.getHeight());
+		// System.out.println(imp.getWidth() + " : " + imp.getHeight());
+
+		float [] medianPerPlane = new float[imp.getNSlices()];
+
+		// System.out.println(bounds.x + " : " + bounds.y);
+		// will be used for median filtering
+		// float [] pixels = new float [(int)(img.dimension(0)*img.dimension(1))];
+
+		double zMin = Double.MAX_VALUE;
+
+		final Cursor<FloatType> cursor = img.cursor();
+		while(cursor.hasNext()) {
+			cursor.fwd();
+
+			int x = cursor.getIntPosition(0) - bounds.x;
+			int y = cursor.getIntPosition(1) - bounds.y; 
+			// check that the pixil is inside of the roi
+			if (ip != null && ip.getPixel(x, y) != 0) {
+				int z = cursor.getIntPosition(2);
+				float I = cursor.get().get();
+				sr.addData(z, I);
+
+				// looking for min z
+				if (z < zMin)
+					zMin = z;
+			}
+		}
+
+		double slope = sr.getSlope();
+		double intercept = sr.getIntercept();
+		// at this point the fitting i already done
+
+		// double zMin = getZMin(pixi, numDimensions);
+
+		System.out.println("zMin:" + zMin);
+		System.out.println("params are:" + slope + " : " + intercept);
+
+		cursor.reset();
+
+		while(cursor.hasNext()) {
+			cursor.fwd();
+
+			int x = cursor.getIntPosition(0) - bounds.x;
+			int y = cursor.getIntPosition(1) - bounds.y;
+			// check that the pixil is inside of the roi
+			if (ip != null && ip.getPixel(x, y) != 0) {
+
+				int z = cursor.getIntPosition(2);
+				float I = cursor.get().get();
+				double dI = linearFunc(zMin, slope, intercept) - linearFunc(z, slope, intercept);
+
+				NumberFormat formatter = new DecimalFormat("0.#####E0");
+				// System.out.println(formatter.format((float)(dI)));
+
+				cursor.get().set((float)(I + dI));
+			}
+		}
+
+		return imp;
+	}
+
+	// return y for y = kx + b
+	public static double linearFunc(double x, double k, double b) {
+		return k * x + b;
+	}
+
+	public static void medianOfMedian(File filepath, File outpath) {
+		ImagePlus imp = IJ.openImage(filepath.getAbsolutePath());
+		float medianMedianPerPlane = calculateMedianIntensity(imp);
+		ImagePlus pImp = subtractValue(imp, medianMedianPerPlane);
+
+		// float scalingFactor = 1/(1 - medianMedianPerPlane);
+		// pImp = multiplyByValue(pImp, scalingFactor);
+
+		FileSaver fs = new FileSaver(pImp);
+		fs.saveAsTiff(outpath.getAbsolutePath());
+	}
+
+
+	public static void main(String[] args) {
+		new ImageJ();
+
+		String folder = "/Volumes/1TB/test/";
+		String imgName = "C1-N2_96.tif";
+
+		String spotsFirstRunFilename = "C1-N2_96-first-run.csv";
+
+		File filepath = new File(folder + imgName);
+		ImagePlus imp = IJ.openImage(filepath.getAbsolutePath());
+
+		float medianMedianPerPlane = calculateMedianIntensity(imp);
+		ImagePlus pImp = subtractValue(imp, medianMedianPerPlane);
+
+		float scalingFactor = 1/(1 - medianMedianPerPlane);
+		pImp = multiplyByValue(pImp, scalingFactor);
+
+		// run the z-dependent fix only on the pixels inside of the roi
+		File spotsFilepath = new File(folder + spotsFirstRunFilename);
+		System.out.println(spotsFilepath);
+		pImp = fixIntensitiesOnlySpots(pImp, spotsFilepath);
+
+		// imp.show();
+		pImp.show();
+
+		FileSaver fs = new FileSaver(pImp);
+		fs.saveAsTiff(folder + "/C1-N2_96-test-not-imp.tif");
+
+		System.out.println("DOGE!");
+	}
+
+}

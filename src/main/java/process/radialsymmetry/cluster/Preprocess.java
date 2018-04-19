@@ -83,11 +83,16 @@ public class Preprocess {
 					
 				
 				// run full stack preprocess
-				if (centerIndex == 2 && isInList)
+				// FIXME: THIS ONE IS NOT WORKING PROPERLY!
+				// if (centerIndex == 2 && isInList)
+				if (centerIndex == 2 || true) {
+					System.out.println("------------PROCESSING!-----------");
 					preprocessImage(new File(inputImagePath), new File(roiImagePath), new File(outputImagePath), normMax);
+				}
 			}
 			else {
 				System.out.println("Preprocess.java: " + inputImagePath + " file is missing");
+				System.out.println("Preprocess.java: " + roiImagePath + " file is missing");
 			}
 		}
 	}
@@ -213,6 +218,10 @@ public class Preprocess {
 			}
 		}
 
+		// IMP!: decided to use image min value as 0 
+		// not the minimum of the image
+		currentMin = 0;
+		
 		// no roi in the image case
 		if (currentMin == Float.MAX_VALUE || currentMax == -Float.MAX_VALUE) {
 			currentMax = 1;

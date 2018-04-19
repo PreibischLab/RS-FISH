@@ -12,8 +12,10 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
+import ij.io.FileSaver;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
+import intensity.Intensity;
 
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
@@ -195,7 +197,7 @@ public class BatchProcess {
 		return params;
 	}
 	
-	public static void runProcess(File pathImagesMedian, File pathDatabase, File pathResultCsv) {
+	public static void runProcess(File pathImagesMedian, File pathDatabase, File pathZcorrected, File pathResultCsv) {
 		// parse the db with smFish labels and good looking images
 		ArrayList<ImageData> imageData = Preprocess.readDb(pathDatabase);
 		
@@ -207,11 +209,15 @@ public class BatchProcess {
 			String inputImagePath = pathImagesMedian.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
 			System.out.println(currentIndex + "/" + imageData.size());
 			if (new File(inputImagePath).exists()){
+				// path to the image
+				String outputPathZCorrected = "";
+				if (pathZcorrected != null)
+					outputPathZCorrected = pathZcorrected.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
 				// table to store the results for each channel
 				String outputPathCsv = pathResultCsv.getAbsolutePath() + "/" + imageD.getFilename() + ".csv";
 				// set the params according to the way length
 				GUIParams params = setParametersN2Second(imageD.getLambda());
-				BatchProcess.process(inputImagePath, params, new File(outputPathCsv));
+				BatchProcess.process(inputImagePath, params, outputPathZCorrected, new File(outputPathCsv));
 			}
 			else {
 				System.out.println("Missing file: " + inputImagePath);
@@ -219,7 +225,7 @@ public class BatchProcess {
 		}
 	}
 
-	public static void process(String imgPath, GUIParams params, File outputPath) {
+	public static void process(String imgPath, GUIParams params, String outputPathZCorrected, File outputPath) {
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File(imgPath));
 		ImagePlus imp = ImageJFunctions.wrap(img, "");
 		// TODO: might be redundant
@@ -232,7 +238,6 @@ public class BatchProcess {
 		// FIXME: MAYBE WE ACTUALLY HAVE TO
 		// don't have to normalize the image and can use it directly
 
-		// dirty cast that can't be avoided :(
 		double[] minmax = HelperFunctions.computeMinMax(img);
 
 		float min = (float) minmax[0];
@@ -277,7 +282,22 @@ public class BatchProcess {
 					fIntensity.add(intensity.get(idx));
 				}
 			}
-
+			
+			// TODO: fix the intensities with the z-correction here 
+			// TODO: this one should be applied to the whole image not only 
+			// to the spots: because processed image will be used later on
+			// Intensity.fixIntensities(fSpots, fIntensity);
+			// the processing part (z-correction including the image should be triggered here)
+			
+			// we don't have to trigger the z-correction 2nd time because the image 
+			
+			if (!outputPathZCorrected.equals("")){
+				ImagePlus fImp = ExtraPreprocess.fixIntensitiesOnlySpots(imp, fSpots, fIntensity);
+				fImp.setRoi(roi);
+				
+				FileSaver fs = new FileSaver(fImp);
+				fs.saveAsTiff(outputPathZCorrected);
+			}
 			// TODO: filter the spot with the gaussian fit
 			saveResult(outputPath, fSpots, fIntensity);
 		}
@@ -299,11 +319,20 @@ public class BatchProcess {
 		NLinearInterpolatorFactory<FloatType> factory = new NLinearInterpolatorFactory<>();
 		RealRandomAccessible<FloatType> interpolant = Views.interpolate(Views.extendMirrorSingle(img), factory);
 
+		// looks like we are working with the correct image
+		// and taking the intensities from the correct place 
+		ImageJFunctions.show(img);
+		// ImageJFunctions.show(rai);
+
 		for (Spot fSpot : filteredSpots){
 			RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
 			double[] position = fSpot.getCenter();
 			rra.setPosition(position);
-			intensity.add(new Float(rra.get().get()));	
+			intensity.add(new Float(rra.get().get()));
+			
+			// FIXME: test purposes only
+			System.out.println(rra.get().get());
+			
 		}
 		return filteredSpots;
 	}
@@ -333,16 +362,13 @@ public class BatchProcess {
 	}
 
 	public static void main(String[] args) {
-		
 		// test run that the correct values are written to the csv file
-		
-		
 		String outputPathCsv = "/Volumes/1TB/test/test-out/data.csv";
 		// set the params according to the way length
 		GUIParams params = setParametersN2Second(670);
 		String inputImagePath = "/Volumes/1TB/test/2/C1-N2_96-p.tif";
 		
-		BatchProcess.process(inputImagePath, params, new File(outputPathCsv));
+		// BatchProcess.process(inputImagePath, params, new File(outputPathCsv));
 		System.out.println("DONE!");
 	}
 }

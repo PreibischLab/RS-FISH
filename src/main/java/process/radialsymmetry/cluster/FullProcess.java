@@ -86,10 +86,27 @@ public class FullProcess {
 
 		// - median per slice 
 		// to get rid of the bright planes (run over the whole plane, NOT roi)
+		// - median-median 
+		// to estimate the bg (run over the roi only)
+		// - normalize the image [0,1] where x_min=0 -> 0, brightest pixel -> 1;
+		// (maybe it is a good idea to use median of r=1 and take the brightest pixel from there for stability)
+		
+		Preprocess.runFirstStepPreprocess(pathImages, pathDatabase, pathImagesRoi, pathImagesMedianMedian);
+		// - run radial symmetry
+		
+		
+		// - (subtract the x_min value before performing the z-correction but it is 0 in our case anyways)
+		// - z-correct the points 
+		// - z-correct the image from the previous step (one normalized between 0 and 1)
+		// - reuse the the z-corrected image from the previous step 
+		// - normalize the image [0,1] where x_min=0 -> 0; center of the peak -> 1;
+		// - radial symmetry you are looking for!
+		
+		// first iteration full preprossing 
+		
+		
 		
 	}
-	
-	
 	
 	public static void runFullProcessTest() {
 		// TODO: make this one more general
@@ -235,7 +252,8 @@ public class FullProcess {
 
 	public static void main(String[] args) {
 		new ImageJ();
-		runFullProcessTest();
+		// runFullProcessTest();
+		runFullProcess2Steps();
 		System.out.println("DOGE!");
 	}
 

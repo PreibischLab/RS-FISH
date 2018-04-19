@@ -317,6 +317,7 @@ public class ExtraPreprocess {
 		return imp;
 	}
 
+
 	public static float calculateMedianIntensity(ImagePlus imp) {
 		// used for iterating
 		Img<FloatType> img = ImageJFunctions.wrap(imp);
@@ -334,7 +335,7 @@ public class ExtraPreprocess {
 
 		for(int z = 0; z < img.dimension(2); z++) {
 			// iterator over the slice
-			final Cursor< FloatType > cursor = 	Views.hyperSlice(img, 2, z).cursor();
+			final Cursor< FloatType > cursor = Views.hyperSlice(img, 2, z).cursor();
 			ArrayList<Float> pixels = new ArrayList<>();
 
 			while(cursor.hasNext()) {
@@ -373,6 +374,18 @@ public class ExtraPreprocess {
 		return imp;
 	}
 
+	public static Img<FloatType> subtractValue(Img<FloatType> img, float value) {
+		Cursor<FloatType> cursor = img.cursor();
+
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			cursor.get().sub(new FloatType(value));
+		}
+
+		return img;
+	}
+	
+	
 	public static ImagePlus multiplyByValue(ImagePlus imp, float value) {
 		Img<FloatType> img = ImageJFunctions.wrap(imp);
 		Cursor<FloatType> cursor = img.cursor();

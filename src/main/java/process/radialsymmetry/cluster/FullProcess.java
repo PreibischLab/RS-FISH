@@ -61,7 +61,7 @@ public class FullProcess {
 		
 		// path to the csv file with RS detected centers
 		File pathCenters = new File(prefix + "/centers/all-centers.csv");
-		int centerIndex = 2; // run the second iteration of the radial symmetry
+		int centerIndex = 1; // run the second iteration of the radial symmetry
 		String suffix = centerIndex == 1 ? "" : "-2";
 		
 		// path to the images with roi
@@ -73,11 +73,18 @@ public class FullProcess {
 		// path to separate channel images
 		File pathImagesMedianMedian = new File(prefix +"/median-median");
 		// path to the median filtered images that we save
-		File pathImagesMedian = new File(prefix +"/median" + suffix);
+		File pathImagesMedian = new File(prefix +"/median");
+		
+		File pathImagesMedian2 = new File(prefix +"/median-2");
+		
 		// path to save the .csv files with the results
 		File pathResultCsv = new File(prefix +"/csv" + suffix);
+		// path to save the .csv files with the results
+		File pathResultCsv2 = new File(prefix +"/csv-2");
 		// path z-corrected image
 		File pathZcorrected = new File(prefix +"/zCorrected");
+		// path z-corrected image
+		File pathZcorrected2 = new File(prefix +"/zCorrected-2");
 		
 		File [] allPaths = new File[] {pathCenters, pathImagesRoi, pathImages, pathDatabase, pathImagesMedianMedian, pathResultCsv, pathZcorrected};
 		boolean allPathsAreCorrect = checkAllPaths(allPaths);
@@ -91,17 +98,23 @@ public class FullProcess {
 		// - normalize the image [0,1] where x_min=0 -> 0, brightest pixel -> 1;
 		// (maybe it is a good idea to use median of r=1 and take the brightest pixel from there for stability)
 		
-		Preprocess.runFirstStepPreprocess(pathImages, pathDatabase, pathImagesRoi, pathImagesMedianMedian);
+		Preprocess.runFirstStepPreprocess(pathImages, pathDatabase, pathImagesRoi, pathImagesMedian);
+		// fix the rois
+		FixImages.runFixImages(pathImagesMedian, pathImagesRoi, pathImagesMedian);
+		
 		// - run radial symmetry
-		
-		
 		// - (subtract the x_min value before performing the z-correction but it is 0 in our case anyways)
+		// can scip this step because x_min = 0
 		// - z-correct the points 
 		// - z-correct the image from the previous step (one normalized between 0 and 1)
+		BatchProcess.runProcess(pathImagesMedian, pathDatabase, pathZcorrected, pathResultCsv);
 		// - reuse the the z-corrected image from the previous step 
 		// - normalize the image [0,1] where x_min=0 -> 0; center of the peak -> 1;
-		// - radial symmetry you are looking for!
 		
+		Preprocess.runSecondStepPreprocess(pathZcorrected, pathDatabase, pathImagesRoi, pathCenters, pathImagesMedian2);
+		FixImages.runFixImages(pathImagesMedian2, pathImagesRoi, pathImagesMedian2);
+		// - radial symmetry you are looking for!
+		BatchProcess.runProcess(pathImagesMedian2, pathDatabase, pathZcorrected2, pathResultCsv2);
 		// first iteration full preprossing 
 		
 		

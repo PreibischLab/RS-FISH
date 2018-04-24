@@ -379,6 +379,49 @@ public class Preprocess {
 		}
 	}
 	
+	public static float getCenter(ArrayList<ImageData> centers, String filename) {
+		float center = 1;
+		
+		for(ImageData id : centers)
+			if (filename.equals(id.getFilename()))
+					center = id.getCenter();
+		
+		return center;
+	}
+	
+	public static void runSecondStepPreprocess(File pathImages, File pathDb, File pathImagesRoi, File pathCenters, File pathImagesMedian) {
+		// parse the db with smFish labels and good looking images
+		ArrayList<ImageData> imageData = Preprocess.readDb(pathDb);
+		// grab the values of the centers
+		ArrayList<ImageData> centers = Preprocess.readCenters(pathCenters);
+		
+		// to see the feedback
+		long currentIdx = 0;
+		for (ImageData imageD : imageData) {
+			currentIdx++;
+			// unprocessed path
+			String inputImagePath = pathImages.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
+			// processed path 
+			String outputImagePath = pathImagesMedian.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
+			// roi path 
+			String roiImagePath = pathImagesRoi.getAbsolutePath() + "/" + imageD.getFilename().substring(3) + ".tif";
+			// peak center value
+			float center = getCenter(centers, imageD.getFilename());
+
+			System.out.println( currentIdx + "/" + imageData.size() + ": " + inputImagePath);
+			// System.out.println(outputImagePath);
+			// System.out.println(roiImagePath);
+
+			// check that the corresponding files is not missing
+			if (new File(inputImagePath).exists()) {
+				secondStepPreprocess(new File(inputImagePath), new File(roiImagePath), new File(outputImagePath), center);
+			}
+			else {
+				System.out.println("Preprocess.java: " + inputImagePath + " file is missing");
+			}
+		}
+	}
+	
 	// 
 	public static void firstStepPreprocess(File imgPath, File roiPath, File outputPath) {
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
@@ -413,14 +456,61 @@ public class Preprocess {
 		
 		// imp used for roi only
 		float [] fromMinMax = getMinmax(pImg, imp);
+		// IMP: decided to take min as 0
+		fromMinMax[0] = 0;
+		
 		normalize(pImg, fromMinMax[0], fromMinMax[1], min, max);
+		System.out.println("Normalization done!");
+		
+		// 4.* just resave the images at the moment
+		IOFunctions.saveResult(pImg, outputPath.getAbsolutePath());
+		System.out.println("Saving done!");
+	}
+
+	public static void secondStepPreprocess(File imgPath, File roiPath, File outputPath, float center) {
+		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
+		Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
+		ImagePlus imp = IJ.openImage(roiPath.getAbsolutePath());
+		// 1. get the background
+		int [] kernelDim = new int []{19, 19}; 
+		MedianFilter.medianFilterSliced(img, bg, kernelDim);
+		
+		// 2. subtract the background
+		HelperFunctions.subtractImg(img, bg);
+		System.out.println("Median filtering done!");
+
+		// 3. calculate median per median
+
+		// this one is used only to reduce the amount of code re-factoring
+		ImagePlus tmpImg = ImageJFunctions.wrap(img, "");
+		tmpImg.setDimensions(1, imp.getNSlices(), 1);
+		Roi roi = imp.getRoi();
+		if (roi != null)
+			tmpImg.setRoi(roi);
+		else
+			System.out.println("There was the probelm with roi in " + imgPath.getAbsolutePath());
+
+//		float medianMedianPerPlane = ExtraPreprocess.calculateMedianIntensity(tmpImg);
+//		Img<FloatType> pImg = ExtraPreprocess.subtractValue(img, medianMedianPerPlane);
+//		System.out.println("Median of median done!");
+
+		// 5. normalize image 
+		float min = 0;
+		float max = 1;
+		
+		// imp used for roi only
+		float [] fromMinMax = getMinmax(img, imp);
+		fromMinMax[1] = center;
+		
+		normalize(img, fromMinMax[0], fromMinMax[1], min, max);
 		System.out.println("Normalization done!");
 		
 		// 4.* just resave the images at the moment
 		IOFunctions.saveResult(img, outputPath.getAbsolutePath());
 		System.out.println("Saving done!");
 	}
-
+	
+	
 	public static void preprocessImage(File imgPath, File roiPath, File outputPath, float newMax){
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
 		Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType());

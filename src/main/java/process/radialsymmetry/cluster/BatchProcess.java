@@ -22,6 +22,7 @@ import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.interpolation.randomaccess.LanczosInterpolatorFactory;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
@@ -238,6 +239,9 @@ public class BatchProcess {
 		// FIXME: MAYBE WE ACTUALLY HAVE TO
 		// don't have to normalize the image and can use it directly
 
+		//
+		ImageJFunctions.show(img).setTitle("DEBUG");
+		
 		double[] minmax = HelperFunctions.computeMinMax(img);
 
 		float min = (float) minmax[0];
@@ -315,8 +319,9 @@ public class BatchProcess {
 		// TODO: if the detect spot has at least 1 inlier add it
 		ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), 1 );
 
-		//  iterate over all points and perform the linear interpolation for each of the spots
+		// iterate over all points and perform the linear interpolation for each of the spots
 		NLinearInterpolatorFactory<FloatType> factory = new NLinearInterpolatorFactory<>();
+		// LanczosInterpolatorFactory< FloatType > factory = new LanczosInterpolatorFactory< FloatType >();
 		RealRandomAccessible<FloatType> interpolant = Views.interpolate(Views.extendMirrorSingle(img), factory);
 
 		// looks like we are working with the correct image
@@ -329,7 +334,7 @@ public class BatchProcess {
 			double[] position = fSpot.getCenter();
 			rra.setPosition(position);
 			intensity.add(new Float(rra.get().get()));
-			
+			// [83.85610471462424, 336.9622269595374, 32.396389491090034]
 			// FIXME: test purposes only
 			System.out.println(rra.get().get());
 			

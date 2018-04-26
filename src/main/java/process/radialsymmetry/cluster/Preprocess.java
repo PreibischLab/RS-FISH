@@ -13,6 +13,7 @@ import ij.gui.Roi;
 import ij.process.ImageProcessor;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccess;
 import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -224,12 +225,15 @@ public class Preprocess {
 		return minmax;
 	}
 	
-	public static void normalize( Img <FloatType> img, float fromMin, float fromMax, float toMin, float toMax){
+	public static Img<FloatType> normalize( Img <FloatType> img, float fromMin, float fromMax, float toMin, float toMax){
 		// System.out.println(ip.getWidth() + " : " + ip.getHeight());
 		// System.out.println(imp.getWidth() + " : " + imp.getHeight());
-
+		
+		Img<FloatType> pImg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
+		
 		final Cursor< FloatType > cursor = img.cursor();
-
+		RandomAccess<FloatType> ra = pImg.randomAccess();
+		
 		// no roi in the image case
 		if (fromMin == Float.MAX_VALUE || fromMax == -Float.MAX_VALUE) {
 			fromMax = 1;
@@ -241,12 +245,17 @@ public class Preprocess {
 
 		while(cursor.hasNext()) {
 			cursor.fwd();
+			ra.setPosition(cursor);
 
 			float currentVal = cursor.get().get();
 			currentVal -= fromMin;
 			currentVal /= scale;
-			cursor.get().set(currentVal);
+			
+			// cursor.get().set(currentVal);
+			ra.get().set(currentVal);
 		}
+		
+		return pImg;
 	}
 
 	// FIXME: old one; remove
@@ -459,7 +468,7 @@ public class Preprocess {
 		// IMP: decided to take min as 0
 		fromMinMax[0] = 0;
 		
-		normalize(pImg, fromMinMax[0], fromMinMax[1], min, max);
+		pImg = normalize(pImg, fromMinMax[0], fromMinMax[1], min, max);
 		System.out.println("Normalization done!");
 		
 		// 4.* just resave the images at the moment
@@ -472,12 +481,12 @@ public class Preprocess {
 		Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
 		ImagePlus imp = IJ.openImage(roiPath.getAbsolutePath());
 		// 1. get the background
-		int [] kernelDim = new int []{19, 19}; 
-		MedianFilter.medianFilterSliced(img, bg, kernelDim);
+//		int [] kernelDim = new int []{19, 19}; 
+//		MedianFilter.medianFilterSliced(img, bg, kernelDim);
 		
 		// 2. subtract the background
-		HelperFunctions.subtractImg(img, bg);
-		System.out.println("Median filtering done!");
+//		HelperFunctions.subtractImg(img, bg);
+//		System.out.println("Median filtering done!");
 
 		// 3. calculate median per median
 
@@ -499,14 +508,19 @@ public class Preprocess {
 		float max = 1;
 		
 		// imp used for roi only
+		// TODO: do I actually need this one 
 		float [] fromMinMax = getMinmax(img, imp);
-		fromMinMax[1] = center;
 		
-		normalize(img, fromMinMax[0], fromMinMax[1], min, max);
+		fromMinMax[0] = 0;
+		fromMinMax[1] = center; // - medianMedianPerPlane;
+		
+		Img<FloatType> pImg = normalize(img, fromMinMax[0], fromMinMax[1], min, max);
 		System.out.println("Normalization done!");
 		
+		// ImageJFunctions.show(pImg).setTitle(imgPath.getAbsolutePath());
+		
 		// 4.* just resave the images at the moment
-		IOFunctions.saveResult(img, outputPath.getAbsolutePath());
+		IOFunctions.saveResult(pImg, outputPath.getAbsolutePath());
 		System.out.println("Saving done!");
 	}
 	

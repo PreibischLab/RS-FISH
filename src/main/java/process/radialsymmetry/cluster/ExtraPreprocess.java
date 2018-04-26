@@ -206,8 +206,8 @@ public class ExtraPreprocess {
 	}
 
 	// FIXME: Check that this function is actually working
-	public static ImagePlus fixIntensitiesOnlySpots(ImagePlus imp, ArrayList<Spot> spots, ArrayList<Float> intensity) {
-		Img<FloatType> img = ImageJFunctions.wrap(imp);
+	public static ImagePlus fixIntensitiesOnlySpots(Img<FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity) {
+		// Img<FloatType> img = ImageJFunctions.wrap(imp);
 		
 		// fitting part
 		boolean includeIntercept = true;
@@ -237,20 +237,28 @@ public class ExtraPreprocess {
 		System.out.println("zMin:" + zMin);
 		System.out.println("params are:" + slope + " : " + intercept);
 
+		int currentSlice = 0;
+		
 		// we z correct the whole image, not only the embryo
 		Cursor<FloatType> c = img.cursor();
 		while(c.hasNext()) {
 			c.fwd();
 			int z = c.getIntPosition(numDimensions - 1);
 			float I = c.get().get();
-			double dI = linearFunc(zMin, slope, intercept) - linearFunc(z, slope, intercept);
-
-			NumberFormat formatter = new DecimalFormat("0.#####E0");
-			// System.out.println(formatter.format((float)(I)) +" => " + formatter.format((float)(I + dI)));
-			c.get().set((float)(I + dI));
+			
+//			double dI = linearFunc(zMin, slope, intercept) - linearFunc(z, slope, intercept);
+//			NumberFormat formatter = new DecimalFormat("0.#####E0");
+//			// System.out.println(formatter.format((float)(I)) +" => " + formatter.format((float)(I + dI)));
+//			c.get().set((float)(I + dI));
+			
+			double fixFactor = linearFunc(zMin, slope, intercept) / linearFunc(z, slope, intercept);
+			if (z != currentSlice)
+				System.out.println("z: " + (currentSlice++) + ", factor=: " + fixFactor);
+			c.get().set((float)(I*fixFactor));
 		}
 
-		return imp;
+		// ImageJFunctions.wrap(img, "");
+		return ImageJFunctions.wrap(img, "");
 	}
 
 	public static ImagePlus fixIntensitiesOnlySpots(ImagePlus imp, File spotsFirstRunFilename) {

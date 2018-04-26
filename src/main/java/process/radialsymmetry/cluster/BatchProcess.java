@@ -239,9 +239,6 @@ public class BatchProcess {
 		// FIXME: MAYBE WE ACTUALLY HAVE TO
 		// don't have to normalize the image and can use it directly
 
-		//
-		ImageJFunctions.show(img).setTitle("DEBUG");
-		
 		double[] minmax = HelperFunctions.computeMinMax(img);
 
 		float min = (float) minmax[0];
@@ -296,7 +293,7 @@ public class BatchProcess {
 			// we don't have to trigger the z-correction 2nd time because the image 
 			
 			if (!outputPathZCorrected.equals("")){
-				ImagePlus fImp = ExtraPreprocess.fixIntensitiesOnlySpots(imp, fSpots, fIntensity);
+				ImagePlus fImp = ExtraPreprocess.fixIntensitiesOnlySpots(img, fSpots, fIntensity);
 				fImp.setRoi(roi);
 				
 				FileSaver fs = new FileSaver(fImp);

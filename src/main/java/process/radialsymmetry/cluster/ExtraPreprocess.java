@@ -121,7 +121,7 @@ public class ExtraPreprocess {
 		return medianZI;
 	}
 
-	
+
 	// FIXME: CHECK THAT THIS ONE IS ACTUALLY WORKING
 	// calculates the median intensity per-slice and returns the set of z-points and intensities
 	public static ArrayList<float []> getMedianPerSlice(ArrayList<Spot> spots, ArrayList<Float> intensity, long zSlices){
@@ -146,7 +146,7 @@ public class ExtraPreprocess {
 				Arrays.sort(intensityIndices, comparator);
 				// now indices will give me the result I am looking for 
 				int id = intensityIndices[intensityIndices.length/2];
-				
+
 				medianZI.add(new float[]{fSpots.get(id).getFloatPosition(2), fIntensity.get(id)});
 			} 
 		}
@@ -205,10 +205,74 @@ public class ExtraPreprocess {
 		}
 	}
 
+	//	public static ImagePlus fixIntensitiesOnlySpots(ImagePlus imp, File spotsFirstRunFilename) {
+	//		Img<FloatType> img = ImageJFunctions.wrap(imp);
+	//
+	//		// System.out.println(ip.getWidth() + " : " + ip.getHeight());
+	//		// System.out.println(imp.getWidth() + " : " + imp.getHeight());
+	//
+	//		// we expect this values to be in the ROI
+	//		ArrayList<float []> zI = readCsv(spotsFirstRunFilename);
+	//
+	//		// fitting part
+	//		boolean includeIntercept = true; // use constant term
+	//		SimpleRegression sr = new SimpleRegression(includeIntercept);
+	//		// perform correction in 3D only
+	//		int numDimensions = 3;
+	//
+	//		double zMin = Double.MAX_VALUE;
+	//
+	//		//		for (float [] item : zI) {
+	//		//			float z = item[0];
+	//		//			float I = item[1];
+	//		//			sr.addData(z, I);
+	//		//			if (z < zMin)
+	//		//				zMin = z;
+	//		//		}
+	//
+	//		ArrayList<float[]> medianZI =  getMedianPerSlice(zI,img.dimension(numDimensions - 1));
+	//
+	//		for (float [] item : medianZI) {
+	//			float z = item[0];
+	//			float I = item[1];
+	//			sr.addData(z, I);
+	//			if (z < zMin)
+	//				zMin = z;
+	//		}
+	//
+	//
+	//		double slope = sr.getSlope();
+	//		double intercept = sr.getIntercept();
+	//		// at this point the fitting i already done
+	//
+	//		// double zMin = getZMin(pixi, numDimensions);
+	//
+	//		System.out.println("zMin:" + zMin);
+	//		System.out.println("params are:" + slope + " : " + intercept);
+	//
+	//
+	//		Cursor<FloatType> c = img.cursor();
+	//
+	//		while(c.hasNext()) {
+	//			c.fwd();
+	//
+	//			int z = c.getIntPosition(2);
+	//			float I = c.get().get();
+	//			double dI = linearFunc(zMin, slope, intercept) - linearFunc(z, slope, intercept);
+	//
+	//			NumberFormat formatter = new DecimalFormat("0.#####E0");
+	//			// System.out.println(formatter.format((float)(I)) +" => " + formatter.format((float)(I + dI)));
+	//
+	//			c.get().set((float)(I + dI));
+	//		}
+	//
+	//		return imp;
+	//	}
+
 	// FIXME: Check that this function is actually working
-	public static ImagePlus fixIntensitiesOnlySpots(Img<FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity) {
+	public static ImagePlus fixIntensitiesOnlySpots(Img<FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity, boolean doZcorrection) {
 		// Img<FloatType> img = ImageJFunctions.wrap(imp);
-		
+
 		// fitting part
 		boolean includeIntercept = true;
 		SimpleRegression sr = new SimpleRegression(includeIntercept);
@@ -217,10 +281,9 @@ public class ExtraPreprocess {
 
 		double zMin = Double.MAX_VALUE;
 		// double zMin = getZMin(spots, numDimensions);
-		
-		ArrayList<float[]> medianZI =  getMedianPerSlice(spots, intensity, img.dimension(numDimensions - 1));
 
-		// for (int j = 0; j < spots.size(); ++j) {
+		ArrayList<float[]> medianZI = getMedianPerSlice(spots, intensity, img.dimension(numDimensions - 1));
+
 		for (int j = 0; j < medianZI.size(); ++j) {
 			float z = medianZI.get(j)[0];
 			float I = medianZI.get(j)[1];
@@ -233,31 +296,42 @@ public class ExtraPreprocess {
 		double intercept = sr.getIntercept();
 
 		// at this point the fitting i already done
-
 		System.out.println("zMin:" + zMin);
 		System.out.println("params are:" + slope + " : " + intercept);
 
 		int currentSlice = 0;
-		
+
 		// we z correct the whole image, not only the embryo
 		Cursor<FloatType> c = img.cursor();
 		while(c.hasNext()) {
 			c.fwd();
-			int z = c.getIntPosition(numDimensions - 1);
+			float z = c.getFloatPosition(numDimensions - 1);
 			float I = c.get().get();
-			
-//			double dI = linearFunc(zMin, slope, intercept) - linearFunc(z, slope, intercept);
-//			NumberFormat formatter = new DecimalFormat("0.#####E0");
-//			// System.out.println(formatter.format((float)(I)) +" => " + formatter.format((float)(I + dI)));
-//			c.get().set((float)(I + dI));
-			
+
+			//			// old way to fix the intensities
+			//			double dI = linearFunc(zMin, slope, intercept) - linearFunc(z, slope, intercept);
+			//			NumberFormat formatter = new DecimalFormat("0.#####E0");
+			//			// System.out.println(formatter.format((float)(I)) +" => " + formatter.format((float)(I + dI)));
+			//			c.get().set((float)(I + dI));
+
 			double fixFactor = linearFunc(zMin, slope, intercept) / linearFunc(z, slope, intercept);
-			if (z != currentSlice)
+			// DEBUG: 
+			if ((int) z != currentSlice)
 				System.out.println("z: " + (currentSlice++) + ", factor=: " + fixFactor);
 			c.get().set((float)(I*fixFactor));
 		}
 
-		// ImageJFunctions.wrap(img, "");
+		// TODO: z-correct the intensities and return them here, too
+		if (doZcorrection) {
+			for(int j = 0; j < spots.size(); j++) {
+				float z = spots.get(j).getFloatPosition(numDimensions - 1);
+				float I = intensity.get(j);
+
+				double fixFactor = linearFunc(zMin, slope, intercept) / linearFunc(z, slope, intercept);
+				intensity.set(j, (float)(I*fixFactor));
+			} 
+		}
+
 		return ImageJFunctions.wrap(img, "");
 	}
 
@@ -392,8 +466,8 @@ public class ExtraPreprocess {
 
 		return img;
 	}
-	
-	
+
+
 	public static ImagePlus multiplyByValue(ImagePlus imp, float value) {
 		Img<FloatType> img = ImageJFunctions.wrap(imp);
 		Cursor<FloatType> cursor = img.cursor();

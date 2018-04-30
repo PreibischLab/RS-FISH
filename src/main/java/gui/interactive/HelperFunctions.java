@@ -561,9 +561,9 @@ public class HelperFunctions {
 		RandomAccess<FloatType> ra = bg.randomAccess();
 		
 		while(cursor.hasNext()){
-			cursor.fwd();		
-			ra.setPosition(cursor);			
-			float val = cursor.get().get() - ra.get().get();			
+			cursor.fwd();
+			ra.setPosition(cursor);
+			float val = cursor.get().get() - ra.get().get();
 			cursor.get().set(val);
 		}
 	}

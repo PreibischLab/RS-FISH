@@ -198,7 +198,7 @@ public class BatchProcess {
 		return params;
 	}
 	
-	public static void runProcess(File pathImagesMedian, File pathDatabase, File pathZcorrected, File pathResultCsv) {
+	public static void runProcess(File pathImagesMedian, File pathDatabase, File pathZcorrected, File pathResultCsv, boolean doZcorrection) {
 		// parse the db with smFish labels and good looking images
 		ArrayList<ImageData> imageData = Preprocess.readDb(pathDatabase);
 		
@@ -218,7 +218,7 @@ public class BatchProcess {
 				String outputPathCsv = pathResultCsv.getAbsolutePath() + "/" + imageD.getFilename() + ".csv";
 				// set the params according to the way length
 				GUIParams params = setParametersN2Second(imageD.getLambda());
-				BatchProcess.process(inputImagePath, params, outputPathZCorrected, new File(outputPathCsv));
+				BatchProcess.process(inputImagePath, params, outputPathZCorrected, new File(outputPathCsv), doZcorrection);
 			}
 			else {
 				System.out.println("Missing file: " + inputImagePath);
@@ -226,7 +226,7 @@ public class BatchProcess {
 		}
 	}
 
-	public static void process(String imgPath, GUIParams params, String outputPathZCorrected, File outputPath) {
+	public static void process(String imgPath, GUIParams params, String outputPathZCorrected, File outputPath, boolean doZcorrection) {
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File(imgPath));
 		ImagePlus imp = ImageJFunctions.wrap(img, "");
 		// TODO: might be redundant
@@ -262,7 +262,7 @@ public class BatchProcess {
 		// TODO: filter the spots that are inside of the roi
 		ImagePlus impRoi = IJ.openImage(imgPath);
 		Roi roi = impRoi.getRoi();
-
+		
 		// filtered images
 		ArrayList<Float> fIntensity = new ArrayList<>(0);
 		ArrayList<Spot> fSpots = new ArrayList<>(0);
@@ -292,13 +292,18 @@ public class BatchProcess {
 			
 			// we don't have to trigger the z-correction 2nd time because the image 
 			
+			// TODO: we don't need to check this - path always exists
 			if (!outputPathZCorrected.equals("")){
-				ImagePlus fImp = ExtraPreprocess.fixIntensitiesOnlySpots(img, fSpots, fIntensity);
+				ImagePlus fImp = ExtraPreprocess.fixIntensitiesOnlySpots(img, fSpots, fIntensity, doZcorrection);
 				fImp.setRoi(roi);
-				
 				FileSaver fs = new FileSaver(fImp);
 				fs.saveAsTiff(outputPathZCorrected);
 			}
+			
+			// close the windows images that popup
+//			impRoi.changes = false;
+//			impRoi.close();
+			
 			// TODO: filter the spot with the gaussian fit
 			saveResult(outputPath, fSpots, fIntensity);
 		}

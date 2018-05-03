@@ -99,7 +99,6 @@ public class FullProcess {
 			return;
 
 		boolean doZcorrection = true;
-
 		// - median per slice 
 		// to get rid of the bright planes (run over the whole plane, NOT roi)
 		// - median-median 

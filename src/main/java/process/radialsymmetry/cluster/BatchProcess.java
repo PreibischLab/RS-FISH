@@ -400,7 +400,7 @@ public class BatchProcess {
 		try {
 			writer = new CSVWriter(new FileWriter(path.getAbsolutePath()), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 			for (int j = 0; j < coeff.length; j++) {
-				nextLine[j] = String.format(java.util.Locale.US, "%.2f", coeff[j]);
+				nextLine[j] = String.valueOf(coeff[j]); // use max precision possible otherwise we don't capture the x^2 coefficient 
 			}
 			writer.writeNext(nextLine);
 			writer.close();

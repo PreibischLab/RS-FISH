@@ -90,8 +90,10 @@ public class FullProcess {
 		File pathZcorrected = new File(prefix +"/zCorrected");
 		// path z-corrected image
 		File pathZcorrected2 = new File(prefix +"/zCorrected-2");
-
-		File [] allPaths = new File[] {pathCenters, pathImagesRoi, pathImages, pathDatabase, pathImagesMedianMedian, pathResultCsv, pathZcorrected, pathResultCsvBeforeCorrection};
+		// path to the files with the parameters
+		File pathParameters = new File(prefix + "/csv-parameters");
+		
+		File [] allPaths = new File[] {pathCenters, pathImagesRoi, pathImages, pathDatabase, pathImagesMedianMedian, pathResultCsv, pathZcorrected, pathResultCsvBeforeCorrection, pathParameters};
 		boolean allPathsAreCorrect = checkAllPaths(allPaths);
 		if (!allPathsAreCorrect)
 			return;
@@ -109,10 +111,10 @@ public class FullProcess {
 		FixImages.runFixImages(pathImagesMedian, pathImagesRoi, pathImagesMedian);
 		// - run radial symmetry
 		// - (subtract the x_min value before performing the z-correction but it is 0 in our case anyways)
-		// can scip this step because x_min = 0
+		// can skip this step because x_min = 0
 		// - z-correct the points 
 		// - z-correct the image from the previous step (one normalized between 0 and 1)
-		BatchProcess.runProcess(pathImagesMedian, pathDatabase, pathZcorrected, pathResultCsvBeforeCorrection, pathResultCsv, doZcorrection);
+		BatchProcess.runProcess(pathImagesMedian, pathDatabase, pathZcorrected, pathResultCsvBeforeCorrection, pathParameters, pathResultCsv, doZcorrection);
 		// - reuse the the z-corrected image from the previous step 
 		// - normalize the image [0,1] where x_min=0 -> 0; center of the peak -> 1;
 
@@ -120,7 +122,7 @@ public class FullProcess {
 		// FixImages.runFixImages(pathImagesMedian2, pathImagesRoi, pathImagesMedian2);
 		// - radial symmetry you are looking for!
 		// doZcorrection = true;
-		// BatchProcess.runProcess(pathImagesMedian2, pathDatabase, pathZcorrected2, new File(""), pathResultCsv2, doZcorrection);
+		// BatchProcess.runProcess(pathImagesMedian2, pathDatabase, pathZcorrected2, new File(""), new File(""), pathResultCsv2, doZcorrection);
 		// first iteration full preprossing 
 
 	}

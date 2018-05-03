@@ -272,11 +272,11 @@ public class ExtraPreprocess {
 	//	}
 
 	// FIXME: Check that this function is actually working
-	public static ImagePlus fixIntensitiesOnlySpots(Img<FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity, boolean doZcorrection) {
+	public static ImagePlus fixIntensitiesOnlySpots(Img<FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity, double [] gCoeff, boolean doZcorrection) {
 		// Img<FloatType> img = ImageJFunctions.wrap(imp);
 
 		// fitting part
-		int degree = 2;
+		int degree = gCoeff.length - 1;
 		WeightedObservedPoints obs = new WeightedObservedPoints();
 		PolynomialCurveFitter pcf = PolynomialCurveFitter.create(degree);
 		
@@ -297,6 +297,8 @@ public class ExtraPreprocess {
 		}
 
 		final double[] coeff = pcf.fit(obs.toList());
+		for (int j = 0; j < coeff.length; j++)
+			gCoeff[j] = coeff[j];
 
 		// at this point the fitting i already done
 		System.out.println("zMin:" + zMin);

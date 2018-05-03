@@ -200,10 +200,10 @@ public class BatchProcess {
 	
 	// to support old code 
 	public static void runProcess(File pathImagesMedian, File pathDatabase, File pathZcorrected, File pathResultCsv, boolean doZcorrection) {
-		runProcess(pathImagesMedian, pathDatabase, pathZcorrected, new File(""), pathResultCsv, doZcorrection);
+		runProcess(pathImagesMedian, pathDatabase, pathZcorrected, null, null, pathResultCsv, doZcorrection);
 	}
 	
-	public static void runProcess(File pathImagesMedian, File pathDatabase, File pathZcorrected, File pathResultCsvBeforeCorrection, File pathResultCsv, boolean doZcorrection) {
+	public static void runProcess(File pathImagesMedian, File pathDatabase, File pathZcorrected, File pathResultCsvBeforeCorrection, File pathParameters, File pathResultCsv, boolean doZcorrection) {
 		// parse the db with smFish labels and good looking images
 		ArrayList<ImageData> imageData = Preprocess.readDb(pathDatabase);
 		
@@ -219,6 +219,10 @@ public class BatchProcess {
 				String outputPathZCorrected = "";
 				if (pathZcorrected != null)
 					outputPathZCorrected = pathZcorrected.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
+				// table with all processing parameters
+				String outputPathParameters = "";
+				if (pathParameters != null)
+					outputPathParameters = pathParameters.getAbsolutePath() + "/" + imageD.getFilename() + ".csv";
 				// table to store the results before we perform the z-correction 
 				String outputPathResultCsvBeforeCorrection = "";
 				if (pathResultCsvBeforeCorrection != null)
@@ -227,7 +231,7 @@ public class BatchProcess {
 				String outputPathCsv = pathResultCsv.getAbsolutePath() + "/" + imageD.getFilename() + ".csv";
 				// set the params according to the way length
 				GUIParams params = setParametersN2Second(imageD.getLambda());
-				BatchProcess.process(inputImagePath, params, new File(outputPathResultCsvBeforeCorrection), outputPathZCorrected, new File(outputPathCsv), doZcorrection);
+				BatchProcess.process(inputImagePath, params, new File(outputPathResultCsvBeforeCorrection), new File(outputPathParameters), outputPathZCorrected, new File(outputPathCsv), doZcorrection);
 			}
 			else {
 				System.out.println("Missing file: " + inputImagePath);
@@ -235,7 +239,7 @@ public class BatchProcess {
 		}
 	}
 
-	public static void process(String imgPath, GUIParams params, File outputPathResultCsvBeforeCorrection, String outputPathZCorrected, File outputPath, boolean doZcorrection) {
+	public static void process(String imgPath, GUIParams params, File outputPathResultCsvBeforeCorrection, File outputPathParameters, String outputPathZCorrected, File outputPath, boolean doZcorrection) {
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File(imgPath));
 		ImagePlus imp = ImageJFunctions.wrap(img, "");
 		// TODO: might be redundant
@@ -306,12 +310,19 @@ public class BatchProcess {
 				saveResult(outputPathResultCsvBeforeCorrection, fSpots, fIntensity);
 			}
 			
+			
 			// TODO: we don't need to check this - path always exists
 			if (!outputPathZCorrected.equals("")){
-				ImagePlus fImp = ExtraPreprocess.fixIntensitiesOnlySpots(img, fSpots, fIntensity, doZcorrection);
+				
+				int degree = 2; 
+				double [] coeff = new double [degree + 1];
+				
+				ImagePlus fImp = ExtraPreprocess.fixIntensitiesOnlySpots(img, fSpots, fIntensity, coeff, doZcorrection);
 				fImp.setRoi(roi);
 				FileSaver fs = new FileSaver(fImp);
 				fs.saveAsTiff(outputPathZCorrected);
+				
+				saveParameters(outputPathParameters, coeff);
 			}
 			
 			// TODO: this seems to trigger bugs
@@ -377,6 +388,21 @@ public class BatchProcess {
 				}; 	
 				writer.writeNext(nextLine);
 			}
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void saveParameters(File path, double [] coeff) {
+		CSVWriter writer = null;
+		String[] nextLine = new String [coeff.length];
+		try {
+			writer = new CSVWriter(new FileWriter(path.getAbsolutePath()), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+			for (int j = 0; j < coeff.length; j++) {
+				nextLine[j] = String.format(java.util.Locale.US, "%.2f", coeff[j]);
+			}
+			writer.writeNext(nextLine);
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();

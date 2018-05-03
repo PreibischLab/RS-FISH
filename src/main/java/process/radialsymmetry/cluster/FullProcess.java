@@ -57,8 +57,10 @@ public class FullProcess {
 	public static void runFullProcess2Steps(){
 		// TODO: make this one more general
 		// String prefix = "/Volumes/1TB/test/2018-04-17-test-run";
-		String prefix = "/Users/kkolyva/Desktop/2018-04-18-08-29-25-test/test/2018-04-24-15-33-21-median-median-first-test"; // 2018-04-18-14-46-52-median-median-first-test"; //2018-04-18-14-46-52-median-median-first-test";
+		// String prefix = "/Users/kkolyva/Desktop/2018-04-18-08-29-25-test/test/2018-04-18-14-46-52-median-median-first-test"; // 2018-04-18-14-46-52-median-median-first-test"; //2018-04-18-14-46-52-median-median-first-test";
 
+		String prefix = "/Users/kkolyva/Desktop/2018-04-18-08-29-25-test/test/2018-05-02-13-33-11-median-median-first-test";
+		
 		// path to the csv file with RS detected centers
 		File pathCenters = new File(prefix + "/centers/all-centers.csv");
 		int centerIndex = 1; // run the second iteration of the radial symmetry
@@ -114,7 +116,7 @@ public class FullProcess {
 		Preprocess.runSecondStepPreprocess(pathZcorrected, pathDatabase, pathImagesRoi, pathCenters, pathImagesMedian2);
 		FixImages.runFixImages(pathImagesMedian2, pathImagesRoi, pathImagesMedian2);
 		// - radial symmetry you are looking for!
-		doZcorrection = true;
+		// doZcorrection = true;
 		BatchProcess.runProcess(pathImagesMedian2, pathDatabase, pathZcorrected2, pathResultCsv2, doZcorrection);
 		// first iteration full preprossing 
 

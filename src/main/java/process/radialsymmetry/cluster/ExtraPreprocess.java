@@ -19,6 +19,8 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
+import org.apache.commons.math3.fitting.PolynomialCurveFitter;
+import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 import fit.Spot;
@@ -274,6 +276,77 @@ public class ExtraPreprocess {
 		// Img<FloatType> img = ImageJFunctions.wrap(imp);
 
 		// fitting part
+		int degree = 2;
+		WeightedObservedPoints obs = new WeightedObservedPoints();
+		PolynomialCurveFitter pcf = PolynomialCurveFitter.create(degree);
+		
+		// perform correction in 3D only
+		int numDimensions = 3;
+
+		double zMin = Double.MAX_VALUE;
+		// double zMin = getZMin(spots, numDimensions);
+
+		ArrayList<float[]> medianZI = getMedianPerSlice(spots, intensity, img.dimension(numDimensions - 1));
+
+		for (int j = 0; j < medianZI.size(); ++j) {
+			float z = medianZI.get(j)[0];
+			float I = medianZI.get(j)[1];
+			obs.add(z, I);
+			if (z < zMin)
+				zMin = z;
+		}
+
+		final double[] coeff = pcf.fit(obs.toList());
+
+		// at this point the fitting i already done
+		System.out.println("zMin:" + zMin);
+		System.out.println("params are:" + coeff[0] + " : " + coeff[1] + " : " + coeff[2]);
+
+		int currentSlice = 0;
+
+		// we z correct the whole image, not only the embryo
+		Cursor<FloatType> c = img.cursor();
+		while(c.hasNext()) {
+			c.fwd();
+			float z = c.getFloatPosition(numDimensions - 1);
+			float I = c.get().get();
+
+			//			// old way to fix the intensities
+			//			double dI = linearFunc(zMin, slope, intercept) - linearFunc(z, slope, intercept);
+			//			NumberFormat formatter = new DecimalFormat("0.#####E0");
+			//			// System.out.println(formatter.format((float)(I)) +" => " + formatter.format((float)(I + dI)));
+			//			c.get().set((float)(I + dI));
+
+			double fixFactor = polyFunc(zMin, coeff) / polyFunc(z, coeff);
+			// DEBUG: 
+			if ((int) z != currentSlice)
+				System.out.println("z: " + (currentSlice++) + ", factor=: " + fixFactor);
+			c.get().set((float)(I*fixFactor));
+		}
+
+		// TODO: REMOVE hardcode! 
+		// BatchProcess.saveResult(new File("/Users/kkolyva/Desktop/2018-04-18-08-29-25-test/test/2018-05-02-13-33-11-median-median-first-test/csv/FIRST_RUN.csv"), spots, intensity);
+		
+		// TODO: z-correct the intensities and return them here, too
+		if (doZcorrection) {
+			for(int j = 0; j < spots.size(); j++) {
+				float z = spots.get(j).getFloatPosition(numDimensions - 1);
+				float I = intensity.get(j);
+
+				double fixFactor = polyFunc(zMin, coeff) / polyFunc(z, coeff);
+				intensity.set(j, (float)(I*fixFactor));
+			} 
+		}
+
+		return ImageJFunctions.wrap(img, "");
+	}
+	
+	
+	// FIXME: Check that this function is actually working
+	public static ImagePlus fixIntensitiesOnlySpots1(Img<FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity, boolean doZcorrection) {
+		// Img<FloatType> img = ImageJFunctions.wrap(imp);
+
+		// fitting part
 		boolean includeIntercept = true;
 		SimpleRegression sr = new SimpleRegression(includeIntercept);
 		// perform correction in 3D only
@@ -321,6 +394,10 @@ public class ExtraPreprocess {
 			c.get().set((float)(I*fixFactor));
 		}
 
+		// TODO: REMOVE hardcode! 
+		// BatchProcess.saveResult(new File("/Users/kkolyva/Desktop/2018-04-18-08-29-25-test/test/2018-04-18-14-46-52-median-median-first-test/csv/FIRST_RUN.csv"), spots, intensity);
+		
+		
 		// TODO: z-correct the intensities and return them here, too
 		if (doZcorrection) {
 			for(int j = 0; j < spots.size(); j++) {
@@ -558,6 +635,14 @@ public class ExtraPreprocess {
 		return k * x + b;
 	}
 
+	// return y for y = a*x*x + b*x + c
+	public static double polyFunc(double x, double [] a) {
+		double y = 0;
+		for (int j = 0; j < a.length; j++)
+			y += Math.pow(x, j)*a[j];
+		return y;
+	}
+	
 	public static void medianOfMedian(File filepath, File outpath) {
 		ImagePlus imp = IJ.openImage(filepath.getAbsolutePath());
 		float medianMedianPerPlane = calculateMedianIntensity(imp);

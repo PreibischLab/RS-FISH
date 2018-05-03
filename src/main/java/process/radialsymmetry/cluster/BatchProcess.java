@@ -198,7 +198,12 @@ public class BatchProcess {
 		return params;
 	}
 	
+	// to support old code 
 	public static void runProcess(File pathImagesMedian, File pathDatabase, File pathZcorrected, File pathResultCsv, boolean doZcorrection) {
+		runProcess(pathImagesMedian, pathDatabase, pathZcorrected, new File(""), pathResultCsv, doZcorrection);
+	}
+	
+	public static void runProcess(File pathImagesMedian, File pathDatabase, File pathZcorrected, File pathResultCsvBeforeCorrection, File pathResultCsv, boolean doZcorrection) {
 		// parse the db with smFish labels and good looking images
 		ArrayList<ImageData> imageData = Preprocess.readDb(pathDatabase);
 		
@@ -214,11 +219,15 @@ public class BatchProcess {
 				String outputPathZCorrected = "";
 				if (pathZcorrected != null)
 					outputPathZCorrected = pathZcorrected.getAbsolutePath() + "/" + imageD.getFilename() + ".tif";
+				// table to store the results before we perform the z-correction 
+				String outputPathResultCsvBeforeCorrection = "";
+				if (pathResultCsvBeforeCorrection != null)
+					outputPathResultCsvBeforeCorrection = pathResultCsvBeforeCorrection.getAbsolutePath() + "/" + imageD.getFilename() + ".csv";
 				// table to store the results for each channel
 				String outputPathCsv = pathResultCsv.getAbsolutePath() + "/" + imageD.getFilename() + ".csv";
 				// set the params according to the way length
 				GUIParams params = setParametersN2Second(imageD.getLambda());
-				BatchProcess.process(inputImagePath, params, outputPathZCorrected, new File(outputPathCsv), doZcorrection);
+				BatchProcess.process(inputImagePath, params, new File(outputPathResultCsvBeforeCorrection), outputPathZCorrected, new File(outputPathCsv), doZcorrection);
 			}
 			else {
 				System.out.println("Missing file: " + inputImagePath);
@@ -226,7 +235,7 @@ public class BatchProcess {
 		}
 	}
 
-	public static void process(String imgPath, GUIParams params, String outputPathZCorrected, File outputPath, boolean doZcorrection) {
+	public static void process(String imgPath, GUIParams params, File outputPathResultCsvBeforeCorrection, String outputPathZCorrected, File outputPath, boolean doZcorrection) {
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File(imgPath));
 		ImagePlus imp = ImageJFunctions.wrap(img, "");
 		// TODO: might be redundant
@@ -292,6 +301,11 @@ public class BatchProcess {
 			
 			// we don't have to trigger the z-correction 2nd time because the image 
 			
+			// we want to save the intensity values that were not corrected yet
+			if (!outputPathResultCsvBeforeCorrection.getAbsolutePath().equals("")) {
+				saveResult(outputPathResultCsvBeforeCorrection, fSpots, fIntensity);
+			}
+			
 			// TODO: we don't need to check this - path always exists
 			if (!outputPathZCorrected.equals("")){
 				ImagePlus fImp = ExtraPreprocess.fixIntensitiesOnlySpots(img, fSpots, fIntensity, doZcorrection);
@@ -300,6 +314,7 @@ public class BatchProcess {
 				fs.saveAsTiff(outputPathZCorrected);
 			}
 			
+			// TODO: this seems to trigger bugs
 			// close the windows images that popup
 //			impRoi.changes = false;
 //			impRoi.close();

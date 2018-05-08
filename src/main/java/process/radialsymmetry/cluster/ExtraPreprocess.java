@@ -23,12 +23,17 @@ import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
+import fit.PointFunctionMatch;
 import fit.Spot;
+import fit.polynomial.QuadraticFunction;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.process.ImageProcessor;
+import mpicbg.models.IllDefinedDataPointsException;
+import mpicbg.models.NotEnoughDataPointsException;
+import mpicbg.models.Point;
 import util.opencsv.CSVReader;
 
 public class ExtraPreprocess {
@@ -132,7 +137,10 @@ public class ExtraPreprocess {
 		for (int z = 0; z < zSlices; z++) {
 			ArrayList<Integer> indices = new ArrayList<>();
 			for (int j = 0; j < spots.size(); j++) {
-				if(spots.get(j).getIntPosition(2) == z) {
+				// not the exact slice but in between
+				// if(spots.get(j).getIntPosition(2) == z) {
+				int spread = 3;
+				if (Math.abs(spots.get(j).getIntPosition(2) - z) <= spread) {
 					indices.add(j);
 				}
 			}
@@ -271,6 +279,101 @@ public class ExtraPreprocess {
 	//		return imp;
 	//	}
 
+	public static ArrayList<Point> copySpots(ArrayList<Spot> spots, ArrayList<Float> intensity){
+		final ArrayList<Point> points = new ArrayList<>();
+		
+		for (Spot spot : spots) {
+			// lazy
+			int numDimensions = 3;
+			
+			double [] loc = new double [numDimensions];
+			spot.localize(loc);
+			points.add(new Point(new double[] {loc[2], intensity.get(spots.indexOf(spot))}));
+		}
+		return points;
+	}
+	
+	
+	public static ImagePlus fixIntensitiesOnlySpotsRansac(Img<FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity, double [] gCoeff, boolean doZcorrection) {
+	
+		int numDimensions = 3;
+		
+		// fitting part 
+		int degree = gCoeff.length - 1;
+		
+		int nIterations = 100;
+		double epsilon = 0.1;
+		double minInlierRatio = 0.5;
+		QuadraticFunction qf = new QuadraticFunction();
+		
+		ArrayList<Point> points = copySpots(spots, intensity);
+		final ArrayList<PointFunctionMatch> candidates = new ArrayList<>();
+		final ArrayList<PointFunctionMatch> inliers = new ArrayList<>();
+		
+		for (final Point p : points)
+			candidates.add(new PointFunctionMatch(p));
+		
+		try {
+			qf.ransac(candidates, inliers, nIterations, epsilon, minInlierRatio);
+			qf.fit(candidates);
+		}
+		catch (NotEnoughDataPointsException | IllDefinedDataPointsException exc) {
+			// TODO Auto-generated catch block
+			exc.printStackTrace();
+		}
+		
+		for (int j = 0; j <= degree; j++)
+			gCoeff[j] = qf.getCoefficient(j);
+		
+		float zMin = Float.MAX_VALUE;
+		for (Spot spot : spots)
+			if (spot.getFloatPosition(numDimensions - 1) < zMin)
+				zMin = spot.getFloatPosition(numDimensions - 1);
+		
+		// at this point the fitting i already done
+		System.out.println("zMin:" + zMin);
+		System.out.println("params are:" + qf.getCoefficient(0) + " : " + qf.getCoefficient(1) + " : " + qf.getCoefficient(2));
+		
+		int currentSlice = 0;
+
+		// we z correct the whole image, not only the embryo
+		Cursor<FloatType> c = img.cursor();
+		while(c.hasNext()) {
+			c.fwd();
+			float z = c.getFloatPosition(numDimensions - 1);
+			float I = c.get().get();
+
+			//			// old way to fix the intensities
+			//			double dI = linearFunc(zMin, slope, intercept) - linearFunc(z, slope, intercept);
+			//			NumberFormat formatter = new DecimalFormat("0.#####E0");
+			//			// System.out.println(formatter.format((float)(I)) +" => " + formatter.format((float)(I + dI)));
+			//			c.get().set((float)(I + dI));
+
+			double fixFactor = polyFunc(zMin, gCoeff) / polyFunc(z, gCoeff);
+			// DEBUG: 
+			if ((int) z != currentSlice)
+				System.out.println("z: " + (currentSlice++) + ", factor=: " + fixFactor);
+			c.get().set((float)(I*fixFactor));
+		}
+
+		// TODO: REMOVE hardcode! 
+		// BatchProcess.saveResult(new File("/Users/kkolyva/Desktop/2018-04-18-08-29-25-test/test/2018-05-02-13-33-11-median-median-first-test/csv/FIRST_RUN.csv"), spots, intensity);
+		
+		// TODO: z-correct the intensities and return them here, too
+		if (doZcorrection) {
+			for(int j = 0; j < spots.size(); j++) {
+				float z = spots.get(j).getFloatPosition(numDimensions - 1);
+				float I = intensity.get(j);
+
+				double fixFactor = polyFunc(zMin, gCoeff) / polyFunc(z, gCoeff);
+				intensity.set(j, (float)(I*fixFactor));
+			} 
+		}
+
+		return ImageJFunctions.wrap(img, "");
+	}
+	
+	
 	// FIXME: Check that this function is actually working
 	public static ImagePlus fixIntensitiesOnlySpots(Img<FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity, double [] gCoeff, boolean doZcorrection) {
 		// Img<FloatType> img = ImageJFunctions.wrap(imp);

@@ -231,6 +231,7 @@ public class BatchProcess {
 				String outputPathCsv = pathResultCsv.getAbsolutePath() + "/" + imageD.getFilename() + ".csv";
 				// set the params according to the way length
 				GUIParams params = setParametersN2Second(imageD.getLambda());
+				
 				BatchProcess.process(inputImagePath, params, new File(outputPathResultCsvBeforeCorrection), new File(outputPathParameters), outputPathZCorrected, new File(outputPathCsv), doZcorrection);
 			}
 			else {
@@ -306,7 +307,7 @@ public class BatchProcess {
 			// we don't have to trigger the z-correction 2nd time because the image 
 			
 			// we want to save the intensity values that were not corrected yet
-			if (!outputPathResultCsvBeforeCorrection.getAbsolutePath().equals("")) {
+			if (outputPathResultCsvBeforeCorrection.getAbsolutePath().endsWith(".csv")) {
 				saveResult(outputPathResultCsvBeforeCorrection, fSpots, fIntensity);
 			}
 			
@@ -317,12 +318,14 @@ public class BatchProcess {
 				int degree = 2; 
 				double [] coeff = new double [degree + 1];
 				
-				ImagePlus fImp = ExtraPreprocess.fixIntensitiesOnlySpots(img, fSpots, fIntensity, coeff, doZcorrection);
+				ImagePlus fImp = ExtraPreprocess.fixIntensitiesOnlySpotsRansac(img, fSpots, fIntensity, coeff, doZcorrection);
 				fImp.setRoi(roi);
 				FileSaver fs = new FileSaver(fImp);
 				fs.saveAsTiff(outputPathZCorrected);
 				
-				saveParameters(outputPathParameters, coeff);
+				if (outputPathParameters.getAbsolutePath().endsWith(".csv")) {
+					saveParameters(outputPathParameters, coeff);
+				}
 			}
 			
 			// TODO: this seems to trigger bugs

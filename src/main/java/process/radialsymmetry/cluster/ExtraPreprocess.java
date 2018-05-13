@@ -301,7 +301,7 @@ public class ExtraPreprocess {
 		// fitting part 
 		int degree = gCoeff.length - 1;
 		
-		int nIterations = 100;
+		int nIterations = 1000;
 		double epsilon = 0.1;
 		double minInlierRatio = 0.5;
 		QuadraticFunction qf = new QuadraticFunction();

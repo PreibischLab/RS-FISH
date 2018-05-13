@@ -478,7 +478,7 @@ public class Preprocess {
 
 	public static void secondStepPreprocess(File imgPath, File roiPath, File outputPath, float center) {
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
-		Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
+		// Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
 		ImagePlus imp = IJ.openImage(roiPath.getAbsolutePath());
 		// 1. get the background
 //		int [] kernelDim = new int []{19, 19}; 

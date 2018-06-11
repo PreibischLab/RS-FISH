@@ -351,8 +351,8 @@ public class ExtraPreprocess {
 
 			double fixFactor = polyFunc(zMin, gCoeff) / polyFunc(z, gCoeff);
 			// DEBUG: 
-			if ((int) z != currentSlice)
-				System.out.println("z: " + (currentSlice++) + ", factor=: " + fixFactor);
+//			if ((int) z != currentSlice)
+//				System.out.println("z: " + (currentSlice++) + ", factor=: " + fixFactor);
 			c.get().set((float)(I*fixFactor));
 		}
 

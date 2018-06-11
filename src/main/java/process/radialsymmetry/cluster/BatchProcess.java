@@ -230,7 +230,7 @@ public class BatchProcess {
 				// table to store the results for each channel
 				String outputPathCsv = pathResultCsv.getAbsolutePath() + "/" + imageD.getFilename() + ".csv";
 				// set the params according to the way length
-				GUIParams params = setParametersN2Second(imageD.getLambda());
+				GUIParams params = setParameters2(imageD.getLambda());
 				
 				BatchProcess.process(inputImagePath, params, new File(outputPathResultCsvBeforeCorrection), new File(outputPathParameters), outputPathZCorrected, new File(outputPathCsv), doZcorrection);
 			}
@@ -263,8 +263,11 @@ public class BatchProcess {
 			rai = new TypeTransformingRandomAccessibleInterval<>(img,
 					new RealTypeNormalization<>(min, max - min), new FloatType());
 		else // otherwise use
-			rai = img;
-		
+		{
+			// rai = img;
+			System.out.println("Can\'t normalize image!");
+			return;
+		}
 		// x y z
 		long[] dims = new long[img.numDimensions()];
 		img.dimensions(dims);
@@ -319,9 +322,12 @@ public class BatchProcess {
 				double [] coeff = new double [degree + 1];
 				
 				ImagePlus fImp = ExtraPreprocess.fixIntensitiesOnlySpotsRansac(img, fSpots, fIntensity, coeff, doZcorrection);
-				fImp.setRoi(roi);
-				FileSaver fs = new FileSaver(fImp);
-				fs.saveAsTiff(outputPathZCorrected);
+				ImagePlus tmpImp = fImp.duplicate();
+				tmpImp.setRoi(roi);
+				// FileSaver fs = new FileSaver(fImp);
+				// fs.saveAsTiff(outputPathZCorrected);
+				
+				IJ.saveAsTiff(tmpImp, outputPathZCorrected);
 				
 				if (outputPathParameters.getAbsolutePath().endsWith(".csv")) {
 					saveParameters(outputPathParameters, coeff);
@@ -357,7 +363,7 @@ public class BatchProcess {
 
 		// looks like we are working with the correct image
 		// and taking the intensities from the correct place 
-		ImageJFunctions.show(img);
+		// ImageJFunctions.show(img);
 		// ImageJFunctions.show(rai);
 
 		for (Spot fSpot : filteredSpots){
@@ -367,7 +373,7 @@ public class BatchProcess {
 			intensity.add(new Float(rra.get().get()));
 			// [83.85610471462424, 336.9622269595374, 32.396389491090034]
 			// FIXME: test purposes only
-			System.out.println(rra.get().get());
+			// System.out.println(rra.get().get());
 			
 		}
 		return filteredSpots;

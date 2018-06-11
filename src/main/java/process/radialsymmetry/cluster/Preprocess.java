@@ -379,7 +379,7 @@ public class Preprocess {
 			// System.out.println(roiImagePath);
 
 			// check that the corresponding files is not missing
-			if (new File(inputImagePath).exists()) {
+			if (new File(inputImagePath).exists() && new File(roiImagePath).exists()) {
 				firstStepPreprocess(new File(inputImagePath), new File(roiImagePath), new File(outputImagePath));
 			}
 			else {
@@ -436,6 +436,7 @@ public class Preprocess {
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
 		Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
 		ImagePlus imp = IJ.openImage(roiPath.getAbsolutePath());
+
 		// 1. get the background
 		int [] kernelDim = new int []{19, 19}; 
 		MedianFilter.medianFilterSliced(img, bg, kernelDim);

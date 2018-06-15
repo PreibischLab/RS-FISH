@@ -36,14 +36,21 @@ import ij.gui.Overlay;
 import ij.process.ByteProcessor;
 
 import java.awt.Color;
+import java.util.Random;
 
+import net.imglib2.Interval;
 import net.imglib2.Localizable;
+import net.imglib2.RandomAccess;
 import net.imglib2.algorithm.componenttree.mser.Mser;
 import net.imglib2.algorithm.componenttree.mser.MserTree;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.img.imageplus.ImagePlusImgs;
+import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.real.FloatType;
 
 /**
  * Example of computing and visualizing the {@link MserTree} of an image.
@@ -127,11 +134,12 @@ public class MserTreeExample< T extends IntegerType< T > >
 
 	public static void main( final String[] args )
 	{
-		final int delta = 15;
-		final long minSize = 10;
-		final long maxSize = 100*100;
-		final double maxVar = 0.8;
-		final double minDiversity = 0;
+		// ref: http://www.vlfeat.org/overview/mser.html
+		final int delta = 1; // "steps" between the stable regions
+		final long minSize = 1000; // min size of the connected component 
+		final long maxSize = 100 * 100 * 1; // max size of the connected component
+		final double maxVar = 0.8; // describes the stability of the region, smaller the value less regions you get 
+		final double minDiversity = 1; // describes the similarity with the parent, larger value less regions you get 
 
 		final Img< UnsignedByteType > img;
 		try
@@ -139,7 +147,7 @@ public class MserTreeExample< T extends IntegerType< T > >
 			new ImageJ();
 			// IJ.run("Lena (68K)");
 			// IJ.run("8-bit");
-			IJ.open("/Users/kkolyva/Desktop/2018-06-11-10-09-02-test-mser/lena-std.tif");
+			IJ.open("/Users/kkolyva/Desktop/2018-06-11-10-09-02-test-mser/it=495-2-cropped-8bit.tif");
 			img = ImagePlusAdapter.wrapByte( IJ.getImage() );
 		}
 		catch ( final Exception e )
@@ -151,13 +159,99 @@ public class MserTreeExample< T extends IntegerType< T > >
 		final ImagePlus impImg = IJ.getImage();
 		final ImageStack stack = new ImageStack( (int) img.dimension( 0 ), (int) img.dimension( 1 ) );
 
-		final MserTree< UnsignedByteType > treeDarkToBright = MserTree.buildMserTree( img, new UnsignedByteType( delta ), minSize, maxSize, maxVar, minDiversity, true );
+		// final MserTree< UnsignedByteType > treeDarkToBright = MserTree.buildMserTree( img, new UnsignedByteType( delta ), minSize, maxSize, maxVar, minDiversity, true );
 		final MserTree< UnsignedByteType > treeBrightToDark = MserTree.buildMserTree( img, new UnsignedByteType( delta ), minSize, maxSize, maxVar, minDiversity, false );
-		final MserTreeExample< UnsignedByteType > vis = new MserTreeExample< UnsignedByteType >( impImg, stack );
-		vis.visualise( treeDarkToBright, Color.CYAN );
+		final MserTreeExample< UnsignedByteType > vis = new MserTreeExample<>( impImg, stack );
+		// vis.visualise( treeDarkToBright, Color.CYAN );
 		vis.visualise( treeBrightToDark, Color.MAGENTA );
 
-		final ImagePlus imp = new ImagePlus("components", stack);
-		imp.show();
+		ImageJFunctions.show( projectRGB( treeBrightToDark, img ) );
+		// final ImagePlus imp = new ImagePlus("components", stack);
+		// imp.show();
+		
+		// show the overlay
+		impImg.setHideOverlay(true);
+		
+		System.out.println("Approximate number of spots: " + treeBrightToDark.size());
+		
+		// TODO: 
+		// [ ] add the size check 
+		// [ ] add the DoG on top
+		// [ ]
+		
 	}
+
+	public static Img< FloatType > project( final MserTree< UnsignedByteType > tree, final Interval image )
+	{
+		final long[] dim = new long[ image.numDimensions() ];
+
+		for ( int d = 0; d < image.numDimensions(); ++d )
+			dim[ d ] = image.dimension( d );
+
+		final Img< FloatType > vis = ImagePlusImgs.floats( dim );
+		final Random rnd = new Random( 353 );
+		final RandomAccess< FloatType > ra = vis.randomAccess();
+
+		for ( final Mser< UnsignedByteType > mser : tree )
+		{
+			final float value = rnd.nextFloat() + 0.1f;
+
+			for ( final Localizable l : mser )
+			{
+				ra.setPosition( l );
+				if ( ra.get().get() != 0.0 )
+					ra.get().set( ( value + ra.get().get() ) / 2.0f );
+				else
+					ra.get().set( value );
+			}
+		}
+
+		return vis;
+	}
+
+	public static Img< ARGBType > projectRGB( final MserTree< UnsignedByteType > tree, final Interval image )
+	{
+		final long[] dim = new long[ image.numDimensions() ];
+
+		for ( int d = 0; d < image.numDimensions(); ++d )
+			dim[ d ] = image.dimension( d );
+
+		final Img< ARGBType > vis = ImagePlusImgs.argbs( dim );
+		final Random rnd = new Random( 353 );
+		final RandomAccess< ARGBType > ra = vis.randomAccess();
+
+		for ( final Mser< UnsignedByteType > mser : tree )
+		{
+			final int r = rnd.nextInt( 128 ) + 128; // 128 ... 255
+			final int g = rnd.nextInt( 128 ) + 128; // 128 ... 255
+			final int b = rnd.nextInt( 128 ) + 128; // 128 ... 255
+
+			for ( final Localizable l : mser )
+			{
+				ra.setPosition( l );
+				final ARGBType t = ra.get();
+				int r1 = ARGBType.red( t.get() );
+				int g1 = ARGBType.green( t.get() );
+				int b1 = ARGBType.blue( t.get() );
+	
+				if ( r1 + g1 + b1 == 0 )
+				{
+					r1 = r;
+					g1 = g;
+					b1 = b;
+				}
+				else
+				{
+					r1 = ( r1 + r ) / 2;
+					g1 = ( g1 + g ) / 2;
+					b1 = ( b1 + b ) / 2;
+				}
+
+				ra.get().set( ARGBType.rgba( r1, g1, b1, 0 ) );
+			}
+		}
+
+		return vis;
+	}
+
 }

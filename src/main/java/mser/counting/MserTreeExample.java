@@ -33,16 +33,23 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.EllipseRoi;
 import ij.gui.Overlay;
+import ij.gui.Roi;
 import ij.process.ByteProcessor;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 
 import net.imglib2.Interval;
 import net.imglib2.Localizable;
+import net.imglib2.Point;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.componenttree.mser.Mser;
 import net.imglib2.algorithm.componenttree.mser.MserTree;
+import net.imglib2.algorithm.dog.DogDetection;
+import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
@@ -51,6 +58,13 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.FloatType;
+
+import org.apache.commons.math3.linear.EigenDecomposition;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealMatrixFormat;
+
+import gui.interactive.HelperFunctions;
 
 /**
  * Example of computing and visualizing the {@link MserTree} of an image.
@@ -65,73 +79,145 @@ public class MserTreeExample< T extends IntegerType< T > >
 	final ImageStack stack;
 	final int w;
 	final int h;
+	
+//steps per octave for DoG
+	private static int defaultSensitivity = 4;
 
 	public MserTreeExample( final ImagePlus imp, final ImageStack stack )
 	{
 		this.imp = imp;
-		ov = new Overlay();
-		imp.setOverlay( ov );
+		if (imp.getOverlay() == null) {
+			ov = new Overlay();
+			imp.setOverlay( ov );
+		}
+		else
+			ov = imp.getOverlay();
+		
 		this.stack = stack;
 		this.w = imp.getWidth();
 		this.h = imp.getHeight();
 	}
-
+	
 	/**
-	 * Visualise MSER. Add a 3sigma ellipse overlay to {@link #imp} in the given
-	 * color. Add a slice to {@link #stack} showing binary mask of MSER region.
+	 * find the ellipsoid around smfish image
 	 */
-	public void visualise( final Mser< T > mser, final Color color )
+	public void visualise3D( final MserTree< T > tree)
 	{
-		final ByteProcessor byteProcessor = new ByteProcessor( w, h );
-		final byte[] pixels = ( byte[] )byteProcessor.getPixels();
-		for ( final Localizable l : mser )
-		{
-			final int x = l.getIntPosition( 0 );
-			final int y = l.getIntPosition( 1 );
-			pixels[ y * w + x ] = (byte)(255 & 0xff);
+		double [] sigmas = new double [3];
+		for ( final Mser< T > mser : tree ){
+			sigmas = getSigmas( mser.mean(), mser.cov(), 3 );
 		}
-		final String label = "" + mser.value();
-		stack.addSlice( label, byteProcessor );
-
-		final EllipseRoi ellipse = createEllipse( mser.mean(), mser.cov(), 3 );
-		ellipse.setStrokeColor( color );
-		ov.add( ellipse );
+		// TODO: how do we adjust threshold values?
+		float pThreshold = 0.0027f;
+		// TODO: which sigmas do we take? maybe adjust through
+		ArrayList<RefinedPeak<Point>> peaks = computeDog(ImageJFunctions.wrap(imp), (float) sigmas[0], pThreshold);
+		ArrayList<RefinedPeak<Point>> filteredPeaks = filterPeaks(peaks, imp);
+		// TODO: save peaks to the folder
+		printPeaks(filteredPeaks);
 	}
-
-	/**
-	 * Visualize all MSER in a tree. {@see #visualise(Mser, Color)}.
-	 */
-	public void visualise( final MserTree< T > tree, final Color color )
-	{
-		for ( final Mser< T > mser : tree )
-			visualise( mser, color );
+	
+	public static ArrayList<RefinedPeak<Point>> filterPeaks(ArrayList<RefinedPeak<Point>> peaks, ImagePlus imp){
+		ArrayList<RefinedPeak<Point>> filteredPeaks = new ArrayList<>();
+		
+		if (imp.getRoi() != null){
+			Roi roi = imp.getRoi();
+			for (RefinedPeak<Point> peak : peaks) {
+				if ( roi.contains((int)peak.getFloatPosition(0), (int)peak.getFloatPosition(1)))
+					filteredPeaks.add(peak);
+			}
+		} 
+		else {
+			// DEBUG: 
+			System.out.println("No roi found!");
+			filteredPeaks = peaks;
+		}
+		return filteredPeaks;
 	}
-
-	/**
-	 * Paint ellipse at nsigmas standard deviations
-	 * of the given 2D Gaussian distribution.
-	 *
-	 * @param mean (x,y) components of mean vector
-	 * @param cov (xx, xy, yy) components of covariance matrix
-	 * @return ImageJ roi
-	 */
-	public static EllipseRoi createEllipse( final double[] mean, final double[] cov, final double nsigmas )
-	{
-		final double a = cov[0];
-		final double b = cov[1];
-		final double c = cov[2];
-		final double d = Math.sqrt( a*a + 4*b*b - 2*a*c + c*c );
-		final double scale1 = Math.sqrt( 0.5 * ( a+c+d ) ) * nsigmas;
-		final double scale2 = Math.sqrt( 0.5 * ( a+c-d ) ) * nsigmas;
-		final double theta = 0.5 * Math.atan2( (2*b), (a-c) );
-		final double x = mean[ 0 ];
-		final double y = mean[ 1 ];
-		final double dx = scale1 * Math.cos( theta );
-		final double dy = scale1 * Math.sin( theta );
-		final EllipseRoi ellipse = new EllipseRoi( x-dx, y-dy, x+dx, y+dy, scale2 / scale1 );
-		return ellipse;
+	
+	public static void printPeaks(ArrayList<RefinedPeak<Point>> peaks) {
+		for (RefinedPeak<Point> peak : peaks) {
+			System.out.println(createPosString(peak));
+		}
 	}
+	
+	public static String createPosString(RefinedPeak<Point> peak) {
+		String delimeter = " ";
+		String res = peak.getFloatPosition(0) + delimeter + peak.getFloatPosition(1) + delimeter + peak.getFloatPosition(2);
+		return res;
+	}
+	
+	public static void savePeaksToFile(ArrayList<RefinedPeak<Point>> peaks) {
+		// TODO: 
+	}
+	
+	// TODO: FINISH THE MATHS FORMULAS
+	public static double [] getSigmas(final double [] mean, final double[] cov, final double nsigmas) {
+		double [] sigmas = new double [3];
+		
+		// upper triangular matrix
+		RealMatrix matrix = MatrixUtils.createRealMatrix(new double [][] {{cov[0], cov[1], cov[2]},
+																																	{cov[1], cov[3], cov[4]}, 
+																																	{cov[2], cov[4], cov[5]} });
+		
+		EigenDecomposition ed = new EigenDecomposition(matrix);
+		double [] eigenvalues = ed.getRealEigenvalues();
+		
+		if (eigenvalues.length != 3) System.out.println("Something is wrong; real eigenvalues count is < 3");
 
+//		DEBUG:
+//		for (double val : eigenvalues)
+//			System.out.println(val);
+		
+		// TODO: this one is still not finished 
+		// for ()
+		// find the rotation angle 
+		// find sigma 
+		// pass these values to the DOG to detect spots
+		sigmas[0] = sigmas[1] = sigmas[2] = 10;
+		return sigmas;
+	}
+	
+	public static ArrayList<RefinedPeak<Point>> computeDog(final RandomAccessibleInterval<FloatType> pImg, float pSigma,
+		float pThreshold) {
+		float pSigma2 = HelperFunctions.computeSigma2(pSigma, defaultSensitivity);
+		final float tFactor = pImg.numDimensions() == 3 ? 0.5f : 1.0f;
+		
+		// TODO: adjust the calibration for the z-axis
+		double [] calibration = new double [] {1, 1, 1};
+		
+		final DogDetection<FloatType> dog2 = new DogDetection<>(pImg, calibration, pSigma, pSigma2,
+				DogDetection.ExtremaType.MINIMA, tFactor * pThreshold / 2, false);
+		ArrayList<RefinedPeak<Point>> pPeaks = dog2.getSubpixelPeaks();
+		return pPeaks;
+}
+
+	public static < T extends IntegerType< T > > long[] getMserSize(final MserTree< T > tree) {
+		long mserSize[] = new long[] {0, 0}; // mean, median
+		ArrayList <Long> mserSizes = new ArrayList<>(tree.size());
+		
+		for(final Mser< T > mser : tree) {
+			mserSize[0] += mser.size();
+			mserSizes.add(mser.size());
+			// DEBUG:
+			// break;
+			// System.out.println("connected component size: " + mser.size() + ", size:" + mser.cov()[0] + " " + mser.cov()[1] + " " + mser.cov()[2]);
+		}
+
+		if (mserSizes.size() > 0) {
+			// mean
+			mserSize[0] /= tree.size();
+			// median
+			Collections.sort(mserSizes);
+			mserSize[1] = mserSizes.get(mserSizes.size() / 2);
+		}
+
+		// DEBUG: 
+		// System.out.println("mean: " + mserSize[0]);
+		// System.out.println("median: " + mserSize[1]);
+		return mserSize;
+	}
+	
+	
 	public static void main( final String[] args )
 	{
 		// ref: http://www.vlfeat.org/overview/mser.html
@@ -145,9 +231,7 @@ public class MserTreeExample< T extends IntegerType< T > >
 		try
 		{
 			new ImageJ();
-			// IJ.run("Lena (68K)");
-			// IJ.run("8-bit");
-			IJ.open("/Users/kkolyva/Desktop/2018-06-11-10-09-02-test-mser/it=495-2-cropped-8bit.tif");
+			IJ.open("/Users/kkolyva/Desktop/2018-06-11-10-09-02-test-mser/it=495-2-cropped-8bit-median-roi.tif");
 			img = ImagePlusAdapter.wrapByte( IJ.getImage() );
 		}
 		catch ( final Exception e )
@@ -159,26 +243,23 @@ public class MserTreeExample< T extends IntegerType< T > >
 		final ImagePlus impImg = IJ.getImage();
 		final ImageStack stack = new ImageStack( (int) img.dimension( 0 ), (int) img.dimension( 1 ) );
 
-		// final MserTree< UnsignedByteType > treeDarkToBright = MserTree.buildMserTree( img, new UnsignedByteType( delta ), minSize, maxSize, maxVar, minDiversity, true );
 		final MserTree< UnsignedByteType > treeBrightToDark = MserTree.buildMserTree( img, new UnsignedByteType( delta ), minSize, maxSize, maxVar, minDiversity, false );
 		final MserTreeExample< UnsignedByteType > vis = new MserTreeExample<>( impImg, stack );
-		// vis.visualise( treeDarkToBright, Color.CYAN );
-		vis.visualise( treeBrightToDark, Color.MAGENTA );
 
 		ImageJFunctions.show( projectRGB( treeBrightToDark, img ) );
-		// final ImagePlus imp = new ImagePlus("components", stack);
-		// imp.show();
-		
-		// show the overlay
-		impImg.setHideOverlay(true);
-		
 		System.out.println("Approximate number of spots: " + treeBrightToDark.size());
 		
 		// TODO: 
 		// [ ] add the size check 
-		// [ ] add the DoG on top
-		// [ ]
+		long[] mserSize = getMserSize(treeBrightToDark);
+		System.out.println("Mser: mean: " + mserSize[0] + ", median: " + mserSize[1]);
 		
+		vis.visualise3D(treeBrightToDark);
+		
+		// [ ] add the DoG on top
+		// [ ] 
+		// [ ]
+		System.out.println("Done!");
 	}
 
 	public static Img< FloatType > project( final MserTree< UnsignedByteType > tree, final Interval image )
@@ -187,8 +268,7 @@ public class MserTreeExample< T extends IntegerType< T > >
 
 		for ( int d = 0; d < image.numDimensions(); ++d )
 			dim[ d ] = image.dimension( d );
-
-		final Img< FloatType > vis = ImagePlusImgs.floats( dim );
+		Img< FloatType > vis = ImagePlusImgs.floats( dim );
 		final Random rnd = new Random( 353 );
 		final RandomAccess< FloatType > ra = vis.randomAccess();
 
@@ -253,5 +333,5 @@ public class MserTreeExample< T extends IntegerType< T > >
 
 		return vis;
 	}
-
+	
 }

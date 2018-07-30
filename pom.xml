@@ -129,8 +129,8 @@
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2.simulation</groupId>
-			<artifactId>light-simulation</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<artifactId>function-fit-mpicbg</artifactId>
+			<version>0.0.1</version>
 		</dependency>
 	</dependencies>
 </project>

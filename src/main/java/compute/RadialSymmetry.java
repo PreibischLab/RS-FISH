@@ -158,7 +158,7 @@ public class RadialSymmetry {
 
 	// process each 2D/3D slice of the image to search for the spots
 	public static void processSliceBySlice(RandomAccessibleInterval<FloatType> img, RandomAccessibleInterval<FloatType> rai,
-			RadialSymmetryParameters rsm, int[] impDim, boolean gaussFit, double sigma, ArrayList<Spot> allSpots,
+			RadialSymmetryParameters rsm, int[] impDim, ArrayList<Spot> allSpots,
 			ArrayList<Long> timePoint, ArrayList<Long> channelPoint, ArrayList<Float> intensity) {
 		RandomAccessibleInterval<FloatType> timeFrameNormalized;
 		RandomAccessibleInterval<FloatType> timeFrame;
@@ -178,10 +178,10 @@ public class RadialSymmetry {
 				allSpots.addAll(filteredSpots);
 				timePoint.add(new Long(filteredSpots.size()));
 
-				if (gaussFit) {
+				if (rsm.getParams().getGaussFit()) {
 					// FIXME: fix the problem with the computations of this one
 					Intensity.calulateIntesitiesGF(timeFrame, timeFrame.numDimensions(), rsm.getParams().getAnisotropyCoefficient(),
-							sigma, filteredSpots, intensity);
+						rsm.getParams().getSigmaDoG(), filteredSpots, intensity);
 				} else // iterate over all points and perform the linear
 						// interpolation for each of the spots
 					Intensity.calculateIntensitiesLinear(timeFrame, filteredSpots, intensity);

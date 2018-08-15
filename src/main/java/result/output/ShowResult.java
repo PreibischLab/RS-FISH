@@ -16,8 +16,7 @@ public class ShowResult {
 	// this function will show the result of RANSAC
 	// proper window -> dialog view with the columns
 	public static void ransacResultTable(final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
-			final ArrayList<Long> channelPoint, ArrayList<Float> intensity, double histThreshold, int[] roiIndices,
-			int currentRoiIdx) {
+			final ArrayList<Long> channelPoint, ArrayList<Float> intensity, double histThreshold) {
 		IOFunctions.println("Running RANSAC ... ");
 		// real output
 		ResultsTable rt = new ResultsTable();
@@ -32,8 +31,6 @@ public class ShowResult {
 		for (Spot spot : spots) {
 			// if spot was not discarded
 			if (spot.inliers.size() != 0) { // TODO: filtered already?
-				if (roiIndices[idx] == currentRoiIdx) {
-
 					if (intensity.get(idx) >= histThreshold) {
 						rt.incrementCounter();
 						double[] pos = spot.getCenter();
@@ -58,12 +55,10 @@ public class ShowResult {
 						rt.addValue("intensity", String.format(java.util.Locale.US, "%.4f", intensity.get(idx)));
 
 					}
-
-				}
 			}
 			idx++;
 		}
 		IOFunctions.println("Spots found = " + rt.getCounter());
-		rt.show("Results-" + (currentRoiIdx + 1));
+		rt.show("Results");
 	}
 }

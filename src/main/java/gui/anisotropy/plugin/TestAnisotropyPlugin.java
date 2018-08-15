@@ -5,11 +5,11 @@ import java.io.IOException;
 
 import net.imagej.Dataset;
 
-public class main {
+public class TestAnisotropyPlugin {
 	
 	public static void main(String[] args)
 	{
-		File path = new File("/Users/kkolyva/Desktop/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/beads-cropped.tif");
+		File path = new File("/Users/kkolyva/Desktop/wow-desktop/2017-11-17-resort/2017-09-20-hackathon-dresden-projects/2017-09-20-anisotropy-fix/beads-cropped.tif");
 
 		// create the ImageJ application context with all available services
 		final net.imagej.ImageJ ij = new net.imagej.ImageJ();

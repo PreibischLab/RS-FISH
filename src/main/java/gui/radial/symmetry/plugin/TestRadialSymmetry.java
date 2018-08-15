@@ -1,4 +1,4 @@
-package gui;
+package gui.radial.symmetry.plugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,15 +43,13 @@ public class TestRadialSymmetry {
 				}
 			}
 		}
-//		try {
-//			Dataset dataset = ij.scifio().datasetIO().open("/media/milkyklim/Samsung_T3/2017-08-24-intronic-probes/N2_dpy-23_ex_int_ama-1_015/subtracted/c1/N2_dpy-23_ex_int_ama-1_015.nd2 - N2_dpy-23_ex_int_ama-1_015.nd2 (series 01) - C=0.tif");
-//			ij.ui().show(dataset);
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
 
-
-
+		try {
+			Dataset dataset = ij.scifio().datasetIO().open("/Users/kkolyva/Downloads/test.tif");
+			ij.ui().show(dataset);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		ij.command().run(Radial_Symmetry.class, true);
 		System.out.println("Doge!");

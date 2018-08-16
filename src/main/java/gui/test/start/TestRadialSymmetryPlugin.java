@@ -1,16 +1,18 @@
-package gui.radial.symmetry.plugin;
+package gui.test.start;
 
 import java.io.File;
 import java.io.IOException;
 
 import net.imagej.Dataset;
 
+import gui.radial.symmetry.plugin.Radial_Symmetry;
+
 /*
  * 
  * New main class for testing
  * */
 
-public class TestRadialSymmetry {
+public class TestRadialSymmetryPlugin {
 
 	public static void main(String[] args) {
 		final net.imagej.ImageJ ij = new net.imagej.ImageJ();

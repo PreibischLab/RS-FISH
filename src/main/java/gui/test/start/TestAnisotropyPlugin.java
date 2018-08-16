@@ -1,9 +1,11 @@
-package gui.anisotropy.plugin;
+package gui.test.start;
 
 import java.io.File;
 import java.io.IOException;
 
 import net.imagej.Dataset;
+
+import gui.anisotropy.plugin.Anisotropy_Plugin;
 
 public class TestAnisotropyPlugin {
 	

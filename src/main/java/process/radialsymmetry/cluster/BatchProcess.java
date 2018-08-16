@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import compute.RadialSymmetry;
-import fit.Spot;
+import fitting.Spot;
 import gui.interactive.HelperFunctions;
 import ij.IJ;
 import ij.ImageJ;

@@ -1,4 +1,4 @@
-package fit;
+package fitting;
 
 import mpicbg.models.CoordinateTransform;
 import mpicbg.models.Point;

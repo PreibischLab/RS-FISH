@@ -17,7 +17,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
 import compute.RadialSymmetry;
-import fit.Spot;
+import fitting.Spot;
 import gui.interactive.HelperFunctions;
 import ij.ImageJ;
 import ij.ImagePlus;

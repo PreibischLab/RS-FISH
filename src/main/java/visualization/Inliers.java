@@ -8,7 +8,7 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
-import fit.Spot;
+import fitting.Spot;
 import gui.interactive.HelperFunctions;
 import ij.CompositeImage;
 import ij.ImagePlus;

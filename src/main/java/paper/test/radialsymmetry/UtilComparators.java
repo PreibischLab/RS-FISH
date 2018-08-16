@@ -2,7 +2,7 @@ package paper.test.radialsymmetry;
 
 import java.util.Comparator;
 
-import fit.Spot;
+import fitting.Spot;
 
 public class UtilComparators {
 	// contains useful comparators 

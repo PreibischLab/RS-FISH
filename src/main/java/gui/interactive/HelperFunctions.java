@@ -23,7 +23,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
-import fit.Spot;
+import fitting.Spot;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;

@@ -2,7 +2,7 @@ package result.output;
 
 import java.util.ArrayList;
 
-import fit.Spot;
+import fitting.Spot;
 import ij.measure.ResultsTable;
 import mpicbg.spim.io.IOFunctions;
 

@@ -1,4 +1,4 @@
-package fit;
+package fitting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +15,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 
 import background.NormalizedGradient;
+import fitting.PointFunctionMatch;
 import gradient.Gradient;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;

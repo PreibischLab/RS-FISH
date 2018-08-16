@@ -19,7 +19,7 @@ import net.imglib2.view.Views;
 import anisotropy.parameters.AParams;
 import background.NormalizedGradient;
 import fiji.tool.SliceObserver;
-import fit.Spot;
+import fitting.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
 import gui.interactive.FixROIListener;

@@ -2,7 +2,7 @@ package paper.test.radialsymmetry;
 
 import java.util.ArrayList;
 
-import fit.Spot;
+import fitting.Spot;
 
 public class Utils {
 	public static double dist(double[] e1, double[] e2){

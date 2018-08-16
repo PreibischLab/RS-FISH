@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import fit.Center;
-import fit.Center.CenterMethod;
-import fit.PointFunctionMatch;
+import fitting.Center;
+import fitting.PointFunctionMatch;
+import fitting.Center.CenterMethod;
 import gradient.Gradient;
 import mpicbg.models.Point;
 

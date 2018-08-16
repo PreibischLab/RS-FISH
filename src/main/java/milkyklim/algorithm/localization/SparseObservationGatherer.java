@@ -8,8 +8,8 @@ import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 
-import fit.PointFunctionMatch;
-import fit.Spot;
+import fitting.PointFunctionMatch;
+import fitting.Spot;
 
 public class SparseObservationGatherer < T extends RealType< T > > implements ObservationGatherer< Spot > 
 {

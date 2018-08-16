@@ -12,7 +12,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 
 import compute.RadialSymmetry;
-import fit.Spot;
+import fitting.Spot;
 import gui.interactive.HelperFunctions;
 import gui.vizualization.Visualization;
 import imglib2.RealTypeNormalization;

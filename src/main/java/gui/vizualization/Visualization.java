@@ -5,7 +5,7 @@ import java.util.List;
 
 import net.imglib2.multithreading.SimpleMultiThreading;
 
-import fit.Spot;
+import fitting.Spot;
 import histogram.Histogram;
 import ij.ImagePlus;
 import visualization.Detections;

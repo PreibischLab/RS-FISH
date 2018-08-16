@@ -16,8 +16,8 @@ import net.imglib2.view.Views;
 
 import background.NormalizedGradient;
 import background.NormalizedGradientRANSAC;
-import fit.Center.CenterMethod;
-import fit.Spot;
+import fitting.Spot;
+import fitting.Center.CenterMethod;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
 import ij.ImageJ;

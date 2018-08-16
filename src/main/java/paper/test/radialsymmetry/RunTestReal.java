@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import compute.RadialSymmetry;
-import fit.Spot;
+import fitting.Spot;
 import gui.interactive.HelperFunctions;
 import gui.vizualization.Visualization;
 import ij.ImagePlus;

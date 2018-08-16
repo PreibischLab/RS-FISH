@@ -36,7 +36,7 @@ public class Radial_Symmetry extends ContextCommand {
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
 	// public static int defaultImg = 0;
 	public static int defaultParam = 0;
-	public static boolean defaultGauss = true;
+	public static boolean defaultGauss = false;
 	public static boolean defaultRANSAC = true;
 	public static float defaultAnisotropy = 1.0f;
 
@@ -70,7 +70,7 @@ public class Radial_Symmetry extends ContextCommand {
 	// use gauss fit
 	// defines if we perform the gauss fit or
 	// linear interpolation for peak intensities
-	@Parameter(label = "Gaussian fitting")
+	// @Parameter(label = "Gaussian fitting")
 	boolean gaussFit = defaultGauss;
 
 	@Parameter(label = "<html><b>Visualization:</b>", visibility = org.scijava.ItemVisibility.MESSAGE)

@@ -11,7 +11,7 @@ import net.imglib2.util.Util;
 
 import background.NormalizedGradient;
 import background.NormalizedGradientAverage;
-import fit.Spot;
+import fitting.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
 import ij.ImageJ;

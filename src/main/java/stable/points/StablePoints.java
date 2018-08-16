@@ -14,7 +14,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
 import background.NormalizedGradient;
-import fit.Spot;
+import fitting.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
 import ij.ImageJ;

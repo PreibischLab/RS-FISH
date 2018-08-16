@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import fiji.tool.SliceObserver;
-import fit.Spot;
+import fitting.Spot;
 import gui.interactive.HelperFunctions;
 import gui.vizualization.ImagePlusListener;
 import ij.ImagePlus;

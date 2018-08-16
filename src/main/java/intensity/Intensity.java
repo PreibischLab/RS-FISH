@@ -12,7 +12,7 @@ import net.imglib2.view.Views;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
-import fit.Spot;
+import fitting.Spot;
 import milkyklim.algorithm.localization.EllipticGaussianOrtho;
 import milkyklim.algorithm.localization.GenericPeakFitter;
 import milkyklim.algorithm.localization.LevenbergMarquardtSolver;

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import net.imglib2.util.Util;
 
-import fit.Spot;
+import fitting.Spot;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 

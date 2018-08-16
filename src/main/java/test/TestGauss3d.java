@@ -16,8 +16,8 @@ import net.imglib2.view.Views;
 
 import background.NormalizedGradient;
 import background.NormalizedGradientRANSAC;
-import fit.Center.CenterMethod;
-import fit.Spot;
+import fitting.Spot;
+import fitting.Center.CenterMethod;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
 import ij.ImageJ;
@@ -227,7 +227,7 @@ public class TestGauss3d
 		return Math.sqrt( sum );
 	}
 
-	final public static void addGaussian( final RandomAccessibleInterval< FloatType > image, final double[] location, final double[] sigma, float A )
+	final public static void addGaussian( final RandomAccessibleInterval< FloatType > image, final double[] location, final double[] sigma, float A, boolean total)
 	{
 		final int numDimensions = image.numDimensions();
 		final int[] size = new int[ numDimensions ];
@@ -262,13 +262,19 @@ public class TestGauss3d
 				value *= A*Math.exp( -(x * x) / two_sq_sigma[ d ] );
 			}
 			
-			cursor.get().set( cursor.get().get() + (float)value );
+			if (total)
+				cursor.get().set( cursor.get().get() + (float)value );
+			else
+				cursor.get().set( Math.max(cursor.get().get(), (float)value) );
 		}
 	}
 
+	final public static void addGaussian( final RandomAccessibleInterval< FloatType > image, final double[] location, final double[] sigma, float A){
+		addGaussian(image, location, sigma, A, true);
+	}
 	
 	final public static void addGaussian( final RandomAccessibleInterval< FloatType > image, final double[] location, final double[] sigma){
-		addGaussian(image, location, sigma, 1);
+		addGaussian(image, location, sigma, 1, true);
 	}
 	
 	

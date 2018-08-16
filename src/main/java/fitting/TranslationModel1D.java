@@ -1,4 +1,4 @@
-package fit;
+package fitting;
 
 import java.util.Collection;
 

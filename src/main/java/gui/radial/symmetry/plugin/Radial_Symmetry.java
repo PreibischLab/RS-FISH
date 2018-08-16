@@ -17,7 +17,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import compute.RadialSymmetry;
-import fit.Spot;
+import fitting.Spot;
 import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
@@ -34,7 +34,7 @@ import result.output.ShowResult;
 public class Radial_Symmetry extends ContextCommand {
 	// Defaults: used to save previous values of the plugin fields
 	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
-	public static int defaultImg = 0;
+	// public static int defaultImg = 0;
 	public static int defaultParam = 0;
 	public static boolean defaultGauss = false;
 	public static boolean defaultRANSAC = true;
@@ -73,7 +73,7 @@ public class Radial_Symmetry extends ContextCommand {
 	// @Parameter(label = "Gaussian fitting")
 	boolean gaussFit = defaultGauss;
 
-	@Parameter(label = "<html><b>Visualization:</b>", visibility = ItemVisibility.MESSAGE)
+	@Parameter(label = "<html><b>Visualization:</b>", visibility = org.scijava.ItemVisibility.MESSAGE)
 	String visualizationLabel = "";
 	@Parameter(label = "Detections overlay")
 	boolean showDetections = defaultDetections;
@@ -84,10 +84,10 @@ public class Radial_Symmetry extends ContextCommand {
 	double[] calibration;
 
 	// logging + error message; used instead of the IO.log
-	@Parameter
+	@Parameter(visibility = org.scijava.ItemVisibility.INVISIBLE)
 	LogService logService;
 
-	@Parameter
+	@Parameter(visibility = ItemVisibility.INVISIBLE)
 	CommandService commandService;
 
 	@Override
@@ -109,7 +109,13 @@ public class Radial_Symmetry extends ContextCommand {
 		// the 2 below we adjust here because they are defined in the gui
 		params.setAnisotropyCoefficient(anisotropy);
 		params.setRANSAC(RANSAC);
+		params.setGaussFit(gaussFit);
 
+		
+		// DEBUG: 
+		// System.out.println(gaussFit + " " + RANSAC);
+		
+		
 		if (parameterType.equals(paramChoice[0])) // manual
 		{
 			// set the parameters in the manual mode
@@ -135,7 +141,7 @@ public class Radial_Symmetry extends ContextCommand {
 		}
 
 		// back up the parameter values to the default variables
-		params.setDefaultValues();
+		// params.setDefaultValues();
 		calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions());
 
 		RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
@@ -158,8 +164,7 @@ public class Radial_Symmetry extends ContextCommand {
 		// stores the intensity values
 		ArrayList<Float> intensity = new ArrayList<>(0);
 
-		RadialSymmetry.processSliceBySlice(ImageJFunctions.wrap(imp), rai, rsm, impDim, gaussFit, params.getSigmaDoG(),
-				allSpots, timePoint, channelPoint, intensity);
+		RadialSymmetry.processSliceBySlice(ImageJFunctions.wrap(imp), rai, rsm, impDim, allSpots, timePoint, channelPoint, intensity);
 
 		if (parameterType.equals(paramChoice[1])) { // interactive
 			// TODO: keep here?
@@ -172,14 +177,23 @@ public class Radial_Symmetry extends ContextCommand {
 		} else if (parameterType.equals(paramChoice[0])) { // manual
 			// write the result to the csv file
 			double histThreshold = 0; // take all of the points that were detected
-
-			ArrayList<Roi> roiList = new ArrayList<>();
-			roiList.add(new Roi(0, 0, imp.getWidth() + 1, imp.getHeight() + 1));
-
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
 		} else
 			System.out.println("Wrong parameters' mode");
+
 	}
+
+	public void setDefaultParams() {
+		// defaultImg = ; // TODO: 
+		// defaultParam = 0;
+		defaultGauss = gaussFit;
+		defaultRANSAC = RANSAC;
+		defaultAnisotropy = anisotropy;
+		defaultDetections = showDetections;
+		defaultInliers = showInliers;
+	}
+
+
 
 	public static void main(String[] args) {
 		// for the historical reasons

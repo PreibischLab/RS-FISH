@@ -9,6 +9,7 @@ import java.util.Iterator;
 import net.imglib2.Cursor;
 import net.imglib2.Localizable;
 import net.imglib2.Point;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
@@ -22,7 +23,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
-import fit.Spot;
+import fitting.Spot;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
@@ -30,6 +31,7 @@ import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
+import mpicbg.util.RealSum;
 
 public class HelperFunctions {
 	
@@ -54,6 +56,22 @@ public class HelperFunctions {
 			img = Views.hyperSlice(img, mapping[4], time);
 					
 		return Views.dropSingletonDimensions(img);
+	}
+	
+	public static double[] calculateMinMax(ImagePlus imp){
+		float min = Float.MAX_VALUE;
+		float max = -Float.MAX_VALUE;
+		for ( int z = 1; z <= imp.getStack().getSize(); ++z )
+		{
+			final ImageProcessor ip = imp.getStack().getProcessor( z );
+			for ( int i = 0; i < ip.getPixelCount(); ++i )
+			{
+				final float v = ip.getf( i );
+				min = Math.min( min, v );
+				max = Math.max( max, v );
+			}
+		}
+		return new double[]{min, max};
 	}
 
 	// returns the index of time dimension
@@ -511,7 +529,45 @@ public class HelperFunctions {
 		}
 		public Spot getSpot() { return spot; }
 	}
-
+	
+	public static void subtractValue(Img<FloatType> bg, double value){			
+		Cursor<FloatType> cursor = bg.cursor();
+		
+		while(cursor.hasNext()){
+			cursor.fwd();
+			float val = (float) (cursor.get().get() - value);
+			cursor.get().set(val);
+		}
+	}
+	
+	public static double getImageAverage(Img<FloatType> bg){
+		// compute average over all pixels
+		double sum = sumImage(bg);
+		for (int d = 0; d < bg.numDimensions(); ++d)
+			sum /= bg.dimension(d);
+		return sum;
+	}
+	
+	public static double sumImage(Img<FloatType> img)
+	{
+		final RealSum sum = new RealSum();		
+		for ( final FloatType t : img )
+			sum.add( t.get() );
+		return sum.getSum();
+	}
+	
+	public static void subtractImg(Img<FloatType> img, Img<FloatType> bg){
+		Cursor<FloatType> cursor = img.cursor();
+		RandomAccess<FloatType> ra = bg.randomAccess();
+		
+		while(cursor.hasNext()){
+			cursor.fwd();
+			ra.setPosition(cursor);
+			float val = cursor.get().get() - ra.get().get();
+			cursor.get().set(val);
+		}
+	}
+	
 	/*
 	 * used by background subtraction to calculate the boundaries of the spot
 	 */

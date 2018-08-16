@@ -1,8 +1,7 @@
-package fit;
+package fitting;
 
-import net.imglib2.EuclideanSpace;
+import net.imglib2.util.Util;
 
-import mpicbg.models.Model;
 import mpicbg.models.Point;
 
 /**
@@ -23,23 +22,25 @@ import mpicbg.models.Point;
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
-public interface SymmetryCenter< M extends AbstractFunction< M > > extends Model< M >, Function< Point >, EuclideanSpace
+public class LinkedPoint<P> extends Point
 {
-	/**
-	 * @param center - will write the symmetry center into the array, dimensionality must match
-	 */
-	public void getSymmetryCenter( final double center[] );
+	private static final long serialVersionUID = 1L;
+
+	final P link;
 	
-	/**
-	 * @param center - will write the symmetry center into the array, dimensionality must match
-	 */
-	public void getSymmetryCenter( final float center[] );
+	public LinkedPoint( final double[] l, final P link )
+	{
+		super( l.clone() );
+		this.link = link;
+	}
+
+	public LinkedPoint( final double[] l, final double[] w, final P link )
+	{
+		super( l.clone(), w.clone() );
+		this.link = link;
+	}
+
+	public P getLinkedObject() { return link; }
 	
-	/**
-	 * @param d - dimension
-	 * @return the center in dimension d
-	 */
-	public double getSymmetryCenter( final int d );
-	
-	public void setSymmetryCenter( final double center, final int d );
+	public String toString() { return "LinkedPoint " + Util.printCoordinates( l ); }
 }

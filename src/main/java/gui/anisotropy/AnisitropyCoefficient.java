@@ -6,7 +6,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
-import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
@@ -20,7 +19,7 @@ import net.imglib2.view.Views;
 import anisotropy.parameters.AParams;
 import background.NormalizedGradient;
 import fiji.tool.SliceObserver;
-import fit.Spot;
+import fitting.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
 import gui.interactive.FixROIListener;
@@ -34,9 +33,9 @@ import ij.process.ImageProcessor;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
 import milkyklim.algorithm.localization.EllipticGaussianOrtho;
+import milkyklim.algorithm.localization.GenericPeakFitter;
 import milkyklim.algorithm.localization.LevenbergMarquardtSolver;
 import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
-import milkyklim.algorithm.localization.PeakFitter;
 
 public class AnisitropyCoefficient {
 
@@ -232,28 +231,22 @@ public class AnisitropyCoefficient {
 
 	// use gauss fit to detect the anisotropy coefficent of the 3D images
 	public double calculateAnisotropyCoefficientGF(RandomAccessibleInterval<FloatType> img, float threshold, float sigma){
+		// this one will be returned
 		double bestScale = 1; 
-
 		int numDimensions = img.numDimensions();
-
+		// this one is coming from gui
 		double [] typicalSigmas = new double[numDimensions];
 		for (int d = 0; d < numDimensions; d++)
 			typicalSigmas[d] = sigma;
 
-		// TODO: implement hashCode for Spot, othewise lookups will be very slow
-		// TODO: make spot implement Localizable and just return the original location for the Localize methods
 		// TODO: implement the background subtraction here, otherwise peakfitter will give the wrong result 
-		// HelperFunctions.copyToLocalizable(filteredSpots, peaks);
-
-		PeakFitter<FloatType> pf = new PeakFitter<FloatType>(img, (ArrayList)peaks,
-				new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(), // use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
+		
+		GenericPeakFitter< FloatType, Point > pf = new GenericPeakFitter<>(img, peaks,
+				new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(),
 				new MLEllipticGaussianEstimator(typicalSigmas));
 		pf.process();
 
-		// TODO: make spot implement Localizable - then this is already a HashMap that maps Spot > double[]
-		// this is actually a Map< Spot, double[] >
-		final Map< Localizable, double[] > fits = pf.getResult();
-
+		final Map< Point, double[] > fits = pf.getResult();
 
 		double [] sigmas = new double[numDimensions];
 		for (int d = 0; d < numDimensions; d++)
@@ -268,7 +261,7 @@ public class AnisitropyCoefficient {
 			}
 		}
 
-		// TODO: skip division by zero		
+		// skip division by zero		
 		for(int d = 0; d < numDimensions; d++)
 			sigmas[d] = (peaks.size() == 0) ? 1 : sigmas[d]/peaks.size();
 		for(int d = 0; d < numDimensions; d++){

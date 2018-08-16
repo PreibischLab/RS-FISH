@@ -1,7 +1,8 @@
-package fit;
+package fitting;
 
 import java.util.Collection;
 
+import fitting.Function;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
 

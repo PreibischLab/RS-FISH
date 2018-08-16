@@ -3,7 +3,7 @@ package test;
 import java.io.File;
 import java.net.URISyntaxException;
 
-import fit.OrientedPoint;
+import fitting.OrientedPoint;
 import mpicbg.models.Point;
 
 public class JAR_Test

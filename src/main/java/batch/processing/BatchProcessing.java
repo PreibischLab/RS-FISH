@@ -17,7 +17,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
 import compute.RadialSymmetry;
-import fit.Spot;
+import fitting.Spot;
 import gui.interactive.HelperFunctions;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -189,7 +189,7 @@ public class BatchProcessing {
 		params.setRANSAC(useRANSAC);
 		// pre-detection
 		params.setSigmaDog(1.50f);
-		params.setThresholdDoG(0.0083f);
+		params.setThresholdDog(0.0083f);
 		// detection
 		params.setSupportRadius(3);
 		params.setInlierRatio(0.37f);

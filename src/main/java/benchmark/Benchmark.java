@@ -16,9 +16,9 @@ import net.imglib2.neighborsearch.NearestNeighborSearchOnKDTree;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
-import fit.OrientedPoint;
-import fit.PointFunctionMatch;
-import fit.Spot;
+import fitting.OrientedPoint;
+import fitting.PointFunctionMatch;
+import fitting.Spot;
 import gauss.GaussFit;
 import gauss.GaussianMaskFit;
 import gradient.Gradient;

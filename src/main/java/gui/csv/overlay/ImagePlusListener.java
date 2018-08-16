@@ -15,12 +15,7 @@ public class ImagePlusListener implements SliceListener
 
 	@Override
 	public void sliceChanged(ImagePlus imp) {
-		if (parent.isStarted()) {
-			while (parent.isComputing()) {
-				SimpleMultiThreading.threadWait(10);
-			}
-			
+		if (parent.isStarted()) 
 			parent.updatePreview(); 
-		}
 	}
 }

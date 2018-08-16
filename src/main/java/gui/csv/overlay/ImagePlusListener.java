@@ -1,7 +1,6 @@
-package gui.anisotropy.plugin;
+package gui.csv.overlay;
 
 import fiji.tool.SliceListener;
-import gui.csv.overlay.CsvOverlay;
 import ij.ImagePlus;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
@@ -15,14 +14,13 @@ public class ImagePlusListener implements SliceListener
 	}
 
 	@Override
-	public void sliceChanged(ImagePlus arg0) {
+	public void sliceChanged(ImagePlus imp) {
 		if (parent.isStarted()) {
 			while (parent.isComputing()) {
 				SimpleMultiThreading.threadWait(10);
 			}
 			
-			// TODO: adjust to the use case
-			// parent.updatePreview(parent.getSlice()); // TODO: better way to do this ? 
+			parent.updatePreview(); 
 		}
 	}
 }

@@ -31,7 +31,7 @@ public class IOUtils {
 		String[] nextLine;
 		int numDimensions = getNumDimensions(filepath, separator) - 2;
 		try {
-			CSVReader reader = new CSVReader(new FileReader(filepath), separator); // figure the delimeter yourself
+			CSVReader reader = new CSVReader(new FileReader(filepath), separator); // figure the delimiter yourself
 			while ((nextLine = reader.readNext()) != null) {
 				double [] pos = new double[numDimensions];
 				for (int d = 0; d < numDimensions; d++)

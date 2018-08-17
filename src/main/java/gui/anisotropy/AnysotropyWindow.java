@@ -8,7 +8,7 @@ import java.awt.Insets;
 import java.awt.Label;
 import java.awt.Scrollbar;
 
-import gui.interactive.HelperFunctions;
+import gui.radial.symmetry.interactive.HelperFunctions;
 
 public class AnysotropyWindow {
 

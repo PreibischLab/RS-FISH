@@ -15,11 +15,11 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
-import background.NormalizedGradient;
 import fitting.Spot;
-import gradient.Gradient;
-import gradient.GradientPreCompute;
-import gui.interactive.HelperFunctions;
+import gradient.computation.Gradient;
+import gradient.computation.GradientPreCompute;
+import gradient.normalized.computation.NormalizedGradient;
+import gui.radial.symmetry.interactive.HelperFunctions;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;

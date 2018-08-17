@@ -16,19 +16,19 @@ import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import compute.RadialSymmetry;
 import fitting.Spot;
-import gui.imagej.GenericDialogGUIParams;
-import gui.interactive.HelperFunctions;
-import gui.interactive.InteractiveRadialSymmetry;
-import gui.vizualization.Visualization;
+import gui.radial.symmetry.imagej.GenericDialogGUIParams;
+import gui.radial.symmetry.interactive.HelperFunctions;
+import gui.radial.symmetry.interactive.InteractiveRadialSymmetry;
+import gui.radial.symmetry.result.ShowResult;
+import gui.radial.symmetry.vizualization.Visualization;
 import ij.ImagePlus;
 import ij.gui.Roi;
-import imglib2.RealTypeNormalization;
-import imglib2.TypeTransformingRandomAccessibleInterval;
-import parameters.GUIParams;
-import parameters.RadialSymmetryParameters;
-import result.output.ShowResult;
+import imglib2.type.numeric.real.normalized.RealTypeNormalization;
+import imglib2.type.numeric.real.normalized.TypeTransformingRandomAccessibleInterval;
+import radial.symmetry.computation.RadialSymmetry;
+import radial.symmetry.parameters.GUIParams;
+import radial.symmetry.parameters.RadialSymmetryParameters;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Radial Symmetry")
 public class Radial_Symmetry extends ContextCommand {

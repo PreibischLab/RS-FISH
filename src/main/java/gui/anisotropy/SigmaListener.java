@@ -6,7 +6,7 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 
 import gui.anisotropy.AnisitropyCoefficient.ValueChange;
-import gui.interactive.HelperFunctions;
+import gui.radial.symmetry.interactive.HelperFunctions;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 public class SigmaListener implements AdjustmentListener {

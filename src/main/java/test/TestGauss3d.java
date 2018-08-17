@@ -14,15 +14,15 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
-import background.NormalizedGradient;
-import background.NormalizedGradientRANSAC;
 import fitting.Spot;
 import fitting.Center.CenterMethod;
-import gradient.Gradient;
-import gradient.GradientPreCompute;
+import gradient.computation.Gradient;
+import gradient.computation.GradientPreCompute;
+import gradient.normalized.computation.NormalizedGradient;
+import gradient.normalized.computation.NormalizedGradientRANSAC;
 import ij.ImageJ;
-import localmaxima.LocalMaxima;
-import localmaxima.LocalMaximaDoG;
+import local.maxima.LocalMaxima;
+import local.maxima.LocalMaximaDoG;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 

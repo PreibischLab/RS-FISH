@@ -8,9 +8,9 @@ import org.scijava.plugin.Plugin;
 
 import anisotropy.parameters.AParams;
 import gui.anisotropy.AnisitropyCoefficient;
-import gui.interactive.HelperFunctions;
+import gui.radial.symmetry.interactive.HelperFunctions;
 import ij.ImagePlus;
-import parameters.GUIParams;
+import radial.symmetry.parameters.GUIParams;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Calculate Anisotropy Coefficient")
 public class Anisotropy_Plugin implements Command {

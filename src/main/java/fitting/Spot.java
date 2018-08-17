@@ -14,9 +14,9 @@ import net.imglib2.iterator.IntervalIterator;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 
-import background.NormalizedGradient;
 import fitting.PointFunctionMatch;
-import gradient.Gradient;
+import gradient.computation.Gradient;
+import gradient.normalized.computation.NormalizedGradient;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;

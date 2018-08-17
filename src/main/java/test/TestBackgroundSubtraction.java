@@ -11,8 +11,8 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
+import background.plane.fit.BackgroundSubtraction;
 import ij.ImageJ;
-import plane.fit.BackgroundSubtraction;
 import util.ImgLib2Util;
 
 public class TestBackgroundSubtraction {

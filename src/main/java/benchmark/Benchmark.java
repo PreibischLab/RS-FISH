@@ -19,15 +19,15 @@ import net.imglib2.view.Views;
 import fitting.OrientedPoint;
 import fitting.PointFunctionMatch;
 import fitting.Spot;
-import gauss.GaussFit;
-import gauss.GaussianMaskFit;
-import gradient.Gradient;
-import gradient.GradientPreCompute;
+import gauss.fit.GaussFit;
+import gauss.fit.GaussianMaskFit;
+import gradient.computation.Gradient;
+import gradient.computation.GradientPreCompute;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
-import localmaxima.LocalMaxima;
-import localmaxima.LocalMaximaSmoothNeighborhood;
+import local.maxima.LocalMaxima;
+import local.maxima.LocalMaximaSmoothNeighborhood;
 import test.TestGauss2d;
 
 /**

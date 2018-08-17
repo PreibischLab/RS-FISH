@@ -181,6 +181,14 @@ public class GUIParams {
 		this.gaussFit = gaussFit;
 	}
 
+	public void setMultipleParams(float dogSigma, float dogThreshold, int supportRadius, float inlierRatio, float maxError ) {
+		this.sigma = dogSigma;
+		this.threshold = dogThreshold;
+		this.supportRadius = supportRadius;
+		this.inlierRatio = inlierRatio;
+		this.maxError = maxError;
+	}
+	
 	// background subtraction
 	// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC
 	// on Median" };

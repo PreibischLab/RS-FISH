@@ -181,12 +181,15 @@ public class GUIParams {
 		this.gaussFit = gaussFit;
 	}
 
-	public void setMultipleParams(float dogSigma, float dogThreshold, int supportRadius, float inlierRatio, float maxError ) {
+	public void setMultipleParams(float dogSigma, float dogThreshold, int supportRadius, float inlierRatio, float maxError, float anisotropyCoefficient, boolean useRansac) {
 		this.sigma = dogSigma;
 		this.threshold = dogThreshold;
 		this.supportRadius = supportRadius;
 		this.inlierRatio = inlierRatio;
 		this.maxError = maxError;
+		
+		this.anisotropyCoefficient = anisotropyCoefficient;
+		this.RANSAC = useRansac;
 	}
 	
 	// background subtraction

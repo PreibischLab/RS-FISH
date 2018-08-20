@@ -1,4 +1,4 @@
-package cluster.radial.symmetry.process;
+package cluster.radial.symmetry.process.updated;
 
 
 public class ProcessImage {

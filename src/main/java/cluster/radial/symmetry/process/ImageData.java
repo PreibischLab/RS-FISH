@@ -9,28 +9,28 @@ public class ImageData {
 	public String filename; // without extension
 	public float center; // used for the second run to store the center of the fitted peak
 	
-	ImageData(){
+	public ImageData(){
 		lambda = 0;
 		defects = false;
 		filename = "";
 		center = 1;
 	}
 	
-	ImageData(int lambda, boolean defects, String filename){
+	public ImageData(int lambda, boolean defects, String filename){
 		this.lambda = lambda;
 		this.defects = defects;
 		this.filename = filename;
 		this.center = 1;
 	}
 	
-	ImageData(int lambda, boolean defects, String filename, float center){
+	public ImageData(int lambda, boolean defects, String filename, float center){
 		this.lambda = lambda;
 		this.defects = defects;
 		this.filename = filename;
 		this.center = center;
 	}
 	
-	ImageData(String filename, float center){
+	public ImageData(String filename, float center){
 		this.lambda = 0;
 		this.defects = false;
 		this.filename = filename;

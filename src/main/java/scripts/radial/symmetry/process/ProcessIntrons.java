@@ -16,7 +16,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.RealSum;
 import net.imglib2.view.Views;
 
-import cluster.radial.symmetry.process.updated.ImageData;
+import cluster.radial.symmetry.process.ImageData;
 import radial.symmetry.utils.IOUtils;
 import util.ImgLib2Util;
 

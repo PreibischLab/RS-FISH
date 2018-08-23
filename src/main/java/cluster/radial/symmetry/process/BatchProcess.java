@@ -1,4 +1,4 @@
-package cluster.radial.symmetry.process.updated;
+package cluster.radial.symmetry.process;
 
 import io.scif.img.ImgSaver;
 

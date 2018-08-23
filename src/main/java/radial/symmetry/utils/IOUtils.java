@@ -15,7 +15,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 
-import cluster.radial.symmetry.process.updated.ImageData;
+import cluster.radial.symmetry.process.ImageData;
 import fitting.Spot;
 import ij.IJ;
 import util.opencsv.CSVReader;

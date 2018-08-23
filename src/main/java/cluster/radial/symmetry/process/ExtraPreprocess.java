@@ -1,4 +1,4 @@
-package cluster.radial.symmetry.process.updated;
+package cluster.radial.symmetry.process;
 
 import java.awt.Rectangle;
 import java.io.File;

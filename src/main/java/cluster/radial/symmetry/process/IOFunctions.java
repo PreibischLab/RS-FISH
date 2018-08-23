@@ -38,7 +38,7 @@ public class IOFunctions {
 	}
 
 	public static ArrayList <ImageData> readDb(File databasePath) {
-
+		// TODO: rewrite this part as dictionaries
 		ArrayList <ImageData> imageData = new ArrayList<>(); 
 		// some constants
 		final int nColumns = 24;

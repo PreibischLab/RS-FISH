@@ -294,7 +294,7 @@ public class ExtraPreprocess {
 	}
 	
 	
-	public static ImagePlus fixIntensitiesOnlySpotsRansac(Img<FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity, double [] gCoeff, boolean doZcorrection) {
+	public static Img<FloatType> fixIntensitiesOnlySpotsRansac(Img<FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity, double [] gCoeff, boolean doZcorrection) {
 	
 		int numDimensions = 3;
 		
@@ -318,7 +318,6 @@ public class ExtraPreprocess {
 			qf.fit(candidates);
 		}
 		catch (NotEnoughDataPointsException | IllDefinedDataPointsException exc) {
-			// TODO Auto-generated catch block
 			exc.printStackTrace();
 		}
 		
@@ -370,7 +369,8 @@ public class ExtraPreprocess {
 			} 
 		}
 
-		return ImageJFunctions.wrap(img, "");
+		return img;
+		// return ImageJFunctions.wrap(img, "");
 	}
 	
 	
@@ -582,6 +582,42 @@ public class ExtraPreprocess {
 	}
 
 
+	public static float calculateMedianIntensity(Img<FloatType> img, Img<FloatType> mask) {
+		int numDimensions = img.numDimensions();
+		float [] medianPerPlane = new float[(int) img.dimension(numDimensions -1)];
+		
+		RandomAccess<FloatType> ra = mask.randomAccess();
+		
+		for (int z = 0; z < img.dimension(numDimensions -1); z++) {
+			final Cursor< FloatType > cursor = Views.hyperSlice(img, numDimensions - 1, z).cursor();
+			ArrayList<Float> pixels = new ArrayList<>();
+			
+			long [] position = new long [numDimensions - 2];
+			
+			while(cursor.hasNext()) {
+				cursor.fwd();
+				
+				cursor.localize(position);
+				ra.setPosition(position);
+				
+				if (ra.get().get() > 0)
+					pixels.add(cursor.get().get());
+				
+			}
+			Collections.sort(pixels);
+			medianPerPlane[z] = pixels.get(pixels.size() / 2);
+		}
+		
+		Arrays.sort(medianPerPlane);
+		float medianMedianPerPlane = medianPerPlane[medianPerPlane.length / 2];
+
+		System.out.println("medianMedianPerPlane: " + medianMedianPerPlane);
+
+		return medianMedianPerPlane;
+		
+	}
+	
+	// TODO: OLD REMOVE
 	public static float calculateMedianIntensity(ImagePlus imp) {
 		// used for iterating
 		Img<FloatType> img = ImageJFunctions.wrap(imp);

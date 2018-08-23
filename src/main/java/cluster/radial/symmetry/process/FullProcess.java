@@ -122,7 +122,7 @@ public class FullProcess {
 //		// - radial symmetry you are looking for!
 //		// doZcorrection = true;
 //		 
-		BatchProcess.runProcess(pathImagesMedian2, pathDatabase, pathZcorrected2, null, null, pathResultCsv2, doZcorrection);
+		BatchProcess.runProcess(pathImagesMedian2, pathImagesRoi, pathDatabase, pathZcorrected2, null, null, pathResultCsv2, doZcorrection);
 		// first iteration full preprossing 
 
 	}
@@ -178,168 +178,169 @@ public class FullProcess {
 		// to estimate the bg (run over the roi only)
 		// - normalize the image [0,1] where x_min=0 -> 0, brightest pixel -> 1;
 		// (maybe it is a good idea to use median of r=1 and take the brightest pixel from there for stability)
-		// Preprocess.runFirstStepPreprocess(pathImages, pathDatabase, pathImagesRoi, pathImagesMedian);
+		Preprocess.runFirstStepPreprocess(pathImages, pathDatabase, pathImagesRoi, pathImagesMedian);
 		// fix the rois
+		// TODO: THIS MIGHT BE OBSOLETE: CHECK AND REMOVE!
 		// FixImages.runFixImages(pathImagesMedian, pathImagesRoi, pathImagesMedian);
 		// - run radial symmetry
 		// - (subtract the x_min value before performing the z-correction but it is 0 in our case anyways)
 		// can skip this step because x_min = 0
 		// - z-correct the points 
 		// - z-correct the image from the previous step (one normalized between 0 and 1)
-		// BatchProcess.runProcess(pathImagesMedian, pathDatabase, pathZcorrected, pathResultCsvBeforeCorrection, pathParameters, pathResultCsv, doZcorrection);
+		BatchProcess.runProcess(pathImagesMedian, pathImagesRoi, pathDatabase, pathZcorrected, pathResultCsvBeforeCorrection, pathParameters, pathResultCsv, doZcorrection);
 		// - reuse the the z-corrected image from the previous step 
 		// - normalize the image [0,1] where x_min=0 -> 0; center of the peak -> 1;
 
-//		Preprocess.runSecondStepPreprocess(pathZcorrected, pathDatabase, pathImagesRoi, pathCenters, pathImagesMedian2);
+		Preprocess.runSecondStepPreprocess(pathZcorrected, pathDatabase, pathImagesRoi, pathCenters, pathImagesMedian2);
 //		FixImages.runFixImages(pathImagesMedian2, pathImagesRoi, pathImagesMedian2);
 //		// - radial symmetry you are looking for!
 //		// doZcorrection = true;
 //		 
-		BatchProcess.runProcess(pathImagesMedian2, pathDatabase, pathZcorrected2, null, null, pathResultCsv2, doZcorrection);
+		BatchProcess.runProcess(pathImagesMedian2, pathImagesRoi, pathDatabase, pathZcorrected2, null, null, pathResultCsv2, doZcorrection);
 		// first iteration full preprossing 
 
 	}
 
-	public static void runFullProcessTest() {
-		// TODO: make this one more general
-		// String prefix = "/Volumes/1TB/test/2018-04-17-test-run";
-		String prefix = "/Users/kkolyva/Desktop/2018-04-18-08-29-25-test/test/2018-04-18-14-46-52-median-median-first-test";
-
-		// path to the csv file with RS detected centers
-		File pathCenters = new File(prefix + "/centers/all-centers.csv");
-		int centerIndex = 2; // run the second iteration of the radial symmetry
-		String suffix = centerIndex == 1 ? "" : "-2";
-
-		// path to the images with roi
-		File pathImagesRoi = new File(prefix +"/roi");
-		// path to separate channel images
-		File pathImages = new File(prefix +"/channels");
-		// path to the database with the images
-		File pathDatabase = new File(prefix +"/smFISH-database/N2-Table 1.csv");
-		// path to separate channel images
-		File pathImagesMedianMedian = new File(prefix +"/median-median");
-		// path to the median filtered images that we save
-		File pathImagesMedian = new File(prefix +"/median" + suffix);
-		// path to save the .csv files with the results
-		File pathResultCsv = new File(prefix +"/csv" + suffix);
-		// path z-corrected image
-		File pathZcorrected = new File(prefix +"/zCorrected");
-
-		boolean allPathsAreCorrect = checkAllPaths(pathDatabase, pathDatabase, pathImagesMedian, pathDatabase, pathDatabase);
-		if (!allPathsAreCorrect)
-			return;
-
-		// Img<FloatType> img =  ImgLib2Util.openAs32Bit(new File("/Volumes/1TB/test/2/img/C1-N2_96.tif"));
-		// ImageJFunctions.show(img);
-
-		if (false) {
-			ExtraPreprocess.runExtraPreprocess(pathImages, pathDatabase, pathImagesMedianMedian);
-		}
-
-		if (true){
-			// trigger preprocessing
-			if (centerIndex == 1) {
-				Preprocess.runPreprocess(pathImagesMedianMedian, pathImagesRoi, pathImagesMedian, pathDatabase, pathCenters, centerIndex);
-				// trigger fixing; reslice and add roi's
-				FixImages.runFixImages(pathImagesMedian, pathImagesRoi, pathImagesMedian);
-			}
-			if (centerIndex == 2) {
-				Preprocess.runPreprocess(pathImagesMedianMedian, pathImagesRoi, pathImagesMedian, pathDatabase, pathCenters, centerIndex);
-				// trigger fixing; reslice and add roi's
-				FixImages.runFixImages(pathImagesMedian, pathImagesRoi, pathImagesMedian);
-			}
-
-		}
-		if (true) {
-			// use only images that are fine 
-			if (centerIndex == 1)
-				BatchProcess.runProcess(pathImagesMedian, pathDatabase, pathZcorrected, pathResultCsv, true);
-			if (centerIndex == 2)
-				BatchProcess.runProcess(pathZcorrected, pathDatabase, null, pathResultCsv, true);
-		}
-
-	}
-
-
-	public static void runFullProcess() {
-		// TODO: make this one more general
-		String prefix = "/media/milkyklim/1TB/new/";
-		// path to the images with roi
-		File pathImagesRoi = new File(prefix +"/2018-03-29-laura-radial-symmetry-numbers/SEA-12");
-		// path to separate channel images
-		File pathImages = new File(prefix +"/2018-03-29-laura-radial-symmetry-numbers/SEA-12-channels-correct");
-		// path to the database with the images
-		File pathDatabase = new File(prefix +"/2018-03-29-laura-radial-symmetry-numbers/smFISH-database/SEA-12-Table 1.csv");
-		// path to the median filtered images that we save
-		File pathImagesMedian = new File(prefix +"/2018-04-03-laura-images-processing/median-correct");
-		// path to save the .csv files with the results
-		File pathResultCsv = new File(prefix +"/2018-04-03-laura-images-processing/results");
-
-		// path z-corrected image
-		File pathZcorrected = new File(prefix +"/zCorrected");
-
-		// path to the csv file with RS detected centers
-		File pathCenters = new File("");		
-		int centerIndex = 2; // run the second iteration of the radial symmetry
+//	public static void runFullProcessTest() {
+//		// TODO: make this one more general
+//		// String prefix = "/Volumes/1TB/test/2018-04-17-test-run";
+//		String prefix = "/Users/kkolyva/Desktop/2018-04-18-08-29-25-test/test/2018-04-18-14-46-52-median-median-first-test";
+//
+//		// path to the csv file with RS detected centers
+//		File pathCenters = new File(prefix + "/centers/all-centers.csv");
+//		int centerIndex = 2; // run the second iteration of the radial symmetry
+//		String suffix = centerIndex == 1 ? "" : "-2";
+//
+//		// path to the images with roi
+//		File pathImagesRoi = new File(prefix +"/roi");
+//		// path to separate channel images
+//		File pathImages = new File(prefix +"/channels");
+//		// path to the database with the images
+//		File pathDatabase = new File(prefix +"/smFISH-database/N2-Table 1.csv");
+//		// path to separate channel images
+//		File pathImagesMedianMedian = new File(prefix +"/median-median");
+//		// path to the median filtered images that we save
+//		File pathImagesMedian = new File(prefix +"/median" + suffix);
+//		// path to save the .csv files with the results
+//		File pathResultCsv = new File(prefix +"/csv" + suffix);
+//		// path z-corrected image
+//		File pathZcorrected = new File(prefix +"/zCorrected");
+//
+//		boolean allPathsAreCorrect = checkAllPaths(pathDatabase, pathDatabase, pathImagesMedian, pathDatabase, pathDatabase);
+//		if (!allPathsAreCorrect)
+//			return;
+//
+//		// Img<FloatType> img =  ImgLib2Util.openAs32Bit(new File("/Volumes/1TB/test/2/img/C1-N2_96.tif"));
+//		// ImageJFunctions.show(img);
+//
+//		if (false) {
+//			ExtraPreprocess.runExtraPreprocess(pathImages, pathDatabase, pathImagesMedianMedian);
+//		}
+//
+//		if (true){
+//			// trigger preprocessing
+//			if (centerIndex == 1) {
+//				Preprocess.runPreprocess(pathImagesMedianMedian, pathImagesRoi, pathImagesMedian, pathDatabase, pathCenters, centerIndex);
+//				// trigger fixing; reslice and add roi's
+//				FixImages.runFixImages(pathImagesMedian, pathImagesRoi, pathImagesMedian);
+//			}
+//			if (centerIndex == 2) {
+//				Preprocess.runPreprocess(pathImagesMedianMedian, pathImagesRoi, pathImagesMedian, pathDatabase, pathCenters, centerIndex);
+//				// trigger fixing; reslice and add roi's
+//				FixImages.runFixImages(pathImagesMedian, pathImagesRoi, pathImagesMedian);
+//			}
+//
+//		}
+//		if (true) {
+//			// use only images that are fine 
+//			if (centerIndex == 1)
+//				BatchProcess.runProcess(pathImagesMedian, pathDatabase, pathZcorrected, pathResultCsv, true);
+//			if (centerIndex == 2)
+//				BatchProcess.runProcess(pathZcorrected, pathDatabase, null, pathResultCsv, true);
+//		}
+//
+//	}
 
 
+//	public static void runFullProcess() {
+//		// TODO: make this one more general
+//		String prefix = "/media/milkyklim/1TB/new/";
+//		// path to the images with roi
+//		File pathImagesRoi = new File(prefix +"/2018-03-29-laura-radial-symmetry-numbers/SEA-12");
+//		// path to separate channel images
+//		File pathImages = new File(prefix +"/2018-03-29-laura-radial-symmetry-numbers/SEA-12-channels-correct");
+//		// path to the database with the images
+//		File pathDatabase = new File(prefix +"/2018-03-29-laura-radial-symmetry-numbers/smFISH-database/SEA-12-Table 1.csv");
+//		// path to the median filtered images that we save
+//		File pathImagesMedian = new File(prefix +"/2018-04-03-laura-images-processing/median-correct");
+//		// path to save the .csv files with the results
+//		File pathResultCsv = new File(prefix +"/2018-04-03-laura-images-processing/results");
+//
+//		// path z-corrected image
+//		File pathZcorrected = new File(prefix +"/zCorrected");
+//
+//		// path to the csv file with RS detected centers
+//		File pathCenters = new File("");		
+//		int centerIndex = 2; // run the second iteration of the radial symmetry
+//
+//
+//
+//		boolean allPathsAreCorrect = checkAllPaths(pathImages, pathImagesRoi, pathImagesMedian, pathDatabase, pathCenters);
+//		if (!allPathsAreCorrect)
+//			return;
+//
+//		if (false){
+//			// trigger preprocessing
+//			// Preprocess.runPreprocess(pathImages, pathImagesRoi, pathImagesMedian, pathDatabase, pathCenters, centerIndex);
+//			// trigger fixing; reslice and add roi's
+//			// FixImages.runFixImages(pathImagesMedian, pathImagesRoi, pathImagesMedian);
+//		}
+//		if (true) {
+//			// use only images that are fine 
+//			BatchProcess.runProcess(pathImagesMedian, pathDatabase, pathZcorrected, pathResultCsv, true);
+//			// 
+//		}
+//	}
 
-		boolean allPathsAreCorrect = checkAllPaths(pathImages, pathImagesRoi, pathImagesMedian, pathDatabase, pathCenters);
-		if (!allPathsAreCorrect)
-			return;
-
-		if (false){
-			// trigger preprocessing
-			// Preprocess.runPreprocess(pathImages, pathImagesRoi, pathImagesMedian, pathDatabase, pathCenters, centerIndex);
-			// trigger fixing; reslice and add roi's
-			// FixImages.runFixImages(pathImagesMedian, pathImagesRoi, pathImagesMedian);
-		}
-		if (true) {
-			// use only images that are fine 
-			BatchProcess.runProcess(pathImagesMedian, pathDatabase, pathZcorrected, pathResultCsv, true);
-			// 
-		}
-	}
-
-	public static void runFullProcess2() {
-		// TODO: make this one more general
-		String prefix = "/home/milkyklim/Desktop";
-		// name of the line
-		String line = "N2";
-		// path to the images with roi
-		File pathImagesRoi = new File(prefix +"/2018-04-03-laura-radial-symmetry-numbers/N2");
-		// path to separate channel images
-		File pathImages = new File(prefix +"/2018-04-03-laura-radial-symmetry-numbers/N2-channels-correct");
-		// path to the database with the images
-		File pathDatabase = new File(prefix +"/2018-04-03-laura-radial-symmetry-numbers/smFISH-database/N2-Table 1.csv");
-		// path to the median filtered images that we save
-		File pathImagesMedian = new File(prefix +"/2018-04-03-laura-radial-symmetry-numbers/median-correct-2");
-		// path to save the .csv files with the results
-		File pathResultCsv = new File(prefix +"/2018-04-03-laura-radial-symmetry-numbers/results-2");
-
-		// path z-corrected image
-		File pathZcorrected = new File(prefix +"/zCorrected");
-
-		// path to the csv file with RS detected centers
-		File pathCenters = new File(prefix +"/2018-04-03-laura-radial-symmetry-numbers/N2-results/centers/all-centers.csv");		
-		int centerIndex = 2; // run the second iteration of the radial symmetry
-
-		boolean allPathsAreCorrect = checkAllPaths(pathImages, pathImagesRoi, pathImagesMedian, pathDatabase, pathCenters);
-		if (!allPathsAreCorrect)
-			return;
-
-		if (false){
-			// trigger preprocessing
-			Preprocess.runPreprocess(pathImages, pathImagesRoi, pathImagesMedian, pathDatabase, pathCenters, centerIndex);
-			// trigger fixing; reslice and add roi's
-			FixImages.runFixImages(pathImagesMedian, pathImagesRoi, pathImagesMedian);
-		}
-		if (true) {
-			// use only images that are fine 
-			BatchProcess.runProcess(pathImagesMedian, pathDatabase, pathZcorrected, pathResultCsv, true);
-			// 
-		}
-	}
+//	public static void runFullProcess2() {
+//		// TODO: make this one more general
+//		String prefix = "/home/milkyklim/Desktop";
+//		// name of the line
+//		String line = "N2";
+//		// path to the images with roi
+//		File pathImagesRoi = new File(prefix +"/2018-04-03-laura-radial-symmetry-numbers/N2");
+//		// path to separate channel images
+//		File pathImages = new File(prefix +"/2018-04-03-laura-radial-symmetry-numbers/N2-channels-correct");
+//		// path to the database with the images
+//		File pathDatabase = new File(prefix +"/2018-04-03-laura-radial-symmetry-numbers/smFISH-database/N2-Table 1.csv");
+//		// path to the median filtered images that we save
+//		File pathImagesMedian = new File(prefix +"/2018-04-03-laura-radial-symmetry-numbers/median-correct-2");
+//		// path to save the .csv files with the results
+//		File pathResultCsv = new File(prefix +"/2018-04-03-laura-radial-symmetry-numbers/results-2");
+//
+//		// path z-corrected image
+//		File pathZcorrected = new File(prefix +"/zCorrected");
+//
+//		// path to the csv file with RS detected centers
+//		File pathCenters = new File(prefix +"/2018-04-03-laura-radial-symmetry-numbers/N2-results/centers/all-centers.csv");		
+//		int centerIndex = 2; // run the second iteration of the radial symmetry
+//
+//		boolean allPathsAreCorrect = checkAllPaths(pathImages, pathImagesRoi, pathImagesMedian, pathDatabase, pathCenters);
+//		if (!allPathsAreCorrect)
+//			return;
+//
+//		if (false){
+//			// trigger preprocessing
+//			Preprocess.runPreprocess(pathImages, pathImagesRoi, pathImagesMedian, pathDatabase, pathCenters, centerIndex);
+//			// trigger fixing; reslice and add roi's
+//			FixImages.runFixImages(pathImagesMedian, pathImagesRoi, pathImagesMedian);
+//		}
+//		if (true) {
+//			// use only images that are fine 
+//			BatchProcess.runProcess(pathImagesMedian, pathDatabase, pathZcorrected, pathResultCsv, true);
+//			// 
+//		}
+//	}
 
 
 	public static void main(String[] args) {

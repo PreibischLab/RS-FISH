@@ -4,6 +4,8 @@ import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 
 import ij.IJ;
 import ij.ImageJ;
@@ -21,6 +23,7 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 
 import gui.radial.symmetry.interactive.HelperFunctions;
 import util.ImgLib2Util;
@@ -89,10 +92,10 @@ public class Preprocess {
 		}
 	}
 
-	
+	// TODO: OLD: REMOVE
 	public static float[] getMinmax(Img <FloatType> img, ImagePlus imp) {
 		float [] minmax = new float[2];
-		
+
 		ImageProcessor ip = imp.getMask();
 		Rectangle bounds = imp.getRoi().getBounds();
 		// System.out.println(ip.getWidth() + " : " + ip.getHeight());
@@ -118,22 +121,57 @@ public class Preprocess {
 					currentMax = currentValue;
 			}
 		}
-		
+
 		minmax[0] = currentMin;
 		minmax[1] = currentMax;
-		
+
 		return minmax;
 	}
-	
+
+	public static float[] getMinmax(Img<FloatType> img, Img<FloatType> mask) {
+		int numDimensions = img.numDimensions();
+		float [] minmax = new float[2];
+
+		final Cursor< FloatType > cursor = img.cursor();
+		RandomAccess<FloatType> ra = mask.randomAccess();
+		
+		float currentMin = Float.MAX_VALUE;
+		float currentMax = -Float.MAX_VALUE;
+		
+		long [] position = new long [numDimensions];
+
+		while(cursor.hasNext()) {
+			cursor.fwd();
+
+			cursor.localize(position);
+			ra.setPosition(new long[] {position[0], position[1]});
+
+			if (ra.get().get() > 0){
+				float currentValue = cursor.get().get();
+				if (currentValue < currentMin)
+					currentMin = currentValue;
+				if (currentValue > currentMax)
+					currentMax = currentValue;
+			}
+
+		}
+
+		minmax[0] = currentMin;
+		minmax[1] = currentMax;
+
+		return minmax;
+
+	}
+
 	public static Img<FloatType> normalize( Img <FloatType> img, float fromMin, float fromMax, float toMin, float toMax){
 		// System.out.println(ip.getWidth() + " : " + ip.getHeight());
 		// System.out.println(imp.getWidth() + " : " + imp.getHeight());
-		
+
 		Img<FloatType> pImg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
-		
+
 		final Cursor< FloatType > cursor = img.cursor();
 		RandomAccess<FloatType> ra = pImg.randomAccess();
-		
+
 		// no roi in the image case
 		if (fromMin == Float.MAX_VALUE || fromMax == -Float.MAX_VALUE) {
 			fromMax = 1;
@@ -150,11 +188,11 @@ public class Preprocess {
 			float currentVal = cursor.get().get();
 			currentVal -= fromMin;
 			currentVal /= scale;
-			
+
 			// cursor.get().set(currentVal);
 			ra.get().set(currentVal);
 		}
-		
+
 		return pImg;
 	}
 
@@ -258,7 +296,7 @@ public class Preprocess {
 		return center;
 	}
 
-	
+
 	public static void runFirstStepPreprocess(File pathImages, File pathDb, File pathImagesRoi, File pathImagesMedian) {
 		// parse the db with smFish labels and good looking images
 		ArrayList<ImageData> imageData = IOFunctions.readDb(pathDb);
@@ -287,23 +325,23 @@ public class Preprocess {
 			}
 		}
 	}
-	
+
 	public static float getCenter(ArrayList<ImageData> centers, String filename) {
 		float center = 1;
-		
+
 		for(ImageData id : centers)
 			if (filename.equals(id.getFilename()))
-					center = id.getCenter();
-		
+				center = id.getCenter();
+
 		return center;
 	}
-	
+
 	public static void runSecondStepPreprocess(File pathImages, File pathDb, File pathImagesRoi, File pathCenters, File pathImagesMedian) {
 		// parse the db with smFish labels and good looking images
 		ArrayList<ImageData> imageData = IOFunctions.readDb(pathDb);
 		// grab the values of the centers
 		ArrayList<ImageData> centers = IOFunctions.readCenters(pathCenters);
-		
+
 		// to see the feedback
 		long currentIdx = 0;
 		for (ImageData imageD : imageData) {
@@ -330,48 +368,52 @@ public class Preprocess {
 			}
 		}
 	}
-	
+
 	// 
 	public static void firstStepPreprocess(File imgPath, File roiPath, File outputPath) {
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
 		Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
-		ImagePlus imp = IJ.openImage(roiPath.getAbsolutePath());
+		// ImagePlus mask = IJ.openImage(roiPath.getAbsolutePath());
+
+		// TODO: convert to binary type
+		Img<FloatType> mask =  ImgLib2Util.openAs32Bit(roiPath.getAbsoluteFile());
 
 		// 1. get the background
 		int [] kernelDim = new int []{19, 19}; 
 		MedianFilter.medianFilterSliced(img, bg, kernelDim);
-		
+
 		// 2. subtract the background
 		HelperFunctions.subtractImg(img, bg);
 		System.out.println("Median filtering done!");
 
 		// 3. calculate median per median
-
+		// TODO: remove this part; now we are using 2D masks images => without any ui involved
 		// this one is used only to reduce the amount of code re-factoring
-		ImagePlus tmpImg = ImageJFunctions.wrap(img, "");
-		tmpImg.setDimensions(1, imp.getNSlices(), 1);
-		Roi roi = imp.getRoi();
-		if (roi != null)
-			tmpImg.setRoi(roi);
-		else
-			System.out.println("There was the probelm with roi in " + imgPath.getAbsolutePath());
+		//		ImagePlus tmpImg = ImageJFunctions.wrap(img, "");
+		//		tmpImg.setDimensions(1, mask.getNSlices(), 1);
+		//		Roi roi = mask.getRoi();
+		//		if (roi != null)
+		//			tmpImg.setRoi(roi);
+		//		else
+		//			System.out.println("There was the probelm with roi in " + imgPath.getAbsolutePath());
 
-		float medianMedianPerPlane = ExtraPreprocess.calculateMedianIntensity(tmpImg);
+		// float medianMedianPerPlane = ExtraPreprocess.calculateMedianIntensity(tmpImg);
+		float medianMedianPerPlane = ExtraPreprocess.calculateMedianIntensity(img, mask);
 		Img<FloatType> pImg = ExtraPreprocess.subtractValue(img, medianMedianPerPlane);
 		System.out.println("Median of median done!");
 
 		// 5. normalize image 
 		float min = 0;
 		float max = 1;
-		
+
 		// imp used for roi only
-		float [] fromMinMax = getMinmax(pImg, imp);
+		float [] fromMinMax = getMinmax(pImg, mask);
 		// IMP: decided to take min as 0
 		fromMinMax[0] = 0;
-		
+
 		pImg = normalize(pImg, fromMinMax[0], fromMinMax[1], min, max);
 		System.out.println("Normalization done!");
-		
+
 		// 4.* just resave the images at the moment
 		IOFunctions.saveResult(pImg, outputPath.getAbsolutePath());
 		System.out.println("Saving done!");
@@ -380,52 +422,54 @@ public class Preprocess {
 	public static void secondStepPreprocess(File imgPath, File roiPath, File outputPath, float center) {
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
 		// Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
-		ImagePlus imp = IJ.openImage(roiPath.getAbsolutePath());
-		// 1. get the background
-//		int [] kernelDim = new int []{19, 19}; 
-//		MedianFilter.medianFilterSliced(img, bg, kernelDim);
+		// ImagePlus mask = IJ.openImage(roiPath.getAbsolutePath());
+		Img<FloatType> mask = ImgLib2Util.openAs32Bit(roiPath.getAbsoluteFile());
 		
+		// 1. get the background
+		//		int [] kernelDim = new int []{19, 19}; 
+		//		MedianFilter.medianFilterSliced(img, bg, kernelDim);
+
 		// 2. subtract the background
-//		HelperFunctions.subtractImg(img, bg);
-//		System.out.println("Median filtering done!");
+		//		HelperFunctions.subtractImg(img, bg);
+		//		System.out.println("Median filtering done!");
 
 		// 3. calculate median per median
-
+// TODO: REMOVE WE ARE NOT USING IMPs ANY MORE
 		// this one is used only to reduce the amount of code re-factoring
-		ImagePlus tmpImg = ImageJFunctions.wrap(img, "");
-		tmpImg.setDimensions(1, imp.getNSlices(), 1);
-		Roi roi = imp.getRoi();
-		if (roi != null)
-			tmpImg.setRoi(roi);
-		else
-			System.out.println("There was the probelm with roi in " + imgPath.getAbsolutePath());
+//		ImagePlus tmpImg = ImageJFunctions.wrap(img, "");
+//		tmpImg.setDimensions(1, mask.getNSlices(), 1);
+//		Roi roi = mask.getRoi();
+//		if (roi != null)
+//			tmpImg.setRoi(roi);
+//		else
+//			System.out.println("There was the probelm with roi in " + imgPath.getAbsolutePath());
 
-//		float medianMedianPerPlane = ExtraPreprocess.calculateMedianIntensity(tmpImg);
-//		Img<FloatType> pImg = ExtraPreprocess.subtractValue(img, medianMedianPerPlane);
-//		System.out.println("Median of median done!");
+		//		float medianMedianPerPlane = ExtraPreprocess.calculateMedianIntensity(tmpImg);
+		//		Img<FloatType> pImg = ExtraPreprocess.subtractValue(img, medianMedianPerPlane);
+		//		System.out.println("Median of median done!");
 
 		// 5. normalize image 
 		float min = 0;
 		float max = 1;
-		
+
 		// imp used for roi only
 		// TODO: do I actually need this one 
-		float [] fromMinMax = getMinmax(img, imp);
-		
+		float [] fromMinMax = getMinmax(img, mask);
+
 		fromMinMax[0] = 0;
 		fromMinMax[1] = center; // - medianMedianPerPlane;
-		
+
 		Img<FloatType> pImg = normalize(img, fromMinMax[0], fromMinMax[1], min, max);
 		System.out.println("Normalization done!");
-		
+
 		// ImageJFunctions.show(pImg).setTitle(imgPath.getAbsolutePath());
-		
+
 		// 4.* just resave the images at the moment
 		IOFunctions.saveResult(pImg, outputPath.getAbsolutePath());
 		System.out.println("Saving done!");
 	}
-	
-	
+
+
 	public static void preprocessImage(File imgPath, File roiPath, File outputPath, float newMax){
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
 		Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType());

@@ -35,226 +35,14 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
 import cluster.radial.symmetry.process.parameters.ParametersFirstRun;
+import cluster.radial.symmetry.process.parameters.ParametersSecondRun;
 import util.ImgLib2Util;
 import util.NotSoUsefulOutput;
 import util.opencsv.CSVWriter;
 
 public class BatchProcess {
 
-	// N2 SECOND RUN parameters
-	public static GUIParams setParametersN2Second(int lambda) {
-		// set the parameters according to the lambda value
-		final GUIParams params = new GUIParams();
-
-		// same for all lambda values
-		params.setAnisotropyCoefficient(1.08f);
-		boolean useRANSAC = true;
-		params.setRANSAC(useRANSAC);
-
-		// FIXME: Check that the values for the params are correct
-		// Larger support radius smaller number of inliers
-		if (lambda == 670) {
-
-			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
-			// CHECK ON THE CROWDED ONE
-
-			// pre-detection
-			params.setSigmaDog(1.50f);
-			params.setThresholdDog(0.0081f);
-			// detection
-			params.setSupportRadius(3);
-			params.setInlierRatio(0.37f);
-			params.setMaxError(0.5034f);
-		} else if(lambda == 610){
-
-			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
-			// CHECK ON THE CROWDED ONE
-
-			// pre-detection
-			params.setSigmaDog(1.50f);
-			params.setThresholdDog(0.0081f);
-			// detection
-			params.setSupportRadius(3);
-			params.setInlierRatio(0.37f);
-			params.setMaxError(0.5034f);
-		} else if(lambda == 570){
-
-			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
-			// CHECK ON THE CROWDED ONE
-
-			// pre-detection
-			params.setSigmaDog(1.50f);
-			params.setThresholdDog(0.0081f);
-			// detection
-			params.setSupportRadius(3);
-			params.setInlierRatio(0.37f);
-			params.setMaxError(0.5034f);
-		} else {
-			System.out.println("This is the wave length value that you didn't use before. Check the results carefully");
-		}
-
-		return params;
-	}
-
-	// N2 parameters 
-	public static GUIParams setParameters(int lambda) {
-		// set the parameters according to the lambda value
-		final GUIParams params = new GUIParams();
-
-		// same for all lambda values
-		params.setAnisotropyCoefficient(1.08f);
-		boolean useRANSAC = true;
-		params.setRANSAC(useRANSAC);
-
-		// FIXME: Check that the values for the params are correct
-		// Larger support radius smaller number of inliers
-		if (lambda == 670) {
-
-			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
-			// CHECK ON THE CROWDED ONE
-
-			// pre-detection
-			params.setSigmaDog(1.50f);
-			params.setThresholdDog(0.0081f);
-			// detection
-			params.setSupportRadius(3);
-			params.setInlierRatio(0.37f);
-			params.setMaxError(0.5034f);
-		} else if(lambda == 610){
-
-			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
-			// CHECK ON THE CROWDED ONE
-
-			// pre-detection
-			params.setSigmaDog(1.50f);
-			params.setThresholdDog(0.0081f);
-			// detection
-			params.setSupportRadius(3);
-			params.setInlierRatio(0.37f);
-			params.setMaxError(0.5034f);
-		} else if(lambda == 570){
-
-			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
-			// CHECK ON THE CROWDED ONE
-
-			// pre-detection
-			params.setSigmaDog(1.50f);
-			params.setThresholdDog(0.0081f);
-			// detection
-			params.setSupportRadius(3);
-			params.setInlierRatio(0.37f);
-			params.setMaxError(0.5034f);
-		} else {
-			System.out.println("This is the wave length value that you didn't use before. Check the results carefully");
-		}
-
-		return params;
-	}
-
-	// SEA-12 parameters
-	public static GUIParams setParameters2(int lambda) {
-		// set the parameters according to the lambda value
-		final GUIParams params = new GUIParams();
-
-		// same for all lambda values
-		params.setAnisotropyCoefficient(1.08f);
-		boolean useRANSAC = true;
-		params.setRANSAC(useRANSAC);
-
-		// FIXME: Check that the values for the params are correct
-		// Larger support radius smaller number of inliers
-		if (lambda == 670) {
-
-			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
-			// CHECK ON THE CROWDED ONE
-
-			// pre-detection
-			params.setSigmaDog(1.50f);
-			params.setThresholdDog(0.0081f);
-			// detection
-			params.setSupportRadius(3);
-			params.setInlierRatio(0.37f);
-			params.setMaxError(0.5034f);
-		} else if(lambda == 610){
-
-			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
-			// CHECK ON THE CROWDED ONE
-
-			// pre-detection
-			params.setSigmaDog(1.50f);
-			params.setThresholdDog(0.0081f);
-			// detection
-			params.setSupportRadius(3);
-			params.setInlierRatio(0.37f);
-			params.setMaxError(0.5034f);
-		} else if(lambda == 570){
-
-			// CHECKED THIS VALUES ON THE GOOD LOOKING IMAGE 
-			// CHECK ON THE CROWDED ONE
-
-			// pre-detection
-			params.setSigmaDog(1.50f);
-			params.setThresholdDog(0.0081f);
-			// detection
-			params.setSupportRadius(3);
-			params.setInlierRatio(0.37f);
-			params.setMaxError(0.5034f);
-		} else {
-			System.out.println("This is the wave length value that you didn't use before. Check the results carefully");
-		}
-
-		return params;
-	}
-
-	// to support old code 
-	public static void runProcess(File pathImagesMedian, File pathImagesRoi, File pathDatabase, File pathZcorrected, File pathResultCsv, boolean doZcorrection) {
-		runProcess(pathImagesMedian, pathImagesRoi, pathDatabase, pathZcorrected, null, null, pathResultCsv, doZcorrection);
-	}
-
-	public static void runProcess(File pathImagesMedian, File pathImagesRoi, File pathDatabase, File pathZcorrected, File pathResultCsvBeforeCorrection, File pathParameters, File pathResultCsv, boolean doZcorrection) {
-		// parse the db with smFish labels and good looking images
-		ArrayList<ImageData> imageData = IOUtils.readDb(pathDatabase);
-
-		long currentIndex = 0;
-		String extImg = ".tif";
-		String extOut = ".csv";
-		String classname = Preprocess.class.getSimpleName();
-
-		for (ImageData imageD : imageData) {
-			currentIndex++;
-			// path to the processed image
-			File inputImagePath = Paths.get(pathImagesMedian.getAbsolutePath(), imageD.getFilename(), extImg).toFile();
-			File inputRoiPath = Paths.get(pathImagesRoi.getAbsolutePath(), imageD.getFilename(), extImg).toFile();
-			
-			System.out.println(NotSoUsefulOutput.toProgressString(currentIndex, imageData.size(), inputImagePath.getAbsolutePath()));
-			
-			if (inputImagePath.exists()){
-				// path to the image
-				File outputPathZCorrected = new File("");
-				if (pathZcorrected != null)
-					outputPathZCorrected = Paths.get(pathZcorrected.getAbsolutePath(), imageD.getFilename(), extImg).toFile();
-				// table with all processing parameters
-				File outputPathParameters = new File ("");
-				if (pathParameters != null)
-					outputPathParameters = Paths.get(pathParameters.getAbsolutePath(), imageD.getFilename(), extImg).toFile();
-				// table to store the results before we perform the z-correction 
-				File outputPathResultCsvBeforeCorrection = new File ("");
-				if (pathResultCsvBeforeCorrection != null)
-					outputPathResultCsvBeforeCorrection = Paths.get(pathResultCsvBeforeCorrection.getAbsolutePath(), imageD.getFilename(), extOut).toFile();
-				// table to store the results for each channel
-				File outputPathCsv = Paths.get(pathResultCsv.getAbsolutePath(), imageD.getFilename(), extOut).toFile();
-				// set the params according to the way length
-				// FIXME: SET THE PARAMETERS PROPERLY? ARGUMENT MAYBE?
-				GUIParams params = ParametersFirstRun.getSEA12ParametersFirstRun(imageD.getLambda());
-				
-				BatchProcess.process(inputImagePath, inputRoiPath, params, outputPathResultCsvBeforeCorrection, outputPathParameters, outputPathZCorrected, outputPathCsv, doZcorrection);
-			}
-			else {
-				System.out.println("Missing file: " + inputImagePath);
-			}
-		}
-	}
-
+	// TODO: Refactor, divide into functions
 	public static void process(File imgPath, File inputRoiPath, GUIParams params, File outputPathResultCsvBeforeCorrection, File outputPathParameters, File outputPathZCorrected, File outputPath, boolean doZcorrection) {
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath);
 		// TODO: might be redundant
@@ -317,7 +105,6 @@ public class BatchProcess {
 			IOUtils.writePositionsAndIntensitiesToCSV(outputPathResultCsvBeforeCorrection, fSpots, fIntensity);
 		}
 
-		// TODO: CLEAR THE COMMENTS BELOW
 		// TODO: we don't need to check this - path always exists
 		if (!outputPathZCorrected.equals("")){
 
@@ -343,6 +130,7 @@ public class BatchProcess {
 	/*
 	 * Class to process multiple images in a batch mode
 	 * */
+	// TODO: polish
 	public static ArrayList<Spot> processImage(Img<FloatType> img, RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
 		long[] dims, double sigma, ArrayList<Float> intensity) {
 		RadialSymmetry rs = new RadialSymmetry(rai, rsm);
@@ -376,13 +164,6 @@ public class BatchProcess {
 	}
 
 	public static void main(String[] args) {
-		// test run that the correct values are written to the csv file
-		String outputPathCsv = "/Volumes/1TB/test/test-out/data.csv";
-		// set the params according to the way length
-		GUIParams params = setParametersN2Second(670);
-		String inputImagePath = "/Volumes/1TB/test/2/C1-N2_96-p.tif";
-
-		// BatchProcess.process(inputImagePath, params, new File(outputPathCsv));
 		System.out.println("DONE!");
 	}
 }

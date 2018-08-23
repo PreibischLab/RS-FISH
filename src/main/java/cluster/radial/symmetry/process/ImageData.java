@@ -37,19 +37,19 @@ public class ImageData {
 		this.center = center;
 	}
 	
-	int getLambda() {
+	public int getLambda() {
 		return lambda;
 	}
 	
-	boolean getDefects() {
+	public boolean getDefects() {
 		return defects;
 	}
 	
-	String getFilename() {
+	public String getFilename() {
 		return filename;
 	}
 	
-	float getCenter() {
+	public float getCenter() {
 		return center;
 	}
 }

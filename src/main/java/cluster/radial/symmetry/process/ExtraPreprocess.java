@@ -45,7 +45,7 @@ public class ExtraPreprocess {
 
 	public static void runExtraPreprocess(File pathImages, File pathDb, File pathImagesMedian) {
 		// parse the db with smFish labels and good looking images
-		ArrayList<ImageData> imageData = Preprocess.readDb(pathDb);
+		ArrayList<ImageData> imageData = IOFunctions.readDb(pathDb);
 
 		// to see the feedback
 		long currentIdx = 0;

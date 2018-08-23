@@ -89,7 +89,7 @@ public class BatchProcess {
 		return params;
 	}
 	
-	// N2 parameters
+	// N2 parameters 
 	public static GUIParams setParameters(int lambda) {
 		// set the parameters according to the lambda value
 		final GUIParams params = new GUIParams();
@@ -206,7 +206,7 @@ public class BatchProcess {
 	
 	public static void runProcess(File pathImagesMedian, File pathDatabase, File pathZcorrected, File pathResultCsvBeforeCorrection, File pathParameters, File pathResultCsv, boolean doZcorrection) {
 		// parse the db with smFish labels and good looking images
-		ArrayList<ImageData> imageData = Preprocess.readDb(pathDatabase);
+		ArrayList<ImageData> imageData = IOFunctions.readDb(pathDatabase);
 		
 		long currentIndex = 0;
 		

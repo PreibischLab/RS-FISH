@@ -105,7 +105,7 @@ public class FullProcess {
 		// to estimate the bg (run over the roi only)
 		// - normalize the image [0,1] where x_min=0 -> 0, brightest pixel -> 1;
 		// (maybe it is a good idea to use median of r=1 and take the brightest pixel from there for stability)
-		// Preprocess.runFirstStepPreprocess(pathImages, pathDatabase, pathImagesRoi, pathImagesMedian);
+		Preprocess.runFirstStepPreprocess(pathImages, pathDatabase, pathImagesRoi, pathImagesMedian);
 		// fix the rois
 		// FixImages.runFixImages(pathImagesMedian, pathImagesRoi, pathImagesMedian);
 		// - run radial symmetry

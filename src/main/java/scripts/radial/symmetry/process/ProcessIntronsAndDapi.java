@@ -3,6 +3,7 @@ package scripts.radial.symmetry.process;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
@@ -19,6 +20,7 @@ import net.imglib2.view.Views;
 import cluster.radial.symmetry.process.ImageData;
 import radial.symmetry.utils.IOUtils;
 import util.ImgLib2Util;
+import util.NotSoUsefulOutput;
 
 public class ProcessIntronsAndDapi {
 
@@ -29,12 +31,31 @@ public class ProcessIntronsAndDapi {
 	public static void processImages(File anotherChannelImagesPath, File exonFolderPath, File anotherChannelFolderPath, File smFishDbPath) {
 		// read the list of the good exon images 
 		// imageData contains the information about all images
-		ArrayList<ImageData> imageData = IOUtils.readDb(smFishDbPath);
+		String [] types = new String[] {"DPY-23_EX", "DPY-23_INT", "DAPI"};
+		ArrayList<ImageData> imageData = IOUtils.readDb(smFishDbPath, types);
+		// now searching should be faster
+		// HashMap<String, ImageData> filteredImageData = new HashMap<>();
+		
+		//  ArrayList<ImageData> filteredImageData = filterImageData(ArrayList<ImageData> imageData, String type)
 		// find the corresponding intron images 
-
+		// DEBUG: remove once down
+		NotSoUsefulOutput.printImageDataParameters(imageData);
 		// run processing on each image 
 
 		// 
+	}
+	
+	
+	// pick images of the specific stain type and without the defects
+	public static HashMap<String, ImageData> filterImageData(ArrayList<ImageData> imageData, String type) {
+		HashMap<String, ImageData> filteredImageData = new HashMap<>();
+		
+		for (ImageData id : imageData) {
+			if (!id.getDefects() && id.getType().equals(type))
+				filteredImageData.put(id.getFilename(), id);
+		} 
+		
+		return filteredImageData;
 	}
 	
 	// grab anotherChannelImagePath and exonPath and put the detections to the intronPath
@@ -126,6 +147,17 @@ public class ProcessIntronsAndDapi {
 
 
 	public static void main(String[] args) {
+		
+		String root = "/Users/kkolyva/Desktop/2018-07-31-09-53-32-N2-all-results-together/smFISH-database";
+		String smFishDbFilename = "N2-Table 1 updated.csv";
+		
+		File anotherChannelImagesPath = new File ("");
+		File exonFolderPath = new File ("");
+		File anotherChannelFolderPath = new File (""); 
+		File smFishDbPath = Paths.get(root, smFishDbFilename).toFile();
+
+		processImages( anotherChannelImagesPath,  exonFolderPath, anotherChannelFolderPath, smFishDbPath);
+		
 		System.out.println("DOGE!");
 	}
 

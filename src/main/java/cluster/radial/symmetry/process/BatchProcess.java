@@ -106,7 +106,7 @@ public class BatchProcess {
 		}
 
 		// TODO: we don't need to check this - path always exists
-		if (!outputPathZCorrected.equals("")){
+		if (!outputPathZCorrected.getAbsolutePath().equals("")){
 
 			int degree = 2; 
 			double [] coeff = new double [degree + 1];

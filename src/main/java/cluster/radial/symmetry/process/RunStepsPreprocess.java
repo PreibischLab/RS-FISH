@@ -8,7 +8,7 @@ import radial.symmetry.utils.IOUtils;
 import util.NotSoUsefulOutput;
 
 public class RunStepsPreprocess {
-	public static void runFirstStepPreprocess(File pathImages, File pathDb, File pathImagesRoi, File pathImagesMedian) {
+	public static void runFirstStepPreprocess(File pathImages, File pathDb, File pathMasks, File pathImagesMedian) {
 		// parse the db with smFish labels and good looking images
 		ArrayList<ImageData> imageData = IOUtils.readDb(pathDb);
 		// to see the feedback
@@ -22,8 +22,8 @@ public class RunStepsPreprocess {
 			File inputImageFile = Paths.get(pathImages.getAbsolutePath(), imageD.getFilename(), ext).toFile();
 			// processed path 
 			File outputImageFile = Paths.get(pathImagesMedian.getAbsolutePath(), imageD.getFilename(), ext).toFile();
-			// roi path 
-			File maskFile = Paths.get(pathImagesRoi.getAbsolutePath(), imageD.getFilename().substring(3), ext).toFile();
+			// mask path 
+			File maskFile = Paths.get(pathMasks.getAbsolutePath(), imageD.getFilename().substring(3), ext).toFile();
 			System.out.println(NotSoUsefulOutput.toProgressString(currentIdx, imageData.size(), inputImageFile.getAbsolutePath()));
 			// check that the corresponding files is not missing
 			if (inputImageFile.exists() && maskFile.exists()) {
@@ -35,7 +35,7 @@ public class RunStepsPreprocess {
 		}
 	}
 	
-	public static void runSecondStepPreprocess(File pathImages, File pathDb, File pathImagesRoi, File pathCenters, File pathImagesMedian) {
+	public static void runSecondStepPreprocess(File pathImages, File pathDb, File pathMasks, File pathCenters, File pathImagesMedian) {
 		// parse the db with smFish labels and good looking images
 		ArrayList<ImageData> imageData = IOUtils.readDb(pathDb);
 		// grab the values of the centers
@@ -52,8 +52,8 @@ public class RunStepsPreprocess {
 			File inputImageFile = Paths.get(pathImages.getAbsolutePath(), imageD.getFilename(), ext).toFile();
 			// processed path 
 			File outputImageFile = Paths.get(pathImagesMedian.getAbsolutePath(), imageD.getFilename(), ext).toFile();
-			// roi path 
-			File maskFile = Paths.get(pathImagesRoi.getAbsolutePath(), imageD.getFilename().substring(3), ext).toFile();
+			// mask path 
+			File maskFile = Paths.get(pathMasks.getAbsolutePath(), imageD.getFilename().substring(3), ext).toFile();
 			// peak center value
 			float center = Preprocess.getCenter(centers, imageD.getFilename());
 			System.out.println(NotSoUsefulOutput.toProgressString(currentIdx, imageData.size(), inputImageFile.getAbsolutePath()));

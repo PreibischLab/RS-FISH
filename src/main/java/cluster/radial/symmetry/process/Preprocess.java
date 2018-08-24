@@ -88,7 +88,7 @@ public class Preprocess {
 		return center;
 	}
 
-	// 
+	// TODO: make all operations in place
 	public static void firstStepPreprocess(File imgPath, File roiPath, File outputPath) {
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
 		Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType());

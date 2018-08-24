@@ -20,12 +20,13 @@ import cluster.radial.symmetry.process.ImageData;
 import radial.symmetry.utils.IOUtils;
 import util.ImgLib2Util;
 
-public class ProcessIntrons {
+public class ProcessIntronsAndDapi {
 
-	// process the exon signal to compute the intron signal around the exon one
-
+	// take smFISH detections in exon channel and find intensities for the corresponding locations 
+	// in intron and dapi channels (in general, any other channel)
+	
 	// same as process image but for all good images
-	public static void processImages(File intronImagesFolderPath, File exonFolderPath, File intronFolderPath, File smFishDbPath) {
+	public static void processImages(File anotherChannelImagesPath, File exonFolderPath, File anotherChannelFolderPath, File smFishDbPath) {
 		// read the list of the good exon images 
 		// imageData contains the information about all images
 		ArrayList<ImageData> imageData = IOUtils.readDb(smFishDbPath);
@@ -36,19 +37,19 @@ public class ProcessIntrons {
 		// 
 	}
 	
-	// grab intronImagePath and exonPath and put the detections to the intronPath
-	public static void processImage(File intronImagePath, File exonPath, File intronPath) {
+	// grab anotherChannelImagePath and exonPath and put the detections to the intronPath
+	public static void processImage(File anotherChannelImagePath, File exonPath, File anotherChannelPath) {
 		// reading 
-		Img<FloatType> img = ImgLib2Util.openAs32Bit(intronImagePath);
+		Img<FloatType> img = ImgLib2Util.openAs32Bit(anotherChannelImagePath);
 		ArrayList<RealPoint> exonSpots = IOUtils.readPositionsFromCSV(exonPath, '\t');
 		// processing
-		ArrayList<Double> intronIntensity = calculateIntronSignals(exonSpots, img);
+		ArrayList<Double> allIntensities = calculateAnotherChannelSignals(exonSpots, img);
 		// writing 
-		IOUtils.writeIntensitiesToCSV(intronPath, intronIntensity, '\t');
+		IOUtils.writeIntensitiesToCSV(anotherChannelPath, allIntensities, '\t');
 	}
 
-	public static ArrayList<Double> calculateIntronSignals(ArrayList<RealPoint> exonSpots, Img<FloatType> img){
-		ArrayList<Double> intronIntensities = new ArrayList<>();
+	public static ArrayList<Double> calculateAnotherChannelSignals(ArrayList<RealPoint> exonSpots, Img<FloatType> img){
+		ArrayList<Double> allIntesities = new ArrayList<>();
 
 		int numDimensions = img.numDimensions();
 
@@ -71,16 +72,17 @@ public class ProcessIntrons {
 				max[d] = (long)spot.getDoublePosition(d) + kernelSize[d]/2;
 			}
 
+			// DEBUG: remove once done
 			// System.out.println(Util.printCoordinates(min));
 			// System.out.println(Util.printCoordinates(max));
 
 			FinalInterval interval = new FinalInterval(min, max);
-			double intronIntensity = calulateIntronSignal(exonSpots.get(i), img, interpolant, interval, offset, numPixels);
-			intronIntensities.add(intronIntensity);
+			double intensity = calulateAnotherChannelSignal(exonSpots.get(i), img, interpolant, interval, offset, numPixels);
+			allIntesities.add(intensity);
 			// break;
 		}
 
-		return intronIntensities;
+		return allIntesities;
 	}
 
 	public static long getNumberPixels(int[] kernelSize) {
@@ -89,6 +91,7 @@ public class ProcessIntrons {
 			res *= kernelSize[d];
 		return res;
 	}
+	
 
 	public static double[] getOffset(RealPoint spot) {
 		double [] offset = new double[spot.numDimensions()];
@@ -97,7 +100,7 @@ public class ProcessIntrons {
 		return offset;
 	}
 
-	public static double calulateIntronSignal(RealPoint spot, RandomAccessible<FloatType> img, RealRandomAccessible<FloatType> rImg, FinalInterval interval, double [] offset, long numPixels) {
+	public static double calulateAnotherChannelSignal(RealPoint spot, RandomAccessible<FloatType> img, RealRandomAccessible<FloatType> rImg, FinalInterval interval, double [] offset, long numPixels) {
 		Cursor<FloatType> cursor = Views.interval(img, interval).cursor();
 		RealRandomAccess<FloatType> rra = rImg.realRandomAccess();
 
@@ -117,29 +120,12 @@ public class ProcessIntrons {
 			sum.add(rra.get().get());
 		}
 
-		double intronIntensity = sum.getSum()/numPixels;
-		return intronIntensity;
+		double intensity = sum.getSum()/numPixels;
+		return intensity;
 	}
 
 
 	public static void main(String[] args) {
-		String root = "/Users/kkolyva/Desktop/2018-07-31-09-53-32-N2-all-results-together/test";
-		// input
-		String exonFolder = "csv-2";
-		String intronImagesFolder = "median";
-		String smFishDb = "smFISH-database/N2-Table 1.csv";
-		// output 
-		String intronFolder = "csv-dapi-intron";
-
-		File exonFolderPath = Paths.get(root, exonFolder).toFile();
-		File intronImagesFolderPath = Paths.get(root, intronImagesFolder).toFile();
-		File smFishDbPath = Paths.get(root, smFishDb).toFile();
-		File intronFolderPath = Paths.get(root, intronFolder).toFile();
-
-
-		// IOUtils.checkPaths(...)
-
-		ProcessIntrons.processImages(intronImagesFolderPath, exonFolderPath, intronFolderPath, smFishDbPath);
 		System.out.println("DOGE!");
 	}
 

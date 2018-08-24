@@ -3,9 +3,9 @@ package test;
 import java.io.File;
 import java.nio.file.Paths;
 
-import scripts.radial.symmetry.process.ProcessIntrons;
+import scripts.radial.symmetry.process.ProcessIntronsAndDapi;
 
-public class TestProcessIntrons {
+public class TestProcessIntronsAndDapi {
 	
 	
 	public static void testProcessImageSet(){
@@ -22,7 +22,7 @@ public class TestProcessIntrons {
 			File exonPath = Paths.get(root, "csv-2", exonFilename[j]).toFile();
 			File intronPath = Paths.get(root, "csv-dapi-intron", intronFilename[j]).toFile();
 			
-			ProcessIntrons.processImage(intronImagePath, exonPath, intronPath);
+			ProcessIntronsAndDapi.processImage(intronImagePath, exonPath, intronPath);
 		}
 		
 		System.out.println("DOGE!");
@@ -42,7 +42,7 @@ public class TestProcessIntrons {
 		File exonPath = Paths.get(root, "csv-2", exonFilename).toFile();
 		File intronPath = Paths.get(root, "csv-dapi-intron", intronFilename).toFile();
 
-		ProcessIntrons.processImage(intronImagePath, exonPath, intronPath);
+		ProcessIntronsAndDapi.processImage(intronImagePath, exonPath, intronPath);
 
 		System.out.println("DOGE!");
 	}

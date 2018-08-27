@@ -66,7 +66,8 @@ public class ProcessIntronsAndDapi {
 		// processing
 		ArrayList<Double> allIntensities = calculateAnotherChannelSignals(exonSpots, img);
 		// writing 
-		IOUtils.writeIntensitiesToCSV(anotherChannelPath, allIntensities, '\t');
+		// IOUtils.writeIntensitiesToCSV(anotherChannelPath, allIntensities, '\t');
+		IOUtils.writePositionsAndIntensitiesToCSV(anotherChannelPath, exonSpots, allIntensities);
 	}
 
 	public static ArrayList<Double> calculateAnotherChannelSignals(ArrayList<RealPoint> exonSpots, Img<FloatType> img){

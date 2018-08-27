@@ -22,6 +22,44 @@ import util.opencsv.CSVReader;
 import util.opencsv.CSVWriter;
 
 public class IOUtils {
+	
+	public static void mergeExonIntronDapiAndWriteToCsv(File exonPath, File intronPath, File dapiPath, File outputPath, char separator) {
+		int numDimensions = 3;
+		int offset = 0;
+		ArrayList<RealPoint> exonPos = readPositionsFromCSV(exonPath, separator);
+		ArrayList<Double> exonInt = readIntensitiesFromCSV(exonPath, separator, numDimensions + offset);
+		
+		ArrayList<Double> intronInt = readIntensitiesFromCSV(intronPath, separator, numDimensions + offset);
+		ArrayList<Double> dapiInt = readIntensitiesFromCSV(dapiPath, separator,numDimensions + offset);
+	
+		try {
+			String[] nextLine = new String [7];
+			CSVWriter writer = new CSVWriter(new FileWriter(outputPath.getAbsolutePath()), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+			
+			// write header
+			nextLine = new String[]{"idx", "x", "y", "z", "exon", "intron", "dapi"};
+			writer.writeNext(nextLine);
+			
+			for (int k = 0; k < exonPos.size(); k++) {
+				double[] position = new double [numDimensions];
+				exonPos.get(k).localize(position);
+				
+				nextLine[0] = String.valueOf(k + 1);
+				for (int d = 0; d < numDimensions; d++)
+					nextLine[d + 1] = String.format(java.util.Locale.US, "%.2f", position[d]);
+				nextLine[numDimensions + 1] = String.format(java.util.Locale.US, "%.2f", exonInt.get(k));
+				nextLine[numDimensions + 2] = String.format(java.util.Locale.US, "%.2f", intronInt.get(k));
+				nextLine[numDimensions + 3] = String.format(java.util.Locale.US, "%.2f", dapiInt.get(k));
+				writer.writeNext(nextLine);
+			}
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	
 
 	public static ArrayList<ImageData> readCenters(File filePath) {
 		ArrayList <ImageData> imageData = new ArrayList<>(); 
@@ -70,9 +108,31 @@ public class IOUtils {
 		}
 	}
 
-	public static void writePositionsAndIntensitiesToCSV(File path, ArrayList<Spot> spots, ArrayList<Float> intensity) {
+	public static void writePositionsAndIntensitiesToCSV(File path, ArrayList<RealPoint> spots, ArrayList<Double> intensity) {
 		try {
 			String[] nextLine = new String [5];
+			CSVWriter writer = new CSVWriter(new FileWriter(path.getAbsolutePath()), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+			for (int j = 0; j < spots.size(); j++) {
+				double[] position = new double[spots.get(j).numDimensions()];
+				spots.get(j).localize(position);
+				nextLine = new String[]{
+					String.valueOf(j + 1), 
+					String.format(java.util.Locale.US, "%.2f", position[0]), 
+					String.format(java.util.Locale.US, "%.2f", position[1]), 
+					String.format(java.util.Locale.US, "%.2f", position[2]),
+					String.format(java.util.Locale.US, "%.2f", intensity.get(j))
+				}; 	
+				writer.writeNext(nextLine);
+			}
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void writePositionsAndBothIntensitiesCSV(File path, ArrayList<Spot> spots, ArrayList<Float> i1, ArrayList<Float> i2) {
+		try {
+			String[] nextLine = new String [6];
 			CSVWriter writer = new CSVWriter(new FileWriter(path.getAbsolutePath()), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 			for (int j = 0; j < spots.size(); j++) {
 				double[] position = spots.get(j).getCenter();
@@ -81,8 +141,9 @@ public class IOUtils {
 					String.format(java.util.Locale.US, "%.2f", position[0]), 
 					String.format(java.util.Locale.US, "%.2f", position[1]), 
 					String.format(java.util.Locale.US, "%.2f", position[2]),
-					String.format(java.util.Locale.US, "%.2f", intensity.get(j))
-				}; 	
+					String.format(java.util.Locale.US, "%.2f", i1.get(j)),
+					String.format(java.util.Locale.US, "%.2f", i2.get(j))
+				}; 
 				writer.writeNext(nextLine);
 			}
 			writer.close();
@@ -103,6 +164,24 @@ public class IOUtils {
 				for (int d = 0; d < numDimensions; d++)
 					pos[d] = Double.parseDouble(nextLine[d + 1]);
 				peaks.add(new RealPoint(pos));
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return peaks;
+	}
+	
+	// IMP: this reader assumes that images are 3D-stacks {x, y, z}
+	public static ArrayList<Double> readIntensitiesFromCSV(File filepath, char separator, int numDimensions){
+		ArrayList<Double> peaks = new ArrayList<>();
+		
+		try {
+			String[] nextLine;
+			CSVReader reader = new CSVReader(new FileReader(filepath), separator);
+			while ((nextLine = reader.readNext()) != null) {
+				// 1 = index
+				double i = Double.parseDouble(nextLine[numDimensions + 1]);
+				peaks.add(i);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

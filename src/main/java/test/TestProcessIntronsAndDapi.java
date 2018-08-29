@@ -12,20 +12,20 @@ public class TestProcessIntronsAndDapi {
 	public static void testProcessExonIntronDapiResave() {
 		String root = "/Users/kkolyva/Desktop/2018-07-31-09-53-32-N2-all-results-together/test";
 		int nFiles = 4;
-		
+
 		String[] exonFilename = new String []{"C1-N2_395.csv", "C1-N2_447.csv","C1-N2_459.csv","C1-N2_542.csv"};
 		String[] dapiFilename = new String []{"C5-N2_395.csv", "C5-N2_447.csv","C5-N2_459.csv","C5-N2_542.csv"};
 		String[] intronFilename = new String []{"C2-N2_395.csv", "C3-N2_447.csv","C3-N2_459.csv","C3-N2_542.csv"};
-		
-	
-		
+
+
+
 		for (int j = 0; j < nFiles; j++) {			
 			File exonPath = Paths.get(root, "csv-2", exonFilename[j]).toFile();
 			File intronPath = Paths.get(root, "csv-dapi-intron", intronFilename[j]).toFile();
 			File dapiPath = Paths.get(root, "csv-dapi-intron", dapiFilename[j]).toFile();
-			
+
 			File outputPath = Paths.get(root, "csv-dapi-intron", exonFilename[j].substring(3)).toFile();
-			
+
 			IOUtils.mergeExonIntronDapiAndWriteToCsv(exonPath, intronPath, dapiPath, outputPath, '\t');
 
 			// PreprocessIntronAndDapi.normalizeAndSave(dapiImagePath, maskDapiPath, normalizedDapiPath);
@@ -99,8 +99,8 @@ public class TestProcessIntronsAndDapi {
 	}
 
 	public static void main(String[] args){
-		// testProcessIntronImageSet();
-		// testProcessDapiImageSet();
+		testProcessIntronImageSet();
+		testProcessDapiImageSet();
 		testProcessExonIntronDapiResave();
 	}
 }

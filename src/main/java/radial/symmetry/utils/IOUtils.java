@@ -16,34 +16,35 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 
 import cluster.radial.symmetry.process.ImageData;
+import cluster.radial.symmetry.process.ImageDataFull;
 import fitting.Spot;
 import ij.IJ;
 import util.opencsv.CSVReader;
 import util.opencsv.CSVWriter;
 
 public class IOUtils {
-	
+
 	public static void mergeExonIntronDapiAndWriteToCsv(File exonPath, File intronPath, File dapiPath, File outputPath, char separator) {
 		int numDimensions = 3;
 		int offset = 0;
 		ArrayList<RealPoint> exonPos = readPositionsFromCSV(exonPath, separator);
 		ArrayList<Double> exonInt = readIntensitiesFromCSV(exonPath, separator, numDimensions + offset);
-		
+
 		ArrayList<Double> intronInt = readIntensitiesFromCSV(intronPath, separator, numDimensions + offset);
 		ArrayList<Double> dapiInt = readIntensitiesFromCSV(dapiPath, separator,numDimensions + offset);
-	
+
 		try {
 			String[] nextLine = new String [7];
 			CSVWriter writer = new CSVWriter(new FileWriter(outputPath.getAbsolutePath()), '\t', CSVWriter.NO_QUOTE_CHARACTER);
-			
+
 			// write header
 			nextLine = new String[]{"idx", "x", "y", "z", "exon", "intron", "dapi"};
 			writer.writeNext(nextLine);
-			
+
 			for (int k = 0; k < exonPos.size(); k++) {
 				double[] position = new double [numDimensions];
 				exonPos.get(k).localize(position);
-				
+
 				nextLine[0] = String.valueOf(k + 1);
 				for (int d = 0; d < numDimensions; d++)
 					nextLine[d + 1] = String.format(java.util.Locale.US, "%.2f", position[d]);
@@ -56,10 +57,10 @@ public class IOUtils {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
-	
+
+
 
 	public static ArrayList<ImageData> readCenters(File filePath) {
 		ArrayList <ImageData> imageData = new ArrayList<>(); 
@@ -129,7 +130,7 @@ public class IOUtils {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void writePositionsAndBothIntensitiesCSV(File path, ArrayList<Spot> spots, ArrayList<Float> i1, ArrayList<Float> i2) {
 		try {
 			String[] nextLine = new String [6];
@@ -170,11 +171,11 @@ public class IOUtils {
 		}
 		return peaks;
 	}
-	
+
 	// IMP: this reader assumes that images are 3D-stacks {x, y, z}
 	public static ArrayList<Double> readIntensitiesFromCSV(File filepath, char separator, int numDimensions){
 		ArrayList<Double> peaks = new ArrayList<>();
-		
+
 		try {
 			String[] nextLine;
 			CSVReader reader = new CSVReader(new FileReader(filepath), separator);
@@ -214,6 +215,62 @@ public class IOUtils {
 			}
 
 		return isFine;
+	}
+
+	public static ArrayList <ImageDataFull> readDbFull(File databasePath, boolean doFilter) {
+		ArrayList <ImageDataFull> imageData = new ArrayList<>(); 
+
+		// some constants
+		final int nColumns = 24;
+
+		final String [] channels = new String[] {"C1", "C2", "C3", "C4", "C5"};
+
+		final HashMap<String, Integer> typeIndices = new HashMap<>();
+		typeIndices.put(channels[0], 4);
+		typeIndices.put(channels[1], 7);
+		typeIndices.put(channels[2], 10);
+		typeIndices.put(channels[3], 13);
+		typeIndices.put(channels[4], 16);
+
+		final HashMap<String, Integer> paramIndices = new HashMap<>();
+		paramIndices.put("signal", 17);
+		paramIndices.put("integrity", 18);
+		paramIndices.put("stage", 19);
+		paramIndices.put("comment", 20); // quality
+		paramIndices.put("new filename", 23);
+
+		try {
+			int toSkip = 1; // skip header
+			CSVReader reader = new CSVReader(new FileReader(databasePath), ',', CSVReader.DEFAULT_QUOTE_CHARACTER, toSkip);
+			String[] nextLine = new String [nColumns];
+			// while there are rows in the file
+			while ((nextLine = reader.readNext()) != null) {
+				HashMap<String, String> currentImage = new HashMap<>(0);
+				// parse the row; that is 25 elements long
+				if (!doFilter || conditionalPick(nextLine, paramIndices)) { 
+					for (String channel : channels) {
+						String type = nextLine[typeIndices.get(channel)];
+						if (!type.trim().isEmpty()) {
+							// System.out.println(type);
+							currentImage.put(type, channel);
+						}
+					}
+					if (!currentImage.isEmpty()) {
+						String filename = nextLine[paramIndices.get("new filename")];
+						boolean defects = !nextLine[paramIndices.get("comment")].equals(""); // empty string means no defect
+						imageData.add(new ImageDataFull(defects, filename, currentImage));
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		//		for (ImageDataFull id : imageData)
+		//			System.out.println(id.getLambda() + " " + id.getFilename());
+
+		System.out.println("Done reading the database");
+		return imageData;
 	}
 
 	// TODO: refactor the reading parts; 
@@ -342,8 +399,8 @@ public class IOUtils {
 			e.printStackTrace();
 		}
 
-//		for (ImageData id : imageData)
-//			System.out.println(id.getLambda() + " " + id.getFilename());
+		//		for (ImageData id : imageData)
+		//			System.out.println(id.getLambda() + " " + id.getFilename());
 
 		System.out.println("Done reading the database");
 		return imageData;
@@ -356,9 +413,6 @@ public class IOUtils {
 		// integrity == 1 
 		// signal in {3,4,5}
 		boolean isGood = false;
-
-		System.out.println();
-
 		int signalQuality = nextLine[paramIndices.get("signal")].trim().equals("") ? 0 : Math.round(Float.parseFloat(nextLine[paramIndices.get("signal")].trim()));
 		int integrity = nextLine[paramIndices.get("integrity")].trim().equals("") ? 0 : Math.round(Float.parseFloat(nextLine[paramIndices.get("integrity")].trim()));
 

@@ -1,6 +1,7 @@
 package scripts.radial.symmetry.process;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,10 +29,30 @@ public class ProcessIntronsAndDapi {
 	// take smFISH detections in exon channel and find intensities for the corresponding locations 
 	// in intron and dapi channels (in general, any other channel)
 
-	public static void processImages(String root, boolean f) {
-
+	public static void setupProcess(String root, String datasetDbFile) {
+		// [x] create all the dirs if they are missing 
+		// [x] check that all necessary dirs are there 
+		File smFishDbFilename = Paths.get(root, "smFISH-database", "datasetDbFile").toFile();
+		String [] folders = new String [] {"csv-2", "median", "roi", "channels", "normalized","csv-dapi-intron"};
+		int numFolders = folders.length + 1;
+		
+		File [] allPaths = new File[numFolders];
+		allPaths[numFolders - 1] = smFishDbFilename;
+		
+		for (int j = 0; j < numFolders - 1; j++) {
+			allPaths[j] = Paths.get(root, folders[j]).toFile();
+			if(!allPaths[j].exists()) {
+					allPaths[j].mkdirs();
+					System.out.println("Created: " + allPaths[j].getAbsolutePath());
+			}
+		}
+		NotSoUsefulOutput.printFiles(allPaths);
 	}
-
+	
+	public static void createInputArguments() {
+		// [ ] create the file with the triplets that should be processed
+	}
+	
 	// same as process image but for all good images
 	public static void processImages(String root) {
 		File smFishDbFilename = Paths.get(root, "smFISH-database", "SEA-12-Table 1.csv").toFile();
@@ -209,15 +230,17 @@ public class ProcessIntronsAndDapi {
 
 	public static void main(String[] args) {
 
-		String root = "/media/milkyklim/Funky-space/Klim/2018-08-10-SEA-12";
-		// String smFishDbFilename = "N2-Table 1 updated.csv";
+		String root = "/Volumes/1TB/2018-06-14-12-36-00-N2-full-stack";
+		String smFishDbFilename = "SEA-12-Table 1.csv";
 
 		File anotherChannelImagesPath = new File ("");
 		File exonFolderPath = new File ("");
 		File anotherChannelFolderPath = new File (""); 
 		// File smFishDbPath = Paths.get(root, smFishDbFilename).toFile();
 
-		processImages(root);
+		setupProcess(root, smFishDbFilename);
+		
+		// processImages(root);
 
 		System.out.println("DOGE!");
 	}

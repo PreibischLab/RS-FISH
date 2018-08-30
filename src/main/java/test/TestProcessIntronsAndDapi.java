@@ -10,7 +10,6 @@ import scripts.radial.symmetry.process.ProcessIntronsAndDapi;
 public class TestProcessIntronsAndDapi {
 	
 	public static void testProcessOneTripplet() {
-		// C1-N2_342 C2-N2_342 C5-N2_342
 		String root = "/Volumes/1TB/2018-06-14-12-36-00-N2-full-stack";
 		String intronFilename = "C2-N2_342";
 		String exonFilename = "C1-N2_342";

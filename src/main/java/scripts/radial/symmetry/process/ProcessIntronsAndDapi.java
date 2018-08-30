@@ -27,93 +27,97 @@ public class ProcessIntronsAndDapi {
 
 	// take smFISH detections in exon channel and find intensities for the corresponding locations 
 	// in intron and dapi channels (in general, any other channel)
-	
+
 	public static void processImages(String root, boolean f) {
 
 	}
-	
+
 	// same as process image but for all good images
 	public static void processImages(String root) {
-		File smFishDbFilename = Paths.get(root, "smFISH-database", "N2-Table 1 updated.csv").toFile();
-		
+		File smFishDbFilename = Paths.get(root, "smFISH-database", "SEA-12-Table 1.csv").toFile();
+
 		boolean doFilter = true;
 		ArrayList<ImageDataFull> imageDataFull = IOUtils.readDbFull(smFishDbFilename, doFilter);
 
 		// String root = "/Users/kkolyva/Desktop/2018-07-31-09-53-32-N2-all-results-together/test";
 		String dataExt = ".csv";
 		String imgExt = ".tif";
-		
+
 		final String exon = "DPY-23_EX";
 		final String dapi = "DAPI"; 
 		final String intron = "DPY-23_INT";
-		
+
 		for (ImageDataFull idf : imageDataFull) {
-			if (idf.getChannels().containsKey(exon) && idf.getChannels().containsKey(dapi) && idf.getChannels().containsKey(intron)) {
-				// in : exonCsv, intronImage, dapiImage
-				File exonCsvPath = Paths.get(root, "csv-2", getFullName(idf.getChannel(exon), idf.getFilename(), dataExt)).toFile();
-				File intronImagePath = Paths.get(root, "median", getFullName(idf.getChannel(intron), idf.getFilename(), imgExt)).toFile();
-				File dapiImagePath = Paths.get(root, "channels", getFullName(idf.getChannel(dapi), idf.getFilename(), imgExt)).toFile();
-				// extra input
-				File maskDapiPath = Paths.get(root, "roi", idf.getFilename() + imgExt).toFile();
-				// out: intronCsv, dapiCsv
-				File intronCsvPath = Paths.get(root, "csv-dapi-intron", getFullName(idf.getChannel(intron), idf.getFilename(), dataExt)).toFile();
-				File dapiCsvPath = Paths.get(root, "csv-dapi-intron", getFullName(idf.getChannel(dapi), idf.getFilename(), dataExt)).toFile();
-				File mergedCsvPath = Paths.get(root, "csv-dapi-intron", idf.getFilename() + dataExt).toFile();
-				
-				// extra output
-				File normalizedDapiPath = Paths.get(root, "normalized", getFullName(idf.getChannel(dapi), idf.getFilename(), imgExt)).toFile();
-				
-				File [] allPaths = new File[] {exonCsvPath, intronImagePath, dapiImagePath, maskDapiPath};
-				
-				// NotSoUsefulOutput.printFiles(allPaths);
-				
-				// System.out.println(maskDapiPath.getAbsolutePath());
-				
-				boolean allPathsAreCorrect = IOUtils.checkPaths(allPaths);
-				if (!allPathsAreCorrect)
-					continue; 
-				
-				// System.out.println(exonCsvPath.getAbsolutePath());
-				
-				PreprocessIntronAndDapi.normalizeAndSave(dapiImagePath, maskDapiPath, normalizedDapiPath);
-				ProcessIntronsAndDapi.processImage(normalizedDapiPath, exonCsvPath, dapiCsvPath);
-				ProcessIntronsAndDapi.processImage(intronImagePath, exonCsvPath, intronCsvPath);
-				IOUtils.mergeExonIntronDapiAndWriteToCsv(exonCsvPath, intronCsvPath, dapiCsvPath, mergedCsvPath, '\t');
+			try {
+				if (idf.getChannels().containsKey(exon) && idf.getChannels().containsKey(dapi) && idf.getChannels().containsKey(intron)) {
+					// in : exonCsv, intronImage, dapiImage
+					File exonCsvPath = Paths.get(root, "csv-2", getFullName(idf.getChannel(exon), idf.getFilename(), dataExt)).toFile();
+					File intronImagePath = Paths.get(root, "median", getFullName(idf.getChannel(intron), idf.getFilename(), imgExt)).toFile();
+					File dapiImagePath = Paths.get(root, "channels", getFullName(idf.getChannel(dapi), idf.getFilename(), imgExt)).toFile();
+					// extra input
+					File maskDapiPath = Paths.get(root, "roi", idf.getFilename() + imgExt).toFile();
+					// out: intronCsv, dapiCsv
+					File intronCsvPath = Paths.get(root, "csv-dapi-intron", getFullName(idf.getChannel(intron), idf.getFilename(), dataExt)).toFile();
+					File dapiCsvPath = Paths.get(root, "csv-dapi-intron", getFullName(idf.getChannel(dapi), idf.getFilename(), dataExt)).toFile();
+					File mergedCsvPath = Paths.get(root, "csv-dapi-intron", idf.getFilename() + dataExt).toFile();
+
+					// extra output
+					File normalizedDapiPath = Paths.get(root, "normalized", getFullName(idf.getChannel(dapi), idf.getFilename(), imgExt)).toFile();
+
+					File [] allPaths = new File[] {exonCsvPath, intronImagePath, dapiImagePath, maskDapiPath};
+
+					NotSoUsefulOutput.printFiles(allPaths);
+
+					// System.out.println(maskDapiPath.getAbsolutePath());
+
+					boolean allPathsAreCorrect = IOUtils.checkPaths(allPaths);
+					if (!allPathsAreCorrect)
+						continue; 
+
+					System.out.println(exonCsvPath.getAbsolutePath());
+
+					PreprocessIntronAndDapi.normalizeAndSave(dapiImagePath, maskDapiPath, normalizedDapiPath);
+					ProcessIntronsAndDapi.processImage(normalizedDapiPath, exonCsvPath, dapiCsvPath);
+					ProcessIntronsAndDapi.processImage(intronImagePath, exonCsvPath, intronCsvPath);
+					IOUtils.mergeExonIntronDapiAndWriteToCsv(exonCsvPath, intronCsvPath, dapiCsvPath, mergedCsvPath, '\t');
+				}
 			}
-			
+			catch(Exception e) {
+				// exception happened
+			}
 
 		}
-		
-		
+
+
 		// 
 		//NotSoUsefulOutput.printImageDataFullParameters(imageDataFull);
-		
+
 	}
-	
+
 	public static String getFullName(String channel, String filename, String ext) {
 		return String.format("%s-%s%s", channel, filename, ext);
 	}
-	
+
 	// return the triplets corresponding to the same image 
 	public static void assembleCorrespondingChannels() {
-		
+
 	}
-	
-	
-	
+
+
+
 	// TODO: check this might be old and not used
 	// pick images of the specific stain type and without the defects
 	public static HashMap<String, ImageData> filterImageData(ArrayList<ImageData> imageData, String type) {
 		HashMap<String, ImageData> filteredImageData = new HashMap<>();
-		
+
 		for (ImageData id : imageData) {
 			if (!id.getDefects() && id.getType().equals(type))
 				filteredImageData.put(id.getFilename(), id);
 		} 
-		
+
 		return filteredImageData;
 	}
-	
+
 	// grab anotherChannelImagePath and exonPath and put the detections to the intronPath
 	public static void processImage(File anotherChannelImagePath, File exonPath, File anotherChannelPath) {
 		// reading 
@@ -169,7 +173,7 @@ public class ProcessIntronsAndDapi {
 			res *= kernelSize[d];
 		return res;
 	}
-	
+
 
 	public static double[] getOffset(RealPoint spot) {
 		double [] offset = new double[spot.numDimensions()];
@@ -204,17 +208,17 @@ public class ProcessIntronsAndDapi {
 
 
 	public static void main(String[] args) {
-		
-		String root = "/Users/kkolyva/Desktop/2018-07-31-09-53-32-N2-all-results-together/test";
+
+		String root = "/media/milkyklim/Funky-space/Klim/2018-08-10-SEA-12";
 		// String smFishDbFilename = "N2-Table 1 updated.csv";
-		
+
 		File anotherChannelImagesPath = new File ("");
 		File exonFolderPath = new File ("");
 		File anotherChannelFolderPath = new File (""); 
 		// File smFishDbPath = Paths.get(root, smFishDbFilename).toFile();
 
 		processImages(root);
-		
+
 		System.out.println("DOGE!");
 	}
 

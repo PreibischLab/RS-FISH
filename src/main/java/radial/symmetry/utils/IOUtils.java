@@ -109,6 +109,28 @@ public class IOUtils {
 		}
 	}
 
+	public static void writeSpotPositionsAndIntensitiesToCSV(File path, ArrayList<Spot> spots, ArrayList<Float> intensity) {
+		try {
+			String[] nextLine = new String [5];
+			CSVWriter writer = new CSVWriter(new FileWriter(path.getAbsolutePath()), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+			for (int j = 0; j < spots.size(); j++) {
+				double[] position = new double[spots.get(j).numDimensions()];
+				spots.get(j).localize(position);
+				nextLine = new String[]{
+					String.valueOf(j + 1), 
+					String.format(java.util.Locale.US, "%.2f", position[0]), 
+					String.format(java.util.Locale.US, "%.2f", position[1]), 
+					String.format(java.util.Locale.US, "%.2f", position[2]),
+					String.format(java.util.Locale.US, "%.2f", intensity.get(j))
+				}; 	
+				writer.writeNext(nextLine);
+			}
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static void writePositionsAndIntensitiesToCSV(File path, ArrayList<RealPoint> spots, ArrayList<Double> intensity) {
 		try {
 			String[] nextLine = new String [5];

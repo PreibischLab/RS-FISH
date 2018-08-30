@@ -102,7 +102,7 @@ public class BatchProcess {
 
 		// we want to save the intensity values that were not corrected yet
 		if (outputPathResultCsvBeforeCorrection.getAbsolutePath().endsWith(".csv")) {
-			IOUtils.writePositionsAndIntensitiesToCSV(outputPathResultCsvBeforeCorrection, fSpots, fIntensity);
+			IOUtils.writeSpotPositionsAndIntensitiesToCSV(outputPathResultCsvBeforeCorrection, fSpots, fIntensity);
 		}
 
 		// TODO: we don't need to check this - path always exists
@@ -123,7 +123,7 @@ public class BatchProcess {
 			}
 
 			// TODO: filter the spot with the gaussian fit
-			IOUtils.writePositionsAndIntensitiesToCSV(outputPath, fSpots, fIntensity);
+			IOUtils.writeSpotPositionsAndIntensitiesToCSV(outputPath, fSpots, fIntensity);
 		}
 	}
 

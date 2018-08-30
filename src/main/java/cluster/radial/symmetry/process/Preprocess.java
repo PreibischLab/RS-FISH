@@ -11,7 +11,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
-
+import net.imglib2.view.Views;
 import gui.radial.symmetry.interactive.HelperFunctions;
 import ij.IJ;
 import ij.ImagePlus;
@@ -25,7 +25,8 @@ public class Preprocess {
 		float [] minmax = new float[2];
 
 		final Cursor< FloatType > cursor = img.cursor();
-		RandomAccess<FloatType> ra = mask.randomAccess();
+		// FIXME: it is a hack after wrong deconvolution cropping
+		RandomAccess<FloatType> ra = Views.extendMirrorSingle(mask).randomAccess();
 		
 		float currentMin = Float.MAX_VALUE;
 		float currentMax = -Float.MAX_VALUE;

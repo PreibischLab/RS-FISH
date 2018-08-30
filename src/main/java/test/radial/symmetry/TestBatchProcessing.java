@@ -1,4 +1,4 @@
-package cluster.radial.symmetry.process;
+package test.radial.symmetry;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -33,7 +33,7 @@ import radial.symmetry.parameters.GUIParams;
 import radial.symmetry.parameters.RadialSymmetryParameters;
 import util.opencsv.CSVWriter;
 
-public class BatchProcessing {
+public class TestBatchProcessing {
 	/*
 	 * Class to process multiple images in a batch mode
 	 * */

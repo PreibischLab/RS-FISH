@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>Radial_SymmetryLocalization</artifactId>
 	<version>2.1.2-SNAPSHOT</version>
-	
+
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
@@ -86,6 +86,24 @@
 		<system>Travis CI</system>
 		<url>https://travis-ci.org/milkyklim/RadialSymmetryLocalization</url>
 	</ciManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>cluster.process.start.ClusterProcessIntronsAndDapi</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 	<properties>
 		<scijava.jvm.version>1.8</scijava.jvm.version>

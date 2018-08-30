@@ -1,0 +1,1 @@
+mvn clean compile assembly:single -DdescriptorId=jar-with-dependencies -Denforcer.skip

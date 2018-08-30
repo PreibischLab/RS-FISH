@@ -9,9 +9,12 @@ import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 
 import gui.radial.symmetry.interactive.HelperFunctions;
+import ij.IJ;
+import ij.ImagePlus;
 import util.ImgLib2Util;
 import util.MedianFilter;
 
@@ -120,7 +123,10 @@ public class Preprocess {
 
 		// 4.* just resave the images at the moment
 		try {
-			new ImgSaver().saveImg(outputPath.getAbsolutePath(), pImg);
+			// new ImgSaver().saveImg(outputPath.getAbsolutePath(), pImg);
+			ImagePlus imp = ImageJFunctions.wrap(pImg, "");
+			imp.setDimensions(1, imp.getStackSize(), 1);
+			IJ.saveAsTiff(imp, outputPath.getAbsolutePath() );
 		}
 		catch (Exception exc) {
 			exc.printStackTrace();
@@ -148,7 +154,10 @@ public class Preprocess {
 
 		// 4.* just resave the images at the moment
 		try {
-			new ImgSaver().saveImg(outputPath.getAbsolutePath(), pImg);
+			// new ImgSaver().saveImg(outputPath.getAbsolutePath(), pImg);
+			ImagePlus imp = ImageJFunctions.wrap(pImg, "");
+			imp.setDimensions(1, imp.getStackSize(), 1);
+			IJ.saveAsTiff(imp, outputPath.getAbsolutePath() );
 		}
 		catch (Exception exc) {
 			exc.printStackTrace();

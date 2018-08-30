@@ -30,7 +30,7 @@ public class PreprocessIntronAndDapi {
 //			saver.saveImg(normalizedAnotherChannelImagePath.getAbsolutePath(), img);
 			
 			ImagePlus imp = ImageJFunctions.wrap(img, "");
-			ImageJFunctions.wrap(img, "").setDimensions(1, imp.getStackSize(), 1);
+			imp.setDimensions(1, imp.getStackSize(), 1);
 			IJ.saveAsTiff(imp, normalizedAnotherChannelImagePath.getAbsolutePath() );
 		}
 		catch (Exception exc) {

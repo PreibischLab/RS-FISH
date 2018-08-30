@@ -112,7 +112,10 @@ public class BatchProcess {
 			double [] coeff = new double [degree + 1];
 			Img<FloatType> fImg = ExtraPreprocess.fixIntensitiesOnlySpotsRansac(img, fSpots, fIntensity, coeff, doZcorrection);
 			try {
-				new ImgSaver().saveImg(outputPathZCorrected.getAbsolutePath(), fImg);
+				// new ImgSaver().saveImg(outputPathZCorrected.getAbsolutePath(), fImg);
+				ImagePlus fImp = ImageJFunctions.wrap(fImg, "");
+				fImp.setDimensions(1, fImp.getStackSize(), 1);
+				IJ.saveAsTiff(fImp, outputPathZCorrected.getAbsolutePath() );
 			}
 			catch (Exception exc) {
 				exc.printStackTrace();

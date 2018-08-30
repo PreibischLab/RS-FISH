@@ -232,8 +232,8 @@ public class IOUtils {
 
 		for (File path : filepaths)
 			if (!path.exists()){
+				System.out.println("Is missing: " + path);
 				isFine = false;
-				break;
 			}
 
 		return isFine;

@@ -1,7 +1,10 @@
 package scripts.radial.symmetry.process;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,27 +35,48 @@ public class ProcessIntronsAndDapi {
 	public static void setupProcess(String root, String datasetDbFile) {
 		// [x] create all the dirs if they are missing 
 		// [x] check that all necessary dirs are there 
-		File smFishDbFilename = Paths.get(root, "smFISH-database", "datasetDbFile").toFile();
+		File smFishDbFilename = Paths.get(root, "smFISH-database", datasetDbFile).toFile();
 		String [] folders = new String [] {"csv-2", "median", "roi", "channels", "normalized","csv-dapi-intron"};
 		int numFolders = folders.length + 1;
-		
+
 		File [] allPaths = new File[numFolders];
 		allPaths[numFolders - 1] = smFishDbFilename;
-		
+
 		for (int j = 0; j < numFolders - 1; j++) {
 			allPaths[j] = Paths.get(root, folders[j]).toFile();
 			if(!allPaths[j].exists()) {
-					allPaths[j].mkdirs();
-					System.out.println("Created: " + allPaths[j].getAbsolutePath());
+				allPaths[j].mkdirs();
+				System.out.println("Created: " + allPaths[j].getAbsolutePath());
 			}
 		}
 		NotSoUsefulOutput.printFiles(allPaths);
 	}
-	
-	public static void createInputArguments() {
+
+	public static void createInputArguments(String root, String datasetDbFile, boolean doFilter) throws FileNotFoundException, UnsupportedEncodingException {
 		// [ ] create the file with the triplets that should be processed
+		File smFishDbFilename = Paths.get(root, "smFISH-database", datasetDbFile).toFile();
+		File outputFilename = Paths.get(root, "intpu-triplet.txt").toFile();
+
+		ArrayList<ImageDataFull> imageDataFull = IOUtils.readDbFull(smFishDbFilename, doFilter);
+
+		final String exon = "DPY-23_EX"; 
+		final String intron = "DPY-23_INT";
+		final String dapi = "DAPI";
+
+		PrintWriter outputFile = new PrintWriter(outputFilename, "UTF-8");
+		for (ImageDataFull idf : imageDataFull) {
+			if (idf.getChannels().containsKey(exon) && idf.getChannels().containsKey(dapi) && idf.getChannels().containsKey(intron)) {
+				// write the file as exon \ dapi \ intron
+				String names = String.format("%s %s %s", 
+					getNameWithoutExt(idf.getChannel(exon), idf.getFilename()),
+					getNameWithoutExt(idf.getChannel(intron), idf.getFilename()),
+					getNameWithoutExt(idf.getChannel(dapi), idf.getFilename()));
+				outputFile.println(names);
+			}
+		}
+		outputFile.close();
 	}
-	
+
 	// same as process image but for all good images
 	public static void processImages(String root) {
 		File smFishDbFilename = Paths.get(root, "smFISH-database", "SEA-12-Table 1.csv").toFile();
@@ -115,8 +139,44 @@ public class ProcessIntronsAndDapi {
 
 	}
 
+
+	public static void processOneTriplet(String root, String exonName, String intronName, String dapiName) {
+		String dataExt = ".csv";
+		String imgExt = ".tif";
+		// in : exonCsv, intronImage, dapiImage
+		File exonCsvPath = Paths.get(root, "csv-2", exonName + dataExt).toFile();
+		File intronImagePath = Paths.get(root, "median", intronName + imgExt).toFile();
+		File dapiImagePath = Paths.get(root, "channels", dapiName + imgExt).toFile();
+		// extra input
+		File maskDapiPath = Paths.get(root, "roi", dapiName.substring(3) + imgExt).toFile();
+		// out: intronCsv, dapiCsv
+		File intronCsvPath = Paths.get(root, "csv-dapi-intron", intronName + dataExt).toFile();
+		File dapiCsvPath = Paths.get(root, "csv-dapi-intron", dapiName + dataExt).toFile();
+		File mergedCsvPath = Paths.get(root, "csv-dapi-intron", dapiName.substring(3) + dataExt).toFile();
+		// extra output
+		File normalizedDapiPath = Paths.get(root, "normalized", dapiName + imgExt).toFile();
+		// we check if these files are here but they should be
+		File [] allPaths = new File[] {exonCsvPath, intronImagePath, dapiImagePath, maskDapiPath};
+		NotSoUsefulOutput.printFiles(allPaths);
+		boolean allPathsAreCorrect = IOUtils.checkPaths(allPaths);
+		if (!allPathsAreCorrect) {
+			return; 
+		}
+
+		PreprocessIntronAndDapi.normalizeAndSave(dapiImagePath, maskDapiPath, normalizedDapiPath);
+		ProcessIntronsAndDapi.processImage(normalizedDapiPath, exonCsvPath, dapiCsvPath);
+		ProcessIntronsAndDapi.processImage(intronImagePath, exonCsvPath, intronCsvPath);
+		IOUtils.mergeExonIntronDapiAndWriteToCsv(exonCsvPath, intronCsvPath, dapiCsvPath, mergedCsvPath, '\t');
+		
+		System.out.println("processOneTriplet(...): Done processing!");
+	}
+
 	public static String getFullName(String channel, String filename, String ext) {
 		return String.format("%s-%s%s", channel, filename, ext);
+	}
+
+	public static String getNameWithoutExt(String channel, String filename) {
+		return String.format("%s-%s", channel, filename);
 	}
 
 	// return the triplets corresponding to the same image 
@@ -227,19 +287,18 @@ public class ProcessIntronsAndDapi {
 		return intensity;
 	}
 
-
-	public static void main(String[] args) {
+	public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
 
 		String root = "/Volumes/1TB/2018-06-14-12-36-00-N2-full-stack";
-		String smFishDbFilename = "SEA-12-Table 1.csv";
+		String smFishDbFilename = "N2-Table 1.csv";
 
 		File anotherChannelImagesPath = new File ("");
 		File exonFolderPath = new File ("");
 		File anotherChannelFolderPath = new File (""); 
 		// File smFishDbPath = Paths.get(root, smFishDbFilename).toFile();
 
-		setupProcess(root, smFishDbFilename);
-		
+		// setupProcess(root, smFishDbFilename);
+		createInputArguments(root, smFishDbFilename, true);
 		// processImages(root);
 
 		System.out.println("DOGE!");

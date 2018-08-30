@@ -8,6 +8,16 @@ import scripts.radial.symmetry.process.PreprocessIntronAndDapi;
 import scripts.radial.symmetry.process.ProcessIntronsAndDapi;
 
 public class TestProcessIntronsAndDapi {
+	
+	public static void testProcessOneTripplet() {
+		// C1-N2_342 C2-N2_342 C5-N2_342
+		String root = "/Volumes/1TB/2018-06-14-12-36-00-N2-full-stack";
+		String intronFilename = "C2-N2_342";
+		String exonFilename = "C1-N2_342";
+		String dapiFilename = "C5-N2_342";
+		
+		ProcessIntronsAndDapi.processOneTriplet(root, exonFilename, intronFilename, dapiFilename);
+	}
 
 	public static void testProcessExonIntronDapiResave() {
 		String root = "/Users/kkolyva/Desktop/2018-07-31-09-53-32-N2-all-results-together/test";
@@ -99,8 +109,10 @@ public class TestProcessIntronsAndDapi {
 	}
 
 	public static void main(String[] args){
-		testProcessIntronImageSet();
-		testProcessDapiImageSet();
-		testProcessExonIntronDapiResave();
+//		testProcessIntronImageSet();
+//		testProcessDapiImageSet();
+//		testProcessExonIntronDapiResave();
+		
+		testProcessOneTripplet();
 	}
 }

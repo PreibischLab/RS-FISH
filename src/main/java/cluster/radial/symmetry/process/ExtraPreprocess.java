@@ -23,8 +23,8 @@ import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
+import fit.PointFunctionMatch;
 import fit.polynomial.QuadraticFunction;
-import fitting.PointFunctionMatch;
 import fitting.Spot;
 import ij.IJ;
 import ij.ImageJ;

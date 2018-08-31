@@ -19,11 +19,11 @@ public class RunStepsPreprocess {
 		for (ImageData imageD : imageData) {
 			currentIdx++;
 			// unprocessed path
-			File inputImageFile = Paths.get(pathImages.getAbsolutePath(), imageD.getFilename(), ext).toFile();
+			File inputImageFile = Paths.get(pathImages.getAbsolutePath(), imageD.getFilename() + ext).toFile();
 			// processed path 
-			File outputImageFile = Paths.get(pathImagesMedian.getAbsolutePath(), imageD.getFilename(), ext).toFile();
+			File outputImageFile = Paths.get(pathImagesMedian.getAbsolutePath(), imageD.getFilename() + ext).toFile();
 			// mask path 
-			File maskFile = Paths.get(pathMasks.getAbsolutePath(), imageD.getFilename().substring(3), ext).toFile();
+			File maskFile = Paths.get(pathMasks.getAbsolutePath(), imageD.getFilename().substring(3) + ext).toFile();
 			System.out.println(NotSoUsefulOutput.toProgressString(currentIdx, imageData.size(), inputImageFile.getAbsolutePath()));
 			// check that the corresponding files is not missing
 			if (inputImageFile.exists() && maskFile.exists()) {
@@ -49,11 +49,11 @@ public class RunStepsPreprocess {
 		for (ImageData imageD : imageData) {
 			currentIdx++;
 			// unprocessed path
-			File inputImageFile = Paths.get(pathImages.getAbsolutePath(), imageD.getFilename(), ext).toFile();
+			File inputImageFile = Paths.get(pathImages.getAbsolutePath(), imageD.getFilename() + ext).toFile();
 			// processed path 
-			File outputImageFile = Paths.get(pathImagesMedian.getAbsolutePath(), imageD.getFilename(), ext).toFile();
+			File outputImageFile = Paths.get(pathImagesMedian.getAbsolutePath(), imageD.getFilename() + ext).toFile();
 			// mask path 
-			File maskFile = Paths.get(pathMasks.getAbsolutePath(), imageD.getFilename().substring(3), ext).toFile();
+			File maskFile = Paths.get(pathMasks.getAbsolutePath(), imageD.getFilename().substring(3) + ext).toFile();
 			// peak center value
 			float center = Preprocess.getCenter(centers, imageD.getFilename());
 			System.out.println(NotSoUsefulOutput.toProgressString(currentIdx, imageData.size(), inputImageFile.getAbsolutePath()));

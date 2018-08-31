@@ -27,8 +27,8 @@ public class RunBatchProcess {
 		for (ImageData imageD : imageData) {
 			currentIndex++;
 			// path to the processed image
-			File inputImagePath = Paths.get(pathImagesMedian.getAbsolutePath(), imageD.getFilename(), extImg).toFile();
-			File inputRoiPath = Paths.get(pathImagesRoi.getAbsolutePath(), imageD.getFilename(), extImg).toFile();
+			File inputImagePath = Paths.get(pathImagesMedian.getAbsolutePath(), imageD.getFilename() + extImg).toFile();
+			File inputRoiPath = Paths.get(pathImagesRoi.getAbsolutePath(), imageD.getFilename().substring(3) + extImg).toFile();
 			
 			System.out.println(NotSoUsefulOutput.toProgressString(currentIndex, imageData.size(), inputImagePath.getAbsolutePath()));
 			
@@ -36,17 +36,17 @@ public class RunBatchProcess {
 				// path to the image
 				File outputPathZCorrected = new File("");
 				if (pathZcorrected != null)
-					outputPathZCorrected = Paths.get(pathZcorrected.getAbsolutePath(), imageD.getFilename(), extImg).toFile();
+					outputPathZCorrected = Paths.get(pathZcorrected.getAbsolutePath(), imageD.getFilename() + extImg).toFile();
 				// table with all processing parameters
 				File outputPathParameters = new File ("");
 				if (pathParameters != null)
-					outputPathParameters = Paths.get(pathParameters.getAbsolutePath(), imageD.getFilename(), extImg).toFile();
+					outputPathParameters = Paths.get(pathParameters.getAbsolutePath(), imageD.getFilename() + extImg).toFile();
 				// table to store the results before we perform the z-correction 
 				File outputPathResultCsvBeforeCorrection = new File ("");
 				if (pathResultCsvBeforeCorrection != null)
-					outputPathResultCsvBeforeCorrection = Paths.get(pathResultCsvBeforeCorrection.getAbsolutePath(), imageD.getFilename(), extOut).toFile();
+					outputPathResultCsvBeforeCorrection = Paths.get(pathResultCsvBeforeCorrection.getAbsolutePath(), imageD.getFilename() +  extOut).toFile();
 				// table to store the results for each channel
-				File outputPathCsv = Paths.get(pathResultCsv.getAbsolutePath(), imageD.getFilename(), extOut).toFile();
+				File outputPathCsv = Paths.get(pathResultCsv.getAbsolutePath(), imageD.getFilename() + extOut).toFile();
 				// set the params according to the way length
 				// FIXME: SET THE PARAMETERS PROPERLY? ARGUMENT MAYBE?
 				GUIParams params = ParametersFirstRun.getSEA12ParametersFirstRun(imageD.getLambda());

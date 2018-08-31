@@ -23,7 +23,6 @@ import gui.radial.symmetry.interactive.InteractiveRadialSymmetry;
 import gui.radial.symmetry.result.ShowResult;
 import gui.radial.symmetry.vizualization.Visualization;
 import ij.ImagePlus;
-import ij.gui.Roi;
 import imglib2.type.numeric.real.normalized.RealTypeNormalization;
 import imglib2.type.numeric.real.normalized.TypeTransformingRandomAccessibleInterval;
 import radial.symmetry.computation.RadialSymmetry;

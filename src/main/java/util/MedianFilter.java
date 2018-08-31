@@ -10,7 +10,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import ij.ImageJ;
 // import klim.deconvolution.Utils;
 import net.imglib2.Cursor;
 import net.imglib2.Interval;
@@ -23,6 +22,8 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+
+import ij.ImageJ;
 
 public class MedianFilter
 {

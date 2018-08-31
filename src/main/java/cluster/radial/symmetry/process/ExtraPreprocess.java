@@ -586,14 +586,14 @@ public class ExtraPreprocess {
 	public static float calculateMedianIntensity(Img<FloatType> img, Img<FloatType> mask) {
 		int numDimensions = img.numDimensions();
 		float [] medianPerPlane = new float[(int) img.dimension(numDimensions -1)];
-		
-		RandomAccess<FloatType> ra = mask.randomAccess();
+		// FIXME: dirty hack because masks are one pixel short
+		RandomAccess<FloatType> ra = Views.extendMirrorSingle(mask).randomAccess();
 		
 		for (int z = 0; z < img.dimension(numDimensions -1); z++) {
 			final Cursor< FloatType > cursor = Views.hyperSlice(img, numDimensions - 1, z).cursor();
 			ArrayList<Float> pixels = new ArrayList<>();
 			
-			long [] position = new long [numDimensions - 2];
+			long [] position = new long [numDimensions - 1];
 			
 			while(cursor.hasNext()) {
 				cursor.fwd();

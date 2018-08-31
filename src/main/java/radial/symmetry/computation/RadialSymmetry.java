@@ -9,8 +9,8 @@ import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.type.numeric.real.FloatType;
 
-import fitting.Spot;
 import fitting.Center.CenterMethod;
+import fitting.Spot;
 import fix.intensity.Intensity;
 import gradient.computation.Gradient;
 import gradient.computation.GradientPreCompute;

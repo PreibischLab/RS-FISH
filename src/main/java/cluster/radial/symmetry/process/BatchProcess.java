@@ -1,27 +1,7 @@
 package cluster.radial.symmetry.process;
 
-import io.scif.img.ImgSaver;
-
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-
-import fitting.Spot;
-import fix.intensity.Intensity;
-import gui.radial.symmetry.interactive.HelperFunctions;
-import ij.IJ;
-import ij.ImageJ;
-import ij.ImagePlus;
-import ij.gui.Roi;
-import ij.io.FileSaver;
-import imglib2.type.numeric.real.normalized.RealTypeNormalization;
-import imglib2.type.numeric.real.normalized.TypeTransformingRandomAccessibleInterval;
-import radial.symmetry.computation.RadialSymmetry;
-import radial.symmetry.parameters.GUIParams;
-import radial.symmetry.parameters.RadialSymmetryParameters;
-import radial.symmetry.utils.IOUtils;
 
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
@@ -29,16 +9,21 @@ import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.interpolation.randomaccess.LanczosInterpolatorFactory;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
-import cluster.radial.symmetry.process.parameters.ParametersFirstRun;
-import cluster.radial.symmetry.process.parameters.ParametersSecondRun;
+import fitting.Spot;
+import gui.radial.symmetry.interactive.HelperFunctions;
+import ij.IJ;
+import ij.ImagePlus;
+import imglib2.type.numeric.real.normalized.RealTypeNormalization;
+import imglib2.type.numeric.real.normalized.TypeTransformingRandomAccessibleInterval;
+import radial.symmetry.computation.RadialSymmetry;
+import radial.symmetry.parameters.GUIParams;
+import radial.symmetry.parameters.RadialSymmetryParameters;
+import radial.symmetry.utils.IOUtils;
 import util.ImgLib2Util;
-import util.NotSoUsefulOutput;
-import util.opencsv.CSVWriter;
 
 public class BatchProcess {
 
@@ -50,7 +35,7 @@ public class BatchProcess {
 		// convert to 3D stack
 		imp.setDimensions(1, imp.getNSlices(), 1);
 		// set the calibration for the given image
-		double[] calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); 
+		double[] calibration = HelperFunctions.initCalibrationNoUI(imp, imp.getNDimensions()); 
 		// set the parameters for the radial symmetry 
 		RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
 		// FIXME: MAYBE WE ACTUALLY HAVE TO

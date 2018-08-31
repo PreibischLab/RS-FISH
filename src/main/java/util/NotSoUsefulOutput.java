@@ -3,12 +3,23 @@ package util;
 import java.io.File;
 import java.util.Collection;
 
+import net.imglib2.util.Util;
+
 import cluster.radial.symmetry.process.ImageData;
 import cluster.radial.symmetry.process.ImageDataFull;
+import ij.IJ;
 
 public class NotSoUsefulOutput {
 	public static String toProgressString(long current, long total, String name) {
 		return String.format("%d / %d: %s", current, total, name);
+	}
+	
+	public static String toComplaintCalibrationString(double [] cal) {
+		String out = "WARNING: Pixel calibration might be not symmetric! Please check this (Image > Properties)\n";
+		out += "x: " + cal[0] + " y: " +  cal[1];
+		if (cal.length == 3)
+			out += " z: " + cal[2];
+		return out;
 	}
 	
 	public static String toComplaintString(String className, String name) {

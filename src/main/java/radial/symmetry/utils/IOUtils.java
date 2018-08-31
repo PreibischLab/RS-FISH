@@ -8,17 +8,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import net.imglib2.RealPoint;
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
-
-import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
 
 import cluster.radial.symmetry.process.ImageData;
 import cluster.radial.symmetry.process.ImageDataFull;
 import fitting.Spot;
-import ij.IJ;
 import util.opencsv.CSVReader;
 import util.opencsv.CSVWriter;
 

@@ -1,7 +1,5 @@
 package cluster.radial.symmetry.process;
 
-import io.scif.img.ImgSaver;
-
 import java.io.File;
 import java.util.ArrayList;
 
@@ -12,6 +10,7 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+
 import gui.radial.symmetry.interactive.HelperFunctions;
 import ij.IJ;
 import ij.ImagePlus;

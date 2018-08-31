@@ -3,6 +3,12 @@ package test.paper.radial.symmetry;
 import java.io.File;
 import java.util.ArrayList;
 
+import net.imagej.ImageJ;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.real.FloatType;
+
 import fitting.Spot;
 import gui.radial.symmetry.interactive.HelperFunctions;
 import gui.radial.symmetry.result.ShowResult;
@@ -12,13 +18,6 @@ import imglib2.type.numeric.real.normalized.RealTypeNormalization;
 import imglib2.type.numeric.real.normalized.TypeTransformingRandomAccessibleInterval;
 import radial.symmetry.computation.RadialSymmetry;
 import radial.symmetry.parameters.RadialSymmetryParameters;
-
-import net.imagej.ImageJ;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
-
 import util.ImgLib2Util;
 
 public class RunTestReal {

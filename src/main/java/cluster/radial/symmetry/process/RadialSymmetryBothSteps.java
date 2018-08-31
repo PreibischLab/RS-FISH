@@ -3,13 +3,8 @@ package cluster.radial.symmetry.process;
 import java.io.File;
 import java.nio.file.Paths;
 
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
-
 import ij.ImageJ;
 import radial.symmetry.utils.IOUtils;
-import util.ImgLib2Util;
 
 public class RadialSymmetryBothSteps {
 	
@@ -62,7 +57,7 @@ public class RadialSymmetryBothSteps {
 		// path to separate channel images
 		File pathImages = Paths.get(prefix, "channels").toFile();
 		// path to the database with the images
-		File pathDatabase = Paths.get(prefix, "smFISH-database", "SEA-12-Table 1.csv").toFile();
+		File pathDatabase = Paths.get(prefix, "smFISH-database", "N2-Table 1.csv").toFile();
 		// path to the median filtered images that we save
 		File pathImagesMedian = Paths.get(prefix, "median").toFile();
 		File pathImagesMedian2 =  Paths.get(prefix, "median-2").toFile();
@@ -85,15 +80,15 @@ public class RadialSymmetryBothSteps {
 			return;
 		
 		boolean doZcorrection = true;
-		RunStepsPreprocess.runFirstStepPreprocess(pathImages, pathDatabase, pathImagesMask, pathImagesMedian);
+		// RunStepsPreprocess.runFirstStepPreprocess(pathImages, pathDatabase, pathImagesMask, pathImagesMedian);
 		RunBatchProcess.runProcess(pathImagesMedian, pathImagesMask, pathDatabase, pathZcorrected, pathResultCsvBeforeCorrection, pathParameters, pathResultCsv, doZcorrection);
-		RunStepsPreprocess.runSecondStepPreprocess(pathZcorrected, pathDatabase, pathImagesMask, pathCenters, pathImagesMedian2);
-		RunBatchProcess.runProcess(pathImagesMedian2, pathImagesMask, pathDatabase, pathZcorrected2, null, null, pathResultCsv2, doZcorrection);
+		// RunStepsPreprocess.runSecondStepPreprocess(pathZcorrected, pathDatabase, pathImagesMask, pathCenters, pathImagesMedian2);
+		// RunBatchProcess.runProcess(pathImagesMedian2, pathImagesMask, pathDatabase, pathZcorrected2, null, null, pathResultCsv2, doZcorrection);
 	}
 
 	public static void main(String[] args) {
-		new ImageJ();
-		runFullProcess2StepsSEA12();
+		// new ImageJ();
+		runFullProcess2StepsN2();
 		System.out.println("DOGE!");
 	}
 

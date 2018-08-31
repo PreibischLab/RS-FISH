@@ -32,12 +32,13 @@ import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
 import mpicbg.util.RealSum;
+import util.NotSoUsefulOutput;
 
 public class HelperFunctions {
-	
+
 	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel,
-			long time, int[] impDim) {
-		
+		long time, int[] impDim) {
+
 		RandomAccessibleInterval<FloatType> img = rai;
 		// this one is always the loop over 5-dims
 		// cut 5-th, and 3-d and drop them after that 
@@ -48,16 +49,16 @@ public class HelperFunctions {
 			if (impDim[d] != 1)
 				mapping[d] = idx++; 
 		}
-		
+
 		if (mapping[2] != -1) // if there are channels
 			img = Views.hyperSlice(img, mapping[2], channel);
-		
+
 		if (mapping[4] != -1) // if there are timepoints
 			img = Views.hyperSlice(img, mapping[4], time);
-					
+
 		return Views.dropSingletonDimensions(img);
 	}
-	
+
 	public static double[] calculateMinMax(ImagePlus imp){
 		float min = Float.MAX_VALUE;
 		float max = -Float.MAX_VALUE;
@@ -79,9 +80,9 @@ public class HelperFunctions {
 		int t = 4;
 		int numDimensions = 5; 
 		int [] dimensions = imp.getDimensions();
-		
+
 		if (dimensions[4] == 1)
-				t = -1;
+			t = -1;
 		else {
 			for (int d = 2; d < numDimensions; d++)
 				if (dimensions[d] == 1) t--;
@@ -90,7 +91,7 @@ public class HelperFunctions {
 		}
 		return t;
 	} 
-	
+
 	// return x y z 
 	public static long [] getDimensions(int [] impDim){
 		// note the conversion int -> long 
@@ -101,21 +102,21 @@ public class HelperFunctions {
 			dim = new long[] { impDim[0], impDim[1], impDim[3] };
 		return dim;
 	}
-	
+
 	public static long[] getAllDimensions(ImagePlus imagePlus){
 		long[] fullDimensions = new long [imagePlus.getNDimensions()];
 		int[] dimensions = imagePlus.getDimensions();
-		
+
 		int idx = 0;
 		for (int d = 0; d < dimensions.length; d++)
 			if(dimensions[d] != 1) 
 				fullDimensions[idx++] = dimensions[d];
-		
+
 		return fullDimensions;
 	}
-	
+
 	public static ArrayList<RefinedPeak<Point>> filterPeaks(final ArrayList<RefinedPeak<Point>> peaks,
-			final Rectangle rectangle, final double threshold) {
+		final Rectangle rectangle, final double threshold) {
 		final ArrayList<RefinedPeak<Point>> filtered = new ArrayList<>();
 
 		for (final RefinedPeak<Point> peak : peaks)
@@ -125,32 +126,32 @@ public class HelperFunctions {
 
 		return filtered;
 	}
-	
+
 	// TODO: code might be reused instead of copy\pasting
 	public static ArrayList<RefinedPeak<Point>> filterPeaks(final ArrayList<RefinedPeak<Point>> peaks, final double threshold) {
 		final ArrayList<RefinedPeak<Point>> filtered = new ArrayList<>();
-		
+
 		for (final RefinedPeak<Point> peak : peaks)
 			if (-peak.getValue() > threshold)
 				filtered.add(peak);
-		
+
 		return filtered;
 	}
-	
+
 	// TODO: Create a more sophisticated way to filter the peaks
 	public static ArrayList<Point> resavePeaks(final ArrayList<RefinedPeak<Point>> peaks, final double threshold, int numDimensions) {
 		final ArrayList<Point> filtered = new ArrayList<>();
-		
+
 		double [] pos = new double[numDimensions];
 		long [] iPos = new long [numDimensions];
-	
+
 		for (final RefinedPeak<Point> peak : peaks)
 			if (-peak.getValue() > threshold){
 				peak.localize(pos);
 				for (int d = 0; d < numDimensions; d ++)
 					iPos[d] = (long)pos[d];		
 				filtered.add(new Point(iPos));
-				
+
 			}		
 		return filtered;
 	}
@@ -166,7 +167,7 @@ public class HelperFunctions {
 	}
 
 	public static <L extends RealLocalizable> void drawRealLocalizable(final Collection<L> peaks, final ImagePlus imp,
-			final double radius, final Color col, final boolean clearFirst) {
+		final double radius, final Color col, final boolean clearFirst) {
 		// extract peaks to show
 		// we will overlay them with RANSAC result
 		Overlay overlay = imp.getOverlay();
@@ -278,12 +279,12 @@ public class HelperFunctions {
 	}
 
 	public static float computeValueFromScrollbarPosition(final int scrollbarPosition, final float min, final float max,
-			final int scrollbarSize) {
+		final int scrollbarSize) {
 		return min + (scrollbarPosition / (float) scrollbarSize) * (max - min);
 	}
 
 	public static int computeScrollbarPositionFromValue(final float sigma, final float min, final float max,
-			final int scrollbarSize) {
+		final int scrollbarSize) {
 		return Util.round(((sigma - min) / (max - min)) * scrollbarSize);
 	}
 
@@ -293,8 +294,8 @@ public class HelperFunctions {
 	 */
 	public static double[] setCalibration(ImagePlus imagePlus, int numDimensions) {
 		double[] calibration = new double[numDimensions]; // should always be 2
-															// for the
-															// interactive mode
+		// for the
+		// interactive mode
 		// if there is something reasonable in x-axis calibration use this value
 		if ((imagePlus.getCalibration().pixelWidth >= 1e-13) && imagePlus.getCalibration().pixelWidth != Double.NaN) {
 			calibration[0] = imagePlus.getCalibration().pixelWidth / imagePlus.getCalibration().pixelWidth;
@@ -334,7 +335,7 @@ public class HelperFunctions {
 	}
 
 	public static <T extends Comparable<T> & Type<T>> void computeMinMax(final RandomAccessibleInterval<T> input,
-			final T min, final T max) {
+		final T min, final T max) {
 		// create a cursor for the image (the order does not matter)
 		final Iterator<T> iterator = Views.iterable(input).iterator();
 
@@ -380,6 +381,66 @@ public class HelperFunctions {
 		}
 
 		return new double[] { min, max };
+	}
+
+	/*
+	 * initialize calibration 2D and 3D friendly
+	 */
+	public static double[] initCalibrationNoUI(final ImagePlus imp, int numDimensions) {
+		double[] calibration = new double[numDimensions];
+
+		try {
+			final Calibration cal = imp.getCalibration();
+			double[] calValues = new double[numDimensions];
+
+			// image doesn't have the calibration
+			if (cal != null) {
+				calValues[0] = cal.pixelWidth;
+				calValues[1] = cal.pixelHeight;
+				if (numDimensions == 3)
+					calValues[2] = cal.pixelDepth;
+			}
+
+			boolean isFine = true;
+			boolean isSame = true; // to check the calibration in all dimensions
+
+			// ? calibration has meaningful values
+			for (int d = 0; d < numDimensions; d++) {
+				if (Double.isNaN(calValues[d]) || Double.isInfinite(calValues[d]) || calValues[d] <= 0) {
+					isFine = false;
+				}
+				if (d > 0 && (calValues[d - 1] != calValues[d]))
+					isSame = false;
+			}
+
+			if (!isFine || cal == null || isSame) {
+				for (int d = 0; d < numDimensions; d++)
+					calibration[d] = 1.0;
+			} else {
+				NotSoUsefulOutput.toComplaintCalibrationString(calValues);
+
+				int iMax = 0;
+				for (int d = 0; d < numDimensions; d++) {
+					calibration[d] = calValues[d];
+					if (calibration[d] < calibration[iMax])
+						iMax = d;
+				}
+
+				for (int d = 0; d < numDimensions; d++) {
+					if (d != iMax)
+						calibration[d] /= calibration[iMax];
+				}
+				calibration[iMax] = 1.0;
+			}
+		} catch (Exception e) {
+			for (int d = 0; d < numDimensions; d++)
+				calibration[d] = 1.0;
+		}
+
+		System.out.println("Using relative calibration: " + Util.printCoordinates(calibration));
+		
+		return calibration;
+
 	}
 
 	/*
@@ -469,7 +530,7 @@ public class HelperFunctions {
 	 * Copy peaks found by DoG to lighter ArrayList (!imglib2)
 	 */
 	public static void copyPeaks(final ArrayList<RefinedPeak<Point>> peaks, final ArrayList<long[]> simplifiedPeaks,
-			final int numDimensions, final Rectangle rectangle, final double threshold) {
+		final int numDimensions, final Rectangle rectangle, final double threshold) {
 		for (final RefinedPeak<Point> peak : peaks) {
 			if (HelperFunctions.isInside(peak, rectangle) && (-peak.getValue() > threshold)) {
 				final long[] coordinates = new long[numDimensions];
@@ -495,7 +556,7 @@ public class HelperFunctions {
 		}
 		return integerPeaks;
 	}	
-	
+
 	// used to copy Spots to Peaks
 	public static void copyToLocalizable(final ArrayList<Spot> spots, Collection<Localizable> peaks ) {
 		for (final Spot spot : spots) {
@@ -504,7 +565,7 @@ public class HelperFunctions {
 			//peaks.add(pos);
 		}
 	}
-	
+
 	// used to copy Spots to long []
 	public static void copyToLong(final ArrayList<Spot> spots, ArrayList<long[]> peaks ) {
 		for (final Spot spot : spots)
@@ -516,7 +577,7 @@ public class HelperFunctions {
 		for (final Spot spot : spots)
 			peaks.add(spot.getCenter());
 	}
-	
+
 
 	public static class PointSpot extends Point
 	{
@@ -529,17 +590,17 @@ public class HelperFunctions {
 		}
 		public Spot getSpot() { return spot; }
 	}
-	
+
 	public static void subtractValue(Img<FloatType> bg, double value){			
 		Cursor<FloatType> cursor = bg.cursor();
-		
+
 		while(cursor.hasNext()){
 			cursor.fwd();
 			float val = (float) (cursor.get().get() - value);
 			cursor.get().set(val);
 		}
 	}
-	
+
 	public static double getImageAverage(Img<FloatType> bg){
 		// compute average over all pixels
 		double sum = sumImage(bg);
@@ -547,7 +608,7 @@ public class HelperFunctions {
 			sum /= bg.dimension(d);
 		return sum;
 	}
-	
+
 	public static double sumImage(Img<FloatType> img)
 	{
 		final RealSum sum = new RealSum();		
@@ -555,11 +616,11 @@ public class HelperFunctions {
 			sum.add( t.get() );
 		return sum.getSum();
 	}
-	
+
 	public static void subtractImg(Img<FloatType> img, Img<FloatType> bg){
 		Cursor<FloatType> cursor = img.cursor();
 		RandomAccess<FloatType> ra = bg.randomAccess();
-		
+
 		while(cursor.hasNext()){
 			cursor.fwd();
 			ra.setPosition(cursor);
@@ -567,7 +628,7 @@ public class HelperFunctions {
 			cursor.get().set(val);
 		}
 	}
-	
+
 	/*
 	 * used by background subtraction to calculate the boundaries of the spot
 	 */

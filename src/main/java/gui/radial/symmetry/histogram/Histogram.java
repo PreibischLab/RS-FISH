@@ -23,15 +23,13 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.chart.ui.ApplicationFrame;
+// import org.jfree.ui.RefineryUtilities;
 import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import gui.radial.symmetry.vizualization.Detections;
-
-import org.jfree.chart.ui.ApplicationFrame;
-// import org.jfree.ui.RefineryUtilities;
-
 import ij.ImageJ;
 
 public class Histogram extends ApplicationFrame

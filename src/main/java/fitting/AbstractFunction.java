@@ -3,7 +3,6 @@ package fitting;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import fitting.AbstractFunction;
 import mpicbg.models.AbstractModel;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;

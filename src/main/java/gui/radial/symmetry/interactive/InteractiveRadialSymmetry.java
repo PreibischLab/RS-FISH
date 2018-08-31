@@ -24,9 +24,9 @@ import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 
 import fiji.tool.SliceObserver;
+import fitting.Center.CenterMethod;
 import fitting.PointFunctionMatch;
 import fitting.Spot;
-import fitting.Center.CenterMethod;
 import gradient.computation.Gradient;
 import gradient.computation.GradientPreCompute;
 import gradient.normalized.computation.NormalizedGradient;

@@ -9,7 +9,6 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Util;
 
 import fitting.Spot;
 import gui.radial.symmetry.interactive.HelperFunctions;
@@ -18,7 +17,6 @@ import gui.radial.symmetry.vizualization.Visualization;
 import imglib2.type.numeric.real.normalized.RealTypeNormalization;
 import imglib2.type.numeric.real.normalized.TypeTransformingRandomAccessibleInterval;
 import radial.symmetry.computation.RadialSymmetry;
-import radial.symmetry.parameters.GUIParams;
 import radial.symmetry.parameters.RadialSymmetryParameters;
 import util.ImgLib2Util;
 

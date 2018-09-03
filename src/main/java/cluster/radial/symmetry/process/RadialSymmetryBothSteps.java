@@ -80,7 +80,7 @@ public class RadialSymmetryBothSteps {
 			return;
 		
 		boolean doZcorrection = true;
-		// RunStepsPreprocess.runFirstStepPreprocess(pathImages, pathDatabase, pathImagesMask, pathImagesMedian);
+		RunStepsPreprocess.runFirstStepPreprocess(pathImages, pathDatabase, pathImagesMask, pathImagesMedian);
 		RunBatchProcess.runProcess(pathImagesMedian, pathImagesMask, pathDatabase, pathZcorrected, pathResultCsvBeforeCorrection, pathParameters, pathResultCsv, doZcorrection);
 		// RunStepsPreprocess.runSecondStepPreprocess(pathZcorrected, pathDatabase, pathImagesMask, pathCenters, pathImagesMedian2);
 		// RunBatchProcess.runProcess(pathImagesMedian2, pathImagesMask, pathDatabase, pathZcorrected2, null, null, pathResultCsv2, doZcorrection);

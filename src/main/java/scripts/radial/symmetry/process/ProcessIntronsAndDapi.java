@@ -25,6 +25,7 @@ import cluster.radial.symmetry.process.ImageDataFull;
 import radial.symmetry.utils.IOUtils;
 import util.ImgLib2Util;
 import util.NotSoUsefulOutput;
+import util.Utils;
 
 public class ProcessIntronsAndDapi {
 
@@ -67,9 +68,9 @@ public class ProcessIntronsAndDapi {
 			if (idf.getChannels().containsKey(exon) && idf.getChannels().containsKey(dapi) && idf.getChannels().containsKey(intron)) {
 				// write the file as exon \ dapi \ intron
 				String names = String.format("%s %s %s", 
-					getNameWithoutExt(idf.getChannel(exon), idf.getFilename()),
-					getNameWithoutExt(idf.getChannel(intron), idf.getFilename()),
-					getNameWithoutExt(idf.getChannel(dapi), idf.getFilename()));
+					Utils.getNameWithoutExt(idf.getChannel(exon), idf.getFilename()),
+					Utils.getNameWithoutExt(idf.getChannel(intron), idf.getFilename()),
+					Utils.getNameWithoutExt(idf.getChannel(dapi), idf.getFilename()));
 				outputFile.println(names);
 			}
 		}
@@ -95,18 +96,18 @@ public class ProcessIntronsAndDapi {
 			try {
 				if (idf.getChannels().containsKey(exon) && idf.getChannels().containsKey(dapi) && idf.getChannels().containsKey(intron)) {
 					// in : exonCsv, intronImage, dapiImage
-					File exonCsvPath = Paths.get(root, "csv-2", getFullName(idf.getChannel(exon), idf.getFilename(), dataExt)).toFile();
-					File intronImagePath = Paths.get(root, "median", getFullName(idf.getChannel(intron), idf.getFilename(), imgExt)).toFile();
-					File dapiImagePath = Paths.get(root, "channels", getFullName(idf.getChannel(dapi), idf.getFilename(), imgExt)).toFile();
+					File exonCsvPath = Paths.get(root, "csv-2", Utils.getFullName(idf.getChannel(exon), idf.getFilename(), dataExt)).toFile();
+					File intronImagePath = Paths.get(root, "median", Utils.getFullName(idf.getChannel(intron), idf.getFilename(), imgExt)).toFile();
+					File dapiImagePath = Paths.get(root, "channels", Utils.getFullName(idf.getChannel(dapi), idf.getFilename(), imgExt)).toFile();
 					// extra input
 					File maskDapiPath = Paths.get(root, "roi", idf.getFilename() + imgExt).toFile();
 					// out: intronCsv, dapiCsv
-					File intronCsvPath = Paths.get(root, "csv-dapi-intron", getFullName(idf.getChannel(intron), idf.getFilename(), dataExt)).toFile();
-					File dapiCsvPath = Paths.get(root, "csv-dapi-intron", getFullName(idf.getChannel(dapi), idf.getFilename(), dataExt)).toFile();
+					File intronCsvPath = Paths.get(root, "csv-dapi-intron", Utils.getFullName(idf.getChannel(intron), idf.getFilename(), dataExt)).toFile();
+					File dapiCsvPath = Paths.get(root, "csv-dapi-intron", Utils.getFullName(idf.getChannel(dapi), idf.getFilename(), dataExt)).toFile();
 					File mergedCsvPath = Paths.get(root, "csv-dapi-intron", idf.getFilename() + dataExt).toFile();
 
 					// extra output
-					File normalizedDapiPath = Paths.get(root, "normalized", getFullName(idf.getChannel(dapi), idf.getFilename(), imgExt)).toFile();
+					File normalizedDapiPath = Paths.get(root, "normalized", Utils.getFullName(idf.getChannel(dapi), idf.getFilename(), imgExt)).toFile();
 
 					File [] allPaths = new File[] {exonCsvPath, intronImagePath, dapiImagePath, maskDapiPath};
 
@@ -168,14 +169,6 @@ public class ProcessIntronsAndDapi {
 		IOUtils.mergeExonIntronDapiAndWriteToCsv(exonCsvPath, intronCsvPath, dapiCsvPath, mergedCsvPath, '\t');
 		
 		System.out.println("processOneTriplet(...): Done processing!");
-	}
-
-	public static String getFullName(String channel, String filename, String ext) {
-		return String.format("%s-%s%s", channel, filename, ext);
-	}
-
-	public static String getNameWithoutExt(String channel, String filename) {
-		return String.format("%s-%s", channel, filename);
 	}
 
 	// return the triplets corresponding to the same image 

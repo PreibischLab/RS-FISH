@@ -44,9 +44,6 @@ public class SetupProcess {
 		//		final String dapi = "DAPI";
 		
 		// what happens in function then ?
-		// > read the database
-		// > filter the images for the corresponding wave length? 
-		// > write them to the file that will be used later on
 		File smFishDbFilename = Paths.get(root, "smFISH-database", datasetDbFile).toFile();
 		File outputFilename = Paths.get(root, fishType + ".txt").toFile();
 		ArrayList<ImageDataFull> imageDataFull = IOUtils.readDbFull(smFishDbFilename, doFilter);
@@ -63,7 +60,7 @@ public class SetupProcess {
 	public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
 		String root = "/Users/kkolyva/Desktop/2018-07-31-09-53-32-N2-all-results-together/test";
 		String smFishDbFilename = "N2-Table 1.csv";
-		final String exon = "DPY-23_EX"; 
+		final String exon = "MDH-1"; 
 
 		// setupProcess(root, smFishDbFilename);
 		createInputArguments(root, smFishDbFilename, exon, true);

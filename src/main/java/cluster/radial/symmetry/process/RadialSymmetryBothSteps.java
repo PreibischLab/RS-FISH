@@ -3,10 +3,67 @@ package cluster.radial.symmetry.process;
 import java.io.File;
 import java.nio.file.Paths;
 
-import ij.ImageJ;
 import radial.symmetry.utils.IOUtils;
+import util.NotSoUsefulOutput;
 
 public class RadialSymmetryBothSteps {
+	
+	
+	public static void runFullProcecc1Step1Image(String root, String channelFilename, String experimentType, int step) {
+		// distinguish between N2 and SEA12: exprerimentType
+		// step: 1st or 2nd run of the radial symmetry
+		
+		// TODO: choose how to choose the 
+		
+		String dataExt = ".csv";
+		String imgExt = ".tif";
+		
+		// path to the csv file with RS detected centers
+		File pathCenters = Paths.get(root, "centers", "all-centers.csv").toFile();
+		// path to the images with mask
+		File pathImageMask = Paths.get(root, "roi", channelFilename.substring(3) + imgExt).toFile();
+		
+		// path to separate channel images
+		File pathImage = Paths.get(root, "channels", channelFilename + imgExt).toFile();
+		// path to the database with the images
+		File pathDatabase = Paths.get(root, "smFISH-database", "N2-Table 1.csv").toFile();
+		// path to the median filtered images that we save
+		File pathImageMedian = Paths.get(root, "median", channelFilename + imgExt).toFile();
+		File pathImageMedian2 =  Paths.get(root, "median-2", channelFilename + imgExt).toFile();
+		// path to save the .csv files with the results without the correction
+		File pathResultCsvBeforeCorrection = Paths.get(root, "csv-before", channelFilename + imgExt).toFile();
+		// path to save the .csv files with the results
+		File pathResultCsv = Paths.get(root, "csv", channelFilename + imgExt).toFile();
+		// path to save the .csv files with the results
+		File pathResultCsv2 = Paths.get(root, "csv-2", channelFilename + imgExt).toFile();
+		// path z-corrected image
+		File pathZcorrected = Paths.get(root, "zCorrected", channelFilename + imgExt).toFile();
+		// path z-corrected image
+		File pathZcorrected2 = Paths.get(root, "zCorrected-2", channelFilename + imgExt).toFile();
+		// path to the files with the parameters
+		File pathParameters =  Paths.get(root, "csv-parameters", channelFilename + imgExt).toFile();
+		
+		File [] allPaths = new File[] {pathImageMask, pathImage, pathDatabase, pathResultCsv, pathZcorrected, pathResultCsvBeforeCorrection, pathParameters};
+		NotSoUsefulOutput.printFiles(allPaths);
+		boolean allPathsAreCorrect = IOUtils.checkPaths(allPaths);
+		if (!allPathsAreCorrect || true)
+			return;
+		
+		boolean doZcorrection = true;
+		if (step == 1) {
+			RunStepsPreprocess.runFirstStepPreprocessImage(pathImage, pathImageMask, pathImageMedian); 
+			RunBatchProcess.runProcessImage(pathImageMedian, pathImageMask, pathZcorrected, pathResultCsvBeforeCorrection, pathParameters, pathResultCsv, doZcorrection);
+		}
+		if (step == 2) {
+			RunStepsPreprocess.runSecondStepPreprocessImage(pathZcorrected, pathImageMask, pathCenters, pathImageMedian2);
+			RunBatchProcess.runProcessImage(pathImageMedian2, pathImageMask, pathZcorrected2, new File(""), new File(""), pathResultCsv2, doZcorrection);
+		}
+		if (step != 1 && step != 2) {
+			System.out.println("Wrong step specified");
+		}
+		
+		
+	}
 	
 	public static void runFullProcess2StepsSEA12() {
 		String prefix = "/Users/kkolyva/Desktop/2018-07-31-09-53-32-SEA-all-results-together/test";
@@ -88,7 +145,14 @@ public class RadialSymmetryBothSteps {
 
 	public static void main(String[] args) {
 		// new ImageJ();
-		runFullProcess2StepsN2();
+		// runFullProcess2StepsN2();
+		
+		String root = "/Users/kkolyva/Desktop/2018-07-31-09-53-32-N2-all-results-together/test";
+		String channelFilename = "C1-N2_395";
+		String experimentType = "N2";
+		int step = 1;
+		runFullProcecc1Step1Image(root, channelFilename, experimentType, step);
+		
 		System.out.println("DOGE!");
 	}
 

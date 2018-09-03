@@ -8,6 +8,33 @@ import radial.symmetry.utils.IOUtils;
 import util.NotSoUsefulOutput;
 
 public class RunStepsPreprocess {
+
+	public static void runFirstStepPreprocessImage(File inputImageFile, File maskFile, File imagesMedianFile) {
+		String classname = Preprocess.class.getSimpleName();
+		if (inputImageFile.exists() && maskFile.exists()) {
+			Preprocess.firstStepPreprocess(inputImageFile, maskFile, imagesMedianFile);
+		}
+		else {
+			System.out.println(NotSoUsefulOutput.toComplaintString(classname, inputImageFile.getAbsolutePath()));
+		}
+	}
+
+	public static void runSecondStepPreprocessImage(File inputImageFile, File maskFile, File pathCenters, File imageMedianFile) {
+		// grab the values of the centers
+		ArrayList<ImageData> centers = IOUtils.readCenters(pathCenters);
+		// to see the feedback
+		String classname = Preprocess.class.getSimpleName();
+		// check that the corresponding files is not missing
+		if (inputImageFile.exists() && maskFile.exists()) {
+			float center = Preprocess.getCenter(centers, inputImageFile.getName());
+			Preprocess.secondStepPreprocess(inputImageFile, maskFile, imageMedianFile, center);
+		}
+		else {
+			System.out.println(NotSoUsefulOutput.toComplaintString(classname, inputImageFile.getAbsolutePath()));
+		}
+
+	}
+
 	public static void runFirstStepPreprocess(File pathImages, File pathDb, File pathMasks, File pathImagesMedian) {
 		// parse the db with smFish labels and good looking images
 		ArrayList<ImageData> imageData = IOUtils.readDb(pathDb);
@@ -15,7 +42,7 @@ public class RunStepsPreprocess {
 		long currentIdx = 0;
 		String ext = ".tif";
 		String classname = Preprocess.class.getSimpleName();
-		
+
 		for (ImageData imageD : imageData) {
 			currentIdx++;
 			// unprocessed path
@@ -34,7 +61,7 @@ public class RunStepsPreprocess {
 			}
 		}
 	}
-	
+
 	public static void runSecondStepPreprocess(File pathImages, File pathDb, File pathMasks, File pathCenters, File pathImagesMedian) {
 		// parse the db with smFish labels and good looking images
 		ArrayList<ImageData> imageData = IOUtils.readDb(pathDb);
@@ -45,7 +72,7 @@ public class RunStepsPreprocess {
 		long currentIdx = 0;
 		String ext = ".tif";
 		String classname = Preprocess.class.getSimpleName();
-		
+
 		for (ImageData imageD : imageData) {
 			currentIdx++;
 			// unprocessed path

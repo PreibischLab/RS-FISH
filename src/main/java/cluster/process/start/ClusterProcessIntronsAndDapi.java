@@ -6,7 +6,7 @@ public class ClusterProcessIntronsAndDapi {
 	public static void main(String [] args){
 		
 		if (args.length != 4) {
-			System.out.println("You have to provide exactly 3 arguments!");
+			System.out.println("You have to provide exactly 4 arguments!");
 		}
 		else {
 			String root = args[0];

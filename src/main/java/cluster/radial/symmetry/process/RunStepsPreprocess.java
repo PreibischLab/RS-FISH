@@ -26,7 +26,11 @@ public class RunStepsPreprocess {
 		String classname = Preprocess.class.getSimpleName();
 		// check that the corresponding files is not missing
 		if (inputImageFile.exists() && maskFile.exists()) {
-			float center = Preprocess.getCenter(centers, inputImageFile.getName());
+			float center = Preprocess.getCenter(centers, inputImageFile.getName().substring(0, inputImageFile.getName().length() - 4));
+			if (center == 1)
+				System.out.println("Center == 1, possible image wasn't renormalized");
+			else 
+				System.out.println("Center == " + center);
 			Preprocess.secondStepPreprocess(inputImageFile, maskFile, imageMedianFile, center);
 		}
 		else {

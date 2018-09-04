@@ -19,34 +19,34 @@ public class RadialSymmetryBothSteps {
 		String imgExt = ".tif";
 		
 		// path to the csv file with RS detected centers
-		File pathCenters = Paths.get(root, "centers", "all-centers.csv").toFile();
+		File pathCenters = Paths.get(root, "centers", "all-centers" + dataExt).toFile();
 		// path to the images with mask
 		File pathImageMask = Paths.get(root, "roi", channelFilename.substring(3) + imgExt).toFile();
 		
 		// path to separate channel images
 		File pathImage = Paths.get(root, "channels", channelFilename + imgExt).toFile();
 		// path to the database with the images
-		File pathDatabase = Paths.get(root, "smFISH-database", "N2-Table 1.csv").toFile();
+		File pathDatabase = Paths.get(root, "smFISH-database", "N2-Table 1" + dataExt).toFile();
 		// path to the median filtered images that we save
 		File pathImageMedian = Paths.get(root, "median", channelFilename + imgExt).toFile();
 		File pathImageMedian2 =  Paths.get(root, "median-2", channelFilename + imgExt).toFile();
 		// path to save the .csv files with the results without the correction
-		File pathResultCsvBeforeCorrection = Paths.get(root, "csv-before", channelFilename + imgExt).toFile();
+		File pathResultCsvBeforeCorrection = Paths.get(root, "csv-before", channelFilename + dataExt).toFile();
 		// path to save the .csv files with the results
-		File pathResultCsv = Paths.get(root, "csv", channelFilename + imgExt).toFile();
+		File pathResultCsv = Paths.get(root, "csv", channelFilename + dataExt).toFile();
 		// path to save the .csv files with the results
-		File pathResultCsv2 = Paths.get(root, "csv-2", channelFilename + imgExt).toFile();
+		File pathResultCsv2 = Paths.get(root, "csv-2", channelFilename + dataExt).toFile();
 		// path z-corrected image
 		File pathZcorrected = Paths.get(root, "zCorrected", channelFilename + imgExt).toFile();
 		// path z-corrected image
 		File pathZcorrected2 = Paths.get(root, "zCorrected-2", channelFilename + imgExt).toFile();
 		// path to the files with the parameters
-		File pathParameters =  Paths.get(root, "csv-parameters", channelFilename + imgExt).toFile();
+		File pathParameters =  Paths.get(root, "csv-parameters", channelFilename + dataExt).toFile();
 		
-		File [] allPaths = new File[] {pathImageMask, pathImage, pathDatabase, pathResultCsv, pathZcorrected, pathResultCsvBeforeCorrection, pathParameters};
+		File [] allPaths = new File[] {pathImageMask, pathImage, pathDatabase, pathZcorrected};
 		NotSoUsefulOutput.printFiles(allPaths);
 		boolean allPathsAreCorrect = IOUtils.checkPaths(allPaths);
-		if (!allPathsAreCorrect || true)
+		if (!allPathsAreCorrect)
 			return;
 		
 		boolean doZcorrection = true;
@@ -61,7 +61,6 @@ public class RadialSymmetryBothSteps {
 		if (step != 1 && step != 2) {
 			System.out.println("Wrong step specified");
 		}
-		
 		
 	}
 	
@@ -148,9 +147,9 @@ public class RadialSymmetryBothSteps {
 		// runFullProcess2StepsN2();
 		
 		String root = "/Users/kkolyva/Desktop/2018-07-31-09-53-32-N2-all-results-together/test";
-		String channelFilename = "C1-N2_395";
+		String channelFilename = "C2-N2_395";
 		String experimentType = "N2";
-		int step = 1;
+		int step = 2;
 		runFullProcecc1Step1Image(root, channelFilename, experimentType, step);
 		
 		System.out.println("DOGE!");

@@ -9,5 +9,4 @@ public class Utils {
 	public static String getNameWithoutExt(String channel, String filename) {
 		return String.format("%s-%s", channel, filename);
 	}
-
 }

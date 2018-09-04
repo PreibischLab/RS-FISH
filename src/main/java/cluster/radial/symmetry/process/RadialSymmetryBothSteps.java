@@ -9,12 +9,9 @@ import util.NotSoUsefulOutput;
 public class RadialSymmetryBothSteps {
 	
 	
-	public static void runFullProcecc1Step1Image(String root, String channelFilename, String experimentType, int step) {
+	public static void runFullProcess1Step1Image(String root, String channelFilename, String experimentType, int step, int waveLength) {
 		// distinguish between N2 and SEA12: exprerimentType
 		// step: 1st or 2nd run of the radial symmetry
-		
-		// TODO: choose how to choose the 
-		
 		String dataExt = ".csv";
 		String imgExt = ".tif";
 		
@@ -49,14 +46,15 @@ public class RadialSymmetryBothSteps {
 		if (!allPathsAreCorrect)
 			return;
 		
+		
 		boolean doZcorrection = true;
 		if (step == 1) {
 			RunStepsPreprocess.runFirstStepPreprocessImage(pathImage, pathImageMask, pathImageMedian); 
-			RunBatchProcess.runProcessImage(pathImageMedian, pathImageMask, pathZcorrected, pathResultCsvBeforeCorrection, pathParameters, pathResultCsv, doZcorrection);
+			RunBatchProcess.runProcessImage(pathImageMedian, pathImageMask, pathZcorrected, pathResultCsvBeforeCorrection, pathParameters, pathResultCsv, doZcorrection, waveLength);
 		}
 		if (step == 2) {
 			RunStepsPreprocess.runSecondStepPreprocessImage(pathZcorrected, pathImageMask, pathCenters, pathImageMedian2);
-			RunBatchProcess.runProcessImage(pathImageMedian2, pathImageMask, pathZcorrected2, new File(""), new File(""), pathResultCsv2, doZcorrection);
+			RunBatchProcess.runProcessImage(pathImageMedian2, pathImageMask, pathZcorrected2, new File(""), new File(""), pathResultCsv2, doZcorrection, waveLength);
 		}
 		if (step != 1 && step != 2) {
 			System.out.println("Wrong step specified");
@@ -150,7 +148,9 @@ public class RadialSymmetryBothSteps {
 		String channelFilename = "C2-N2_395";
 		String experimentType = "N2";
 		int step = 2;
-		runFullProcecc1Step1Image(root, channelFilename, experimentType, step);
+		int waveLength = 670;
+		
+		runFullProcess1Step1Image(root, channelFilename, experimentType, step, waveLength);
 		
 		System.out.println("DOGE!");
 	}

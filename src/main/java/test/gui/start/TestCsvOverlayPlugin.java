@@ -10,7 +10,7 @@ import gui.csv.overlay.plugin.CsvOverlay_Plugin;
 public class TestCsvOverlayPlugin {
 
 	public static void main(String[] args) {
-		File path = new File("/Users/kkolyva/Desktop/2018-08-16-12-20-11-csv-overlay-plugin-test/C1-N2_279.tif");
+		File path = new File("/Users/kkolyva/Downloads/2018-09-11-11-12-10-clean-up/2018-08-16-12-20-11-csv-overlay-plugin-test/C1-N2_279.tif");
 
 		// create the ImageJ application context with all available services
 		final net.imagej.ImageJ ij = new net.imagej.ImageJ();

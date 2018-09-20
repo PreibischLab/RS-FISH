@@ -53,8 +53,6 @@ public class IOUtils {
 
 	}
 
-
-
 	public static ArrayList<ImageData> readCenters(File filePath) {
 		ArrayList <ImageData> imageData = new ArrayList<>(); 
 		try {

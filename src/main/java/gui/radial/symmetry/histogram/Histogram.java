@@ -41,7 +41,15 @@ public class Histogram extends ApplicationFrame
 	boolean isFinished = false;
 	
 	double histThresold;
+	
+	final IntervalXYDataset dataset;
+	final JFreeChart chart;
+	final ChartPanel chartPanel;
 
+	public ChartPanel getChartPanel() {
+		return chartPanel;
+	}
+	
 	public Histogram( final List< Double > values, final int numBins, final String title, final String units )
 	{
 		this(values, numBins, title, units, null); 
@@ -51,9 +59,9 @@ public class Histogram extends ApplicationFrame
 	{
 		super( title );
 		
-		final IntervalXYDataset dataset = createDataset( values, numBins, title );
-		final JFreeChart chart = createChart( dataset, title, units );
-		final ChartPanel chartPanel = new ChartPanel( chart );
+		this.dataset = createDataset( values, numBins, title );
+		this.chart = createChart( dataset, title, units );
+		this.chartPanel = new ChartPanel( chart );
 		
 		double startValue = getMin() + ( getMax() - getMin() ) / 2;
 		this.histThresold = startValue;

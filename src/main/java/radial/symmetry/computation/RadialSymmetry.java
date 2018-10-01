@@ -176,7 +176,7 @@ public class RadialSymmetry {
 				int minNumInliers = 1;
 				ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), minNumInliers);
 				allSpots.addAll(filteredSpots);
-				timePoint.add(new Long(filteredSpots.size()));
+				// timePoint.add(new Long(filteredSpots.size()));
 
 				if (rsm.getParams().getGaussFit()) {
 					// FIXME: fix the problem with the computations of this one

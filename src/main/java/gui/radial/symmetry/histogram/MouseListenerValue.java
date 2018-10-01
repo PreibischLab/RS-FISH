@@ -80,8 +80,17 @@ public class MouseListenerValue implements ChartMouseListener
 						SimpleMultiThreading.threadWait(10);
 					}
 					detection.updatePreview(value);
+					// detection.setThreshold(value);
 				}
 		}
+	}
+	
+	public void scrollbarChanged(final double value) {
+		histogram.histThresold = value;
+		valueMarker.setValue( value );
+		valueMarker.setLabel( " I = " + String.format(java.util.Locale.US,"%.2f", value) );
+		
+		// overlays are already updated
 	}
 	
 	public static double /*int*/ getChartXLocation( final Point point, final ChartPanel panel )

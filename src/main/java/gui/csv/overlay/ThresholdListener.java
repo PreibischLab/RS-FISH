@@ -27,6 +27,8 @@ public class ThresholdListener implements AdjustmentListener{
 			
 		parent.updatePreview();
 		
+		parent.detection.updatePreview(value);
+		
 //		// TODO: doesn't look like you run into concurrency issues 
 //		if (!parent.isComputing) {
 //			parent.updatePreview(ValueChange.THRESHOLD);

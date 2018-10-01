@@ -12,6 +12,7 @@ import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
+import net.imglib2.RealPoint;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
@@ -576,6 +577,16 @@ public class HelperFunctions {
 	public static void copyToDouble(final ArrayList<Spot> spots, ArrayList<double []> peaks ) {
 		for (final Spot spot : spots)
 			peaks.add(spot.getCenter());
+	}
+	
+	public static ArrayList<double []> copyToDouble(ArrayList<RealPoint> peaks) {
+		ArrayList <double [] > res = new ArrayList<>();
+		for (RealPoint peak : peaks) {
+			double [] pos = new double[peak.numDimensions()];
+			peak.localize(pos);
+			res.add(pos);
+		}
+		return res;
 	}
 
 

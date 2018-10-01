@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
+import net.imglib2.RealPoint;
+
 import fiji.tool.SliceObserver;
 import fitting.Spot;
 import gui.radial.symmetry.interactive.HelperFunctions;
@@ -47,6 +49,10 @@ public class Detections {
 		return threshold;
 	}
 
+	public void setThreshold(double t) {
+		this.threshold = t;
+	}
+	
 	// TODO: the image might be xy t, switch to the imagePlus and adjust the
 	// numDimensions accordingly
 	public Detections(ImagePlus imp, ArrayList<Spot> spots, ArrayList<Float> intensity, ArrayList<Long> timePoint, float sigma, float anisotropy) {
@@ -84,6 +90,45 @@ public class Detections {
 		permuteTimePoints(timePoint, this.timePointIndices, sortedIndices);
 
 	}
+	
+	// TODO: the image might be xy t, switch to the imagePlus and adjust the
+	// numDimensions accordingly
+	public Detections(ImagePlus imp, ArrayList<RealPoint> spots, ArrayList<Float> intensity, float sigma, float anisotropy) {
+		this.dimensions = HelperFunctions.getDimensions(imp.getDimensions());
+		this.numDimensions = dimensions.length; // stores x y (z) only
+
+		this.threshold = 0; // we suppose that intensities are non-negative
+		
+		this.sigma = sigma;
+		this.anisotropy = anisotropy;
+
+		// sort over z ?
+		// show the corresponding overlay
+
+		// TODO: add the check for the 2-4D different cases
+
+		this.imp = imp;
+		// this.imp.setDimensions( 1, (int)img.dimension( 2 ), 1 );
+
+		// this.peaks = new ArrayList<>(spots.size());
+		this.intensity = new ArrayList<>(intensity.size());
+		this.timePointIndices = new ArrayList<>(intensity.size());
+		this.peaks = HelperFunctions.copyToDouble(spots);
+		ArrayList<Long> timePoint = new ArrayList<>();
+		timePoint.add(new Long(intensity.size()));
+		
+
+		// sorts the indices to be able to get the intensities
+		IndexComparator comparator = new IndexComparator(peaks);
+		sortedIndices = comparator.createIndexArray();
+		Arrays.sort(sortedIndices, comparator);
+		// sort by z in increasing order
+		// TODO: Perfom for 3D images only ? 
+		Collections.sort(peaks, new PosComparator());
+
+		permuteIntensities(intensity, this.intensity, sortedIndices);
+		permuteTimePoints(timePoint, this.timePointIndices, sortedIndices);
+	}
 
 	public static void permuteIntensities(ArrayList<Float> from, ArrayList<Float> to, Integer[] idx) {
 		// from and to are of the same sizes
@@ -117,7 +162,6 @@ public class Detections {
 	// in general x y c z t
 	public void showDetections() {
 		imp.show();
-
 		sliceObserver = new SliceObserver(imp, new ImagePlusListener(this));
 		updatePreview(threshold);
 		isStarted = true;

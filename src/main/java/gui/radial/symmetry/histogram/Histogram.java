@@ -198,6 +198,7 @@ public class Histogram extends ApplicationFrame
 
 		NumberAxis range = (NumberAxis) chart.getXYPlot().getDomainAxis();
 		range.setRange( getMin(), getMax() );
+		// range.setRange(0, 5);
 
 		XYPlot plot = chart.getXYPlot();
 		XYBarRenderer renderer = (XYBarRenderer) plot.getRenderer();

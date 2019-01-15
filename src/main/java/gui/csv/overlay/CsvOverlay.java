@@ -1,9 +1,11 @@
 package gui.csv.overlay;
 
+import java.awt.Button;
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Label;
 import java.awt.Scrollbar;
 import java.awt.event.AdjustmentListener;
@@ -18,6 +20,7 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.util.Util;
 
 import org.jfree.chart.ChartMouseListener;
+import org.jfree.chart.axis.NumberAxis;
 
 import fiji.tool.SliceObserver;
 import gui.radial.symmetry.histogram.Histogram;
@@ -43,7 +46,8 @@ public class CsvOverlay {
 	ArrayList< RealPoint > peaks;
 	ArrayList< Float > intensities;
 	boolean isStarted = false;
-
+	boolean isFinished = false;
+	
 	float thresholdValue = 0.1111f;
 	// public static double histThreshold = 0;
 
@@ -80,7 +84,9 @@ public class CsvOverlay {
 			int numBins = 100;
 
 			this.demo = new Histogram( values, numBins, "Intensity distribution", "", this.detection);
-			demo.showHistogram();
+			this.demo.getChartPanel().getChart().getXYPlot().getDomainAxis().setRange(0, 5);
+			// (NumberAxis) chart.getXYPlot().getDomainAxis()
+			this.demo.showHistogram();
 
 			thresholdValue = (float)demo.getHistThreshold();
 			// histThreshold = demo.getHistThreshold();
@@ -117,6 +123,8 @@ public class CsvOverlay {
 		final Scrollbar thresholdBar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 1, 0, scrollbarSize + 1);
 		final Label thresholdBarText = new Label("Intensity = " + String.format(java.util.Locale.US, "%.2f", thresholdValue), Label.CENTER);
 
+		final Button button = new Button("Done");
+		
 		/* Location */
 		frame.setLayout(layout);
 
@@ -136,10 +144,14 @@ public class CsvOverlay {
 		frame.add(thresholdBar, c);
 
 		// insets for buttons
-		//		int bInTop = 0;
-		//		int bInRight = 120;
-		//		int bInBottom = 0;
-		//		int bInLeft = bInRight;
+		int bInTop = 0;
+		int bInRight = 120;
+		int bInBottom = 0;
+		int bInLeft = bInRight;
+		
+		++c.gridy;
+		c.insets = new Insets(bInTop, bInLeft, bInBottom, bInRight);
+		frame.add(button, c);
 
 		/* On screen positioning */
 		/* Screen positioning */
@@ -148,10 +160,10 @@ public class CsvOverlay {
 		frame.setLocation(xOffset, yOffset);
 
 		thresholdBar.addAdjustmentListener(new ThresholdListener(this, thresholdBarText, thresholdMin, thresholdMax, scrollbarSize));
-
+		button.addActionListener(new FinishedButtonListener(this, isFinished));
+		
 		return frame;
 	}
-
 
 	public static ArrayList< RealPoint > readAndSortPositionsFromCsv(File csvPath, char separator) {
 		ArrayList<RealPoint> peaks = IOUtils.readPositionsFromCSV(csvPath, separator);
@@ -179,14 +191,35 @@ public class CsvOverlay {
 	public boolean isStarted() {
 		return isStarted;
 	}
+	
+	protected final void dispose()
+	{
+		// clear the image
+		if ( imp != null) {
+			imp.getOverlay().clear();
+			imp.updateAndDraw();
+		}
+		
+		// close the scroll bar 
+		if (sliceObserver != null)
+			sliceObserver.unregister();
+		
+		// close the histogram here
+		if (demo != null)
+			demo.dispose();
+		
+		if (frame != null)
+			frame.dispose();
+			
+		isFinished = true;
+	}
 
 	// IMP: we only work with 3D-images {x, y, z} for now
 	public void updatePreview() {
 		Overlay overlay = setOverlay(imp);
 		addSpotsOverlay(imp, overlay, peaks, intensities, thresholdValue);
-		
+		// move the threshold line on the histogram
 		((MouseListenerValue) demo.getChartPanel().getListeners(ChartMouseListener.class)[0]).scrollbarChanged(thresholdValue);
-
 		imp.updateAndDraw();
 	}
 

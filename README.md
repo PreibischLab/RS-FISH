@@ -12,25 +12,28 @@ License: GPLv2, written by Stephan Preibisch & Timothee Lionnet
 
 Important to mention:
 
-- it is a 2 step project for radial symmetry;
-- in between steps we run python script;
+1. Preprocessing step
+- Subtract background (median filtering);
+- Subtract `medianMedianPerPlane` from each pixel;
+- Normalize image between [min_intensity, max_intensity] => [0, 1].
 
+2. RS step 
+- Run radial symmetry;
+- Filter spots outside ROI;
+- Run z-correction on the detected spots.
 
-Files to cover:
-- Name of the class with the main function
-- how cluster .sh file looks like
-- how do you set the parameters 
-- what are the input variables 
-- folder structure, write a script to create all necessary folders before hand
-- remember to write what type of are stored in the folders 
+3. Python step
+- Plot distibutions of the spots;
+- Fit Gamma distibution over the histogram;
+- Find `center` of the distibution. 
 
+4. Preprocessing step
+- Normalize image between [min_intensity, max_intensity] => [0, `center`];
 
-Pipeline description 
-- Filtering images (Median, normalization, z-correction) > what is set to what
-- Computations of the centers for the dected spots
-- Filtering images (Normalization) > what is set to what
-- Perfectly defined spots
-
+5. RS step
+- Run radial symmetry;
+- **Redundant:** Filter spots outside ROI; 
+- **Redundant:** Run z-correction on the detected spots.
 
 **Folders structure:**
 
@@ -75,5 +78,27 @@ Here are the folders with description of the files contained and format.
 - `zCorrected` -- format: `<channel>-<line>_<id>.tif`; images after 1st z-correction.
 - `zCorrected-2` -- format: `<channel>-<line>_<id>.tif`; images after 2nd z-correction.
 
-
 If you are looking for GUI step-by-step guide: https://imagej.net/Radial_Symmetry.
+
+
+- it is a 2 step project for radial symmetry;
+- in between steps we run python script;
+
+
+Files to cover:
+- Name of the class with the main function
+- how cluster .sh file looks like
+- how do you set the parameters 
+- what are the input variables 
+- folder structure, write a script to create all necessary folders before hand
+- remember to write what type of are stored in the folders 
+
+
+Pipeline description 
+- Filtering images (Median, normalization, z-correction) > what is set to what
+- Computations of the centers for the dected spots
+- Filtering images (Normalization) > what is set to what
+- Perfectly defined spots
+
+TODO:
+- link to the specific class files  

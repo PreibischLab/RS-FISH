@@ -59,17 +59,21 @@ Some constants that are used below in naming convetion.
 - `<line>` -- {`SEA-12`, `N2`};
 - `<id>` -- can be any integer number;
 
+Here are the folders with description of the files contained and format.
 
 - `centers` -- format: `all-centers.csv` contains centers of all images from the batch; 
-- `channels` -- format: `<channel>-<type>_<id>.tif` 
-- `csv` -- format: `<channel>-<type>_<id>.csv`
-- `csv-2` -- format: `<channel>-<type>_<id>.csv`
-- `csv-before` -- format: `<channel>-<type>_<id>.csv`
-- `csv-parameters` -- format: `<channel>-<type>_<id>.csv`
-- `histograms` -- format: `<subfolder>/<channel>-<type>_<id>.pdf`
-- `median` -- format: `<channel>-<type>_<id>.tif`
-- `median-2` -- format: `<channel>-<type>_<id>.tif`
-- `roi` -- format: `<type>_385.tif`
-- `smFISH-database` -- format: `<type>-Table 1.csv`
-- `zCorrected` -- format: `<channel>-<type>_<id>.tif`
-- `zCorrected-2` -- format: `<channel>-<type>_<id>.tif`
+- `channels` -- format: `<channel>-<line>_<id>.tif`; images split into channels.
+- `csv` -- format: `<channel>-<line>_<id>.csv`; csv-files with the detections after 1st RS run.
+- `csv-2` -- format: `<channel>-<line>_<id>.csv`; csv-files with the detections after 2nd RS run.
+- `csv-before` -- format: `<channel>-<line>_<id>.csv`; csv-files with the detections after 1st RS run but _before z-correction_.
+- `csv-parameters` -- format: `<channel>-<line>_<id>.csv`; csv-files with the z-correction parameters (quadratic fit).
+- `histograms` -- format: `<type>/<channel>-<line>_<id>.pdf`; subfolders for each `<type>` with distribution of detections for each separate image;
+- `median` -- format: `<channel>-<line>_<id>.tif`; images after 1st iteration of processing.
+- `median-2` -- format: `<channel>-<line>_<id>.tif`; images after 2nd iteration of processing.
+- `roi` -- format: `<line>_<id>.tif`; masks.
+- `smFISH-database` -- format: `<line>-Table 1.csv`; csv-file with all information about the images. 
+- `zCorrected` -- format: `<channel>-<line>_<id>.tif`; images after 1st z-correction.
+- `zCorrected-2` -- format: `<channel>-<line>_<id>.tif`; images after 2nd z-correction.
+
+
+If you are looking for GUI step-by-step guide: https://imagej.net/Radial_Symmetry.

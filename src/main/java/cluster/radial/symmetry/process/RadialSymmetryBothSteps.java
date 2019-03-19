@@ -82,7 +82,7 @@ public class RadialSymmetryBothSteps {
 
 	}
 
-	public static void runFullProcess2StepsSEA12() {
+	public static void runFullProcess1StepSEA12(int step) {
 		String prefix =
 			"/Users/kkolyva/Desktop/2018-07-31-09-53-32-SEA-all-results-together/test";
 		// path to the csv file with RS detected centers
@@ -118,19 +118,26 @@ public class RadialSymmetryBothSteps {
 		if (!allPathsAreCorrect) return;
 
 		boolean doZcorrection = true;
-		RunStepsPreprocess.runFirstStepPreprocess(pathImages, pathDatabase,
-			pathImagesMask, pathImagesMedian);
-		RunBatchProcess.runProcess(pathImagesMedian, pathImagesMask, pathDatabase,
-			pathZcorrected, pathResultCsvBeforeCorrection, pathParameters,
-			pathResultCsv, doZcorrection);
-		RunStepsPreprocess.runSecondStepPreprocess(pathZcorrected, pathDatabase,
-			pathImagesMask, pathCenters, pathImagesMedian2);
-		RunBatchProcess.runProcess(pathImagesMedian2, pathImagesMask, pathDatabase,
-			pathZcorrected2, null, null, pathResultCsv2, doZcorrection);
+		if (step == 1) {
+			RunStepsPreprocess.runFirstStepPreprocess(pathImages, pathDatabase,
+				pathImagesMask, pathImagesMedian);
+			RunBatchProcess.runProcess(pathImagesMedian, pathImagesMask, pathDatabase,
+				pathZcorrected, pathResultCsvBeforeCorrection, pathParameters,
+				pathResultCsv, doZcorrection);
+		}
+		if (step == 2) {
+			RunStepsPreprocess.runSecondStepPreprocess(pathZcorrected, pathDatabase,
+				pathImagesMask, pathCenters, pathImagesMedian2);
+			RunBatchProcess.runProcess(pathImagesMedian2, pathImagesMask, pathDatabase,
+				pathZcorrected2, null, null, pathResultCsv2, doZcorrection);
+		}
+		if (step != 1 && step != 2) {
+			System.out.println("Wrong step specified");
+		}
 	}
 
 	// FIXME: fix the way parameters are set
-	public static void runFullProcess2StepsN2() {
+	public static void runFullProcess1StepN2(int step) {
 		String prefix =
 			"/Users/kkolyva/Desktop/2018-07-31-09-53-32-N2-all-results-together/test";
 
@@ -167,20 +174,26 @@ public class RadialSymmetryBothSteps {
 		if (!allPathsAreCorrect) return;
 
 		boolean doZcorrection = true;
-		RunStepsPreprocess.runFirstStepPreprocess(pathImages, pathDatabase,
-			pathImagesMask, pathImagesMedian);
-		RunBatchProcess.runProcess(pathImagesMedian, pathImagesMask, pathDatabase,
-			pathZcorrected, pathResultCsvBeforeCorrection, pathParameters,
-			pathResultCsv, doZcorrection);
-		RunStepsPreprocess.runSecondStepPreprocess(pathZcorrected, pathDatabase,
-			pathImagesMask, pathCenters, pathImagesMedian2);
-		RunBatchProcess.runProcess(pathImagesMedian2, pathImagesMask, pathDatabase,
-			pathZcorrected2, null, null, pathResultCsv2, doZcorrection);
+		if (step == 1) {
+			RunStepsPreprocess.runFirstStepPreprocess(pathImages, pathDatabase,
+				pathImagesMask, pathImagesMedian);
+			RunBatchProcess.runProcess(pathImagesMedian, pathImagesMask, pathDatabase,
+				pathZcorrected, pathResultCsvBeforeCorrection, pathParameters,
+				pathResultCsv, doZcorrection);
+		}
+		if (step == 2) {
+			RunStepsPreprocess.runSecondStepPreprocess(pathZcorrected, pathDatabase,
+				pathImagesMask, pathCenters, pathImagesMedian2);
+			RunBatchProcess.runProcess(pathImagesMedian2, pathImagesMask, pathDatabase,
+				pathZcorrected2, null, null, pathResultCsv2, doZcorrection);
+		}
+		if (step != 1 && step != 2) {
+			System.out.println("Wrong step specified");
+		}
 	}
 
 	public static void main(String[] args) {
 		// new ImageJ();
-		// runFullProcess2StepsN2();
 
 		String root =
 			"/Users/kkolyva/Desktop/2018-07-31-09-53-32-N2-all-results-together/test";
@@ -188,6 +201,8 @@ public class RadialSymmetryBothSteps {
 		String experimentType = "N2";
 		int step = 2;
 		int waveLength = 670;
+		
+		runFullProcess1StepN2(step);
 
 		runFullProcess1Step1Image(root, channelFilename, experimentType, step,
 			waveLength);

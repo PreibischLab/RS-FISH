@@ -31,9 +31,7 @@ Important to mention:
 - Normalize image between [min_intensity, max_intensity] => [0, `center`];
 
 5. RS step
-- Run radial symmetry;
-- **Redundant:** Filter spots outside ROI; 
-- **Redundant:** Run z-correction on the detected spots.
+- Run radial symmetry.
 
 **Folders structure:**
 

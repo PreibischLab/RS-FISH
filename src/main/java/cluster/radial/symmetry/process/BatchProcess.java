@@ -1,3 +1,4 @@
+
 package cluster.radial.symmetry.process;
 
 import java.io.File;
@@ -28,16 +29,21 @@ import util.ImgLib2Util;
 public class BatchProcess {
 
 	// TODO: Refactor, divide into functions
-	public static void process(File imgPath, File inputRoiPath, GUIParams params, File outputPathResultCsvBeforeCorrection, File outputPathParameters, File outputPathZCorrected, File outputPath, boolean doZcorrection) {
+	public static void process(File imgPath, File inputRoiPath, GUIParams params,
+		File outputPathResultCsvBeforeCorrection, File outputPathParameters,
+		File outputPathZCorrected, File outputPath, boolean doZcorrection)
+	{
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath);
 		// TODO: might be redundant
 		ImagePlus imp = ImageJFunctions.wrap(img, "");
 		// convert to 3D stack
 		imp.setDimensions(1, imp.getNSlices(), 1);
 		// set the calibration for the given image
-		double[] calibration = HelperFunctions.initCalibrationNoUI(imp, imp.getNDimensions()); 
-		// set the parameters for the radial symmetry 
-		RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
+		double[] calibration = HelperFunctions.initCalibrationNoUI(imp, imp
+			.getNDimensions());
+		// set the parameters for the radial symmetry
+		RadialSymmetryParameters rsm = new RadialSymmetryParameters(params,
+			calibration);
 		// FIXME: MAYBE WE ACTUALLY HAVE TO
 		// don't have to normalize the image and can use it directly
 
@@ -49,7 +55,7 @@ public class BatchProcess {
 		RandomAccessibleInterval<FloatType> rai;
 		if (!Double.isNaN(min) && !Double.isNaN(max)) // if normalizable
 			rai = new TypeTransformingRandomAccessibleInterval<>(img,
-					new RealTypeNormalization<>(min, max - min), new FloatType());
+				new RealTypeNormalization<>(min, max - min), new FloatType());
 		else // otherwise use
 		{
 			// rai = img;
@@ -62,7 +68,8 @@ public class BatchProcess {
 
 		// stores the intensity values for gauss fitting
 		ArrayList<Float> intensity = new ArrayList<>(0);
-		ArrayList<Spot> spots = processImage(img, rai, rsm, dims, params.getSigmaDoG(), intensity);
+		ArrayList<Spot> spots = processImage(img, rai, rsm, dims, params
+			.getSigmaDoG(), intensity);
 
 		// TODO: filter the spots that are inside of the roi
 		Img<FloatType> mask = ImgLib2Util.openAs32Bit(inputRoiPath);
@@ -76,8 +83,8 @@ public class BatchProcess {
 			int x = spot.getIntPosition(0);
 			int y = spot.getIntPosition(1);
 			// filter spots that are not in the roi
-			ra.setPosition(new long[] {x, y});
-			if(ra.get().get() > 0){
+			ra.setPosition(new long[] { x, y });
+			if (ra.get().get() > 0) {
 				int idx = spots.indexOf(spot);
 
 				fSpots.add(spots.get(idx));
@@ -86,21 +93,25 @@ public class BatchProcess {
 		}
 
 		// we want to save the intensity values that were not corrected yet
-		if (outputPathResultCsvBeforeCorrection.getAbsolutePath().endsWith(".csv")) {
-			IOUtils.writeSpotPositionsAndIntensitiesToCSV(outputPathResultCsvBeforeCorrection, fSpots, fIntensity);
+		if (outputPathResultCsvBeforeCorrection.getAbsolutePath().endsWith(
+			".csv"))
+		{
+			IOUtils.writeSpotPositionsAndIntensitiesToCSV(
+				outputPathResultCsvBeforeCorrection, fSpots, fIntensity);
 		}
 
 		// TODO: we don't need to check this - path always exists
-		if (!outputPathZCorrected.getAbsolutePath().equals("")){
+		if (!outputPathZCorrected.getAbsolutePath().equals("")) {
 
-			int degree = 2; 
-			double [] coeff = new double [degree + 1];
-			Img<FloatType> fImg = ExtraPreprocess.fixIntensitiesOnlySpotsRansac(img, fSpots, fIntensity, coeff, doZcorrection);
+			int degree = 2;
+			double[] coeff = new double[degree + 1];
+			Img<FloatType> fImg = ExtraPreprocess.fixIntensitiesOnlySpotsRansac(img,
+				fSpots, fIntensity, coeff, doZcorrection);
 			try {
 				// new ImgSaver().saveImg(outputPathZCorrected.getAbsolutePath(), fImg);
 				ImagePlus fImp = ImageJFunctions.wrap(fImg, "");
 				fImp.setDimensions(1, fImp.getStackSize(), 1);
-				IJ.saveAsTiff(fImp, outputPathZCorrected.getAbsolutePath() );
+				IJ.saveAsTiff(fImp, outputPathZCorrected.getAbsolutePath());
 			}
 			catch (Exception exc) {
 				exc.printStackTrace();
@@ -111,7 +122,8 @@ public class BatchProcess {
 			}
 
 			// TODO: filter the spot with the gaussian fit
-			IOUtils.writeSpotPositionsAndIntensitiesToCSV(outputPath, fSpots, fIntensity);
+			IOUtils.writeSpotPositionsAndIntensitiesToCSV(outputPath, fSpots,
+				fIntensity);
 		}
 	}
 
@@ -119,26 +131,33 @@ public class BatchProcess {
 	 * Class to process multiple images in a batch mode
 	 * */
 	// TODO: polish
-	public static ArrayList<Spot> processImage(Img<FloatType> img, RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
-		long[] dims, double sigma, ArrayList<Float> intensity) {
+	public static ArrayList<Spot> processImage(Img<FloatType> img,
+		RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
+		long[] dims, double sigma, ArrayList<Float> intensity)
+	{
 		RadialSymmetry rs = new RadialSymmetry(rai, rsm);
 		rs.compute();
 
-		// TODO: Check if this part is redundant 
+		// TODO: Check if this part is redundant
 		// TODO: if the detect spot has at least 1 inlier add it
-		ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), 1 );
+		ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(),
+			1);
 
-		// iterate over all points and perform the linear interpolation for each of the spots
-		NLinearInterpolatorFactory<FloatType> factory = new NLinearInterpolatorFactory<>();
-		// LanczosInterpolatorFactory< FloatType > factory = new LanczosInterpolatorFactory< FloatType >();
-		RealRandomAccessible<FloatType> interpolant = Views.interpolate(Views.extendMirrorSingle(img), factory);
+		// iterate over all points and perform the linear interpolation for each of
+		// the spots
+		NLinearInterpolatorFactory<FloatType> factory =
+			new NLinearInterpolatorFactory<>();
+		// LanczosInterpolatorFactory< FloatType > factory = new
+		// LanczosInterpolatorFactory< FloatType >();
+		RealRandomAccessible<FloatType> interpolant = Views.interpolate(Views
+			.extendMirrorSingle(img), factory);
 
 		// looks like we are working with the correct image
-		// and taking the intensities from the correct place 
+		// and taking the intensities from the correct place
 		// ImageJFunctions.show(img);
 		// ImageJFunctions.show(rai);
 
-		for (Spot fSpot : filteredSpots){
+		for (Spot fSpot : filteredSpots) {
 			RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
 			double[] position = fSpot.getCenter();
 			rra.setPosition(position);

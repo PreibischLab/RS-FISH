@@ -11,7 +11,6 @@ import radial.symmetry.utils.IOUtils;
 import util.NotSoUsefulOutput;
 
 public class RunBatchProcess {
-
 	// to support old code
 	public static void runProcess(File pathImagesMedian, File pathImagesRoi,
 		File pathDatabase, File pathZcorrected, File pathResultCsv,
@@ -27,7 +26,6 @@ public class RunBatchProcess {
 		int waveLength)
 	{
 		String classname = Preprocess.class.getSimpleName();
-
 		if (pathMedian.exists()) {
 			// set the params according to the way length
 			// TODO: Are parameters different for SEA12 and N2?
@@ -42,6 +40,9 @@ public class RunBatchProcess {
 				pathMedian.getAbsolutePath()));
 		}
 	}
+
+
+
 
 	public static void runProcess(File pathImagesMedian, File pathImagesRoi,
 		File pathDatabase, File pathZcorrected, File pathResultCsvBeforeCorrection,
@@ -90,7 +91,6 @@ public class RunBatchProcess {
 				// FIXME: SET THE PARAMETERS PROPERLY? ARGUMENT MAYBE?
 				GUIParams params = ParametersFirstRun.getSEA12ParametersFirstRun(imageD
 					.getLambda());
-
 				BatchProcess.process(inputImagePath, inputRoiPath, params,
 					outputPathResultCsvBeforeCorrection, outputPathParameters,
 					outputPathZCorrected, outputPathCsv, doZcorrection);

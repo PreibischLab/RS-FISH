@@ -191,7 +191,6 @@ public class RadialSymmetryBothSteps {
 
 		runFullProcess1Step1Image(root, channelFilename, experimentType, step,
 			waveLength);
-
 		System.out.println("DOGE!");
 	}
 

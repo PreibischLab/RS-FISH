@@ -116,7 +116,7 @@ public class BatchProcess {
 			catch (Exception exc) {
 				exc.printStackTrace();
 			}
-
+			
 			if (outputPathParameters.getAbsolutePath().endsWith(".csv")) {
 				IOUtils.writeParametersToCsv(outputPathParameters, coeff);
 			}

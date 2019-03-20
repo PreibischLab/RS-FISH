@@ -1,3 +1,4 @@
+
 package cluster.radial.symmetry.process;
 
 import java.io.File;
@@ -21,29 +22,27 @@ public class Preprocess {
 
 	public static float[] getMinmax(Img<FloatType> img, Img<FloatType> mask) {
 		int numDimensions = img.numDimensions();
-		float [] minmax = new float[2];
+		float[] minmax = new float[2];
 
-		final Cursor< FloatType > cursor = img.cursor();
+		final Cursor<FloatType> cursor = img.cursor();
 		// FIXME: it is a hack after wrong deconvolution cropping
 		RandomAccess<FloatType> ra = Views.extendMirrorSingle(mask).randomAccess();
-		
+
 		float currentMin = Float.MAX_VALUE;
 		float currentMax = -Float.MAX_VALUE;
-		
-		long [] position = new long [numDimensions];
 
-		while(cursor.hasNext()) {
+		long[] position = new long[numDimensions];
+
+		while (cursor.hasNext()) {
 			cursor.fwd();
 
 			cursor.localize(position);
-			ra.setPosition(new long[] {position[0], position[1]});
+			ra.setPosition(new long[] { position[0], position[1] });
 
-			if (ra.get().get() > 0){
+			if (ra.get().get() > 0) {
 				float currentValue = cursor.get().get();
-				if (currentValue < currentMin)
-					currentMin = currentValue;
-				if (currentValue > currentMax)
-					currentMax = currentValue;
+				if (currentValue < currentMin) currentMin = currentValue;
+				if (currentValue > currentMax) currentMax = currentValue;
 			}
 		}
 
@@ -52,10 +51,13 @@ public class Preprocess {
 		return minmax;
 	}
 
-	public static Img<FloatType> normalize( Img <FloatType> img, float fromMin, float fromMax, float toMin, float toMax){
-		Img<FloatType> pImg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
+	public static Img<FloatType> normalize(Img<FloatType> img, float fromMin,
+		float fromMax, float toMin, float toMax)
+	{
+		Img<FloatType> pImg = new ArrayImgFactory<FloatType>().create(img,
+			new FloatType());
 
-		final Cursor< FloatType > cursor = img.cursor();
+		final Cursor<FloatType> cursor = img.cursor();
 		RandomAccess<FloatType> ra = pImg.randomAccess();
 
 		// no roi in the image case
@@ -67,7 +69,7 @@ public class Preprocess {
 		float scale = fromMax;
 		scale -= fromMin;
 
-		while(cursor.hasNext()) {
+		while (cursor.hasNext()) {
 			cursor.fwd();
 			ra.setPosition(cursor);
 
@@ -85,36 +87,40 @@ public class Preprocess {
 	public static float getCenter(ArrayList<ImageData> centers, String filename) {
 		float center = 1;
 		// TODO: optimize
-		for(ImageData id : centers)
-			if (filename.equals(id.getFilename()))
-				center = id.getCenter();
+		for (ImageData id : centers)
+			if (filename.equals(id.getFilename())) center = id.getCenter();
 		return center;
 	}
 
 	// TODO: make all operations in place
-	public static void firstStepPreprocess(File imgPath, File roiPath, File outputPath) {
+	public static void firstStepPreprocess(File imgPath, File roiPath,
+		File outputPath)
+	{
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
-		Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
-		Img<FloatType> mask =  ImgLib2Util.openAs32Bit(roiPath.getAbsoluteFile());
+		Img<FloatType> bg = new ArrayImgFactory<FloatType>().create(img,
+			new FloatType());
+		Img<FloatType> mask = ImgLib2Util.openAs32Bit(roiPath.getAbsoluteFile());
 
 		// 1. get the background
-		int [] kernelDim = new int []{19, 19}; 
+		int[] kernelDim = new int[] { 19, 19 };
 		MedianFilter.medianFilterSliced(img, bg, kernelDim);
 
 		// 2. subtract the background
 		HelperFunctions.subtractImg(img, bg);
 		System.out.println("Median filtering done!");
 
-		float medianMedianPerPlane = ExtraPreprocess.calculateMedianIntensity(img, mask);
-		Img<FloatType> pImg = ExtraPreprocess.subtractValue(img, medianMedianPerPlane);
+		float medianMedianPerPlane = ExtraPreprocess.calculateMedianIntensity(img,
+			mask);
+		Img<FloatType> pImg = ExtraPreprocess.subtractValue(img,
+			medianMedianPerPlane);
 		System.out.println("Median of median done!");
 
-		// 5. normalize image 
+		// 5. normalize image
 		float min = 0;
 		float max = 1;
 
 		// imp used for roi only
-		float [] fromMinMax = getMinmax(pImg, mask);
+		float[] fromMinMax = getMinmax(pImg, mask);
 		// IMP: decided to take min as 0
 		fromMinMax[0] = 0;
 
@@ -126,7 +132,7 @@ public class Preprocess {
 			// new ImgSaver().saveImg(outputPath.getAbsolutePath(), pImg);
 			ImagePlus imp = ImageJFunctions.wrap(pImg, "");
 			imp.setDimensions(1, imp.getStackSize(), 1);
-			IJ.saveAsTiff(imp, outputPath.getAbsolutePath() );
+			IJ.saveAsTiff(imp, outputPath.getAbsolutePath());
 		}
 		catch (Exception exc) {
 			exc.printStackTrace();
@@ -134,30 +140,32 @@ public class Preprocess {
 		System.out.println("Saving done!");
 	}
 
-	public static void secondStepPreprocess(File imgPath, File roiPath, File outputPath, float center) {
+	public static void secondStepPreprocess(File imgPath, File roiPath,
+		File outputPath, float center)
+	{
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(imgPath.getAbsoluteFile());
 		Img<FloatType> mask = ImgLib2Util.openAs32Bit(roiPath.getAbsoluteFile());
 
-		// 5. normalize image 
+		// 5. normalize image
 		float min = 0;
 		float max = 1;
 
-		// TODO: do I actually need this one 
-		float [] fromMinMax = getMinmax(img, mask);
+		// TODO: do I actually need this one
+		float[] fromMinMax = getMinmax(img, mask);
 
 		fromMinMax[0] = 0;
 		fromMinMax[1] = center; // - medianMedianPerPlane;
 
-		Img<FloatType> pImg = normalize(img, fromMinMax[0], fromMinMax[1], min, max);
+		Img<FloatType> pImg = normalize(img, fromMinMax[0], fromMinMax[1], min,
+			max);
 		System.out.println("Normalization done!");
-		
 
 		// 4.* just resave the images at the moment
 		try {
 			// new ImgSaver().saveImg(outputPath.getAbsolutePath(), pImg);
 			ImagePlus imp = ImageJFunctions.wrap(pImg, "");
 			imp.setDimensions(1, imp.getStackSize(), 1);
-			IJ.saveAsTiff(imp, outputPath.getAbsolutePath() );
+			IJ.saveAsTiff(imp, outputPath.getAbsolutePath());
 		}
 		catch (Exception exc) {
 			exc.printStackTrace();
@@ -165,7 +173,7 @@ public class Preprocess {
 		System.out.println("Saving done!");
 	}
 
-	public static void main(String [] args){
+	public static void main(String[] args) {
 		File folder = new File("");
 		// runPreprocess(folder);
 	}

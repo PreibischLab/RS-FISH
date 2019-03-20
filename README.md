@@ -59,8 +59,7 @@ Important to mention:
 |-- median-2
 |-- roi
 |-- smFISH-database
-|-- zCorrected
-`-- zCorrected-2
+`-- zCorrected
 ```
 
 Some constants that are used below in naming convention.
@@ -68,7 +67,7 @@ Some constants that are used below in naming convention.
 - `<type>` -- {`DPY-23_EX`, `MDH-1`}
 - `<channel>` -- image channel {0, 1, 2, 3, 4};
 - `<line>` -- {`SEA-12`, `N2`};
-- `<id>` -- can be any integer number;
+- `<id>` -- can be any integer number.
 
 Here are the folders with description of the files contained and format.
 
@@ -87,21 +86,12 @@ Here are the folders with description of the files contained and format.
 - `zCorrected` -- format: `<channel>-<line>_<id>.tif`; images after 1st z-correction.
 - `zCorrected-2` -- format: `<channel>-<line>_<id>.tif`; images after 2nd z-correction.
 
+[RadialSymmetryBothSteps.java](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/intron-cluster/src/main/java/cluster/radial/symmetry/process/RadialSymmetryBothSteps.java ) triggers the computations of Radial Symmetry, one has to specify which `step` should be used – 1st or 2nd.   
 
+It contains 2 important functions: 
 
-
-Files to cover:
-- Name of the class with the main function
-- how cluster .sh file looks like
-- how do you set the parameters 
-- what are the input variables 
-- folder structure, write a script to create all necessary folders before hand
-- remember to write what type of are stored in the folders 
-
-
-TODO:
-- link to the specific class files  
-
+- `runFullProcess1StepN2` or `runFullProcess1StepSEA12` which processes all images in the folder; way to go if you don't have too many images;
+- `runFullProcess1Step1Image` which process only one specified image; way to go if you have too many images and want to process them in parallel.
 
 **Important:**
 - The parameters for Radial Symmetry runs do not change from experiment-to-experiment and are set to the best I've found empirically: 
@@ -116,6 +106,16 @@ anisotropyCoefficient = 1.08
 useRansac = true		
 ```
 
-[File](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/intron-cluster/src/main/java/cluster/radial/symmetry/process/parameters/ParametersFirstRun.java) with the parameters.
+[ParametersFirstRun.java](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/intron-cluster/src/main/java/cluster/radial/symmetry/process/parameters/ParametersFirstRun.java) with the parameters.
 
 For the detailed description of the parameters refer to step-by-step [guide](https://imagej.net/Radial_Symmetry#Detailed_Tutorial).
+
+
+TODO:
+- how cluster .sh file looks like
+- what are the input variables 
+- folder structure, write a script to create all necessary folders before hand
+- remember to write what type of are stored in the folders 
+
+TODO:
+- link to the specific class files  

@@ -84,7 +84,6 @@ Here are the folders with description of the files contained and format.
 - `roi` -- format: `<line>_<id>.tif`; masks.
 - `smFISH-database` -- format: `<line>-Table 1.csv`; csv-file with all information about the images. 
 - `zCorrected` -- format: `<channel>-<line>_<id>.tif`; images after 1st z-correction.
-- `zCorrected-2` -- format: `<channel>-<line>_<id>.tif`; images after 2nd z-correction.
 
 [RadialSymmetryBothSteps.java](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/intron-cluster/src/main/java/cluster/radial/symmetry/process/RadialSymmetryBothSteps.java ) triggers the computations of Radial Symmetry, one has to specify which `step` should be used – 1st or 2nd.   
 
@@ -113,7 +112,6 @@ For the detailed description of the parameters refer to step-by-step [guide](htt
 
 TODO:
 - how cluster .sh file looks like
-- what are the input variables 
 - folder structure, write a script to create all necessary folders before hand
 - remember to write what type of are stored in the folders 
 

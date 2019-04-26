@@ -361,37 +361,50 @@ public class IOUtils {
 	public static ArrayList <ImageData> readDb(File databasePath) {
 		ArrayList <ImageData> imageData = new ArrayList<>(); 
 		// some constants
-		final int nColumns = 24;
+		final int nColumns = 31;
 
-		final String [] channels = new String[] {"C0", "C1", "C2", "C3", "C4"};
+		final String [] channels = new String[] {"c0", "c1", "c2", "c3", "c4"};
 
 		final HashMap<String, Integer> lambdaIndices = new HashMap<>();
-		lambdaIndices.put(channels[0], 2);
-		lambdaIndices.put(channels[1], 5);
-		lambdaIndices.put(channels[2], 8);
-		lambdaIndices.put(channels[3], 11);
-		lambdaIndices.put(channels[4], 14);
+		lambdaIndices.put(channels[0], 7);
+		lambdaIndices.put(channels[1], 8);
+		lambdaIndices.put(channels[2], 9);
+		lambdaIndices.put(channels[3], 10);
+		lambdaIndices.put(channels[4], 11);
 
 		final HashMap<String, Integer> typeIndices = new HashMap<>();
-		typeIndices.put(channels[0], 4);
-		typeIndices.put(channels[1], 7);
-		typeIndices.put(channels[2], 10);
-		typeIndices.put(channels[3], 13);
-		typeIndices.put(channels[4], 16);
+		typeIndices.put(channels[0], 16);
+		typeIndices.put(channels[1], 17);
+		typeIndices.put(channels[2], 18);
+		
+		// this are dummies check if they cause any errors 
+		typeIndices.put(channels[3], 0);
+		typeIndices.put(channels[4], 0);
 
 		final HashMap<String, Integer> stainIndices = new HashMap<>();
-		stainIndices.put(channels[0], 3);
-		stainIndices.put(channels[1], 6);
-		stainIndices.put(channels[2], 9);
-		stainIndices.put(channels[3], 12);
-		stainIndices.put(channels[4], 15);
+//		stainIndices.put(channels[0], 16);
+//		stainIndices.put(channels[1], 17);
+//		stainIndices.put(channels[2], 18);
+//		
+//	// this are dummies check if they cause any errors  
+//		stainIndices.put(channels[3], 0);
+//		stainIndices.put(channels[4], 0);
+		
+		stainIndices.put(channels[0], 2);
+		stainIndices.put(channels[1], 3);
+		stainIndices.put(channels[2], 4);
+		
+		
+	// this are dummies check if they cause any errors  
+		stainIndices.put(channels[3], 5);
+		stainIndices.put(channels[4], 6);
 
 		final HashMap<String, Integer> paramIndices = new HashMap<>();
-		paramIndices.put("signal", 17);
-		paramIndices.put("integrity", 18);
-		paramIndices.put("stage", 19);
-		paramIndices.put("comment", 20); // quality
-		paramIndices.put("new filename", 23);
+		paramIndices.put("signal", 22);
+		paramIndices.put("integrity", 21);
+		paramIndices.put("stage", 20);
+		paramIndices.put("comments", 19); // quality
+		paramIndices.put("cropped_image_file", 28);
 
 		try {
 			int toSkip = 1; // skip header
@@ -399,13 +412,24 @@ public class IOUtils {
 			String[] nextLine = new String [nColumns];
 			// while there are rows in the file
 			while ((nextLine = reader.readNext()) != null) {
-				// parse the row; that is 25 elements long
+				// parse the row; 
 				for (String channel : channels) {
-					if (nextLine[stainIndices.get(channel)].equals("FISH") && conditionalPick(nextLine, paramIndices)) {
+					
+					System.out.println(nextLine[stainIndices.get(channel)]);
+					System.out.println(nextLine[typeIndices.get(channel)]);
+					System.out.println(conditionalPick(nextLine, paramIndices));
+					
+					
+					if ((nextLine[stainIndices.get(channel)].equals("mCherry") || 
+							 nextLine[stainIndices.get(channel)].equals("GoldFISH") ||
+							 nextLine[stainIndices.get(channel)].equals("Cy5")) && // checks if signal is coming from fish channel 
+							 nextLine[typeIndices.get(channel)].endsWith("_ex") && // is exon signal
+							conditionalPick(nextLine, paramIndices)) {
 						int lambda = Math.round(Float.parseFloat(nextLine[lambdaIndices.get(channel)]));
-						String filename = channel + "-"+ nextLine[paramIndices.get("new filename")];
-						boolean defects = !nextLine[paramIndices.get("comment")].equals(""); // empty string means no defect
-						String type = nextLine[typeIndices.get(channel)];
+						
+						String filename = channel.toUpperCase() + "-"+ nextLine[paramIndices.get("cropped_image_file")].split("\\.")[0];
+						boolean defects = !nextLine[paramIndices.get("comments")].equals(""); // empty string means no defect
+						String type = nextLine[typeIndices.get(channel)].toUpperCase().split("_")[0]; 
 						imageData.add(new ImageData(lambda, type, defects, filename));
 					}
 				}
@@ -436,7 +460,7 @@ public class IOUtils {
 				&& nextLine[paramIndices.get("stage")].trim().equals("E") // only embryos
 				// && !nextLine[paramIndices.get("comment")].trim().contains("z jumps") // skip
 				// && !nextLine[paramIndices.get("comment")].trim().contains("z cut") // skip
-				&& nextLine[paramIndices.get("comment")].trim().isEmpty() // IMP: includes 2 above!
+				&& nextLine[paramIndices.get("comments")].trim().isEmpty() // IMP: includes 2 above!
 				)
 			isGood = true;
 		return isGood;

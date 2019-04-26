@@ -68,7 +68,7 @@ public class RunStepsPreprocess {
 				imageD.getFilename() + ext).toFile();
 			// mask path
 			File maskFile = Paths.get(pathMasks.getAbsolutePath(), imageD
-				.getFilename().substring(3) + ext).toFile();
+				.getFilename().substring(3) + ".mask" + ext).toFile();
 			System.out.println(NotSoUsefulOutput.toProgressString(currentIdx,
 				imageData.size(), inputImageFile.getAbsolutePath()));
 			// check that the corresponding files is not missing

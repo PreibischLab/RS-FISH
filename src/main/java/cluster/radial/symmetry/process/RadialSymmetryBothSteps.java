@@ -84,7 +84,8 @@ public class RadialSymmetryBothSteps {
 
 	public static void runFullProcess1StepSEA12(int step) {
 		String prefix =
-			"/Users/kkolyva/Desktop/2018-07-31-09-53-32-SEA-all-results-together/test";
+			// "/Users/kkolyva/Desktop/2018-07-31-09-53-32-SEA-all-results-together/test";
+		  "/Users/kkolyva/Desktop";
 		// path to the csv file with RS detected centers
 		File pathCenters = Paths.get(prefix, "centers", "all-centers.csv").toFile();
 		// path to the images with masks
@@ -93,7 +94,7 @@ public class RadialSymmetryBothSteps {
 		File pathImages = Paths.get(prefix, "channels").toFile();
 		// path to the database with the images
 		File pathDatabase = Paths.get(prefix, "smFISH-database",
-			"SEA-12-Table 1.csv").toFile();
+			"SEA-12-Table1.csv").toFile();
 		// path to the median filtered images that we save
 		File pathImagesMedian = Paths.get(prefix, "median").toFile();
 		File pathImagesMedian2 = Paths.get(prefix, "median-2").toFile();
@@ -114,8 +115,8 @@ public class RadialSymmetryBothSteps {
 		File[] allPaths = new File[] { pathImagesMask, pathImages, pathDatabase,
 			pathResultCsv, pathZcorrected, pathResultCsvBeforeCorrection,
 			pathParameters };
-		boolean allPathsAreCorrect = IOUtils.checkPaths(allPaths);
-		if (!allPathsAreCorrect) return;
+//		 boolean allPathsAreCorrect = IOUtils.checkPaths(allPaths);
+//		 if (!allPathsAreCorrect) return;
 
 		boolean doZcorrection = true;
 		if (step == 1) {
@@ -196,16 +197,19 @@ public class RadialSymmetryBothSteps {
 		// new ImageJ();
 
 		String root =
-			"/Users/kkolyva/Desktop/2018-07-31-09-53-32-N2-all-results-together/test";
+			// "/Users/kkolyva/Desktop/2018-07-31-09-53-32-N2-all-results-together/test";
+			"/Users/kkolyva/Desktop";
 		String channelFilename = "C2-N2_395";
 		String experimentType = "N2";
-		int step = 2;
+		int step = 1;
 		int waveLength = 670;
 		
-		runFullProcess1StepN2(step);
+// 		runFullProcess1StepN2(step);
+		
+		runFullProcess1StepSEA12(step);
 
-		runFullProcess1Step1Image(root, channelFilename, experimentType, step,
-			waveLength);
+//		runFullProcess1Step1Image(root, channelFilename, experimentType, step,
+//			waveLength);
 		System.out.println("DOGE!");
 	}
 

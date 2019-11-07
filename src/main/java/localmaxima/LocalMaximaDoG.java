@@ -2,12 +2,13 @@ package localmaxima;
 
 import java.util.ArrayList;
 
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.real.FloatType;
+
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.wrapper.ImgLib2;
-import net.imglib2.img.Img;
-import net.imglib2.type.numeric.real.FloatType;
 
 /**
  * Radial Symmetry Package
@@ -23,9 +24,9 @@ import net.imglib2.type.numeric.real.FloatType;
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see http://www.gnu.org/licenses/.
  * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de) & Timothee Lionnet
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
 public class LocalMaximaDoG extends LocalMaxima
 {

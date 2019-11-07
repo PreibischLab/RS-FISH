@@ -28,36 +28,43 @@ import net.imglib2.view.Views;
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see http://www.gnu.org/licenses/.
  * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de) & Timothee Lionnet
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
 public class GradientPreCompute extends Gradient
 {
 	final RandomAccess< FloatType > randomAccess;
-	final long[] tmp;
 	final int n1, n2;
 	
 	// we need this to iterate the correct area for pre-computation
+	final long[] tmp;
 	final long[] minIterate; 
 	final long[] maxIterate; 
 
 	public GradientPreCompute( final RandomAccessibleInterval<FloatType> source )
 	{
 		super( source.numDimensions() );
-		
+
 		this.n1 = source.numDimensions();
 		this.n2 = n1 + 1;
-		this.tmp = new long[ n2 ];
 		this.minIterate = new long[ n1 ];
 		this.maxIterate = new long[ n1 ];
-		
+		this.tmp  = new long[ n2 ];
+
 		final Img< FloatType > d = preCompute( source );
 		this.randomAccess = d.randomAccess();
 	}
-	
-	protected Img< FloatType > preCompute( final RandomAccessibleInterval<FloatType> source )
+
+	public Img< FloatType > preCompute( final RandomAccessibleInterval<FloatType> source )
 	{
+		return preCompute( source, minIterate, maxIterate, n1, n2 );
+	}
+
+	public static Img< FloatType > preCompute( final RandomAccessibleInterval<FloatType> source, final long[] minIterate, final long[] maxIterate, final int n1, final int n2 )
+	{
+		final long[] tmp  = new long[ n2 ];
+
 		// we need the extra dimension to store "n" values (except it would be one-dimensional)
 		final long[] dim = new long[ n2 ];
 				
@@ -74,7 +81,7 @@ public class GradientPreCompute extends Gradient
 		
 		// where to store the precomputed derivatives
 		final Img< FloatType > derivatives = new ArrayImgFactory<FloatType>().create( dim, new FloatType() );
-		
+			
 		// we use a local derivative on demand so that we do not need to duplicate code
 		final GradientOnDemand derivativeOnDemand = new GradientOnDemand( source );
 		
@@ -94,6 +101,7 @@ public class GradientPreCompute extends Gradient
 			derivativeOnDemand.gradientAt( cursor, derivativeVector );
 			
 			// where to put the computed derivatives
+			// PROBLEM: we translate [min_x, min_y, ...] to [0,0,...] because we save it in an Img
 			for ( int d = 0; d < n1; ++d )
 				tmp[ d ] = cursor.getLongPosition( d ) - minIterate[ d ];
 			
@@ -115,11 +123,13 @@ public class GradientPreCompute extends Gradient
 	public void gradientAt( final Localizable location, final double[] derivativeVector )
 	{
 		// where to read the computed derivatives
+		// PROLBEM SOLVED: also correct for the introduced offset when returning the gradients
 		for ( int d = 0; d < n1; ++d )
 			tmp[ d ] = location.getLongPosition( d ) - minIterate[ d ];
 		
 		tmp[ n1 ] = 0;
 		randomAccess.setPosition( tmp );
+		
 		derivativeVector[ 0 ] = randomAccess.get().get();
 		
 		for ( int d = 1; d < n1; ++d )

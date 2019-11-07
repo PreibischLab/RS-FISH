@@ -1,17 +1,8 @@
 package test;
 
-import fit.Spot;
-import gradient.Gradient;
-import gradient.GradientPreCompute;
-import ij.ImageJ;
-
 import java.util.ArrayList;
 import java.util.Random;
 
-import localmaxima.LocalMaxima;
-import localmaxima.LocalMaximaDoG;
-import mpicbg.models.IllDefinedDataPointsException;
-import mpicbg.models.NotEnoughDataPointsException;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessible;
@@ -19,10 +10,21 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
+
+import background.NormalizedGradient;
+import background.NormalizedGradientRANSAC;
+import fitting.Spot;
+import fitting.Center.CenterMethod;
+import gradient.Gradient;
+import gradient.GradientPreCompute;
+import ij.ImageJ;
+import localmaxima.LocalMaxima;
+import localmaxima.LocalMaximaDoG;
+import mpicbg.models.IllDefinedDataPointsException;
+import mpicbg.models.NotEnoughDataPointsException;
 
 /**
  * Radial Symmetry Package
@@ -38,9 +40,9 @@ import net.imglib2.view.Views;
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see http://www.gnu.org/licenses/.
  * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de) & Timothee Lionnet
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
 public class TestGauss3d 
 {	
@@ -48,17 +50,25 @@ public class TestGauss3d
 	{
 		// size around the detection to use
 		// we detect at 0.5, 0.5, 0.5 - so we need an even size
-		final int[] range = new int[]{ 10, 10, 10 };
+		final long[] range = new long[]{ 10, 10, 10 };
 		
 		final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 256, 256, 256 }, new FloatType() );
 		final ArrayList< double[] > points = new ArrayList<double[]>();
 		final Random rnd = new Random( 534545 );
-		final double[] sigma = new double[]{ 2, 2, 2 };
+		final double[] sigma = new double[]{ 1.5, 1.5, 1.5 };
 		
 		
 		for ( int i = 0; i < 1500; ++i )
 		{
-			final double[] location = new double[]{ rnd.nextDouble() * 256, rnd.nextDouble() * 256, rnd.nextDouble() * 256 };
+			// small adjustment to have a padding around all points
+			// (int)(Math.random() * ((Max - Min) + 1)) + Min
+			double minValue = 20;
+			double maxValue = 235;
+			double x = rnd.nextDouble()*( (maxValue - minValue)  + 1 ) + minValue; 
+			double y = rnd.nextDouble()*( (maxValue - minValue)  + 1 ) + minValue; 
+			double z = rnd.nextDouble()*( (maxValue - minValue)  + 1 ) + minValue; 
+					
+			final double[] location = new double[]{ x, y, z };
 			addGaussian( image, location, sigma );
 			points.add( location );
 		}
@@ -94,8 +104,16 @@ public class TestGauss3d
 		
 		//derivative = new DerivativeOnDemand( image );
 		derivative = new GradientPreCompute( image );
+
+		NormalizedGradient ng = null;
+		ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEAN );
+		//ng = new NormalizedGradientMedian( derivative );
+		//ng = new NormalizedGradientAverage( derivative );
+
+		final ArrayList< Spot > spots = Spot.extractSpots( image, TestGauss2d.int2long( peaks ), derivative, ng, range );
 		
-		final ArrayList< Spot > spots = Spot.extractSpots( image, peaks, derivative, range );
+//		System.out.println("peaks size = " + peaks.size());
+//		System.out.println("spots size = " + spots.size());
 		
 		//GradientDescent.testGradientDescent( spots, new boolean[]{ false, false, true } );
 		//SimpleMultiThreading.threadHaltUnClean();
@@ -109,10 +127,10 @@ public class TestGauss3d
 			spot.computeAverageCostInliers();
 			
 			//if ( spot.numRemoved != spot.candidates.size() )
-				System.out.println( spot );
+			// 	System.out.println( spot );
 		}
 
-		SimpleMultiThreading.threadHaltUnClean();
+		// SimpleMultiThreading.threadHaltUnClean();
 		
 		int foundCorrect = 0;
 		double avgDist = 0;
@@ -149,6 +167,8 @@ public class TestGauss3d
 			}
 		}
 
+//		System.out.println("spots size = " + spots.size());
+		
 		avgDist /= (double)foundCorrect;
 		
 		System.out.println( "found " + spots.size() );
@@ -156,7 +176,7 @@ public class TestGauss3d
 
 		
 		final Img< FloatType > draw = image.factory().create( image, image.firstElement() );
-		Spot.drawRANSACArea( spots, draw );
+		Spot.drawRANSACArea( spots, draw, true);
 		ImageJFunctions.show( draw );
 		
 		final Img< FloatType > detected = image.factory().create( image, image.firstElement() );
@@ -175,7 +195,10 @@ public class TestGauss3d
 	/**
 	 * Adds additive gaussian noise: i = i + gauss(x, sigma)
 	 * 
-	 * @param amount - how many times sigma
+	 * @param img - to which image
+	 * @param rnd - random num generator
+	 * @param sigma - sigma
+	 * @param onlyPositive - if it can be negative
 	 * @return the signal-to-noise ratio (measured)
 	 */
 	public static double addGaussianNoise( final Img< FloatType > img, final Random rnd, final float sigma, boolean onlyPositive )
@@ -204,7 +227,7 @@ public class TestGauss3d
 		return Math.sqrt( sum );
 	}
 
-	final public static void addGaussian( final Img< FloatType > image, final double[] location, final double[] sigma )
+	final public static void addGaussian( final RandomAccessibleInterval< FloatType > image, final double[] location, final double[] sigma, float A, boolean total)
 	{
 		final int numDimensions = image.numDimensions();
 		final int[] size = new int[ numDimensions ];
@@ -236,11 +259,23 @@ public class TestGauss3d
 			for ( int d = 0; d < numDimensions; ++d )
 			{
 				final double x = location[ d ] - cursor.getIntPosition( d );
-				value *= Math.exp( -(x * x) / two_sq_sigma[ d ] );
+				value *= A*Math.exp( -(x * x) / two_sq_sigma[ d ] );
 			}
 			
-			cursor.get().set( cursor.get().get() + (float)value );
+			if (total)
+				cursor.get().set( cursor.get().get() + (float)value );
+			else
+				cursor.get().set( Math.max(cursor.get().get(), (float)value) );
 		}
 	}
 
+	final public static void addGaussian( final RandomAccessibleInterval< FloatType > image, final double[] location, final double[] sigma, float A){
+		addGaussian(image, location, sigma, A, true);
+	}
+	
+	final public static void addGaussian( final RandomAccessibleInterval< FloatType > image, final double[] location, final double[] sigma){
+		addGaussian(image, location, sigma, 1, true);
+	}
+	
+	
 }

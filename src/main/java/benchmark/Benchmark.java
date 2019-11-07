@@ -1,36 +1,34 @@
 package benchmark;
 
-import ij.ImageJ;
-import io.scif.img.ImgIOException;
-import io.scif.img.ImgOpener;
-
 import java.io.File;
 import java.util.ArrayList;
 
-import localmaxima.LocalMaxima;
-import localmaxima.LocalMaximaDoG;
-import localmaxima.LocalMaximaSmoothNeighborhood;
-import mpicbg.imglib.algorithm.math.MathLib;
-import fit.OrientedPoint;
-import fit.PointFunctionMatch;
-import fit.Spot;
-import gauss.GaussFit;
-import gauss.GaussianMaskFit;
-import gradient.Gradient;
-import gradient.GradientPreCompute;
 import net.imglib2.Cursor;
+import net.imglib2.KDTree;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
-import net.imglib2.KDTree;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.neighborsearch.NearestNeighborSearchOnKDTree;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Util;
 import net.imglib2.view.Views;
+
+import fitting.OrientedPoint;
+import fitting.PointFunctionMatch;
+import fitting.Spot;
+import gauss.GaussFit;
+import gauss.GaussianMaskFit;
+import gradient.Gradient;
+import gradient.GradientPreCompute;
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
+import localmaxima.LocalMaxima;
+import localmaxima.LocalMaximaSmoothNeighborhood;
+import test.TestGauss2d;
 
 /**
  * Radial Symmetry Package
@@ -46,9 +44,9 @@ import net.imglib2.view.Views;
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see http://www.gnu.org/licenses/.
  * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de) & Timothee Lionnet
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
 public class Benchmark 
 {
@@ -72,15 +70,41 @@ public class Benchmark
 	
 	// size around the detection to use
 	// we detect at 0.5, 0.5, 0.5 - so we need an even size
-	final int[] range = new int[]{ 10, 10, 10 };
+	final long[] range = new long[]{ 10, 10, 10 };
 			
-	public Benchmark( final String dir, final String file ) throws ImgIOException
+	public Benchmark( final String dir, final String file )
 	{
 		this.dir = dir;
 		this.file = file;
 
 		this.groundtruth = LoadSpotFile.loadSpots( new File( dir + file + textFile ) );
-		this.img = new ImgOpener().openImg( dir + file + imageFile, new ArrayImgFactory< FloatType >(), new FloatType() ).getImg();
+		ImagePlus imp = new ImagePlus( dir + file + imageFile );
+		
+		if ( imp.getStack().size() > 1 )
+		{
+			//2d
+			this.img = new ArrayImgFactory< FloatType >().create( new int[]{ imp.getWidth(), imp.getHeight() }, new FloatType() );
+
+			int i = 0;
+			for ( final FloatType f : this.img )
+				f.set( imp.getProcessor().getf( i++ ) );
+		}
+		else
+		{
+			//3d
+			this.img = new ArrayImgFactory< FloatType >().create( new int[]{ imp.getWidth(), imp.getHeight(), imp.getStackSize() }, new FloatType() );
+			final Cursor< FloatType > c = img.cursor();
+
+			for ( int z = 1; z <= imp.getStack().getSize(); ++z )
+			{
+				final int size = imp.getWidth() * imp.getHeight();
+				final ImageProcessor ip = imp.getStack().getProcessor( z );
+
+				for ( int i = 0; i < size; ++i )
+					c.next().set( ip.getf( i ) );
+			}
+		}
+
 		this.min = img.firstElement().createVariable();
 		this.max = min.createVariable();
 		
@@ -158,7 +182,7 @@ public class Benchmark
 		
 	}
 	
-	public void getRangeForFit( final long[] min, final long[] max, final long[] size, final int[] p )
+	public void getRangeForFit( final long[] min, final long[] max, final long[] size, final long[] p )
 	{
 		for ( int d = 0; d < p.length; ++d )
 		{
@@ -184,7 +208,7 @@ public class Benchmark
 		
 		int i = 0;
 		
-		for ( final int[] p : peaks )
+		for ( final long[] p : TestGauss2d.int2long( peaks ) )
 		{
 			getRangeForFit( min, max, null, p );
 
@@ -217,7 +241,7 @@ public class Benchmark
 		//derivative = new DerivativeOnDemand( image );
 		derivative = new GradientPreCompute( img );
 		
-		final ArrayList< Spot > spots = Spot.extractSpots( img, peaks, derivative, range );
+		final ArrayList< Spot > spots = Spot.extractSpots( img, TestGauss2d.int2long( peaks ), derivative, range );
 		
 		//GradientDescent.testGradientDescent( spots, new boolean[]{ false, false, true } );
 		
@@ -249,7 +273,7 @@ public class Benchmark
 			if ( spot.inliers.size() > spot.center.getMinNumPoints() * 3 )
 			{
 				// get the center location of the image used to compute the radial symmetry
-				final int[] p = spot.getOriginalLocation();
+				final long[] p = spot.getOriginalLocation();
 				
 				//System.out.println( "p: " + Util.printCoordinates( p ) );
 
@@ -463,11 +487,7 @@ public class Benchmark
 		return Math.sqrt( dist );
 	}
 
-	/**
-	 * @param args
-	 * @throws ImgIOException 
-	 */
-	public static void main(String[] args) throws ImgIOException 
+	public static void main(String[] args) 
 	{
 		//final String dir = "documents/Images For Stephan/Tests/";
 		final String dir = "documents/Images For Stephan/Empty Bg Density Range Sigxy 2 SigZ 2/";

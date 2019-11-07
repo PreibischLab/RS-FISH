@@ -1,26 +1,24 @@
 package test;
 
-import ij.ImageJ;
-
 import java.util.ArrayList;
 import java.util.Random;
 
-import localmaxima.LocalMaxima;
-import localmaxima.LocalMaximaAll;
-import localmaxima.LocalMaximaDoG;
-import localmaxima.LocalMaximaNeighborhood;
-import mpicbg.models.IllDefinedDataPointsException;
-import mpicbg.models.NotEnoughDataPointsException;
-import net.imglib2.RealLocalizable;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
-import fit.Spot;
+
+import background.NormalizedGradient;
+import background.NormalizedGradientAverage;
+import fitting.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
+import ij.ImageJ;
+import localmaxima.LocalMaxima;
+import localmaxima.LocalMaximaNeighborhood;
+import mpicbg.models.IllDefinedDataPointsException;
+import mpicbg.models.NotEnoughDataPointsException;
 
 /**
  * Radial Symmetry Package
@@ -36,9 +34,9 @@ import gradient.GradientPreCompute;
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see http://www.gnu.org/licenses/.
  * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de) & Timothee Lionnet
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
 public class TestGauss2d 
 {
@@ -46,7 +44,7 @@ public class TestGauss2d
 	{
 		// size around the detection to use
 		// we detect at 0.5, 0.5, 0.5 - so we need an even size
-		final int[] range = new int[]{ 10, 10 };
+		final long[] range = new long[]{ 10, 10 };
 		
 		final Img< FloatType > image = new ArrayImgFactory< FloatType >().create( new int[]{ 256, 256 }, new FloatType() );
 		final ArrayList< double[] > points = new ArrayList<double[]>();
@@ -60,7 +58,7 @@ public class TestGauss2d
 			TestGauss3d.addGaussian( image, location, sigma );
 			points.add( location );
 		}
-		
+
 		/*
 		TestGauss3d.addGaussian( image, new double[]{ 10.6, 10 }, new double[]{ 2, 2 } );
 		TestGauss3d.addGaussian( image, new double[]{ 100.3, 100.1 }, new double[]{ 2, 2 } );
@@ -84,16 +82,34 @@ public class TestGauss2d
 		candiateSearch = new LocalMaximaNeighborhood( image );
 		//candiateSearch = new LocalMaximaSmoothNeighborhood( image, new double[]{ 1, 1 } );
 		//candiateSearch = new LocalMaximaAll( image );
-		
+
 		final ArrayList< int[] > peaks = candiateSearch.estimateLocalMaxima();
-		
+
+		// adding a global gradient for testing
+		/*
+		final Cursor< FloatType > cu = image.localizingCursor();
+		while ( cu.hasNext() )
+		{
+			cu.fwd();
+			cu.get().set( cu.get().get() + cu.getIntPosition( 0 )/50.0f + cu.getIntPosition( 1 )/100.0f );
+		}*/
+
 		// we need something to compute the derivatives
 		final Gradient derivative;
 		
 		//derivative = new DerivativeOnDemand( image );
 		derivative = new GradientPreCompute( image );
 		
-		final ArrayList< Spot > spots = Spot.extractSpots( image, peaks, derivative, range );
+		ImageJFunctions.show( new GradientPreCompute( image ).preCompute( image ) );
+		//SimpleMultiThreading.threadHaltUnClean();
+
+		// normalize gradient?
+		NormalizedGradient ng = null;
+		//ng = new NormalizedGradientRANSAC( derivative );
+		//ng = new NormalizedGradientMedian( derivative );
+		ng = new NormalizedGradientAverage( derivative );
+
+		final ArrayList< Spot > spots = Spot.extractSpots( image, int2long( peaks ), derivative, ng, range );
 		
 		//GradientDescent.testGradientDescent( spots, new boolean[]{ false, false, true } );
 		//SimpleMultiThreading.threadHaltUnClean();
@@ -116,11 +132,25 @@ public class TestGauss2d
 		}
 		
 		Img< FloatType > ransacarea = image.factory().create( image, image.firstElement() );
-		Spot.drawRANSACArea( goodspots, ransacarea );
+		Spot.drawRANSACArea( goodspots, ransacarea, true);
 		ImageJFunctions.show( ransacarea );
 	}
-	
-	public static double dist( final double[] p1, final int[] p2 )
+
+	public static ArrayList< long[] > int2long( final ArrayList< int[] > a )
+	{
+		final ArrayList< long[] > b = new ArrayList<>();
+
+		for ( final int[] ai : a )
+		{
+			final long[] bi = new long[ ai.length ];
+			for ( int i = 0; i < bi.length; ++i )
+				bi[ i ] = ai[ i ];
+			b.add( bi );
+		}
+		return b;
+	}
+
+	public static double dist( final double[] p1, final long[] p2 )
 	{
 		double dist = 0;
 		

@@ -5,7 +5,6 @@ import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
@@ -24,9 +23,9 @@ import net.imglib2.view.Views;
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see http://www.gnu.org/licenses/.
  * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de) & Timothee Lionnet
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
 public class GaussianMaskFit 
 {
@@ -34,7 +33,8 @@ public class GaussianMaskFit
 			final RandomAccessibleInterval<FloatType> signalInterval, 
 			final double[] location, 
 			final double[] sigma, 
-			final Img< FloatType > ransacWeight )
+			final Img< FloatType > ransacWeight, 
+			int numItereations)
 	{
 		final int n = signalInterval.numDimensions();
 		
@@ -113,18 +113,29 @@ public class GaussianMaskFit
 			
 			N = sumSN / sumSS;
 			
-			//System.out.println( i + ": " + Util.printCoordinates( location )  + " N: " + N );
+			System.out.println( i + ": " + Util.printCoordinates( location )  + " N: " + N );
 			
 			++i;
 			
-			//ImageJFunctions.show( gaussianMask );
-			//ImageJFunctions.show( signalInterval );
+			// ImageJFunctions.show( gaussianMask );
+			// ImageJFunctions.show( signalInterval );
 			
-			//SimpleMultiThreading.threadHaltUnClean();
+			// SimpleMultiThreading.threadHaltUnClean();
 		}
-		while ( i < 100 );
+		while ( i < numItereations );
 		
-		//ImageJFunctions.show( interval );
+		// ImageJFunctions.show( signalInterval );
+		// ImageJFunctions.show( gaussianMask );
+		// SimpleMultiThreading.threadHaltUnClean();
+	}
+	
+	
+	public static void gaussianMaskFit( 
+			final RandomAccessibleInterval<FloatType> signalInterval, 
+			final double[] location, 
+			final double[] sigma, 
+			final Img< FloatType > ransacWeight){
+		gaussianMaskFit(signalInterval, location, sigma, ransacWeight, 100);
 	}
 	
 	public static void removeBackground( final IterableInterval< FloatType > iterable )

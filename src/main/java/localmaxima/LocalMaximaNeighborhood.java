@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import net.imglib2.Cursor;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.algorithm.region.localneighborhood.Neighborhood;
-import net.imglib2.algorithm.region.localneighborhood.RectangleShape;
+import net.imglib2.algorithm.neighborhood.Neighborhood;
+import net.imglib2.algorithm.neighborhood.RectangleShape;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Intervals;
 import net.imglib2.view.Views;
@@ -25,9 +25,9 @@ import net.imglib2.view.Views;
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see http://www.gnu.org/licenses/.
  * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de) & Timothee Lionnet
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
 public class LocalMaximaNeighborhood extends LocalMaxima
 {

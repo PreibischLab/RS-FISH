@@ -1,10 +1,11 @@
 package gauss;
 
+import net.imglib2.img.Img;
+
 import mpicbg.imglib.algorithm.math.LocalizablePoint;
 import mpicbg.imglib.algorithm.peak.GaussianPeakFitterND;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import net.imglib2.img.Img;
 
 /**
  * Radial Symmetry Package
@@ -20,9 +21,9 @@ import net.imglib2.img.Img;
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see http://www.gnu.org/licenses/.
  * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de) & Timothee Lionnet
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
 public class GaussFit 
 {

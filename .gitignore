@@ -1,5 +1,7 @@
 .DS_Store
 .classpath
 .project
-
+.settings
 /target
+/bin/
+src/main/resources/

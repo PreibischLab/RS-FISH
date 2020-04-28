@@ -23,6 +23,9 @@ import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
+import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
+
 import fit.polynomial.QuadraticFunction;
 import fitting.PointFunctionMatch;
 import fitting.Spot;
@@ -34,7 +37,6 @@ import ij.process.ImageProcessor;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
-import util.opencsv.CSVReader;
 
 public class ExtraPreprocess {
 	// this class performs extra preprocessing of the images: 
@@ -84,7 +86,7 @@ public class ExtraPreprocess {
 
 		try {
 			int toSkip = 1; 
-			reader = new CSVReader(new FileReader(path), '\t', CSVReader.DEFAULT_QUOTE_CHARACTER, toSkip);
+			reader = new CSVReader(new FileReader(path), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER, toSkip);
 			// while there are rows in the file
 			while ((nextLine = reader.readNext()) != null) {
 

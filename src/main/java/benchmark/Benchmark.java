@@ -3,19 +3,6 @@ package benchmark;
 import java.io.File;
 import java.util.ArrayList;
 
-import net.imglib2.Cursor;
-import net.imglib2.KDTree;
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.RealLocalizable;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.neighborsearch.NearestNeighborSearchOnKDTree;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.Views;
-
 import fitting.OrientedPoint;
 import fitting.PointFunctionMatch;
 import fitting.Spot;
@@ -28,6 +15,19 @@ import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import localmaxima.LocalMaxima;
 import localmaxima.LocalMaximaSmoothNeighborhood;
+import mpicbg.imglib.util.Util;
+import net.imglib2.Cursor;
+import net.imglib2.KDTree;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealLocalizable;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.neighborsearch.NearestNeighborSearchOnKDTree;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 import test.TestGauss2d;
 
 /**
@@ -467,8 +467,8 @@ public class Benchmark
 
 		stdev /= (double)goodspots.size();
 		stdev = Math.sqrt( stdev );
-		
-		double medianError = mpicbg.imglib.util.Util.computeMedian( median );
+
+		double medianError = Util.computeMedian( median );
 		
 		System.out.println( avgError + "\t" + stdev + "\t" + medianError + "\t" + minError + "\t" + maxError );
 		

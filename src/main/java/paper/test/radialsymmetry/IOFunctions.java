@@ -4,8 +4,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
 
-import util.opencsv.CSVReader;
-import util.opencsv.CSVWriter;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
 
 public class IOFunctions {
 	public static void writeCSV(ArrayList<double []> list, String fullPath) {

@@ -3,8 +3,8 @@ package result.output;
 import java.util.ArrayList;
 
 import fitting.Spot;
+import ij.IJ;
 import ij.measure.ResultsTable;
-import mpicbg.spim.io.IOFunctions;
 
 public class ShowResult {
 	public static void ransacResultCsv(final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
@@ -17,7 +17,7 @@ public class ShowResult {
 	// proper window -> dialog view with the columns
 	public static void ransacResultTable(final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
 			final ArrayList<Long> channelPoint, ArrayList<Float> intensity, double histThreshold) {
-		IOFunctions.println("Running RANSAC ... ");
+		IJ.log("Running RANSAC ... ");
 		// real output
 		ResultsTable rt = new ResultsTable();
 		String[] xyz = { "x", "y", "z" };
@@ -58,7 +58,7 @@ public class ShowResult {
 			}
 			idx++;
 		}
-		IOFunctions.println("Spots found = " + rt.getCounter());
+		IJ.log("Spots found = " + rt.getCounter());
 		rt.show("Results");
 	}
 }

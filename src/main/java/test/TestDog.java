@@ -2,6 +2,8 @@ package test;
 
 import java.util.concurrent.Executors;
 
+import ij.ImageJ;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.algorithm.dog.DifferenceOfGaussian;
@@ -13,19 +15,37 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
-import ij.ImageJ;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
-import mpicbg.spim.registration.detection.DetectionSegmentation;
-
 public class TestDog {
 	
 	public static float computeSigma2(final float sigma1, final int sensitivity) {
-		final float k = (float) DetectionSegmentation.computeK(sensitivity);
-		final float[] sigma = DetectionSegmentation.computeSigma(k, sigma1);
+		final float k = (float) computeK(sensitivity);
+		final float[] sigma = computeSigma(k, sigma1);
 
 		return sigma[1];
 	}
-	
+
+	public static double computeK( final float stepsPerOctave ) { return Math.pow( 2f, 1f / stepsPerOctave ); }
+	public static double computeK( final int stepsPerOctave ) { return Math.pow( 2f, 1f / stepsPerOctave ); }
+	public static float[] computeSigma( final float k, final float initialSigma )
+	{
+		final float[] sigma = new float[ 2 ];
+
+		sigma[ 0 ] = initialSigma;
+		sigma[ 1 ] = sigma[ 0 ] * k;
+
+		return sigma;
+	}
+	public static float getDiffSigma( final float sigmaA, final float sigmaB ) { return (float) Math.sqrt( sigmaB * sigmaB - sigmaA * sigmaA ); }
+	public static float[] computeSigmaDiff( final float[] sigma, final float imageSigma )
+	{
+		final float[] sigmaDiff = new float[ 2 ];
+
+		sigmaDiff[ 0 ] = getDiffSigma( imageSigma, sigma[ 0 ] );
+		sigmaDiff[ 1 ] = getDiffSigma( imageSigma, sigma[ 1 ] );
+
+		return sigmaDiff;
+	}	
+
 	public static void testDog(Img<FloatType> img, long [] iPos) throws IncompatibleTypeException{
 		
 		//Gauss3.gauss(2, Views.extendZero( img ), img );

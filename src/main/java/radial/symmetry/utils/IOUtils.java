@@ -5,12 +5,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import com.opencsv.CSVReader;
+
 import net.imglib2.RealPoint;
-
-import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
-
-import util.opencsv.CSVReader;
 
 public class IOUtils {
 	public static int getNumDimensions(File filepath, char separator) {

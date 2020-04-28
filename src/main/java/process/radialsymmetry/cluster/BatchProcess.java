@@ -5,6 +5,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import com.opencsv.CSVWriter;
+
 import compute.RadialSymmetry;
 import fitting.Spot;
 import gui.interactive.HelperFunctions;
@@ -29,7 +31,6 @@ import net.imglib2.view.Views;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 import util.ImgLib2Util;
-import util.opencsv.CSVWriter;
 
 public class BatchProcess {
 

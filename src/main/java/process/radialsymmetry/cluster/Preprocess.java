@@ -5,6 +5,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 
+import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
+
 import gui.interactive.HelperFunctions;
 import ij.IJ;
 import ij.ImageJ;
@@ -23,7 +26,6 @@ import net.imglib2.type.numeric.real.FloatType;
 import parameters.GUIParams;
 import util.ImgLib2Util;
 import util.MedianFilter;
-import util.opencsv.CSVReader;
 
 public class Preprocess {
 	// String path - path to the folder with the images
@@ -107,7 +109,7 @@ public class Preprocess {
 
 		try {
 			int toSkip = 1; 
-			reader = new CSVReader(new FileReader(filePath), ',', CSVReader.DEFAULT_QUOTE_CHARACTER, toSkip);
+			reader = new CSVReader(new FileReader(filePath), ',', CSVWriter.DEFAULT_QUOTE_CHARACTER, toSkip);
 			// while there are rows in the file
 			while ((nextLine = reader.readNext()) != null) {
 				String filename = nextLine[0];
@@ -140,7 +142,7 @@ public class Preprocess {
 
 		try {
 			int toSkip = 1; 
-			reader = new CSVReader(new FileReader(databasePath), ',', CSVReader.DEFAULT_QUOTE_CHARACTER, toSkip);
+			reader = new CSVReader(new FileReader(databasePath), ',', CSVWriter.DEFAULT_QUOTE_CHARACTER, toSkip);
 			// while there are rows in the file
 			while ((nextLine = reader.readNext()) != null) {
 				// iterate over the row; that is 25 elements long

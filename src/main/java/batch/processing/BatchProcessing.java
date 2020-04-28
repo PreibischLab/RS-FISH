@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
+import com.opencsv.CSVWriter;
+
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
@@ -31,7 +33,6 @@ import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
 import milkyklim.algorithm.localization.PeakFitter;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
-import util.opencsv.CSVWriter;
 
 public class BatchProcessing {
 	/*

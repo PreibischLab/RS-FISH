@@ -22,6 +22,7 @@ import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
 import gui.vizualization.Visualization;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import imglib2.RealTypeNormalization;
@@ -126,6 +127,7 @@ public class Radial_Symmetry extends ContextCommand {
 					return;
 			} catch (Exception e) {
 				logService.info("Internal exception caught");
+				e.printStackTrace();
 			}
 			// calculations are performed further
 		} else // interactive
@@ -196,7 +198,10 @@ public class Radial_Symmetry extends ContextCommand {
 
 
 	public static void main(String[] args) {
-		// for the historical reasons
-		System.out.println("DOGE!");
+		net.imagej.ImageJ ij = new net.imagej.ImageJ();
+		//ij.launch( "/Users/spreibi/Downloads/N2_267-1.tif" );
+		ij.launch( "/Users/spreibi/Downloads/C0-N2_352_cropped_1240.tif" );
+		ij.command().run(Radial_Symmetry.class, true);
+
 	}
 }

@@ -98,6 +98,10 @@
 			<id>imagej.public</id>
 			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
 	</repositories>
 	<dependencies>
 		<dependency>
@@ -123,10 +127,15 @@
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej-legacy</artifactId>
 		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>net.imglib2.simulation</groupId>-->
+<!--			<artifactId>function-fit-mpicbg</artifactId>-->
+<!--			<version>0.0.3</version>-->
+<!--		</dependency>-->
 		<dependency>
-			<groupId>net.imglib2.simulation</groupId>
-			<artifactId>function-fit-mpicbg</artifactId>
-			<version>0.0.3</version>
+			<groupId>com.github.PreibischLab</groupId>
+			<artifactId>FunctionFit</artifactId>
+			<version>157ab01</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>

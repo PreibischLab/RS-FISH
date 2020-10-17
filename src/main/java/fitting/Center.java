@@ -5,8 +5,6 @@ import java.util.Collection;
 
 import net.imglib2.util.Util;
 
-import fit.AbstractFunction;
-import fit.PointFunctionMatch;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;

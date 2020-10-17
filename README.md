@@ -5,4 +5,14 @@ After the Nature Methods paper "Rapid, accurate particle tracking by calculation
 
 Including derivation for 3d + integration with RANSAC
 
+### Notes
+
+entry point: 
+- gui.radial.symmetry.plugin.Radial_Symmetry
+
+TODO:
+- refactor to be on an actual domain
+
+#
+
 License: GPLv2, written by Stephan Preibisch & Timothee Lionnet

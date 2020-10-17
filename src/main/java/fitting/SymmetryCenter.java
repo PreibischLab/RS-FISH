@@ -1,10 +1,8 @@
 package fitting;
 
-import net.imglib2.EuclideanSpace;
-
-import fit.AbstractFunction;
 import mpicbg.models.Model;
 import mpicbg.models.Point;
+import net.imglib2.EuclideanSpace;
 
 /**
  * Radial Symmetry Package

@@ -6,7 +6,6 @@ import java.util.Random;
 
 import net.imglib2.util.Util;
 
-import fit.AbstractFunction;
 import mpicbg.models.NoninvertibleModelException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;

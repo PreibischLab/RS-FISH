@@ -200,7 +200,8 @@ public class Radial_Symmetry extends ContextCommand {
 	public static void main(String[] args) {
 		net.imagej.ImageJ ij = new net.imagej.ImageJ();
 		//ij.launch( "/Users/spreibi/Downloads/N2_267-1.tif" );
-		ij.launch( "/Users/spreibi/Downloads/C0-N2_352_cropped_1240.tif" );
+		//ij.launch( "/Users/spreibi/Downloads/C0-N2_352_cropped_1240.tif" );
+		ij.launch( "/home/kharrington/Data/Radial_Symmetry/N2_352-1.tif" );
 		ij.command().run(Radial_Symmetry.class, true);
 
 	}

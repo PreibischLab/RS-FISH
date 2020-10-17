@@ -1,28 +1,5 @@
 package process.radialsymmetry.cluster;
 
-import java.awt.Rectangle;
-import java.io.File;
-import java.io.FileReader;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import net.imglib2.Cursor;
-import net.imglib2.RandomAccess;
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.Views;
-
-import org.apache.commons.math3.fitting.PolynomialCurveFitter;
-import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.apache.commons.math3.stat.regression.SimpleRegression;
-
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 
@@ -37,6 +14,23 @@ import ij.process.ImageProcessor;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
+import net.imglib2.Cursor;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
+import org.apache.commons.math3.fitting.PolynomialCurveFitter;
+import org.apache.commons.math3.fitting.WeightedObservedPoints;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
+
+import java.awt.*;
+import java.io.File;
+import java.io.FileReader;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ExtraPreprocess {
 	// this class performs extra preprocessing of the images: 

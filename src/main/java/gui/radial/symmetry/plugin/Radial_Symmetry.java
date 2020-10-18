@@ -3,9 +3,11 @@ package gui.radial.symmetry.plugin;
 import java.util.ArrayList;
 
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 
 import org.scijava.ItemVisibility;
@@ -166,7 +168,14 @@ public class Radial_Symmetry extends ContextCommand {
 		// stores the intensity values
 		ArrayList<Float> intensity = new ArrayList<>(0);
 
-		RadialSymmetry.processSliceBySlice(ImageJFunctions.wrap(imp), rai, rsm, impDim, allSpots, timePoint, channelPoint, intensity);
+		// Ensure that the input is a FloatType
+		RandomAccessibleInterval<RealType> wrapped = ImageJFunctions.wrapReal(imp);
+		RandomAccessibleInterval<FloatType> input = Converters.convert(
+				wrapped,
+				(a, b) -> b.setReal(a.getRealFloat()),
+				new FloatType());
+
+		RadialSymmetry.processSliceBySlice(input, rai, rsm, impDim, allSpots, timePoint, channelPoint, intensity);
 
 		if (parameterType.equals(paramChoice[1])) { // interactive
 			// TODO: keep here?

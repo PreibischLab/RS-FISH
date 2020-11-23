@@ -36,7 +36,7 @@ import result.output.ShowResult;
 @Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Radial Symmetry")
 public class Radial_Symmetry extends ContextCommand {
 	// Defaults: used to save previous values of the plugin fields
-	public static String[] paramChoice = new String[] { "Manual", "Interactive" };
+	public static String[] paramChoice = new String[] { "Manual", "Interactive", "Advanced" };
 	// public static int defaultImg = 0;
 	public static int defaultParam = 0;
 	public static boolean defaultGauss = false;
@@ -57,14 +57,15 @@ public class Radial_Symmetry extends ContextCommand {
 	@Parameter(autoFill = false, label = "Image")
 	ImagePlus imp;
 
-	@Parameter(choices = { "Manual", "Interactive" }, label = "Parameter's mode")
+	// parameterType: "Advanced", make a text box for entering all parameters manually
+	@Parameter(choices = { "Manual", "Interactive", "Advanced" }, label = "Parameter's mode")
 	String parameterType = paramChoice[defaultParam];
 
 	@Parameter(label = "Anisotropy coefficient")
 	float anisotropy = defaultAnisotropy;
 
 	@Parameter(label = " ", visibility = ItemVisibility.MESSAGE, persist = false)
-	String anisotropyLabel = "<html>*Use the \"Anisotropy Coeffcient Plugin\"<br/>to calculate the anisotropy coefficient<br/> or leave 1.00 for a reasonable result.";
+	String anisotropyLabel = "<html>*Use the \"Anisotropy Coefficient Plugin\"<br/>to calculate the anisotropy coefficient<br/> or leave 1.00 for a reasonable result.";
 
 	@Parameter(label = "<html><b>Computation:</h>", visibility = ItemVisibility.MESSAGE)
 	String computationLabel = "";
@@ -82,6 +83,19 @@ public class Radial_Symmetry extends ContextCommand {
 	boolean showDetections = defaultDetections;
 	@Parameter(label = "RANSAC regions")
 	boolean showInliers = defaultInliers;
+
+	@Parameter(label = "<html><b>Advanced parameter mode:</h>", visibility = ItemVisibility.MESSAGE)
+	String advancedLabel = "";
+	@Parameter(label = "Sigma")
+	float sigma = (InteractiveRadialSymmetry.sigmaMin + InteractiveRadialSymmetry.sigmaMax) / 2.0f;
+	@Parameter(label = "Threshold")
+	float threshold = (InteractiveRadialSymmetry.thresholdMin + InteractiveRadialSymmetry.thresholdMax) / 2.0f;
+	@Parameter(label = "Support region radius")
+	int supportRegion = (InteractiveRadialSymmetry.supportRadiusMin + InteractiveRadialSymmetry.supportRadiusMax) / 2;
+	@Parameter(label = "Inlier ratio")
+	float inlierRatio = (InteractiveRadialSymmetry.inlierRatioMin + InteractiveRadialSymmetry.inlierRatioMax) / 2.0f;
+	@Parameter(label = "Max error")
+	float maxError = (InteractiveRadialSymmetry.maxErrorMin + InteractiveRadialSymmetry.maxErrorMax) / 2.0f;
 
 	// defines the resolution in x y z dimensions
 	double[] calibration;
@@ -114,11 +128,11 @@ public class Radial_Symmetry extends ContextCommand {
 		params.setRANSAC(RANSAC);
 		params.setGaussFit(gaussFit);
 
-		
-		// DEBUG: 
+
+		// DEBUG:
 		// System.out.println(gaussFit + " " + RANSAC);
-		
-		
+
+
 		if (parameterType.equals(paramChoice[0])) // manual
 		{
 			// set the parameters in the manual mode
@@ -132,6 +146,13 @@ public class Radial_Symmetry extends ContextCommand {
 				e.printStackTrace();
 			}
 			// calculations are performed further
+		} else if (parameterType.equals(paramChoice[2])) {// advanced
+			params.setAnisotropyCoefficient(anisotropy);
+			params.setSigmaDog(sigma);
+			params.setThresholdDog(threshold);
+			params.setSupportRadius(supportRegion);
+			params.setInlierRatio(inlierRatio);
+			params.setMaxError(maxError);
 		} else // interactive
 		{
 			InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, min, max);
@@ -146,7 +167,11 @@ public class Radial_Symmetry extends ContextCommand {
 
 		// back up the parameter values to the default variables
 		// params.setDefaultValues();
-		calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions());
+		if( imp.getDimensions()[2] > 1 )// if non singleton z dimension
+			calibration = HelperFunctions.initCalibration(imp, 3);
+		else
+			calibration = HelperFunctions.initCalibration(imp, 2);
+		//calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions());
 
 		RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
 
@@ -185,7 +210,7 @@ public class Radial_Symmetry extends ContextCommand {
 					params.getSigmaDoG(), params.getAnisotropyCoefficient());
 			double histThreshold = Visualization.getHistThreshold(); // used to show the overlays
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
-		} else if (parameterType.equals(paramChoice[0])) { // manual
+		} else if (parameterType.equals(paramChoice[0]) || parameterType.equals(paramChoice[2])) { // manual
 			// write the result to the csv file
 			double histThreshold = 0; // take all of the points that were detected
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);

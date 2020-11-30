@@ -2,6 +2,7 @@ package gui.radial.symmetry.plugin;
 
 import java.util.ArrayList;
 
+import ij.measure.ResultsTable;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
@@ -10,6 +11,7 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 
+import org.scijava.ItemIO;
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.command.CommandService;
@@ -213,7 +215,11 @@ public class Radial_Symmetry extends ContextCommand {
 		} else if (parameterType.equals(paramChoice[0]) || parameterType.equals(paramChoice[2])) { // manual
 			// write the result to the csv file
 			double histThreshold = 0; // take all of the points that were detected
-			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
+			ResultsTable rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
+			logService.info("# ResultsTable");
+			for( int r = 0; r < rt.size(); r++ ) {
+				logService.info(rt.getRowAsString(r));
+			}
 		} else
 			System.out.println("Wrong parameters' mode");
 

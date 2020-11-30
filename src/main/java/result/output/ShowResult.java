@@ -15,8 +15,8 @@ public class ShowResult {
 	// ineractive mode
 	// this function will show the result of RANSAC
 	// proper window -> dialog view with the columns
-	public static void ransacResultTable(final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
-			final ArrayList<Long> channelPoint, ArrayList<Float> intensity, double histThreshold) {
+	public static ResultsTable ransacResultTable(final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
+												 final ArrayList<Long> channelPoint, ArrayList<Float> intensity, double histThreshold) {
 		IJ.log("Running RANSAC ... ");
 		// real output
 		ResultsTable rt = new ResultsTable();
@@ -60,5 +60,7 @@ public class ShowResult {
 		}
 		IJ.log("Spots found = " + rt.getCounter());
 		rt.show("Results");
+
+		return rt;
 	}
 }

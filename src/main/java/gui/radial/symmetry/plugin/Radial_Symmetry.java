@@ -1,5 +1,6 @@
 package gui.radial.symmetry.plugin;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import ij.measure.ResultsTable;
@@ -218,8 +219,10 @@ public class Radial_Symmetry extends ContextCommand {
 			// write the result to the csv file
 			double histThreshold = 0; // take all of the points that were detected
 			ResultsTable rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
-			if( resultsFilePath != "" )
+			if( resultsFilePath != "" ) {
+				System.out.println("Writing to results path: " + resultsFilePath);
 				rt.save(resultsFilePath);
+			}
 		} else
 			System.out.println("Wrong parameters' mode");
 

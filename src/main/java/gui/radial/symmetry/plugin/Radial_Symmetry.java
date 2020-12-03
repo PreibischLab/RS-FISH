@@ -98,6 +98,8 @@ public class Radial_Symmetry extends ContextCommand {
 	float inlierRatio = (InteractiveRadialSymmetry.inlierRatioMin + InteractiveRadialSymmetry.inlierRatioMax) / 2.0f;
 	@Parameter(label = "Max error")
 	float maxError = (InteractiveRadialSymmetry.maxErrorMin + InteractiveRadialSymmetry.maxErrorMax) / 2.0f;
+	@Parameter(label = "Results file")
+	String resultsFilePath = "";
 
 	// defines the resolution in x y z dimensions
 	double[] calibration;
@@ -216,10 +218,8 @@ public class Radial_Symmetry extends ContextCommand {
 			// write the result to the csv file
 			double histThreshold = 0; // take all of the points that were detected
 			ResultsTable rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
-			logService.info("# ResultsTable");
-			for( int r = 0; r < rt.size(); r++ ) {
-				logService.info(rt.getRowAsString(r));
-			}
+			if( resultsFilePath != "" )
+				rt.save(resultsFilePath);
 		} else
 			System.out.println("Wrong parameters' mode");
 

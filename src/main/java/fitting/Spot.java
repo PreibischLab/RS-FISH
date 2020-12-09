@@ -3,6 +3,11 @@ package fitting;
 import java.util.ArrayList;
 import java.util.List;
 
+import background.NormalizedGradient;
+import gradient.Gradient;
+import mpicbg.models.IllDefinedDataPointsException;
+import mpicbg.models.NotEnoughDataPointsException;
+import mpicbg.models.Point;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.Localizable;
@@ -13,13 +18,6 @@ import net.imglib2.RealLocalizable;
 import net.imglib2.iterator.IntervalIterator;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
-
-import background.NormalizedGradient;
-import fitting.PointFunctionMatch;
-import gradient.Gradient;
-import mpicbg.models.IllDefinedDataPointsException;
-import mpicbg.models.NotEnoughDataPointsException;
-import mpicbg.models.Point;
 
 /**
  * Radial Symmetry Package
@@ -199,8 +197,6 @@ public class Spot implements RealLocalizable, Localizable
 		else
 			gradient = normalizer;
 
-		int i = 0;
-
 		for ( final long[] peak : peaks )
 		{
 			final Spot spot = new Spot( numDimensions );
@@ -223,16 +219,8 @@ public class Spot implements RealLocalizable, Localizable
 			final FinalInterval spotInterval = new FinalInterval( min, max );
 
 			if ( normalizer != null )
-			{
 				((NormalizedGradient)gradient).normalize( spotInterval );
-				//if ( i < 5 )
-				//	System.out.println( i++ + ": " + Util.printCoordinates( ((NormalizedGradient)gradient).getBackground() ));
-			}
-			
-			
-			// Img<FloatType> discard = new CellImgFactory<FloatType>().create(spotInterval, new FloatType());
-			// RandomAccess<FloatType> ra = discard.randomAccess();
-			
+
 			// define a local region to iterate around the potential detection
 			final IntervalIterator cursor = new IntervalIterator( spotInterval );
 
@@ -251,20 +239,9 @@ public class Spot implements RealLocalizable, Localizable
 						p[ e ] = cursor.getIntPosition( e ) + 0.5f; // we add 0,5 to correct for the half-pixel-shift of the gradient image (because pixel 0 is actually at position 0,5 and pixel 1 at position 1,5)
 					
 					spot.candidates.add( new PointFunctionMatch( new OrientedPoint( p, v, 1 ) ) );
-					
-//					ra.setPosition(cursor);
-//					for (int d = 0; d < cursor.numDimensions(); d++){
-//						ra.move(-min[d], d);
-//						// System.out.print(ra.getIntPosition(d) + " ");
-//					}
-//					// System.out.println();
-//					ra.get().set(1);
 				}
-							
 			}
 			spots.add( spot );
-			
-			// ImageJFunctions.show(discard);
 		}
 		return spots;
 	}
@@ -308,13 +285,13 @@ public class Spot implements RealLocalizable, Localizable
 			{
 				spot.inliers.clear();
 				spot.numRemoved = spot.candidates.size();
-				System.out.println( "e1" );
+				System.out.println( "Spot e1 " + spot.candidates.size() + ": " + e);
 			}
 			catch (IllDefinedDataPointsException e)
 			{
 				spot.inliers.clear();
 				spot.numRemoved = spot.candidates.size();
-				System.out.println( "e2" );
+				System.out.println( "Spot e2: " + e );
 			}
 		}
 	}

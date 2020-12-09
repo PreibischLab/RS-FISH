@@ -111,7 +111,7 @@ public class RadialSymmetry {
 		// the size of the RANSAC area
 		final long[] range = new long[numDimensions];
 		for (int d = 0; d < numDimensions; ++d)
-			range[d] = pSupportRadius;
+			range[d] = pSupportRadius*2;
 
 		ArrayList<Spot> pSpots = Spot.extractSpots(pImg, simplifiedPeaks, pDerivative, pNg, range);
 		// scale the z-component according to the anisotropy coefficient

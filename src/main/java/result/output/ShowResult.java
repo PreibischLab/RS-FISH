@@ -33,9 +33,8 @@ public class ShowResult {
 			if (spot.inliers.size() != 0) { // TODO: filtered already?
 					if (intensity.get(idx) >= histThreshold) {
 						rt.incrementCounter();
-						double[] pos = spot.getCenter();
 						for (int d = 0; d < spot.numDimensions(); ++d) {
-							rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.4f", pos[d]));
+							rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.4f", spot.getDoublePosition(d)));
 						}
 
 						totalSpotsPerTimePoint++;

@@ -146,7 +146,7 @@ public class TestGauss2dROI
 		//SimpleMultiThreading.threadHaltUnClean();
 		
 		// ransac on all spots
-		Spot.ransac( spots, 100, 0.15, 10.0/100.0 );
+		Spot.ransac( spots, 100, 0.15, 10.0/100.0, false );
 		
 		// print localizations
 		int c = 0;
@@ -155,7 +155,7 @@ public class TestGauss2dROI
 		{
 			spot.computeAverageCostInliers();
 			
-			if ( spot.inliers.size() > 10 && dist( spot.getCenter(), spot.getOriginalLocation() ) < 2 )
+			if ( spot.inliers.size() > 10 && dist( spot.localize(), spot.getOriginalLocation() ) < 2 )
 			{
 				System.out.println( spot + " " +  (c++) + " --- " + Util.printCoordinates( spot.getOriginalLocation() ) );
 				goodspots.add( spot );

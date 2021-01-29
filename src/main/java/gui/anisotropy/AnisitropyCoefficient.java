@@ -331,7 +331,7 @@ public class AnisitropyCoefficient {
 			double maxError = 1.0; // 1.0px error 
 			double inlierRatio = 0.6; // at least 60% inliers 
 
-			Spot.ransac(spots, numIterations, maxError, inlierRatio);
+			Spot.ransac(spots, numIterations, maxError, inlierRatio, false );
 			try{
 				Spot.fitCandidates(spots);
 			}
@@ -448,7 +448,7 @@ public class AnisitropyCoefficient {
 
 		// TODO: CORRECT PLACE TO TURN ON/OFF RANSAC		
 		if (true){ // (params.getRANSAC()){
-			Spot.ransac(spots, numIterations, params.getMaxError(), params.getInlierRatio());
+			Spot.ransac(spots, numIterations, params.getMaxError(), params.getInlierRatio(), false);
 			for (final Spot spot : spots)
 				spot.computeAverageCostInliers();
 		}

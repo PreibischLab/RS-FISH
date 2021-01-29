@@ -2,10 +2,15 @@ package gui.interactive;
 
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
+import benchmark.TextFileAccess;
 import net.imglib2.Cursor;
 import net.imglib2.Localizable;
 import net.imglib2.Point;
@@ -20,7 +25,9 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
+import net.imglib2.util.ValuePair;
 import net.imglib2.view.Views;
 
 import fitting.Spot;
@@ -481,6 +488,154 @@ public class HelperFunctions {
 		}
 	}
 
+	public static class Debug
+	{
+		public int doubleAssign = 0;
+		public int miss = 0;
+		public int count = 0;
+		public double avgError = 0;
+
+		public String toString()
+		{
+			return "miss: " + miss + ", double: " + doubleAssign + ", avg error=" + avgError;
+		}
+	}
+
+	public static Debug analyzePoints(
+			List< mpicbg.models.Point > gt, 
+			List< mpicbg.models.Point > p,
+			final boolean silent )
+	{
+		Debug d = new Debug();
+		HashSet< Integer > gtIndicies = new HashSet<>();
+
+		for ( final mpicbg.models.Point pos : p )
+		{
+			Pair< Integer, Double > closest = HelperFunctions.closestPoint( gt, pos );
+
+			d.avgError += closest.getB();
+			++d.count;
+
+			if ( !silent )
+				System.out.println( Util.printCoordinates( pos.getL() ) + ": " + closest.getB() + " -- " + Util.printCoordinates( gt.get( closest.getA()).getL() ) );
+
+			if ( gtIndicies.contains( closest.getA() ) )
+			{
+				if ( !silent )
+					System.out.println( "^^^ double assignment!" );
+				++d.doubleAssign;
+			}
+
+			gtIndicies.add( closest.getA() );
+		}
+
+		if ( !silent )
+			System.out.println( "not assigned: " );
+
+		for ( int i = 0; i < gt.size(); ++i )
+		{
+			if ( !gtIndicies.contains( i ) )
+			{
+				if ( !silent )
+					System.out.println( Util.printCoordinates( gt.get( i ).getL() ) );
+				++d.miss;
+			}
+		}
+
+		d.avgError /= (double)d.count;
+		return d;
+	}
+
+	public static List< mpicbg.models.Point > toPointsSpot( final List< Spot > points )
+	{
+		ArrayList<mpicbg.models.Point> ps = new ArrayList<>();
+
+		for ( final Spot point : points )
+			ps.add( new mpicbg.models.Point( point.localize() ) );
+
+		return ps;
+	}
+
+	public static List< mpicbg.models.Point > toPoints( final List< double[] > points )
+	{
+		ArrayList<mpicbg.models.Point> ps = new ArrayList<>();
+
+		for ( final double[] point : points )
+			ps.add( new mpicbg.models.Point( point ) );
+
+		return ps;
+	}
+
+	public static List< mpicbg.models.Point > toPointsLong( final List< long[] > points )
+	{
+		ArrayList<mpicbg.models.Point> ps = new ArrayList<>();
+
+		for ( final long[] point : points )
+		{
+			double[] pointD = new double[ point.length ];
+			for ( int d = 0; d < point.length; ++d )
+				pointD[ d ] = point[ d ];
+
+			ps.add( new mpicbg.models.Point( pointD ) );
+		}
+		return ps;
+	}
+
+	public static Pair< Integer, Double > closestPoint( List< mpicbg.models.Point > gt, mpicbg.models.Point p )
+	{
+		double minDist = Double.MAX_VALUE;
+		int minIndex = -1;
+
+		for ( int i = 0; i < gt.size(); ++i )
+		{
+			final mpicbg.models.Point g = gt.get( i );
+			double dist =  mpicbg.models.Point.distance( g, p );
+			if ( dist < minDist )
+			{
+				minDist = dist;
+				minIndex = i;
+			}
+		}
+
+		return new ValuePair<Integer, Double>( minIndex, minDist );
+	}
+
+	/*
+	public static ArrayList< double[] > pareLoc( final String file )
+	{
+		ArrayList< double[] > pos = new ArrayList<>();
+		
+		BufferedReader in = TextFileAccess.openFileRead( file );
+		try {
+			while ( in.ready() )
+			{
+				String s = in.readLine().trim();
+
+				String x = s.substring(0, 13 );
+				String y = s.substring(16, 29 );
+				String z = s.substring(32, 45 );
+
+				pos.add( new double[] { Double.parseDouble( y ) , Double.parseDouble( x ), Double.parseDouble( z ) - 1.0,} );
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+		return pos;
+	}
+	*/
+	public static void copySimplePeaks(final ArrayList<Point> peaks, final ArrayList<long[]> simplifiedPeaks, final Rectangle rectangle ) {
+		for (final Point peak : peaks) {
+			if (HelperFunctions.isInside(peak, rectangle))
+			{
+				final long[] coordinates = new long[ peak.numDimensions() ];
+				peak.localize( coordinates );
+				simplifiedPeaks.add(coordinates);
+			}
+		}
+	}
+
 	/*
 	 * Copy peaks found by DoG to lighter ArrayList (!imglib2)
 	 */
@@ -514,7 +669,7 @@ public class HelperFunctions {
 	// used to copy Spots to double []
 	public static void copyToDouble(final ArrayList<Spot> spots, ArrayList<double []> peaks ) {
 		for (final Spot spot : spots)
-			peaks.add(spot.getCenter());
+			peaks.add(spot.localize());
 	}
 	
 

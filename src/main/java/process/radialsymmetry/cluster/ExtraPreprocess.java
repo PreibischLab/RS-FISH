@@ -136,7 +136,7 @@ public class ExtraPreprocess {
 				// not the exact slice but in between
 				// if(spots.get(j).getIntPosition(2) == z) {
 				int spread = 3;
-				if (Math.abs(spots.get(j).getIntPosition(2) - z) <= spread) {
+				if (Math.abs(spots.get(j).getOriginalLocation()[2] - z) <= spread) {
 					indices.add(j);
 				}
 			}

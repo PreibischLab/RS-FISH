@@ -119,7 +119,7 @@ public class TestGauss3d
 		//SimpleMultiThreading.threadHaltUnClean();
 		
 		// ransac on all spots
-		Spot.ransac( spots, 100, 0.15, 20.0/100.0 );
+		Spot.ransac( spots, 100, 0.15, 20.0/100.0, false );
 		
 		// print localizations
 		for ( final Spot spot : spots )
@@ -142,7 +142,7 @@ public class TestGauss3d
 				continue;
 			
 			spot.center.fit( spot.inliers );
-			spot.getCenter( center );
+			spot.localize( center );
 			
 			int minIndex = -1;
 			double minDist = Double.MAX_VALUE;

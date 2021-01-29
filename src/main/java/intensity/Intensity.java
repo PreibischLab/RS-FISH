@@ -1,14 +1,8 @@
 package intensity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
-
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.RealRandomAccess;
-import net.imglib2.RealRandomAccessible;
-import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.Views;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
@@ -18,8 +12,45 @@ import milkyklim.algorithm.localization.GenericPeakFitter;
 import milkyklim.algorithm.localization.LevenbergMarquardtSolver;
 import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
 import milkyklim.algorithm.localization.SparseObservationGatherer;
+import net.imglib2.Localizable;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealRandomAccess;
+import net.imglib2.RealRandomAccessible;
+import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 
 public class Intensity {
+
+	public static class WrappedSpot implements Localizable
+	{
+		final Spot spot;
+		final long[] loc;
+
+		public WrappedSpot( final Spot spot )
+		{
+			this.spot = spot;
+			this.loc = new long[ spot.numDimensions() ];
+			for ( int d = 0; d < spot.numDimensions(); ++d )
+				loc[ d ] = Math.round( spot.getDoublePosition( d ) );
+		}
+
+		public Spot getSpot() { return spot; }
+
+		@Override
+		public int numDimensions() { return spot.numDimensions(); }
+
+		@Override
+		public long getLongPosition( final int d ) { return loc[ d ]; }
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + Arrays.hashCode(loc);
+			return result;
+		}
+	}
 
 	public static void calulateIntesitiesGF(RandomAccessibleInterval<FloatType> xyz, int numDimensions,
 			float anisotropy, double sigma, ArrayList<Spot> filteredSpots, ArrayList<Float> intensity) {
@@ -33,13 +64,20 @@ public class Intensity {
 		SparseObservationGatherer<FloatType> sparseObservationGatherer = new SparseObservationGatherer<>(xyz);
 		// use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy &
 		// sigma_z)
-		GenericPeakFitter< FloatType, Spot > pf = new GenericPeakFitter<>(sparseObservationGatherer, filteredSpots,
-				new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(),
-				new MLEllipticGaussianEstimator(typicalSigmas));
+		final ArrayList< WrappedSpot > wrapped = new ArrayList<>();
+		filteredSpots.forEach( spot -> wrapped.add( new WrappedSpot( spot ) ) );
+
+		GenericPeakFitter< FloatType, WrappedSpot > pf =
+				new GenericPeakFitter< FloatType, WrappedSpot >(
+						sparseObservationGatherer,
+						wrapped,
+						new LevenbergMarquardtSolver(),
+						new EllipticGaussianOrtho(),
+						new MLEllipticGaussianEstimator(typicalSigmas) );
 
 		pf.process();
 
-		final Map<Spot, double[]> fits = pf.getResult();
+		final Map<WrappedSpot, double[]> fits = pf.getResult();
 
 		// FIXME: is the order consistent
 		for (final Spot spot : filteredSpots) {
@@ -55,11 +93,10 @@ public class Intensity {
 		// FIXME: the factory should depend on the imp > floatType, ByteType,
 		// etc.
 		NLinearInterpolatorFactory<FloatType> factory = new NLinearInterpolatorFactory<>();
-		RealRandomAccessible<FloatType> interpolant = Views.interpolate(Views.extendZero(xyz), factory);
+		RealRandomAccessible<FloatType> interpolant = Views.interpolate(Views.extendBorder(xyz), factory);
+		RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
 		for (Spot fSpot : filteredSpots) {
-			RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
-			double[] position = fSpot.getCenter();
-			rra.setPosition(position);
+			rra.setPosition(fSpot);
 			intensity.add(new Float(rra.get().get()));
 		}
 	}

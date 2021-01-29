@@ -25,16 +25,22 @@ import net.imglib2.EuclideanSpace;
 public interface SymmetryCenter< M extends AbstractFunction< M > > extends Model< M >, Function< Point >, EuclideanSpace
 {
 	/**
+	 * WARNING! This value still needs to be divided by the scale set it Spot!
+	 * 
 	 * @param center - will write the symmetry center into the array, dimensionality must match
 	 */
 	public void getSymmetryCenter( final double center[] );
 	
 	/**
+	 * WARNING! This value still needs to be divided by the scale set it Spot!
+	 * 
 	 * @param center - will write the symmetry center into the array, dimensionality must match
 	 */
 	public void getSymmetryCenter( final float center[] );
 	
 	/**
+	 * WARNING! This value still needs to be divided by the scale set it Spot!
+	 * 
 	 * @param d - dimension
 	 * @return the center in dimension d
 	 */

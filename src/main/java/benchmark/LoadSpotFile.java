@@ -36,7 +36,12 @@ public class LoadSpotFile
 		
 		for ( final double[] v : valuesDouble )
 		{
-			final Spot s = new Spot( n );
+			final long[] loc = new long[ n ];
+
+			for ( int d = 0; d < n; ++d )
+				loc[ d ] = Math.round( v[ d ] );
+
+			final Spot s = new Spot( loc );
 			
 			for ( int d = 0; d < n; ++d )
 				s.center.setSymmetryCenter( v[ d ], d );

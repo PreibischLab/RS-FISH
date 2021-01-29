@@ -132,8 +132,7 @@ public class BatchProcessing {
 
 			for (Spot fSpot : filteredSpots){
 				RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
-				double[] position = fSpot.getCenter();
-				rra.setPosition(position);
+				rra.setPosition(fSpot);
 				intensity.add(new Float(rra.get().get()));	
 			}
 		}
@@ -163,13 +162,12 @@ public class BatchProcessing {
 		try {
 			writer = new CSVWriter(new FileWriter(path + "/" + fileName.substring(0, fileName.length() - 4) + ".csv"), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 			for (int j = 0; j < spots.size(); j++) {
-				double[] position = spots.get(j).getCenter();
-			
+
 				nextLine = new String[]{
 						String.valueOf(j + 1), 
-						String.format(java.util.Locale.US, "%.2f", position[0]), 
-						String.format(java.util.Locale.US, "%.2f", position[1]), 
-						String.format(java.util.Locale.US, "%.2f", position[2]),
+						String.format(java.util.Locale.US, "%.2f", spots.get(j).getDoublePosition(0)), 
+						String.format(java.util.Locale.US, "%.2f", spots.get(j).getDoublePosition(1)), 
+						String.format(java.util.Locale.US, "%.2f", spots.get(j).getDoublePosition(2)),
 						String.format(java.util.Locale.US, "%.2f", intensity.get(j))
 						}; 	
 				writer.writeNext(nextLine);

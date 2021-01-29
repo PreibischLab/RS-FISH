@@ -137,6 +137,15 @@ public class Radial_Symmetry extends ContextCommand {
 		// DEBUG:
 		// System.out.println(gaussFit + " " + RANSAC);
 
+		// TODO: REMOVE
+		parameterType = paramChoice[2];
+		sigma = 2.4f;
+		threshold = 0.0122f;
+
+		System.out.println( anisotropy );
+		System.out.println( sigma );
+		System.out.println( threshold );
+		
 
 		if (parameterType.equals(paramChoice[0])) // manual
 		{
@@ -244,7 +253,11 @@ public class Radial_Symmetry extends ContextCommand {
 		net.imagej.ImageJ ij = new net.imagej.ImageJ();
 		//ij.launch( "/Users/spreibi/Downloads/N2_267-1.tif" );
 		//ij.launch( "/Users/spreibi/Downloads/C0-N2_352_cropped_1240.tif" );
-		ij.launch( "/home/kharrington/Data/Radial_Symmetry/N2_352-1.tif" );
+		//ij.launch( "/home/kharrington/Data/Radial_Symmetry/N2_352-1.tif" );
+
+		//ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_0_I_10000_0_img0.tif");
+		ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.tif");
+
 		ij.command().run(Radial_Symmetry.class, true);
 
 	}

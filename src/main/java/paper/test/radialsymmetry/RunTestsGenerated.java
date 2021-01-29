@@ -86,7 +86,7 @@ public class RunTestsGenerated {
 		long numRealDetections = 0;
 		for (int j = 0; j < spots.size(); j++) {
 			Spot spot = spots.get(j);
-			int idx = Collections.binarySearch(positions, spot.getCenter(), comparators.new doubleComparator());
+			int idx = Collections.binarySearch(positions, spot.localize(), comparators.new doubleComparator());
 
 			idx += 1;
 			idx *= -1;

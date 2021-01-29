@@ -169,7 +169,12 @@ public class Benchmark
 			
 			if ( loc != null )
 			{
-				final Spot s = new Spot( n );
+				final long[] locL = new long[ n ];
+
+				for ( int d = 0; d < n; ++d )
+					locL[ d ] = Math.round( loc[ d ] );
+
+				final Spot s = new Spot( locL );
 				
 				for ( int d = 0; d < n; ++d )
 					s.center.setSymmetryCenter( loc[ d ], d );
@@ -220,7 +225,7 @@ public class Benchmark
 			else
 				GaussianMaskFit.gaussianMaskFit( Views.interval( img, min, max ), loc, sigma, ransacWeights.get( i ) );
 			
-			final Spot s = new Spot( n );
+			final Spot s = new Spot( p );
 			
 			for ( int d = 0; d < n; ++d )
 				s.center.setSymmetryCenter( loc[ d ], d );
@@ -246,7 +251,7 @@ public class Benchmark
 		//GradientDescent.testGradientDescent( spots, new boolean[]{ false, false, true } );
 		
 		// ransac on all spots
-		Spot.ransac( spots, 1000, ransacError, 1.0/100.0 );
+		Spot.ransac( spots, 1000, ransacError, 1.0/100.0, false );
 		
 		return spots;
 	}

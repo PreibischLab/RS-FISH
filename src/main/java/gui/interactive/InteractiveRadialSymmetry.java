@@ -302,7 +302,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		}
 		
 		if (params.getRANSAC()){
-			Spot.ransac(spots, numIterations, params.getMaxError(), params.getInlierRatio());
+			Spot.ransac(spots, numIterations, params.getMaxError(), params.getInlierRatio(), false);
 			for (final Spot spot : spots)
 				spot.computeAverageCostInliers();
 		}

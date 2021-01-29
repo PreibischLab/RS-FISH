@@ -290,8 +290,8 @@ public class BatchProcess {
 		}
 		else {
 			for (Spot spot : spots) {
-				int x = spot.getIntPosition(0);
-				int y = spot.getIntPosition(1);
+				int x = (int)spot.getOriginalLocation()[0];
+				int y = (int)spot.getOriginalLocation()[1];
 				// filter spots that are not in the roi
 				// TODO: this one can be improved if rewritten with getMask() 
 				if (roi.contains(x, y)) {
@@ -369,8 +369,7 @@ public class BatchProcess {
 
 		for (Spot fSpot : filteredSpots){
 			RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
-			double[] position = fSpot.getCenter();
-			rra.setPosition(position);
+			rra.setPosition(fSpot);
 			intensity.add(new Float(rra.get().get()));
 			// [83.85610471462424, 336.9622269595374, 32.396389491090034]
 			// FIXME: test purposes only
@@ -387,13 +386,12 @@ public class BatchProcess {
 		try {
 			writer = new CSVWriter(new FileWriter(path.getAbsolutePath()), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 			for (int j = 0; j < spots.size(); j++) {
-				double[] position = spots.get(j).getCenter();
 
 				nextLine = new String[]{
 					String.valueOf(j + 1), 
-					String.format(java.util.Locale.US, "%.2f", position[0]), 
-					String.format(java.util.Locale.US, "%.2f", position[1]), 
-					String.format(java.util.Locale.US, "%.2f", position[2]),
+					String.format(java.util.Locale.US, "%.2f", spots.get(j).getDoublePosition(0)), 
+					String.format(java.util.Locale.US, "%.2f", spots.get(j).getDoublePosition(1)), 
+					String.format(java.util.Locale.US, "%.2f", spots.get(j).getDoublePosition(2)),
 					String.format(java.util.Locale.US, "%.2f", intensity.get(j))
 				}; 	
 				writer.writeNext(nextLine);

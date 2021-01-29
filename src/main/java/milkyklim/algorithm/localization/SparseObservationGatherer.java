@@ -1,5 +1,7 @@
 package milkyklim.algorithm.localization;
 
+import fitting.PointFunctionMatch;
+import intensity.Intensity.WrappedSpot;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
@@ -8,12 +10,8 @@ import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 
-import fitting.PointFunctionMatch;
-import fitting.Spot;
-
-public class SparseObservationGatherer < T extends RealType< T > > implements ObservationGatherer< Spot > 
+public class SparseObservationGatherer < T extends RealType< T > > implements ObservationGatherer< WrappedSpot > 
 {
-	
 	RandomAccessibleInterval <T> img; // initial image
 	RealRandomAccessible<T> interpolant; // interpolated image for non-integer intensities
 	
@@ -25,13 +23,13 @@ public class SparseObservationGatherer < T extends RealType< T > > implements Ob
 		
 		this.img = img;
 		NLinearInterpolatorFactory<T> factory = new NLinearInterpolatorFactory<>();
-		interpolant = Views.interpolate(Views.extendZero(img), factory);
+		interpolant = Views.interpolate(Views.extendBorder(img), factory);
 	}
 
 	@Override
-	public Observation gatherObservationData( final Spot peak )
+	public Observation gatherObservationData( final WrappedSpot peak )
 	{
-		int n_pixels = peak.getInliers().size();
+		int n_pixels = peak.getSpot().getInliers().size();
 		int numDimensions = peak.numDimensions();
 		
 		double [] I = new double[n_pixels];
@@ -41,7 +39,7 @@ public class SparseObservationGatherer < T extends RealType< T > > implements Ob
 		RealRandomAccess<T> rra = interpolant.realRandomAccess();
 		
 		// FIXME: Is there a better way to prevent this dirty cast ?
-		for (PointFunctionMatch pm : peak.getInliers()){
+		for (PointFunctionMatch pm : peak.getSpot().getInliers()){
 			double [] pos = pm.getP1().getL(); 
 			for (int d = 0; d < numDimensions; d++)
 				x[idx][d] = pos[d];
@@ -55,5 +53,4 @@ public class SparseObservationGatherer < T extends RealType< T > > implements Ob
 		obs.X = x;
 		return obs;
 	}
-
 }

@@ -45,6 +45,10 @@ public class Anisotropy_Plugin implements Command {
 
 	public static void main(String[] args)
 	{
+		net.imagej.ImageJ ij = new net.imagej.ImageJ();
+		ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_300spots_bg_200_0_I_10000_0_img0.tif" );
+		ij.command().run(Anisotropy_Plugin.class, true);
+
 		// for the historical reasons
 		System.out.println("DOGE!");
 	}

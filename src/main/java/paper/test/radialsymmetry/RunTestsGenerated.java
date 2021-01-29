@@ -56,9 +56,8 @@ public class RunTestsGenerated {
 
 		if (false) {
 			// some feedback
-			Visualization.showVisualization(ImageJFunctions.wrap(img, ""), spots, timePoint, true, true,
+			double histThreshold = Visualization.visuallyDefineThreshold(ImageJFunctions.wrap(img, ""), spots, timePoint, true, true,
 				rsm.getParams().getSigmaDoG(), rsm.getParams().getAnisotropyCoefficient());
-			double histThreshold = Visualization.getHistThreshold(); // used to show the overlays
 			ShowResult.ransacResultTable(spots, timePoint, channelPoint, histThreshold);
 		}
 		// 2. sort both lists for faster search 

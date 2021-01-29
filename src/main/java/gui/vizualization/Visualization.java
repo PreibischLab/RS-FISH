@@ -3,20 +3,18 @@ package gui.vizualization;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.imglib2.multithreading.SimpleMultiThreading;
-
 import fitting.Spot;
 import histogram.Histogram;
 import ij.ImagePlus;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import visualization.Detections;
 import visualization.Inliers;
 
 public class Visualization {
-	
-	public static double histThreshold = 0;
 
-	public static void showVisualization(ImagePlus imp, ArrayList<Spot> allSpots, ArrayList<Long> timePoint, boolean showInliers, boolean showDetections, float sigma, float anisotropy){
+	public static double visuallyDefineThreshold(ImagePlus imp, ArrayList<Spot> allSpots, ArrayList<Long> timePoint, boolean showInliers, boolean showDetections, float sigma, float anisotropy){
 
+		double histThreshold = 0;
 		Detections detection;
 
 		// show the initial images overlapped with ransac regions
@@ -47,11 +45,8 @@ public class Visualization {
 				
 				histThreshold = demo.getHistThreshold();
 			}
-		}		
-	}
-	
-	public static double getHistThreshold(){
+		}
+
 		return histThreshold;
 	}
-	
 }

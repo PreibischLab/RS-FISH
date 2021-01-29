@@ -57,9 +57,9 @@ public class RunTestReal {
 			// some feedback
 			ImagePlus imp = ImageJFunctions.wrap(img, "");
 			imp.setDimensions(1, imp.getStackSize(), 1);
-			Visualization.showVisualization(imp, spots, timePoint, true, true,
+			double histThreshold = Visualization.visuallyDefineThreshold(imp, spots, timePoint, true, true,
 					rsm.getParams().getSigmaDoG(), rsm.getParams().getAnisotropyCoefficient());
-			double histThreshold = Visualization.getHistThreshold(); // used to show the overlays
+
 			ShowResult.ransacResultTable(spots, timePoint, channelPoint, histThreshold);
 		}
 	}

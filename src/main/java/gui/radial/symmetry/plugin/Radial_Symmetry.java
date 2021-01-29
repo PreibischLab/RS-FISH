@@ -16,6 +16,7 @@ import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
 import gui.vizualization.Visualization;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.ResultsTable;
 import imglib2.RealTypeNormalization;
@@ -86,15 +87,17 @@ public class Radial_Symmetry extends ContextCommand {
 	@Parameter(label = "<html><b>Advanced parameter mode:</h>", visibility = ItemVisibility.MESSAGE)
 	String advancedLabel = "";
 	@Parameter(label = "Sigma")
-	float sigma = (InteractiveRadialSymmetry.sigmaMin + InteractiveRadialSymmetry.sigmaMax) / 2.0f;
+	float sigma = GUIParams.defaultSigma;
 	@Parameter(label = "Threshold")
-	float threshold = (InteractiveRadialSymmetry.thresholdMin + InteractiveRadialSymmetry.thresholdMax) / 2.0f;
+	float threshold = GUIParams.defaultThreshold;
 	@Parameter(label = "Support region radius")
-	int supportRegion = (InteractiveRadialSymmetry.supportRadiusMin + InteractiveRadialSymmetry.supportRadiusMax) / 2;
-	@Parameter(label = "Inlier ratio")
-	float inlierRatio = (InteractiveRadialSymmetry.inlierRatioMin + InteractiveRadialSymmetry.inlierRatioMax) / 2.0f;
+	int supportRegion = GUIParams.defaultSupportRadius;
+	@Parameter(label = "Min inlier ratio")
+	float inlierRatio = GUIParams.defaultInlierRatio;
 	@Parameter(label = "Max error")
-	float maxError = (InteractiveRadialSymmetry.maxErrorMin + InteractiveRadialSymmetry.maxErrorMax) / 2.0f;
+	float maxError = GUIParams.defaultMaxError;
+	@Parameter(label = "Intensity threshold for a spot")
+	double histThreshold = 0;
 	@Parameter(label = "Results file")
 	String resultsFilePath = "";
 
@@ -211,13 +214,12 @@ public class Radial_Symmetry extends ContextCommand {
 			imp.deleteRoi();
 
 			// shows the histogram and sets the intensity threshold
-			Visualization.showVisualization(imp, allSpots, timePoint, showInliers, showDetections,
+			this.histThreshold = Visualization.visuallyDefineThreshold(imp, allSpots, timePoint, showInliers, showDetections,
 					params.getSigmaDoG(), params.getAnisotropyCoefficient());
-			double histThreshold = Visualization.getHistThreshold(); // used to show the overlays
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, histThreshold);
 		} else if (parameterType.equals(paramChoice[0]) || parameterType.equals(paramChoice[2])) { // manual
 			// write the result to the csv file
-			double histThreshold = 0; // take all of the points that were detected
+			IJ.log( "Intensity threshold =" + histThreshold );
 			ResultsTable rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, histThreshold);
 			if( resultsFilePath != "" ) {
 				System.out.println("Writing to results path: " + resultsFilePath);

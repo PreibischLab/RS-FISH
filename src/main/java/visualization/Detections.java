@@ -68,8 +68,8 @@ public class Detections {
 		// this.imp.setDimensions( 1, (int)img.dimension( 2 ), 1 );
 
 		this.peaks = new ArrayList<>(spots.size());
-		this.intensity = new ArrayList<>(intensity.size());
-		this.timePointIndices = new ArrayList<>(intensity.size());
+		this.intensity = new ArrayList<>(spots.size());
+		this.timePointIndices = new ArrayList<>(spots.size());
 
 		HelperFunctions.copyToDouble(spots, peaks);
 
@@ -81,15 +81,15 @@ public class Detections {
 		// TODO: Perfom for 3D images only ? 
 		Collections.sort(peaks, new PosComparator());
 
-		permuteIntensities(intensity, this.intensity, sortedIndices);
+		permuteIntensities(spots, this.intensity, sortedIndices);
 		permuteTimePoints(timePoint, this.timePointIndices, sortedIndices);
 
 	}
 
-	public static void permuteIntensities(ArrayList<Float> from, ArrayList<Float> to, Integer[] idx) {
+	public static void permuteIntensities(ArrayList<Spot> from, ArrayList<Float> to, Integer[] idx) {
 		// from and to are of the same sizes
 		for (int j = 0; j < from.size(); j++)
-			to.add(from.get(idx[j]));
+			to.add(from.get(idx[j]).getFloatIntensity());
 	}
 
 	public static void permuteTimePoints(ArrayList<Long> timePoint, ArrayList<Long> timePointIndices, Integer[] idx) {

@@ -27,6 +27,7 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 import result.output.ShowResult;
@@ -133,14 +134,9 @@ public class Radial_Symmetry extends ContextCommand {
 		// System.out.println(gaussFit + " " + RANSAC);
 
 		// TODO: REMOVE
-		parameterType = paramChoice[2];
-		sigma = 2.4f;
-		threshold = 0.0122f;
-
-		System.out.println( anisotropy );
-		System.out.println( sigma );
-		System.out.println( threshold );
-		
+		//parameterType = paramChoice[2];
+		//sigma = 1.5f;
+		//threshold = 0.007f;
 
 		if (parameterType.equals(paramChoice[0])) // manual
 		{
@@ -176,10 +172,11 @@ public class Radial_Symmetry extends ContextCommand {
 
 		// back up the parameter values to the default variables
 		// params.setDefaultValues();
-		if( imp.getDimensions()[2] > 1 )// if non singleton z dimension
+		if( imp.getDimensions()[3] > 1 )// if non singleton z dimension
 			calibration = HelperFunctions.initCalibration(imp, 3);
 		else
 			calibration = HelperFunctions.initCalibration(imp, 2);
+		System.out.println( "Calibration: " + Util.printCoordinates( calibration ) );
 		//calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions());
 
 		RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
@@ -250,7 +247,8 @@ public class Radial_Symmetry extends ContextCommand {
 		//ij.launch( "/home/kharrington/Data/Radial_Symmetry/N2_352-1.tif" );
 
 		//ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_0_I_10000_0_img0.tif");
-		ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.tif");
+		//ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.tif");
+		ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_300spots_bg_200_0_I_10000_0_img0.tif" );
 
 		ij.command().run(Radial_Symmetry.class, true);
 

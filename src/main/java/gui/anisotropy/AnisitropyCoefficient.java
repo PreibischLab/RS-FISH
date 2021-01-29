@@ -6,16 +6,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
-import net.imglib2.Point;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.algorithm.dog.DogDetection;
-import net.imglib2.algorithm.localextrema.RefinedPeak;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Util;
-import net.imglib2.view.Views;
-
 import anisotropy.parameters.AParams;
 import background.NormalizedGradient;
 import fiji.tool.SliceObserver;
@@ -36,6 +26,15 @@ import milkyklim.algorithm.localization.EllipticGaussianOrtho;
 import milkyklim.algorithm.localization.GenericPeakFitter;
 import milkyklim.algorithm.localization.LevenbergMarquardtSolver;
 import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
+import net.imglib2.Point;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.dog.DogDetection;
+import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
+import net.imglib2.view.Views;
 
 public class AnisitropyCoefficient {
 
@@ -110,6 +109,8 @@ public class AnisitropyCoefficient {
 		dim = new long[imp.getNDimensions()];
 		for (int d = 0; d< imp.getNDimensions(); ++d)
 			this.dim[d] = imp.getDimensions()[d];
+
+		imp.setZ( Math.max( 1, imp.getNSlices() / 2 ) );
 
 		this.params = params; 
 		this.min = min; 

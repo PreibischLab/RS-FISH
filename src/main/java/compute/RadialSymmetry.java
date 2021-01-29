@@ -27,7 +27,7 @@ import parameters.RadialSymmetryParameters;
 public class RadialSymmetry {
 	public static int bsNumIterations = 100; // not a parameter, can be changed
 												// through Beanshell
-	public static int numIterations = 500; // not a parameter, can be changed
+	public static int numIterations = 250; // not a parameter, can be changed
 											// through Beanshell
 	// steps per octave for DoG
 	private static int defaultSensitivity = 4;

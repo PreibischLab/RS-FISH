@@ -191,9 +191,8 @@ public class AnisitropyCoefficient {
 			// decrease the threshold value; this might help in some cases but
 			// z-extra smoothing is image depended
 
-			final float tFactor = img.numDimensions() == 3 ? 0.5f : 1.0f;
 			final DogDetection<FloatType> dog2 = new DogDetection<>(img, calibration, sigma, sigma2,
-					DogDetection.ExtremaType.MINIMA, tFactor * threshold / 2, false);
+					DogDetection.ExtremaType.MINIMA, threshold, false);
 			peaks = dog2.getPeaks();
 			refPeaks = dog2.getSubpixelPeaks();
 
@@ -271,7 +270,7 @@ public class AnisitropyCoefficient {
 		// TODO: here we suppose that the x and y sigmas are the same
 		bestScale = sigmas[numDimensions - 1] / sigmas[0]; // x/z
 
-		return bestScale;
+		return 1.0 / bestScale;
 	}
 
 
@@ -315,7 +314,7 @@ public class AnisitropyCoefficient {
 		long bestTotalInliers = -Long.MAX_VALUE;
 
 		// TODO: SET THE VARAIABLES FOR THE SEARCH SPACE
-		for (float idx = 1.0f; idx < 1.6f; idx += 0.01f){
+		for (float idx = 0.25f; idx < 3f; idx += 0.01f){
 			final ArrayList<Spot> spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
 
 			// scale the z-axis 
@@ -467,6 +466,20 @@ public class AnisitropyCoefficient {
 	protected void dogDetection( final RandomAccessibleInterval <FloatType> image )
 	{
 		final double sigma2 = HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity );
+
+		final double[] calibration;
+
+		if ( this.calibration.length > image.numDimensions() )
+		{
+			calibration = new double[ image.numDimensions() ];
+			for ( int i = 0; i < calibration.length; ++i )
+				calibration[ i ] = this.calibration[ i ];
+		}
+		else
+		{
+			calibration = this.calibration;
+		}
+
 		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA,  params.getThresholdDoG()/2, false);
 		peaks = dog2.getPeaks();
 		refPeaks = dog2.getSubpixelPeaks(); 

@@ -177,41 +177,40 @@ public class RadialSymmetry {
 
 	public static void filterDoubleDetections( final ArrayList< Spot > spots, final double threshold )
 	{
-		final KDTree< Spot > tree = new KDTree<>(spots, spots );
-		final RadiusNeighborSearch< Spot > search = new RadiusNeighborSearchOnKDTree<>( tree );
+		boolean removed = false;
+		int countRemoved = 0;
 
-		final ArrayList< Pair< Spot, Spot > > tooClose = new ArrayList<>();
-		final HashMap< Spot, Integer > tooCloseNeighbors = new HashMap<>();
-	
-		for ( int s = 0; s < spots.size(); ++s )
+		do
 		{
-			final Spot spot = spots.get( s );
-
-			search.search( spot, threshold, true );
-
-			if ( search.numNeighbors() > 1 )
+			removed = false;
+	
+			final KDTree< Spot > tree = new KDTree<>(spots, spots );
+			final RadiusNeighborSearch< Spot > search = new RadiusNeighborSearchOnKDTree<>( tree );
+	
+			for ( int s = 0; s < spots.size(); ++s )
 			{
-				System.out.println( Util.printCoordinates( spot.getOriginalLocation() ) );
-				for ( int i = 1; i < search.numNeighbors(); ++i )
+				final Spot spot = spots.get( s );
+	
+				search.search( spot, threshold, true );
+	
+				if ( search.numNeighbors() > 1 )
 				{
-					System.out.println( search.getDistance( i ) );
-					tooClose.add( new ValuePair<Spot, Spot>( spot, search.getSampler( i ).get() ) );
-
-					if ( !tooCloseNeighbors.containsKey( spot ) )
-						tooCloseNeighbors.put( spot, 1 );
-					else
-						tooCloseNeighbors.put( spot, tooCloseNeighbors.get( spot ) + 1 );
-
-					if ( !tooCloseNeighbors.containsKey( search.getSampler( i ).get() ) )
-						tooCloseNeighbors.put( search.getSampler( i ).get(), 1 );
-					else
-						tooCloseNeighbors.put( search.getSampler( i ).get(), tooCloseNeighbors.get( search.getSampler( i ).get() ) + 1 );
+					System.out.println( "Removing: " + Util.printCoordinates( spot.getOriginalLocation() ) );
+					for ( int i = 1; i < search.numNeighbors(); ++i )
+						System.out.println( search.getDistance( i ) );
+	
+					// we do an expensive greedy strategy
+					// if two or more points are too close, we this one and start over
+					spots.remove( s );
+					++countRemoved;
+					removed = true;
+					break;
 				}
 			}
-		}
 
-		// TODO: REMOVE
+		} while ( removed );
 
+		System.out.println( "Removed " + countRemoved + " points." );
 	}
 
 	public ArrayList<Point> computeDog(final RandomAccessibleInterval<FloatType> pImg, float pSigma,

@@ -1,20 +1,13 @@
 package compute;
 
 import java.awt.Rectangle;
-import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import background.NormalizedGradient;
 import background.NormalizedGradientAverage;
 import background.NormalizedGradientMedian;
 import background.NormalizedGradientRANSAC;
-import benchmark.LoadSpotFile;
 import fitting.Center.CenterMethod;
-import fitting.PointFunctionMatch;
 import fitting.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
@@ -23,18 +16,12 @@ import ij.IJ;
 import intensity.Intensity;
 import net.imglib2.KDTree;
 import net.imglib2.Point;
-import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.RealPoint;
 import net.imglib2.algorithm.dog.DogDetection;
-import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.neighborsearch.RadiusNeighborSearch;
 import net.imglib2.neighborsearch.RadiusNeighborSearchOnKDTree;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
-import net.imglib2.util.ValuePair;
 import parameters.RadialSymmetryParameters;
 
 public class RadialSymmetry {
@@ -112,19 +99,19 @@ public class RadialSymmetry {
 		//
 		// ONE IS MISSED WHERE THINGS ARE CLOSE TO EACH OTHER:
 		// 78.257591, 194.83074, 7.099615399999999 -- only found: 79.0, 193.0, 7.0 closest to 80.47478, 192.88965, 6.092944
-		List< mpicbg.models.Point > gt = HelperFunctions.toPoints(
+		//List< mpicbg.models.Point > gt = HelperFunctions.toPoints(
 				//LoadSpotFile.loadSpotsDouble( new File("/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_0_I_10000_0_img0.loc" ) ));
-				LoadSpotFile.loadSpotsDouble( new File( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.loc") ) );
+				//LoadSpotFile.loadSpotsDouble( new File( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.loc") ) );
+				//LoadSpotFile.loadSpotsDouble( new File( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_300spots_bg_200_0_I_10000_0_img0.loc") ) );
 
 		//for ( final mpicbg.models.Point p : gt )
 		//	System.out.println( Util.printCoordinates( p.getL() ) );
 
-		System.out.println( HelperFunctions.analyzePoints( gt, HelperFunctions.toPointsLong( simplifiedPeaks ), false ) );
+		//System.out.println( HelperFunctions.analyzePoints( gt, HelperFunctions.toPointsLong( simplifiedPeaks ), false ) );
 
-		pMaxError = 1.5f;
-		pSupportRadius = 3;
-
-		System.out.println( "" + pInlierRatio );
+		//pMaxError = 1.5f;
+		//pSupportRadius = 3;
+		//System.out.println( "" + pInlierRatio );
 
 		// 31.140394, 60.66735, 5.0560045
 		// 33.188287, 69.688289, 5.3686692
@@ -136,43 +123,46 @@ public class RadialSymmetry {
 		// 76 --(59.7442836442797, 148.26202274101857, 22.364260862115284)
 		
 		// trigger radial symmetry
-		//for ( pAnisotropy = 0.5f; pAnisotropy <= 2f; pAnisotropy += 0.05f )
+		// pAnisotropy = 0.675f; //1.0f / 1.481481481481481f;
+
+		spots = computeRadialSymmetry(
+				pImg,
+				ng,
+				derivative,
+				simplifiedPeaks,
+				Util.getArrayFromValue(pSupportRadius, pImg.numDimensions() ),
+				pInlierRatio,
+				pMaxError,
+				pAnisotropy,
+				pRansac,
+				false );
+
+		/*
+		long[] dim = new long[ 3 ];
+		pImg.dimensions( dim );
+		RandomAccessibleInterval<FloatType> out = ArrayImgs.floats(dim);
+		RandomAccess<FloatType> r = out.randomAccess();
+
+		int sum = 0;
+		for ( final Spot spot : spots )
 		{
-			pAnisotropy = 0.675f; //1.0f / 1.481481481481481f;
-
-			pRansac = true;
-			int[] supportRadius = new int[ pImg.numDimensions() ];
-			supportRadius[ 0 ] = supportRadius[ 1 ] = pSupportRadius;
-			supportRadius[ 2 ] = pSupportRadius - 1;
-
-			spots = computeRadialSymmetry(pImg, ng, derivative, simplifiedPeaks, supportRadius, pInlierRatio, pMaxError,
-				pAnisotropy, pRansac, false );
-
-			long[] dim = new long[ 3 ];
-			pImg.dimensions( dim );
-			RandomAccessibleInterval<FloatType> out = ArrayImgs.floats(dim);
-			RandomAccess<FloatType> r = out.randomAccess();
-
-			int sum = 0;
-			for ( final Spot spot : spots )
+			sum += spot.inliers.size();
+			for ( final PointFunctionMatch f : spot.inliers )
 			{
-				sum += spot.inliers.size();
-				for ( final PointFunctionMatch f : spot.inliers )
-				{
-					r.setPosition( Math.round( f.getP1().getL()[ 0 ] ) , 0 );
-					r.setPosition( Math.round( f.getP1().getL()[ 1 ] ) , 1 );
-					r.setPosition( Math.round( f.getP1().getL()[ 2 ] ) , 2 );
-					r.get().set( 1 );
-				}
+				r.setPosition( Math.round( f.getP1().getL()[ 0 ] ) , 0 );
+				r.setPosition( Math.round( f.getP1().getL()[ 1 ] ) , 1 );
+				r.setPosition( Math.round( f.getP1().getL()[ 2 ] ) , 2 );
+				r.get().set( 1 );
 			}
-
-			ImageJFunctions.show( out );
-
-			System.out.print( sum + " -- ");
-			System.out.println( pAnisotropy + ": " + HelperFunctions.analyzePoints( gt, HelperFunctions.toPointsSpot( spots ), true ) );
-
-			filterDoubleDetections( spots, 0.5 );
 		}
+
+		ImageJFunctions.show( out );
+		*/
+		//System.out.print( sum + " -- ");
+		//System.out.println( pAnisotropy + ": " + HelperFunctions.analyzePoints( gt, HelperFunctions.toPointsSpot( spots ), true ) );
+
+		IJ.log( "Filtering double-detections (dist < 0.5 px)");
+		filterDoubleDetections( spots, 0.5 );
 	}
 
 	public static void filterDoubleDetections( final ArrayList< Spot > spots, final double threshold )

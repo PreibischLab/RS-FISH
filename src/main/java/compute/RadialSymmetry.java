@@ -282,9 +282,14 @@ public class RadialSymmetry {
 	}
 
 	// process each 2D/3D slice of the image to search for the spots
-	public static void processSliceBySlice(RandomAccessibleInterval<FloatType> img, RandomAccessibleInterval<FloatType> rai,
-			RadialSymmetryParameters rsm, int[] impDim, ArrayList<Spot> allSpots,
-			ArrayList<Long> timePoint, ArrayList<Long> channelPoint, ArrayList<Float> intensity) {
+	public static void processSliceBySlice(
+			RandomAccessibleInterval<FloatType> img,
+			RandomAccessibleInterval<FloatType> rai,
+			RadialSymmetryParameters rsm,
+			int[] impDim,
+			ArrayList<Spot> allSpots,
+			ArrayList<Long> timePoint,
+			ArrayList<Long> channelPoint) {
 		RandomAccessibleInterval<FloatType> timeFrameNormalized;
 		RandomAccessibleInterval<FloatType> timeFrame;
 
@@ -295,7 +300,7 @@ public class RadialSymmetry {
 				timeFrameNormalized = HelperFunctions.copyImg(rai, c, t, impDim);
 				timeFrame 			= HelperFunctions.copyImg(img, c, t, impDim);
 
-				// TODO: check
+				// TODO: finish double-points
 				RadialSymmetry rs = new RadialSymmetry(timeFrameNormalized, rsm);
 				rs.compute();
 
@@ -308,15 +313,15 @@ public class RadialSymmetry {
 					// FIXME: fix the problem with the computations of this one
 					// WARNING: This does a full gaussian fit, let's just not do this!
 					Intensity.calulateIntesitiesGF(timeFrame, timeFrame.numDimensions(), rsm.getParams().getAnisotropyCoefficient(),
-						rsm.getParams().getSigmaDoG(), filteredSpots, intensity);
+						rsm.getParams().getSigmaDoG(), filteredSpots);
 				} else {// iterate over all points and perform the linear
 						// interpolation for each of the spots
-					Intensity.calculateIntensitiesLinear(timeFrame, filteredSpots, intensity);
+					Intensity.calculateIntensitiesLinear(timeFrame, filteredSpots);
 				}
 
 				// FIXME: make this a parameter, not doing this by default, will crash on 2d
 				if ( false )
-					Intensity.fixIntensities(filteredSpots, intensity);
+					Intensity.fixIntensities(filteredSpots);
 				
 			}
 			if (c != 0) // FIXME: formula is wrong

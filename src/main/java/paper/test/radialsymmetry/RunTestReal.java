@@ -41,8 +41,6 @@ public class RunTestReal {
 		ArrayList<Long> timePoint = new ArrayList<>(0);
 		// stores number of detected spots per channel
 		ArrayList<Long> channelPoint = new ArrayList<>(0);
-		// stores the intensity values
-		ArrayList<Float> intensity = new ArrayList<>(0);
 
 		int [] fullDim = new int[] {1, 1, 1, 1, 1};
 
@@ -53,16 +51,16 @@ public class RunTestReal {
 		}
 		
 		RadialSymmetry.processSliceBySlice(img, rai, rsm, fullDim,
-				spots, timePoint, channelPoint, intensity);
+				spots, timePoint, channelPoint);
 
 		if (true) {
 			// some feedback
 			ImagePlus imp = ImageJFunctions.wrap(img, "");
 			imp.setDimensions(1, imp.getStackSize(), 1);
-			Visualization.showVisualization(imp, spots, intensity, timePoint, true, true,
+			Visualization.showVisualization(imp, spots, timePoint, true, true,
 					rsm.getParams().getSigmaDoG(), rsm.getParams().getAnisotropyCoefficient());
 			double histThreshold = Visualization.getHistThreshold(); // used to show the overlays
-			ShowResult.ransacResultTable(spots, timePoint, channelPoint, intensity, histThreshold);
+			ShowResult.ransacResultTable(spots, timePoint, channelPoint, histThreshold);
 		}
 	}
 	

@@ -53,7 +53,7 @@ public class Intensity {
 	}
 
 	public static void calulateIntesitiesGF(RandomAccessibleInterval<FloatType> xyz, int numDimensions,
-			float anisotropy, double sigma, ArrayList<Spot> filteredSpots, ArrayList<Float> intensity) {
+			float anisotropy, double sigma, ArrayList<Spot> filteredSpots) {
 		double[] typicalSigmas = new double[numDimensions];
 		for (int d = 0; d < numDimensions; d++)
 			typicalSigmas[d] = sigma;
@@ -80,14 +80,13 @@ public class Intensity {
 		final Map<WrappedSpot, double[]> fits = pf.getResult();
 
 		// FIXME: is the order consistent
-		for (final Spot spot : filteredSpots) {
-			double[] params = fits.get(spot);
-			intensity.add(new Float(params[numDimensions]));
-		}
+		for (final WrappedSpot spot : wrapped)
+			spot.getSpot().setIntensity(fits.get(spot)[numDimensions]);
 	}
 
-	public static void calculateIntensitiesLinear(RandomAccessibleInterval<FloatType> xyz,
-			ArrayList<Spot> filteredSpots, ArrayList<Float> intensity) {
+	public static void calculateIntensitiesLinear(
+			RandomAccessibleInterval<FloatType> xyz,
+			ArrayList<Spot> filteredSpots) {
 		// iterate over all points and perform the linear interpolation for each
 		// of the spots
 		// FIXME: the factory should depend on the imp > floatType, ByteType,
@@ -97,12 +96,12 @@ public class Intensity {
 		RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
 		for (Spot fSpot : filteredSpots) {
 			rra.setPosition(fSpot);
-			intensity.add(new Float(rra.get().get()));
+			fSpot.setIntensity(rra.get().get());
 		}
 	}
 
 	// FIXME: the factory should depend on the imp > floatType, ByteType, etc.
-	public static void fixIntensities(ArrayList<Spot> spots, ArrayList<Float> intensity) {
+	public static void fixIntensities(ArrayList<Spot> spots) {
 		boolean includeIntercept = true;
 		SimpleRegression sr = new SimpleRegression(includeIntercept);
 		// perform correction in 3D only
@@ -110,7 +109,7 @@ public class Intensity {
 
 		for (int j = 0; j < spots.size(); ++j) {
 			float z = spots.get(j).getFloatPosition(numDimensions - 1);
-			float I = intensity.get(j);
+			float I = spots.get(j).getFloatIntensity();
 			sr.addData(z, I);
 		}
 
@@ -119,11 +118,11 @@ public class Intensity {
 
 		double zMin = getZMin(spots, numDimensions);
 
-		for (int j = 0; j < spots.size(); ++j) {
-			double I = intensity.get(j);
-			float z = spots.get(j).getFloatPosition(numDimensions - 1);
+		for ( final Spot spot : spots ){
+			double I = spot.getIntensity();
+			float z = spot.getFloatPosition(numDimensions - 1);
 			double dI = linearFunc(zMin, slope, intercept) - linearFunc(z, slope, intercept);
-			intensity.set(j, (float) (I + dI));
+			spot.setIntensity(I + dI);
 		}
 
 	}

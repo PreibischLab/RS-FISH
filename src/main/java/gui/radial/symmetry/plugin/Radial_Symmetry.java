@@ -1,18 +1,7 @@
 package gui.radial.symmetry.plugin;
 
-import java.io.File;
 import java.util.ArrayList;
 
-import ij.measure.ResultsTable;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.converter.Converters;
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.real.FloatType;
-
-import org.scijava.ItemIO;
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.command.CommandService;
@@ -27,11 +16,17 @@ import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
 import gui.vizualization.Visualization;
-import ij.ImageJ;
 import ij.ImagePlus;
-import ij.gui.Roi;
+import ij.measure.ResultsTable;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.converter.Converters;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.FloatType;
 import parameters.GUIParams;
 import parameters.RadialSymmetryParameters;
 import result.output.ShowResult;
@@ -204,8 +199,6 @@ public class Radial_Symmetry extends ContextCommand {
 		ArrayList<Long> timePoint = new ArrayList<>(0);
 		// stores number of detected spots per channel
 		ArrayList<Long> channelPoint = new ArrayList<>(0);
-		// stores the intensity values
-		ArrayList<Float> intensity = new ArrayList<>(0);
 
 		// Ensure that the input is a FloatType
 		RandomAccessibleInterval<RealType> wrapped = ImageJFunctions.wrapReal(imp);
@@ -214,20 +207,21 @@ public class Radial_Symmetry extends ContextCommand {
 				(a, b) -> b.setReal(a.getRealFloat()),
 				new FloatType());
 
-		RadialSymmetry.processSliceBySlice(input, rai, rsm, impDim, allSpots, timePoint, channelPoint, intensity);
+		RadialSymmetry.processSliceBySlice(input, rai, rsm, impDim, allSpots, timePoint, channelPoint);
 
 		if (parameterType.equals(paramChoice[1])) { // interactive
 			// TODO: keep here?
 			imp.deleteRoi();
 
-			Visualization.showVisualization(imp, allSpots, intensity, timePoint, showInliers, showDetections,
+			// shows the histogram and sets the intensity threshold
+			Visualization.showVisualization(imp, allSpots, timePoint, showInliers, showDetections,
 					params.getSigmaDoG(), params.getAnisotropyCoefficient());
 			double histThreshold = Visualization.getHistThreshold(); // used to show the overlays
-			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
+			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, histThreshold);
 		} else if (parameterType.equals(paramChoice[0]) || parameterType.equals(paramChoice[2])) { // manual
 			// write the result to the csv file
 			double histThreshold = 0; // take all of the points that were detected
-			ResultsTable rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, intensity, histThreshold);
+			ResultsTable rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, histThreshold);
 			if( resultsFilePath != "" ) {
 				System.out.println("Writing to results path: " + resultsFilePath);
 				rt.save(resultsFilePath);

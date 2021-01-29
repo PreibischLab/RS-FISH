@@ -52,6 +52,7 @@ public class Spot implements RealLocalizable//, Localizable
 	public int numRemoved = -1;
 	public double avgCost = -1, minCost = -1, maxCost = -1;
 
+	private double intensity = -1;
 	// from where it was ran
 	public final long[] loc;
 
@@ -70,6 +71,9 @@ public class Spot implements RealLocalizable//, Localizable
 			throw new RuntimeException( "only 2d and 3d is allowed." );
 	}
 
+	public double getIntensity() { return intensity; }
+	public float getFloatIntensity() { return (float)intensity; }
+	public void setIntensity( final double intensity ) { this.intensity = intensity; }
 	public long[] getOriginalLocation() { return loc; }
 
 	@Override

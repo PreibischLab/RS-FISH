@@ -16,7 +16,7 @@ public class ShowResult {
 	// this function will show the result of RANSAC
 	// proper window -> dialog view with the columns
 	public static ResultsTable ransacResultTable(final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
-												 final ArrayList<Long> channelPoint, ArrayList<Float> intensity, double histThreshold) {
+												 final ArrayList<Long> channelPoint, double histThreshold) {
 		IJ.log("Running RANSAC ... ");
 		// real output
 		ResultsTable rt = new ResultsTable();
@@ -31,7 +31,7 @@ public class ShowResult {
 		for (Spot spot : spots) {
 			// if spot was not discarded
 			if (spot.inliers.size() != 0) { // TODO: filtered already?
-					if (intensity.get(idx) >= histThreshold) {
+					if (spot.getIntensity() >= histThreshold) {
 						rt.incrementCounter();
 						for (int d = 0; d < spot.numDimensions(); ++d) {
 							rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.4f", spot.getDoublePosition(d)));
@@ -51,7 +51,7 @@ public class ShowResult {
 						}
 						rt.addValue("c", currentChannelPoint + 1); // user-friendly, starting the counting from 1
 
-						rt.addValue("intensity", String.format(java.util.Locale.US, "%.4f", intensity.get(idx)));
+						rt.addValue("intensity", String.format(java.util.Locale.US, "%.4f", spot.getIntensity()));
 
 					}
 			}

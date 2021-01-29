@@ -15,7 +15,7 @@ public class Visualization {
 	
 	public static double histThreshold = 0;
 
-	public static void showVisualization(ImagePlus imp, ArrayList<Spot> allSpots, ArrayList<Float> intensity, ArrayList<Long> timePoint, boolean showInliers, boolean showDetections, float sigma, float anisotropy){
+	public static void showVisualization(ImagePlus imp, ArrayList<Spot> allSpots, ArrayList<Long> timePoint, boolean showInliers, boolean showDetections, float sigma, float anisotropy){
 
 		Detections detection;
 
@@ -25,15 +25,15 @@ public class Visualization {
 		}
 		// show the detections + the histogram (doesn't make sense to show it without the detections)
 		if (showDetections){
-			detection = new Detections(imp, allSpots, intensity, timePoint, sigma, anisotropy);
+			detection = new Detections(imp, allSpots, timePoint, sigma, anisotropy);
 			detection.showDetections();
 			
 			// do not show histogram if you have zero spots
 			if (allSpots.size() != 0){
-				final List< Double > values = new ArrayList< Double >(intensity.size());
+				final List< Double > values = new ArrayList< Double >(allSpots.size());
 
-				for (final Float i : intensity )
-					values.add(i.doubleValue());
+				for (final Spot s : allSpots )
+					values.add( s.getIntensity() );
 				// TODO: make this parameter dynamic ?
 				int numBins = 100;
 				

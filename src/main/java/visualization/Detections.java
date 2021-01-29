@@ -50,7 +50,7 @@ public class Detections {
 
 	// TODO: the image might be xy t, switch to the imagePlus and adjust the
 	// numDimensions accordingly
-	public Detections(ImagePlus imp, ArrayList<Spot> spots, ArrayList<Float> intensity, ArrayList<Long> timePoint, float sigma, float anisotropy) {
+	public Detections(ImagePlus imp, ArrayList<Spot> spots, ArrayList<Long> timePoint, float sigma, float anisotropy) {
 		this.dimensions = HelperFunctions.getDimensions(imp.getDimensions());
 		this.numDimensions = dimensions.length; // stores x y (z) only
 

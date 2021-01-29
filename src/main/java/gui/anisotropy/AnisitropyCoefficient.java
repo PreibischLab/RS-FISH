@@ -38,7 +38,7 @@ import net.imglib2.view.Views;
 
 public class AnisitropyCoefficient {
 
-	public static int numIterations = 100; // not a parameter, can be changed through Beanshell
+	public static int numIterations = 250; // not a parameter, can be changed through Beanshell
 
 	// calibration in xy, usually [1, 1], will be read from ImagePlus upon initialization
 	final double[] calibration;
@@ -302,10 +302,10 @@ public class AnisitropyCoefficient {
 		// TODO: should the user set it?
 		// or it is just enough to use the difference of gaussian value -> sigma + 1? 
 		// the size of the RANSAC area
-		final long[] range = new long[numDimensions];
+		final long[] size = new long[numDimensions];
 
 		for (int d = 0; d < numDimensions; ++d)
-			range[d] = (long)(sigma + 2);
+			size[d] = Math.max( 4, (long)(sigma + 2) );
 
 		// this is a hack
 		// range[ 2 ] *= 6;
@@ -316,7 +316,7 @@ public class AnisitropyCoefficient {
 
 		// TODO: SET THE VARAIABLES FOR THE SEARCH SPACE
 		for (float idx = 0.25f; idx < 3f; idx += 0.01f){
-			final ArrayList<Spot> spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, range);
+			final ArrayList<Spot> spots = Spot.extractSpots(img, simplifiedPeaks, derivative, ng, size);
 
 			// scale the z-axis 
 			float scale = idx;
@@ -328,8 +328,8 @@ public class AnisitropyCoefficient {
 
 			// TODO: MOVE TO THE DEFAULT PARAMETERS
 			// USERS SHOULD NOT ADJUST THIS ONE 
-			double maxError = 1.0; // 1.0px error 
-			double inlierRatio = 0.6; // at least 60% inliers 
+			double maxError = 1.5; // 1.0px error 
+			double inlierRatio = 0.2; // at least 20% inliers 
 
 			Spot.ransac(spots, numIterations, maxError, inlierRatio, false );
 			try{
@@ -358,7 +358,7 @@ public class AnisitropyCoefficient {
 				bestTotalInliers = totalInliers;
 			} 
 
-			IJ.log(scale + " " + (1.0)*totalInliers/total + " " + totalInliers + " " + total);
+			IJ.log(scale + " inlier pixels=" + totalInliers + " for spots=" + total);
 
 		}
 

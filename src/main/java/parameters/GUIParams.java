@@ -5,10 +5,10 @@ public class GUIParams {
 			"RANSAC on Mean", "RANSAC on Median" };
 
 	public static float defaultSigma = 1.5f;
-	public static float defaultThreshold = 0.0033f;
+	public static float defaultThreshold = 0.007f;
 
-	public static float defaultMaxError = 0.5034f;
-	public static float defaultInlierRatio = (float) (37.0 / 100.0);
+	public static float defaultMaxError = 1.5f;
+	public static float defaultInlierRatio = (float) (10.0 / 100.0);
 	public static int defaultSupportRadius = 3;
 
 	public static float defaultBsInlierRatio = (float) (75.0 / 100.0);

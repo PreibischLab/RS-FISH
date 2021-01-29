@@ -293,6 +293,8 @@ public class Spot implements RealLocalizable//, Localizable
 	{
 		if ( multiConsenus )
 		{
+			System.out.println( Util.printCoordinates( spot.getOriginalLocation() ));
+
 			MultiConsensusFilter filter = new MultiConsensusFilter( spot, iterations, maxError, inlierRatio, 20, false );
 			spot.inliers = filter.filter( spot.candidates );
 			spot.numRemoved = spot.candidates.size();
@@ -371,7 +373,6 @@ public class Spot implements RealLocalizable//, Localizable
 			final ArrayList<P> inliers = new ArrayList<>();
 			final ArrayList<ArrayList<P>> multiConsensusSets = filterMultiConsensusSets(candidates);
 
-			double[] previousPoint = null;
 			for ( int i = 0; i < multiConsensusSets.size(); ++i )
 			{
 				ArrayList<P> consensusSet = multiConsensusSets.get( i );
@@ -379,11 +380,13 @@ public class Spot implements RealLocalizable//, Localizable
 				try
 				{
 					spot.center.fit(consensusSet);
-					double distance = 0;
-					if ( previousPoint != null )
-						distance = Point.distance( new Point( spot.localize() ), new Point( previousPoint ) );
 
-					previousPoint = spot.localize();
+					final double[] original = new double[ spot.numDimensions() ];
+					for ( int d = 0; d < spot.numDimensions(); ++d )
+						original[ d ] = spot.getOriginalLocation()[ d ];
+
+					double distance = Point.distance( new Point( spot.localize() ), new Point( original ) );
+
 					System.out.println( consensusSet.size() + " --" + Util.printCoordinates( spot.localize() ) + ", " + distance );
 				}
 				catch (NotEnoughDataPointsException | IllDefinedDataPointsException e) {}
@@ -394,6 +397,8 @@ public class Spot implements RealLocalizable//, Localizable
 				System.out.printf("Found %d consensus sets with %d inliers", multiConsensusSets.size(), inliers.size());
 				System.out.println();
 			}
+
+			// TODO: if we use that, we need to return more than one instance
 
 			//System.exit( 0 );
 			return inliers;

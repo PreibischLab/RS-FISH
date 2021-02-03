@@ -152,14 +152,14 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		if ( Double.isNaN( min ) || Double.isNaN( max ) )
 		{
-			this.img = Converters.convert( (RandomAccessibleInterval<RealType<?>>)ImagePlusImgs.from( imp ), (i,o) -> o.set(i.getRealFloat()), new FloatType() );
+			this.img = Converters.convert( (RandomAccessibleInterval<RealType>)(Object)ImagePlusImgs.from( imp ), (i,o) -> o.set(i.getRealFloat()), new FloatType() );
 		}
 		else
 		{
 			final double range = max - min;
 
 			this.img = Converters.convert(
-					(RandomAccessibleInterval<RealType<?>>)ImagePlusImgs.from( imp ),
+					(RandomAccessibleInterval<RealType>)(Object)ImagePlusImgs.from( imp ),
 					(i,o) ->
 					{
 						o.set( (float)( ( i.getRealFloat() - min ) / range ) );

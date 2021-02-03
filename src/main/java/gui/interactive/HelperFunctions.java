@@ -182,7 +182,16 @@ public class HelperFunctions {
 		if (clearFirst)
 			overlay.clear();
 
+		// 'channel', 'slice' and 'frame' are one-based indexes
+		final int currentSlice = imp.getZ() - 1;
+
 		for (final L peak : peaks) {
+
+			// we only draw a 3d peak when it is +- 1.0 pixel away
+			if ( peak.numDimensions() > 2 && imp.getNSlices() > 1 )
+				if ( Math.abs( peak.getDoublePosition( 2 ) - currentSlice ) > 1.0 )
+					continue;
+
 			final float x = peak.getFloatPosition(0);
 			final float y = peak.getFloatPosition(1);
 
@@ -245,7 +254,7 @@ public class HelperFunctions {
 		imp.updateAndDraw();
 	}
 
-	public static Img<FloatType> toImg(final ImagePlus imagePlus, final long[] dim, final int type) {
+	public static Img<FloatType> currentSliceToImg(final ImagePlus imagePlus, final long[] dim, final int type) {
 		final ImageProcessor ip = imagePlus.getStack().getProcessor(imagePlus.getCurrentSlice());
 		final Object pixels = ip.getPixels();
 

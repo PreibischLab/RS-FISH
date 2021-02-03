@@ -38,9 +38,15 @@ import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
+import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.img.imageplus.ImagePlusImgs;
+import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import parameters.RadialSymParams;
@@ -61,8 +67,11 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	FixROIListener fixROIListener;
 
 	final ImagePlus imagePlus;
-	final boolean normalize; // do we normalize intensities?
-	final double min, max; // intensity of the imageplus
+	//final boolean normalize; // do we normalize intensities?
+	//final double min, max; // intensity of the imageplus
+
+	final RandomAccessibleInterval< FloatType > img;
+
 	final long[] dim;
 	final int type;
 	Rectangle rectangle;
@@ -140,13 +149,23 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	public InteractiveRadialSymmetry( final ImagePlus imp, final RadialSymParams params, final double min, final double max )
 	{
 		this.imagePlus = imp;
-		this.min = min;
-		this.max = max;		
-		
+
 		if ( Double.isNaN( min ) || Double.isNaN( max ) )
-			this.normalize = false;
+		{
+			this.img = Converters.convert( (RandomAccessibleInterval<RealType<?>>)ImagePlusImgs.from( imp ), (i,o) -> o.set(i.getRealFloat()), new FloatType() );
+		}
 		else
-			this.normalize = true;
+		{
+			final double range = max - min;
+
+			this.img = Converters.convert(
+					(RandomAccessibleInterval<RealType<?>>)ImagePlusImgs.from( imp ),
+					(i,o) ->
+					{
+						o.set( (float)( ( i.getRealFloat() - min ) / range ) );
+					},
+					new FloatType() );
+		}
 
 		this.params = params;
 
@@ -260,7 +279,10 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			range[ 0 ] = range[ 1 ] = 2*params.getSupportRadius();
 		else
 			range[ 0 ] = range[ 1 ] = (long)(2*params.getSigmaDoG() + 1);
-		
+
+		if ( numDimensions == 3 )
+			range[ 2 ] = range[ 0 ];
+
 		// ImageJFunctions.show(new GradientPreCompute(extendedRoi).preCompute(extendedRoi));
 		final NormalizedGradient ng;
 
@@ -279,14 +301,12 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			throw new RuntimeException( "Unknown bsMethod: " + params.getBsMethod() );
 
 		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
-		
-		double bestScale = params.getAnisotropyCoefficient();
-		
-		for (int j = 0; j < spots.size(); j++){
-			spots.get(j).updateScale(new float []{1, 1, (float)bestScale});
-		}
-		
+
+		for (int j = 0; j < spots.size(); j++)
+			spots.get(j).updateScale(new float []{1, 1, (float)params.getAnisotropyCoefficient()});
+
 		if (params.getRANSAC().ordinal() != 0){
+
 			Spot.ransac(spots, RadialSymmetry.numIterations, params.getMaxError(), params.getInlierRatio(), 0, false, 0.0, 0.0, null, null, null, null, true);
 			for (final Spot spot : spots)
 				spot.computeAverageCostInliers();
@@ -300,47 +320,6 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			}
 		}
 		ransacResults(spots);
-	}
-
-	// TODO: Is this one necessary here? 
-	protected void applyBackgroundSubtraction(ArrayList<long[]> peaksLocal, RandomAccessibleInterval <FloatType> image, long [] fullImgMax){
-		int numDimensions = image.numDimensions();
-
-		for(int j = 0; j < peaksLocal.size(); ++j){
-			double [] coefficients = new double [numDimensions + 1]; // z y x 1
-			double [] position = new double [numDimensions]; // x y z
-			long [] spotMin = new long [numDimensions];
-			long [] spotMax = new long [numDimensions]; 
-
-			backgroundSubtractionCorners(peaksLocal.get(j), image, coefficients, spotMin, spotMax, fullImgMax);
-
-			Cursor <FloatType> cursor = Views.interval(image, spotMin, spotMax).localizingCursor();
-
-			while(cursor.hasNext()){
-				cursor.fwd();
-				cursor.localize(position);				
-				double total = coefficients[numDimensions];	
-				for (int d = 0; d < numDimensions; ++d){
-					total += coefficients[d]*position[numDimensions - d - 1]; 
-				}
-
-				// DEBUG: 
-				if (j == 0){
-					System.out.println("before: " + cursor.get().get());
-				}
-
-				// TODO: looks like modifying the initial image is a bad idea 
-				cursor.get().set(cursor.get().get() - (float)total);
-
-				// DEBUG:
-				if (j == 0){
-					System.out.println("after:  " + cursor.get().get());
-				}
-
-			}		
-		}
-
-		// ImageJFunctions.show(source).setTitle("This one is actually modified with background subtraction");
 	}
 
 	protected void backgroundSubtractionCorners(long [] peak, RandomAccessibleInterval<FloatType> img22, double[] coefficients, long[] min, long[] max, long [] fullImgMax){	
@@ -512,10 +491,10 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		for (final FloatType t : Views.iterable(ransacPreview))
 			t.setZero();
 
-		Spot.drawRANSACArea(spots, ransacPreview, true);
+		Spot.drawRANSACArea(spots, ransacPreview, imagePlus.getZ() -1, 1.5, true);
 
 		// TODO: create a separate function for this part
-		double displayMaxError = 0;		
+		double displayMaxError = 0;
 		for ( final Spot spot : spots ){
 			if ( spot.inliers.size() == 0 )
 				continue;
@@ -537,7 +516,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		HelperFunctions.drawRealLocalizable( filteredSpots, impRansacError, radius, Color.ORANGE, true );
 
 		// draw the result of radialsymmetry in the initial image
-		HelperFunctions.drawRealLocalizable( filteredSpots, imagePlus, radius, Color.ORANGE, false );
+		HelperFunctions.drawRealLocalizable( filteredSpots, imagePlus, radius, Color.BLUE, false );
 	}
 
 	// TODO: fix the check: "==" must not be used with floats
@@ -581,17 +560,50 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			// one direction solution 
 			impRansacError.setRoi(rectangle);
 
-			long [] min = new long []{rectangle.x - params.getSupportRadius(), rectangle.y - params.getSupportRadius()};
-			long [] max = new long []{rectangle.width + rectangle.x + params.getSupportRadius() - 1, rectangle.height + rectangle.y + params.getSupportRadius() - 1};
+			// a 2d or 3d view where we'll run DoG on
+			RandomAccessibleInterval< FloatType > imgTmp;
+			long[] min, max;
 
-			// get the currently selected slice
-			final RandomAccessibleInterval< FloatType > imgTmp;
-			
-			if ( normalize )
-				imgTmp = new TypeTransformingRandomAccessibleInterval<>( HelperFunctions.toImg( imagePlus, dim, type ), new RealTypeNormalization<>( this.min, this.max - this.min ), new FloatType() );
-			else
-				imgTmp = HelperFunctions.toImg( imagePlus, dim, type );
-			
+			if ( imagePlus.getNSlices() > 1 ) { // 3d, 3d+t case
+
+				if ( imagePlus.getNFrames() > 1 )
+					imgTmp = Views.hyperSlice( img, 3, imagePlus.getT() - 1 );
+				else
+					imgTmp = img;
+
+				// 3d case
+
+				// 'channel', 'slice' and 'frame' are one-based indexes
+				final int currentSlice = imagePlus.getZ() - 1;
+
+				final int extZ = 
+						Gauss3.halfkernelsizes(
+								new double[] {
+										HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity ) *
+										( params.useAnisotropyForDoG ? params.anisotropyCoefficient : 1.0 ) } )[ 0 ];
+
+				min = new long []{
+						rectangle.x - params.getSupportRadius(),
+						rectangle.y - params.getSupportRadius(),
+						Math.max( imgTmp.min( 2 ), currentSlice - extZ ) };
+				max = new long []{
+						rectangle.width + rectangle.x + params.getSupportRadius() - 1,
+						rectangle.height + rectangle.y + params.getSupportRadius() - 1,
+						Math.min( imgTmp.max( 2 ), currentSlice + extZ ) };
+			}
+			else { // 2d or 2d+t case
+
+				if ( imagePlus.getNFrames() > 1 )
+					imgTmp = Views.hyperSlice( img, 2, imagePlus.getT() - 1 );
+				else
+					imgTmp = img;
+
+				// 2d case
+
+				min = new long []{rectangle.x - params.getSupportRadius(), rectangle.y - params.getSupportRadius()};
+				max = new long []{rectangle.width + rectangle.x + params.getSupportRadius() - 1, rectangle.height + rectangle.y + params.getSupportRadius() - 1};
+			}
+
 			extendedRoi = Views.interval( Views.extendMirrorSingle( imgTmp ), min, max);
 
 			roiChanged = true;
@@ -604,7 +616,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			derivative = new GradientPreCompute( extendedRoi );
 		}
 
-		final double radius = ( params.getSigmaDoG() + HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity  ) ) / 2.0;
+		final double radius = ( params.getSigmaDoG() + HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity  ) );
 		final ArrayList< RefinedPeak< Point > > filteredPeaks = HelperFunctions.filterPeaks( peaks, rectangle, params.getThresholdDoG() );
 
 		HelperFunctions.drawRealLocalizable( filteredPeaks, imagePlus, radius, Color.RED, true );

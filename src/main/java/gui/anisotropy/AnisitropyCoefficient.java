@@ -405,9 +405,9 @@ public class AnisitropyCoefficient {
 		// get the currently selected slice
 		final RandomAccessibleInterval< FloatType > imgTmp;
 		if ( normalize )
-			imgTmp = new TypeTransformingRandomAccessibleInterval<>( HelperFunctions.toImg( imagePlus, dim, type ), new RealTypeNormalization<>( this.min, this.max - this.min ), new FloatType() );
+			imgTmp = new TypeTransformingRandomAccessibleInterval<>( HelperFunctions.currentSliceToImg( imagePlus, dim, type ), new RealTypeNormalization<>( this.min, this.max - this.min ), new FloatType() );
 		else
-			imgTmp = HelperFunctions.toImg( imagePlus, dim, type );
+			imgTmp = HelperFunctions.currentSliceToImg( imagePlus, dim, type );
 
 		extendedRoi = Views.interval( Views.extendMirrorSingle( imgTmp ), min, max);
 

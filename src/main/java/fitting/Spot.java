@@ -634,6 +634,16 @@ public class Spot implements RealLocalizable//, Localizable
 			final RandomAccessibleInterval< T > draw,
 			final boolean encodeError )
 	{
+		drawRANSACArea(spots, draw, 0, Double.NaN, encodeError);
+	}
+
+	public static <T extends RealType<T> > void drawRANSACArea(
+			final List< Spot > spots,
+			final RandomAccessibleInterval< T > draw,
+			final int currentSlice,
+			final double maxDist,
+			final boolean encodeError )
+	{
 		final int numDimensions = draw.numDimensions();
 		final RandomAccessible<T> drawOobs = Views.extendZero( draw );
 
@@ -664,6 +674,11 @@ public class Spot implements RealLocalizable//, Localizable
 					min[ d ] = Math.round( Math.floor( p.getL()[ d ] ) );
 					max[ d ] = Math.round( Math.ceil( p.getL()[ d ] ) );
 				}
+
+				// we only draw a 3d peak when it is +- maxDist pixel away
+				if ( !Double.isNaN( maxDist ) && p.getL().length > 2 )
+					if ( Math.abs( p.getL()[ 2 ] - currentSlice ) > maxDist )
+						continue;
 
 				// set the intensity 
 				for ( final T type : Views.iterable( Views.interval( drawOobs, min, max ) ) )

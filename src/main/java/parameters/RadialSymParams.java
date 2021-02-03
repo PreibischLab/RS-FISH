@@ -1,9 +1,15 @@
 package parameters;
 
-public class GUIParams {
-	final public static String[] bsMethods = new String[] { "No background subtraction", "Mean", "Median",
-			"RANSAC on Mean", "RANSAC on Median" };
+import compute.RadialSymmetry.Ransac;
 
+public class RadialSymParams {
+
+	public static String[] modeChoice = new String[] { "Interactive", "Advanced" };
+	public static String[] ransacChoice = new String[] { "No RANSAC", "RANSAC", "Multiconsensus RANSAC" };
+
+	final public static String[] bsMethods = new String[] { "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
+
+	public static double defaultIntensityThreshold = 0.0;
 	public static float defaultSigma = 1.5f;
 	public static float defaultThreshold = 0.007f;
 
@@ -13,55 +19,65 @@ public class GUIParams {
 
 	public static float defaultBsInlierRatio = (float) (75.0 / 100.0);
 	public static float defaultBsMaxError = 0.05f;
-	public static String defaultBsMethod = "No background subtraction";
+	public static int defaultBsMethodChoice = 0;
 
-	public static boolean defaultRANSAC = true;
-	public static float defaultAnisotropy = 1.0f;
+	public static int defaultRANSACChoice = 1;
+	public static double defaultAnisotropy = 1.0f;
+	public static boolean defaultUseAnisotropyForDoG = true;
 
 	public static boolean defaultGaussFit = false;
-	
+	public static int defaultMode = 0;
+	public static int defaultImg = 0;
+
+	public static boolean defaultVisualizeDetections = true;
+	public static boolean defaultVisualizeInliers = true;
+
+	public static String defaultResultsFilePath = "";
+
+	// steps per octave for DoG
+	public static int defaultSensitivity = 4;
+
+	// multiconsensus options
+	public static int defaultMinNumInliers = 20;
+	public static double defaultNTimesStDev1 = 8.0;
+	public static double defaultNTimesStDev2 = 6.0;
+
 	// RANSAC parameters
 	// current value
-	boolean RANSAC;
-	float maxError, inlierRatio;
-	int supportRadius;
+	public Ransac RANSAC = Ransac.values()[ defaultRANSACChoice ];
+	public float maxError = defaultMaxError, inlierRatio = defaultInlierRatio;
+	public int supportRadius = defaultSupportRadius;
 
 	// Background Subtraction parameters
 	// current values
-	float bsMaxError, bsInlierRatio;
-	String bsMethod;
+	public float bsMaxError = defaultBsMaxError, bsInlierRatio = defaultInlierRatio;
+	public int bsMethod = defaultBsMethodChoice;
 
 	// DoG parameters
 	// current
-	float sigma, threshold;
+	public float sigma = defaultSigma, threshold = defaultThreshold;
+
+	// intensity threshold
+	public double intensityThreshold = defaultIntensityThreshold;
 
 	// Z-scaling anisotropy calculation
-	float anisotropyCoefficient;
-	// use gauss fit
-	boolean gaussFit;
+	public double anisotropyCoefficient = defaultAnisotropy;
+	public boolean useAnisotropyForDoG = defaultUseAnisotropyForDoG;
 
-	public GUIParams() {
-		setSigmaDog(defaultSigma);
-		setThresholdDog(defaultThreshold);
-		setRANSAC(defaultRANSAC);
-		setMaxError(defaultMaxError);
-		setInlierRatio(defaultInlierRatio);
-		setSupportRadius(defaultSupportRadius);
-		// anisotropy in z
-		setAnisotropyCoefficient(defaultAnisotropy);
-		// gaussfit over the detected spots to find intensity values 
-		setGaussFit(defaultGaussFit);
-		// what do you do with this values here
-		setBsMethod(defaultBsMethod);
-		setBsMaxError(defaultBsMaxError);
-		setBsInlierRatio(defaultBsInlierRatio);
-		
-	}
+	// use gauss fit
+	boolean gaussFit = defaultGaussFit;
+
+	// multiconsensus options
+	public int minNumInliers = defaultMinNumInliers;
+	public double nTimesStDev1 = defaultNTimesStDev1, nTimesStDev2 = defaultNTimesStDev2;
+
+	// advanced output
+	public String resultsFilePath = defaultResultsFilePath;
 
 	public void printParams() {
 		System.out.println("SigmaDoG      : " + sigma);
 		System.out.println("ThresholdDoG  : " + threshold);
-		System.out.println("RANSAC        : " + RANSAC);
+		System.out.println("RANSAC        : " + RANSAC );
 		System.out.println("MaxError      : " + maxError);
 		System.out.println("InlierRatio   : " + inlierRatio);
 		System.out.println("supportRadius : " + supportRadius);
@@ -71,7 +87,7 @@ public class GUIParams {
 	public void printDefaultParams() {
 		System.out.println("DSigmaDoG      : " + defaultSigma);
 		System.out.println("DThresholdDoG  : " + defaultThreshold);
-		System.out.println("DRANSAC        : " + defaultRANSAC);
+		System.out.println("DRANSAC        : " + Ransac.values()[ defaultRANSACChoice ]);
 		System.out.println("DMaxError      : " + defaultMaxError);
 		System.out.println("DInlierRatio   : " + defaultInlierRatio);
 		System.out.println("DSupportRadius : " + defaultSupportRadius);
@@ -89,8 +105,12 @@ public class GUIParams {
 	}
 
 	// RANSAC
-	public boolean getRANSAC() {
+	public Ransac getRANSAC() {
 		return RANSAC;
+	}
+
+	public int getRANSACIndex() {
+		return RANSAC.ordinal();
 	}
 
 	public float getMaxError() {
@@ -105,7 +125,7 @@ public class GUIParams {
 		return supportRadius;
 	}
 
-	public float getAnisotropyCoefficient() {
+	public double getAnisotropyCoefficient() {
 		return anisotropyCoefficient;
 	}
 	
@@ -116,7 +136,7 @@ public class GUIParams {
 	// background subtraction
 	// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC
 	// on Median" };
-	public String getBsMethod() {
+	public int getBsMethod() {
 		return bsMethod;
 	}
 
@@ -129,20 +149,20 @@ public class GUIParams {
 	}
 
 	/**
-	 * back up the default values
+	 * set the default values
 	 */
-	public void setDefaultValues() {
+	public void setDefaultValuesFromInteractive() {
 		defaultSigma = sigma;
 		defaultThreshold = threshold;
 
-		defaultRANSAC = RANSAC;
+		defaultRANSACChoice = RANSAC.ordinal();
 		defaultMaxError = maxError;
 		defaultInlierRatio = inlierRatio;
 		defaultSupportRadius = supportRadius;
 
 		defaultBsInlierRatio = bsInlierRatio;
 		defaultBsMaxError = bsMaxError;
-		defaultBsMethod = bsMethod;
+		defaultBsMethodChoice = bsMethod;
 		
 		defaultAnisotropy = anisotropyCoefficient;
 	}
@@ -157,8 +177,12 @@ public class GUIParams {
 	}
 
 	// RANSAC
-	public void setRANSAC(boolean RANSAC) {
-		this.RANSAC = RANSAC;
+	public void setRANSAC(Ransac ransac) {
+		this.RANSAC = ransac;
+	}
+
+	public void setRANSAC(int ransacChoice) {
+		this.RANSAC = Ransac.values()[ ransacChoice ];
 	}
 
 	public void setMaxError(float maxError) {
@@ -173,7 +197,7 @@ public class GUIParams {
 		this.supportRadius = supportRadius;
 	}
 
-	public void setAnisotropyCoefficient(float anisotropyCoefficient) {
+	public void setAnisotropyCoefficient(double anisotropyCoefficient) {
 		this.anisotropyCoefficient = anisotropyCoefficient;
 	}
 	
@@ -184,7 +208,7 @@ public class GUIParams {
 	// background subtraction
 	// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC
 	// on Median" };
-	public void setBsMethod(final String bsMethod) {
+	public void setBsMethod(final int bsMethod) {
 		this.bsMethod = bsMethod;
 	}
 

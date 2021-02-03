@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import compute.RadialSymmetry;
 import fitting.Center;
 import fitting.PointFunctionMatch;
 import fitting.Center.CenterMethod;
@@ -69,7 +70,7 @@ public class NormalizedGradientRANSAC extends NormalizedGradient {
 		final Center l = new Center(centerMethod);
 
 		try {
-			l.ransac(candidates, inliers, 500, maxError, minInlierRatio);
+			l.ransac(candidates, inliers, RadialSymmetry.bsNumIterations, maxError, minInlierRatio);
 			l.fit(inliers);
 
 			return l.getP();

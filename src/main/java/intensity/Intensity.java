@@ -53,7 +53,7 @@ public class Intensity {
 	}
 
 	public static void calulateIntesitiesGF(RandomAccessibleInterval<FloatType> xyz, int numDimensions,
-			float anisotropy, double sigma, ArrayList<Spot> filteredSpots) {
+			double anisotropy, double sigma, ArrayList<Spot> filteredSpots) {
 		double[] typicalSigmas = new double[numDimensions];
 		for (int d = 0; d < numDimensions; d++)
 			typicalSigmas[d] = sigma;

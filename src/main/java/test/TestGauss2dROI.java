@@ -146,7 +146,7 @@ public class TestGauss2dROI
 		//SimpleMultiThreading.threadHaltUnClean();
 		
 		// ransac on all spots
-		Spot.ransac( spots, 100, 0.15, 10.0/100.0, false );
+		Spot.ransac( spots, 100, 0.15, 10.0/100.0, 0, false, 0.0, 0.0, null, null, null, null );
 		
 		// print localizations
 		int c = 0;

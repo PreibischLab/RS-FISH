@@ -23,7 +23,7 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.real.FloatType;
-import parameters.GUIParams;
+import parameters.RadialSymParams;
 import util.ImgLib2Util;
 import util.MedianFilter;
 

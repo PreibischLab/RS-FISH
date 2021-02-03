@@ -2,10 +2,13 @@ package fitting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import background.NormalizedGradient;
 import gradient.Gradient;
+import ij.IJ;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
@@ -47,7 +50,8 @@ public class Spot implements RealLocalizable//, Localizable
 
 	public final ArrayList< PointFunctionMatch > candidates = new ArrayList<>();
 	public ArrayList< PointFunctionMatch > inliers = new ArrayList<>();
-	public final double[] scale = new double[]{ 1, 1, 1 };
+	public ArrayList<ArrayList< PointFunctionMatch >> multiConsensusMatches = new ArrayList<>();
+	public final float[] scale = new float[]{ 1, 1, 1 };
 
 	public int numRemoved = -1;
 	public double avgCost = -1, minCost = -1, maxCost = -1;
@@ -71,6 +75,7 @@ public class Spot implements RealLocalizable//, Localizable
 			throw new RuntimeException( "only 2d and 3d is allowed." );
 	}
 
+	public float[] getScale() { return scale; }
 	public double getIntensity() { return intensity; }
 	public float getFloatIntensity() { return (float)intensity; }
 	public void setIntensity( final double intensity ) { this.intensity = intensity; }
@@ -135,7 +140,8 @@ public class Spot implements RealLocalizable//, Localizable
 
 			for ( int d = 0; d < l.length; ++d )
 			{
-				// TODO: is this is only needed to have the point also in isotropic space?
+				// is this is only needed to have the point also in isotropic space?
+				// Answer: no, it is not, but we need to re-scale the center location as well
 				w[ d ] = l[ d ] * scale[ d ];
 				ow[ d ] = ol[ d ] / scale[ d ];
 			}
@@ -173,6 +179,21 @@ public class Spot implements RealLocalizable//, Localizable
 			final NormalizedGradient normalizer,
 			final long[] spotSize )
 	{
+		final ArrayList< Spot > spots = new ArrayList<>();
+
+		for ( final long[] peak : peaks )
+			spots.add( extractSpot(interval, peak, derivative, normalizer, spotSize ) );
+
+		return spots;
+	}
+
+	public static <T extends RealType<T> > Spot extractSpot(
+			final Interval interval,
+			final long[] peak,
+			final Gradient derivative,
+			final NormalizedGradient normalizer,
+			final long[] spotSize )
+	{
 		// size around the detection to use (spotSize)
 		// we detect at 0.5, 0.5, 0.5 - so we need an even size (as 2 pixels have been condensed into 1 when computing the gradient)
 		// no gradient: 0-1-2 (to compute something for 1 we need three pixels)
@@ -182,8 +203,6 @@ public class Spot implements RealLocalizable//, Localizable
 		final long[] min = new long[ numDimensions ];
 		final long[] max = new long[ numDimensions ];
 
-		final ArrayList< Spot > spots = new ArrayList<>();
-
 		final Gradient gradient;
 
 		if ( normalizer == null )
@@ -191,54 +210,51 @@ public class Spot implements RealLocalizable//, Localizable
 		else
 			gradient = normalizer;
 
-		for ( final long[] peak : peaks )
+		final Spot spot = new Spot( peak );
+
+		// this part defines the possible values		
+		for ( int e = 0; e < numDimensions; ++e )
 		{
-			final Spot spot = new Spot( peak );
+			min[ e ] = peak[ e ] - spotSize[ e ]/2;
+			max[ e ] = min[ e ] + spotSize[ e ] - 1;
 
-			// this part defines the possible values		
-			for ( int e = 0; e < numDimensions; ++e )
-			{
-				min[ e ] = peak[ e ] - spotSize[ e ]/2;
-				max[ e ] = min[ e ] + spotSize[ e ] - 1;
-
-				// check that it does not exceed bounds of the underlying image
-				min[ e ] = Math.max( min[ e ], interval.min( e ) );
-				
-				// we always compute the location at 0.5, 0.5, 0.5 - so we cannot compute it at the last entry of each dimension
-				// 0 would be the image, -1 is the gradient image as we loose one value computing the gradient
-				max[ e ] = Math.min( max[ e ], interval.max( e ) - 1 ); 
-			}
-
-			final FinalInterval spotInterval = new FinalInterval( min, max );
-
-			if ( normalizer != null )
-				((NormalizedGradient)gradient).normalize( spotInterval );
-
-			// define a local region to iterate around the potential detection
-			final IntervalIterator cursor = new IntervalIterator( spotInterval );
-
-			while ( cursor.hasNext() )
-			{
-				cursor.fwd();
-
-				final double[] v = new double[ numDimensions ];
-				gradient.gradientAt( cursor, v );
-				
-				if ( length( v ) != 0 )
-				{
-					final double[] p = new double[ numDimensions ];
-
-					for ( int e = 0; e < numDimensions; ++e )
-						p[ e ] = cursor.getIntPosition( e ) + 0.5f; // we add 0,5 to correct for the half-pixel-shift of the gradient image (because pixel 0 is actually at position 0,5 and pixel 1 at position 1,5)
-					
-					spot.candidates.add( new PointFunctionMatch( new OrientedPoint( p, v, 1 ) ) );
-				}
-			}
-			spots.add( spot );
+			// check that it does not exceed bounds of the underlying image
+			min[ e ] = Math.max( min[ e ], interval.min( e ) );
+			
+			// we always compute the location at 0.5, 0.5, 0.5 - so we cannot compute it at the last entry of each dimension
+			// 0 would be the image, -1 is the gradient image as we loose one value computing the gradient
+			max[ e ] = Math.min( max[ e ], interval.max( e ) - 1 ); 
 		}
-		return spots;
+
+		final FinalInterval spotInterval = new FinalInterval( min, max );
+
+		if ( normalizer != null )
+			((NormalizedGradient)gradient).normalize( spotInterval );
+
+		// define a local region to iterate around the potential detection
+		final IntervalIterator cursor = new IntervalIterator( spotInterval );
+
+		while ( cursor.hasNext() )
+		{
+			cursor.fwd();
+
+			final double[] v = new double[ numDimensions ];
+			gradient.gradientAt( cursor, v );
+			
+			if ( length( v ) != 0 )
+			{
+				final double[] p = new double[ numDimensions ];
+
+				for ( int e = 0; e < numDimensions; ++e )
+					p[ e ] = cursor.getIntPosition( e ) + 0.5; // we add 0,5 to correct for the half-pixel-shift of the gradient image (because pixel 0 is actually at position 0,5 and pixel 1 at position 1,5)
+				
+				spot.candidates.add( new PointFunctionMatch( new OrientedPoint( p, v, 1 ) ) );
+			}
+		}
+
+		return spot;
 	}
-	
+
 	public static void fitCandidates( final ArrayList< Spot > spots ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
 		for ( final Spot spot : spots )
@@ -261,18 +277,54 @@ public class Spot implements RealLocalizable//, Localizable
 	{
 		spot.center.fit( spot.inliers );
 	}
-	
 
-	public static void ransac( final ArrayList< Spot > spots, final int iterations, final double maxError, final double inlierRatio, final boolean multiConsenus )
+	public static ArrayList< Spot > ransac(
+			final ArrayList< Spot > spots,
+			final int iterations,
+			final double maxError,
+			final double inlierRatio,
+			int minNumInliers,
+			final boolean multiConsenus, // all variables below are to instantiate new spots
+			final double nTimesStDev1,
+			final double nTimesStDev2,
+			final Interval interval,
+			final Gradient derivative,
+			final NormalizedGradient normalizer,
+			final long[] spotSize )
+	{
+		return ransac(spots, iterations, maxError, inlierRatio, minNumInliers, multiConsenus, nTimesStDev1, nTimesStDev2, interval, derivative, normalizer, spotSize, false );
+	}
+
+	public static ArrayList< Spot > ransac(
+			final ArrayList< Spot > spots,
+			final int iterations,
+			final double maxError,
+			final double inlierRatio,
+			int minNumInliers,
+			final boolean multiConsenus, // all variables below are to instantiate new spots
+			final double nTimesStDev1,
+			final double nTimesStDev2,
+			final Interval interval,
+			final Gradient derivative,
+			final NormalizedGradient normalizer,
+			final long[] spotSize,
+			final boolean silent )
 	{
 		// TODO: This is only to make it reproducible
 		//AbstractModel.resetRandom();
+
+		ArrayList< Spot > additionalSpots = new ArrayList<>();
+
+		long min = Long.MAX_VALUE;
+		long max = Long.MIN_VALUE;
+		long sum = 0;
+		ArrayList< Integer > inlierCount = new ArrayList<>();
 
 		for ( final Spot spot : spots )
 		{
 			try 
 			{
-				ransac( spot, iterations, maxError, inlierRatio, multiConsenus );
+				ransac( spot, iterations, maxError, inlierRatio, multiConsenus, minNumInliers );
 			} 
 			catch (NotEnoughDataPointsException e) 
 			{
@@ -286,22 +338,195 @@ public class Spot implements RealLocalizable//, Localizable
 				spot.numRemoved = spot.candidates.size();
 				System.out.println( "Spot e2: " + e );
 			}
+
+			if ( spot.inliers.size() > 0 )
+			{
+				min = Math.min( min, spot.inliers.size() );
+				max = Math.max( max, spot.inliers.size() );
+				sum += spot.inliers.size();
+				inlierCount.add( spot.inliers.size() );
+			}
 		}
-	}
 
-	public static void ransac( final Spot spot, final int iterations, final double maxError, final double inlierRatio, final boolean multiConsenus ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
-	{
-		if ( multiConsenus )
+		if ( inlierCount.size() > 0 )
 		{
-			System.out.println( Util.printCoordinates( spot.getOriginalLocation() ));
+			double avg = sum/(double)inlierCount.size();	
+			double stdev = 0;
 
-			MultiConsensusFilter filter = new MultiConsensusFilter( spot, iterations, maxError, inlierRatio, 20, false );
-			spot.inliers = filter.filter( spot.candidates );
-			spot.numRemoved = spot.candidates.size();
+			for ( final int v : inlierCount )
+				stdev += ( v - avg )*( v - avg );
+
+			stdev = Math.sqrt( stdev / (double)( inlierCount.size() - 1 ) );
+
+			if ( !silent )
+			{
+				IJ.log( "min #inliers=" + min );
+				IJ.log( "max #inliers=" + max );
+				IJ.log( "average #inliers=" + avg );
+				IJ.log( "stdev #inliers=" + stdev );
+			}
+
+			// select extra consensus areas that might be spots
+			if ( multiConsenus )
+			{
+				final long thr1 = Math.round( avg - nTimesStDev1 * stdev );
+				final long thr2 = Math.round( avg - nTimesStDev2 * stdev );
+
+				if ( !silent )
+				{
+					IJ.log( "Finding additional spots ... " );
+					IJ.log( "MultiConsensus initial threshold #inliers=" + thr1 );
+					IJ.log( "MultiConsensus final threshold #inliers=" + thr2 );
+				}
+
+				final ArrayList< Spot > newSpots = new ArrayList<>();
+	
+				for ( final Spot spot : spots )
+				{
+					for ( final ArrayList< PointFunctionMatch > list : spot.multiConsensusMatches )
+					{
+						if ( list.size() >= thr1 )
+						{
+							long[] pos = new long[ spot.getOriginalLocation().length ];
+	
+							try
+							{
+								spot.center.fit( list );
+	
+								for ( int d = 0; d < pos.length; ++d )
+									pos[ d ] = Math.round( spot.getDoublePosition( d ) );
+	
+								if ( !pointExists(pos, newSpots))
+								{
+									Spot newSpot = extractSpot( interval, pos, derivative, normalizer, spotSize );
+	
+									minNumInliers = (int)Math.max( minNumInliers, Math.round( newSpot.candidates.size() * inlierRatio ) );
+	
+									long [] pN = new long[ pos.length ];
+	
+									// remove any candiadates that were already used as inliers
+									for ( int i = newSpot.candidates.size() - 1; i >= 0; --i )
+									{
+										PointFunctionMatch pfN = newSpot.candidates.get( i );
+										for ( int d = 0; d < pos.length; ++d )
+											pN[ d ] = Math.round( pfN.getP1().getL()[ d ] - 0.5 );
+	
+										boolean foundIdentical = false;
+	
+										for ( final Spot s : spots )
+										{
+											for ( final PointFunctionMatch p : s.inliers )
+											{
+												boolean same = true;
+	
+												for ( int d = 0; d < pos.length && same; ++d )
+													if ( pN[ d ] != Math.round( p.getP1().getL()[ d ] - 0.5 ) )
+														same = false;
+	
+												if ( same == true )
+												{
+													foundIdentical = true;
+													break;
+												}
+											}
+	
+											if ( foundIdentical )
+												break;
+										}
+	
+										if ( foundIdentical )
+											newSpot.candidates.remove( i );
+									}
+	
+									newSpot.updateScale( spot.getScale() );
+	
+									System.out.println( "new candidate for: " + Util.printCoordinates( spot.getOriginalLocation() ) + "@" + Util.printCoordinates( pos ) + ": " + list.size() );
+	
+									ransac( newSpot, iterations, maxError, inlierRatio, false, minNumInliers );
+									System.out.println( newSpot.inliers.size() + " from " + list.size() );
+	
+									// Ad-hoc criteria that the inliers either increase by 33% or that they reach the range of the normal spots
+									if ( newSpot.inliers.size() >= minNumInliers && newSpot.inliers.size() >= thr2 )
+									{
+										newSpot.center.fit(newSpot.inliers);
+										additionalSpots.add( newSpot );
+										System.out.println( newSpot.inliers.size() + " --" + Util.printCoordinates( newSpot.localize() ) );
+									}
+								}
+							}
+							catch (NotEnoughDataPointsException | IllDefinedDataPointsException e)
+							{
+							}
+	
+							try
+							{
+								//re-fit as we might have destroyed locations
+								if ( spot.inliers.size() >= spot.center.getMinNumPoints() )
+									spot.center.fit( spot.inliers );
+							}
+							catch (NotEnoughDataPointsException | IllDefinedDataPointsException e)
+							{
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+			}
 		}
 		else
 		{
-			spot.center.ransac( spot.candidates, spot.inliers, iterations, maxError, inlierRatio );
+			if (!silent )
+				IJ.log( "No spots remaining after RANSAC." );
+		}
+
+		return additionalSpots;
+	}
+
+	protected static boolean pointExists( final long[] loc, final Collection< Spot > spots )
+	{
+		for ( final Spot spot : spots )
+		{
+			boolean equal = true;
+
+			for ( int d = 0; d < spot.getOriginalLocation().length && equal; ++d )
+				if ( loc[ d ] != spot.getOriginalLocation()[ d ] )
+					equal = false;
+
+			if ( equal == true )
+				return true;
+		}
+
+		return false;
+	}
+
+	public static void ransac( final Spot spot, final int iterations, final double maxError, final double inlierRatio, final boolean multiConsenus, final int minNumInliers ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
+	{
+		if ( multiConsenus )
+		{
+			//System.out.println( Util.printCoordinates( spot.getOriginalLocation() ));
+
+			spot.numRemoved = spot.candidates.size();
+
+			MultiConsensusFilter filter = new MultiConsensusFilter( spot, iterations, maxError, inlierRatio, minNumInliers, false );
+			ArrayList<ArrayList<PointFunctionMatch>> allMatches = filter.filter( spot.candidates );
+
+			if ( allMatches == null || allMatches.size() == 0 )
+			{
+				spot.inliers = new ArrayList<>();
+			}
+			else
+			{
+				spot.inliers = allMatches.get( 0 );
+				for ( int i = 1; i < allMatches.size(); ++i )
+					spot.multiConsensusMatches.add( allMatches.get( i ) );
+			}
+
+			spot.numRemoved -= spot.inliers.size();
+		}
+		else
+		{
+			spot.center.ransac( spot.candidates, spot.inliers, iterations, maxError, inlierRatio,  minNumInliers );
 			spot.numRemoved = spot.candidates.size() - spot.inliers.size();
 
 			//System.out.println( Util.printCoordinates( spot.getOriginalLocation() ));
@@ -368,11 +593,12 @@ public class Spot implements RealLocalizable//, Localizable
 			return inliers;
 		}
 
-		public < P extends PointMatch > ArrayList<P> filter(final List<P> candidates) {
+		public < P extends PointMatch > ArrayList<ArrayList<P>> filter(final List<P> candidates) {
 
-			final ArrayList<P> inliers = new ArrayList<>();
+			//final ArrayList<P> inliers = new ArrayList<>();
 			final ArrayList<ArrayList<P>> multiConsensusSets = filterMultiConsensusSets(candidates);
 
+			/*
 			for ( int i = 0; i < multiConsensusSets.size(); ++i )
 			{
 				ArrayList<P> consensusSet = multiConsensusSets.get( i );
@@ -386,7 +612,6 @@ public class Spot implements RealLocalizable//, Localizable
 						original[ d ] = spot.getOriginalLocation()[ d ];
 
 					double distance = Point.distance( new Point( spot.localize() ), new Point( original ) );
-
 					System.out.println( consensusSet.size() + " --" + Util.printCoordinates( spot.localize() ) + ", " + distance );
 				}
 				catch (NotEnoughDataPointsException | IllDefinedDataPointsException e) {}
@@ -397,11 +622,10 @@ public class Spot implements RealLocalizable//, Localizable
 				System.out.printf("Found %d consensus sets with %d inliers", multiConsensusSets.size(), inliers.size());
 				System.out.println();
 			}
+			*/
 
-			// TODO: if we use that, we need to return more than one instance
-
-			//System.exit( 0 );
-			return inliers;
+			return multiConsensusSets;//.get( 0 );
+			//return inliers;
 		}
 	}
 
@@ -464,7 +688,7 @@ public class Spot implements RealLocalizable//, Localizable
 				continue;
 			// Using extension because sometimes spots are not fully inside of the image
 			final RandomAccess< T > drawRA =  Views.extendMirrorSingle(draw).randomAccess();
-			final double[] scale = spot.scale;
+			final float[] scale = spot.getScale();
 
 			for ( final PointFunctionMatch pm : spot.candidates )
 			{
@@ -477,9 +701,7 @@ public class Spot implements RealLocalizable//, Localizable
 		}
 		
 	}
-	
-	
-	
+
 	public static double length( final double[] f )
 	{
 		double l = 0;

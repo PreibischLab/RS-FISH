@@ -12,7 +12,7 @@ import visualization.Inliers;
 
 public class Visualization {
 
-	public static double visuallyDefineThreshold(ImagePlus imp, ArrayList<Spot> allSpots, ArrayList<Long> timePoint, boolean showInliers, boolean showDetections, float sigma, float anisotropy){
+	public static double visuallyDefineThreshold(ImagePlus imp, ArrayList<Spot> allSpots, ArrayList<Long> timePoint, boolean showInliers, boolean showDetections, float sigma, double anisotropy){
 
 		double histThreshold = 0;
 		Detections detection;
@@ -23,7 +23,7 @@ public class Visualization {
 		}
 		// show the detections + the histogram (doesn't make sense to show it without the detections)
 		if (showDetections){
-			detection = new Detections(imp, allSpots, timePoint, sigma, anisotropy);
+			detection = new Detections(imp, allSpots, timePoint, sigma, (float)anisotropy);
 			detection.showDetections();
 			
 			// do not show histogram if you have zero spots

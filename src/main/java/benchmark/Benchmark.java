@@ -251,7 +251,7 @@ public class Benchmark
 		//GradientDescent.testGradientDescent( spots, new boolean[]{ false, false, true } );
 		
 		// ransac on all spots
-		Spot.ransac( spots, 1000, ransacError, 1.0/100.0, false );
+		Spot.ransac( spots, 1000, ransacError, 1.0/100.0, 0, false, 0.0, 0.0, null, null, null, null );
 		
 		return spots;
 	}

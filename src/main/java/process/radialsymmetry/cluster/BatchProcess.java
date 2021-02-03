@@ -8,41 +8,35 @@ import java.util.ArrayList;
 import com.opencsv.CSVWriter;
 
 import compute.RadialSymmetry;
+import compute.RadialSymmetry.Ransac;
 import fitting.Spot;
 import gui.interactive.HelperFunctions;
 import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
-import ij.io.FileSaver;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
-import intensity.Intensity;
-
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.interpolation.randomaccess.LanczosInterpolatorFactory;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
-import parameters.GUIParams;
-import parameters.RadialSymmetryParameters;
+import parameters.RadialSymParams;
 import util.ImgLib2Util;
 
 public class BatchProcess {
 
 	// N2 SECOND RUN parameters
-	public static GUIParams setParametersN2Second(int lambda) {
+	public static RadialSymParams setParametersN2Second(int lambda) {
 		// set the parameters according to the lambda value
-		final GUIParams params = new GUIParams();
+		final RadialSymParams params = new RadialSymParams();
 
 		// same for all lambda values
 		params.setAnisotropyCoefficient(1.08f);
-		boolean useRANSAC = true;
-		params.setRANSAC(useRANSAC);
+		params.setRANSAC(Ransac.SIMPLE);
 
 		// FIXME: Check that the values for the params are correct
 		// Larger support radius smaller number of inliers
@@ -90,14 +84,13 @@ public class BatchProcess {
 	}
 	
 	// N2 parameters
-	public static GUIParams setParameters(int lambda) {
+	public static RadialSymParams setParameters(int lambda) {
 		// set the parameters according to the lambda value
-		final GUIParams params = new GUIParams();
+		final RadialSymParams params = new RadialSymParams();
 
 		// same for all lambda values
 		params.setAnisotropyCoefficient(1.08f);
-		boolean useRANSAC = true;
-		params.setRANSAC(useRANSAC);
+		params.setRANSAC(Ransac.SIMPLE);
 
 		// FIXME: Check that the values for the params are correct
 		// Larger support radius smaller number of inliers
@@ -145,14 +138,13 @@ public class BatchProcess {
 	}
 	
 	// SEA-12 parameters
-	public static GUIParams setParameters2(int lambda) {
+	public static RadialSymParams setParameters2(int lambda) {
 		// set the parameters according to the lambda value
-		final GUIParams params = new GUIParams();
+		final RadialSymParams params = new RadialSymParams();
 
 		// same for all lambda values
 		params.setAnisotropyCoefficient(1.08f);
-		boolean useRANSAC = true;
-		params.setRANSAC(useRANSAC);
+		params.setRANSAC(Ransac.SIMPLE);
 
 		// FIXME: Check that the values for the params are correct
 		// Larger support radius smaller number of inliers
@@ -231,7 +223,7 @@ public class BatchProcess {
 				// table to store the results for each channel
 				String outputPathCsv = pathResultCsv.getAbsolutePath() + "/" + imageD.getFilename() + ".csv";
 				// set the params according to the way length
-				GUIParams params = setParameters2(imageD.getLambda());
+				RadialSymParams params = setParameters2(imageD.getLambda());
 				
 				BatchProcess.process(inputImagePath, params, new File(outputPathResultCsvBeforeCorrection), new File(outputPathParameters), outputPathZCorrected, new File(outputPathCsv), doZcorrection);
 			}
@@ -241,16 +233,12 @@ public class BatchProcess {
 		}
 	}
 
-	public static void process(String imgPath, GUIParams params, File outputPathResultCsvBeforeCorrection, File outputPathParameters, String outputPathZCorrected, File outputPath, boolean doZcorrection) {
+	public static void process(String imgPath, RadialSymParams params, File outputPathResultCsvBeforeCorrection, File outputPathParameters, String outputPathZCorrected, File outputPath, boolean doZcorrection) {
 		Img<FloatType> img = ImgLib2Util.openAs32Bit(new File(imgPath));
 		ImagePlus imp = ImageJFunctions.wrap(img, "");
 		// TODO: might be redundant
 		// convert to 3D stack
 		imp.setDimensions(1, imp.getNSlices(), 1);
-		// set the calibration for the given image
-		double[] calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); 
-		// set the parameters for the radial symmetry 
-		RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
 		// FIXME: MAYBE WE ACTUALLY HAVE TO
 		// don't have to normalize the image and can use it directly
 
@@ -275,7 +263,7 @@ public class BatchProcess {
 
 		// stores the intensity values for gauss fitting
 		ArrayList<Float> intensity = new ArrayList<>(0);
-		ArrayList<Spot> spots = processImage(img, rai, rsm, dims, params.getSigmaDoG(), intensity);
+		ArrayList<Spot> spots = processImage(img, rai, params, dims, params.getSigmaDoG(), intensity);
 
 		// TODO: filter the spots that are inside of the roi
 		ImagePlus impRoi = IJ.openImage(imgPath);
@@ -348,7 +336,7 @@ public class BatchProcess {
 	/*
 	 * Class to process multiple images in a batch mode
 	 * */
-	public static ArrayList<Spot> processImage(Img<FloatType> img, RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
+	public static ArrayList<Spot> processImage(Img<FloatType> img, RandomAccessibleInterval<FloatType> rai, RadialSymParams rsm,
 		long[] dims, double sigma, ArrayList<Float> intensity) {
 		RadialSymmetry rs = new RadialSymmetry(rai, rsm);
 		rs.compute();
@@ -421,7 +409,7 @@ public class BatchProcess {
 		// test run that the correct values are written to the csv file
 		String outputPathCsv = "/Volumes/1TB/test/test-out/data.csv";
 		// set the params according to the way length
-		GUIParams params = setParametersN2Second(670);
+		RadialSymParams params = setParametersN2Second(670);
 		String inputImagePath = "/Volumes/1TB/test/2/C1-N2_96-p.tif";
 		
 		// BatchProcess.process(inputImagePath, params, new File(outputPathCsv));

@@ -5,17 +5,6 @@ import java.awt.Rectangle;
 import java.io.File;
 import java.util.ArrayList;
 
-import net.imglib2.Cursor;
-import net.imglib2.Point;
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.algorithm.dog.DogDetection;
-import net.imglib2.algorithm.localextrema.RefinedPeak;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.Views;
-
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.DecompositionSolver;
@@ -27,13 +16,13 @@ import background.NormalizedGradient;
 import background.NormalizedGradientAverage;
 import background.NormalizedGradientMedian;
 import background.NormalizedGradientRANSAC;
+import compute.RadialSymmetry;
 import fiji.tool.SliceObserver;
+import fitting.Center.CenterMethod;
 import fitting.PointFunctionMatch;
 import fitting.Spot;
-import fitting.Center.CenterMethod;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
-import gui.radial.symmetry.plugin.Radial_Symmetry;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -44,23 +33,22 @@ import ij.process.ImageProcessor;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
 import mpicbg.models.PointMatch;
-import parameters.GUIParams;
+import net.imglib2.Cursor;
+import net.imglib2.Point;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.dog.DogDetection;
+import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
+import parameters.RadialSymParams;
 
 public class InteractiveRadialSymmetry// extends GUIParams
 {
-	public static int bsNumIterations = 100; // not a parameter, can be changed through Beanshell
-	public static int numIterations = 100; // not a parameter, can be changed through Beanshell
-
-	// --------------------------------
-	// all values here are initialized in initParameters()
-
-	// calibration in xy, usually [1, 1], will be read from ImagePlus upon initialization
-	double[] calibration;
-
-	// --------------------------------
-
 	// TODO: Pass as the parameter (?)
-	int sensitivity = Radial_Symmetry.defaultSensitivity;
+	int sensitivity = RadialSymParams.defaultSensitivity;
 
 	// Frames that are potentially open
 	BackgroundRANSACWindow bkWindow;
@@ -99,7 +87,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	}
 	
 	// stores all the parameters 
-	final GUIParams params;
+	final RadialSymParams params;
 	
 	// min/max values for GUI
 	public static final int supportRadiusMin = 1;
@@ -135,7 +123,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		return wasCanceled;
 	}
 
-	public InteractiveRadialSymmetry( final ImagePlus imp, final GUIParams params )
+	public InteractiveRadialSymmetry( final ImagePlus imp, final RadialSymParams params )
 	{
 		this( imp, params, Double.NaN, Double.NaN );
 	}
@@ -149,7 +137,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	 * @param min - min intensity of the image
 	 * @param max - max intensity of the image
 	 */
-	public InteractiveRadialSymmetry( final ImagePlus imp, final GUIParams params, final double min, final double max )
+	public InteractiveRadialSymmetry( final ImagePlus imp, final RadialSymParams params, final double min, final double max )
 	{
 		this.imagePlus = imp;
 		this.min = min;
@@ -192,9 +180,6 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 			imagePlus.setRoi( rectangle );
 		}
-		
-		// set the calibration
-		this.calibration = HelperFunctions.initCalibration(imp, 2);
 
 		// initialize variables for interactive preview
 		// called before updatePreview() !
@@ -216,7 +201,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		this.ransacWindow = new RANSACWindow( this );
 		
 		// case when we run RS without ransac
-		boolean useRANSAC = params.getRANSAC();
+		boolean useRANSAC = params.getRANSAC().ordinal() != 0;
 		this.ransacWindow.getFrame().setVisible( useRANSAC );
 		
 		// add listener to the imageplus slice slider
@@ -271,7 +256,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		// the size of the RANSAC area
 		final long[] range = new long[numDimensions];
 
-		if (params.getRANSAC())
+		if (params.getRANSAC().ordinal() != 0 )
 			range[ 0 ] = range[ 1 ] = 2*params.getSupportRadius();
 		else
 			range[ 0 ] = range[ 1 ] = (long)(2*params.getSigmaDoG() + 1);
@@ -280,29 +265,29 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		final NormalizedGradient ng;
 
 		// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median"
-		if ( params.getBsMethod().equals("No background subtraction"))
+		if ( params.getBsMethod() == 0 )
 			ng = null;
-		else if ( params.getBsMethod().equals("Mean"))
+		else if ( params.getBsMethod() == 1)
 			ng = new NormalizedGradientAverage( derivative );
-		else if ( params.getBsMethod().equals("Median") )
+		else if ( params.getBsMethod() == 2 )
 			ng = new NormalizedGradientMedian( derivative );
-		else if ( params.getBsMethod().equals("RANSAC on Mean") )
+		else if ( params.getBsMethod() == 3 )
 			ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEAN, params.getBsMaxError(), params.getBsInlierRatio() );
-		else if ( params.getBsMethod().equals("RANSAC on Median") )
+		else if ( params.getBsMethod() == 4 )
 			ng = new NormalizedGradientRANSAC( derivative, CenterMethod.MEDIAN, params.getBsMaxError(), params.getBsInlierRatio() );
 		else
 			throw new RuntimeException( "Unknown bsMethod: " + params.getBsMethod() );
 
 		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
 		
-		float bestScale = params.getAnisotropyCoefficient();
+		double bestScale = params.getAnisotropyCoefficient();
 		
 		for (int j = 0; j < spots.size(); j++){
-			spots.get(j).updateScale(new float []{1, 1, bestScale});
+			spots.get(j).updateScale(new float []{1, 1, (float)bestScale});
 		}
 		
-		if (params.getRANSAC()){
-			Spot.ransac(spots, numIterations, params.getMaxError(), params.getInlierRatio(), false);
+		if (params.getRANSAC().ordinal() != 0){
+			Spot.ransac(spots, RadialSymmetry.numIterations, params.getMaxError(), params.getInlierRatio(), 0, false, 0.0, 0.0, null, null, null, null, true);
 			for (final Spot spot : spots)
 				spot.computeAverageCostInliers();
 		}
@@ -632,12 +617,19 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	/*
 	 * this function is used for Difference-of-Gaussian calculation in the 
 	 * interactive case. No calibration adjustment is needed.
-	 * (threshold/2) - because some peaks might be skipped - always compute all spots, select later
+	 * (thresholdMin) - always compute all spots, select later
 	 * */
 	protected void dogDetection( final RandomAccessibleInterval <FloatType> image )
 	{
 		final double sigma2 = HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity );
-		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA,  params.getThresholdDoG()/2, false);
+
+		double[] calibration = new double[ image.numDimensions() ];
+		calibration[ 0 ] = 1.0;
+		calibration[ 1 ] = 1.0;
+		if ( calibration.length == 3 )
+			calibration[ 2 ] = params.useAnisotropyForDoG ? (1.0/params.anisotropyCoefficient) : 1.0;
+
+		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA, InteractiveRadialSymmetry.thresholdMin, false);
 		peaks = dog2.getSubpixelPeaks(); 
 	}
 
@@ -708,7 +700,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		imp.setSlice(20);
 
-		new InteractiveRadialSymmetry( imp, new GUIParams(), min, max );
+		new InteractiveRadialSymmetry( imp, new RadialSymParams(), min, max );
 
 		System.out.println("DOGE!");
 	}

@@ -8,17 +8,8 @@ import java.util.Map;
 
 import com.opencsv.CSVWriter;
 
-import net.imglib2.Localizable;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.RealRandomAccess;
-import net.imglib2.RealRandomAccessible;
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.Views;
-
 import compute.RadialSymmetry;
+import compute.RadialSymmetry.Ransac;
 import fitting.Spot;
 import gui.interactive.HelperFunctions;
 import ij.ImageJ;
@@ -31,15 +22,23 @@ import milkyklim.algorithm.localization.EllipticGaussianOrtho;
 import milkyklim.algorithm.localization.LevenbergMarquardtSolver;
 import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
 import milkyklim.algorithm.localization.PeakFitter;
-import parameters.GUIParams;
-import parameters.RadialSymmetryParameters;
+import net.imglib2.Localizable;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealRandomAccess;
+import net.imglib2.RealRandomAccessible;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
+import parameters.RadialSymParams;
 
 public class BatchProcessing {
 	/*
 	 * Class to process multiple images in a batch mode
 	 * */
 
-	public static void startBatchProcessing(GUIParams params, String path, int channelId) {
+	public static void startBatchProcessing(RadialSymParams params, String path, int channelId) {
 		File folder = new File(path + "subtracted/c" + channelId);
 		
 		System.out.println(folder.getAbsolutePath());		
@@ -59,10 +58,6 @@ public class BatchProcessing {
 				float min = (float) minmax[0];
 				float max = (float) minmax[1];
 
-				// set the calibration for the given image
-				double[] calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions()); 
-				// set the parameters for the radial symmetry 
-				RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
 				// normalize the image if necessary
 				RandomAccessibleInterval<FloatType> rai;
 				if (!Double.isNaN(min) && !Double.isNaN(max)) // if normalizable
@@ -81,7 +76,7 @@ public class BatchProcessing {
 				ArrayList<Float> intensity = new ArrayList<>(0);
 
 				boolean useGaussFit = false;
-				ArrayList<Spot> spots = processImage(imp, rai, rsm, dim, useGaussFit, params.getSigmaDoG(), intensity);
+				ArrayList<Spot> spots = processImage(imp, rai, params, dim, useGaussFit, params.getSigmaDoG(), intensity);
 				
 				saveResult(path + "/results/c" + channelId, file.getName(), spots, intensity);
 				
@@ -90,7 +85,7 @@ public class BatchProcessing {
 	}
 
 
-	public static ArrayList<Spot> processImage(ImagePlus imp, RandomAccessibleInterval<FloatType> rai, RadialSymmetryParameters rsm,
+	public static ArrayList<Spot> processImage(ImagePlus imp, RandomAccessibleInterval<FloatType> rai, RadialSymParams rsm,
 			long[] dim, boolean gaussFit, double sigma, ArrayList<Float> intensity) {
 
 		int numDimensions = dim.length;
@@ -181,11 +176,10 @@ public class BatchProcessing {
 	public static void main(String[] args) {
 		new ImageJ();
 
-		boolean useRANSAC = true;
-		final GUIParams params = new GUIParams();
+		final RadialSymParams params = new RadialSymParams();
 		// apparently the best value for now
 		params.setAnisotropyCoefficient(1.09f);
-		params.setRANSAC(useRANSAC);
+		params.setRANSAC(Ransac.SIMPLE);
 		// pre-detection
 		params.setSigmaDog(1.50f);
 		params.setThresholdDog(0.0083f);

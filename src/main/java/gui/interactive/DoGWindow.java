@@ -87,8 +87,8 @@ public class DoGWindow
 		doGFrame.setLocation(xOffset, yOffset);
 
 		/* Configuration */
-		sigma1Bar.addAdjustmentListener(new SigmaListener(parent,sigmaText1, parent.sigmaMin, parent.sigmaMax, parent.scrollbarSize, sigma1Bar));
-		thresholdBar.addAdjustmentListener(new ThresholdListener(parent,thresholdText, parent.thresholdMin, parent.thresholdMax));
+		sigma1Bar.addAdjustmentListener(new SigmaListener(parent,sigmaText1, InteractiveRadialSymmetry.sigmaMin, InteractiveRadialSymmetry.sigmaMax, parent.scrollbarSize, sigma1Bar));
+		thresholdBar.addAdjustmentListener(new ThresholdListener(parent,thresholdText, InteractiveRadialSymmetry.thresholdMin, InteractiveRadialSymmetry.thresholdMax));
 		button.addActionListener(new FinishedButtonListener(parent, false));
 		cancel.addActionListener(new FinishedButtonListener(parent, true));
 		doGFrame.addWindowListener(new FrameListener(parent));

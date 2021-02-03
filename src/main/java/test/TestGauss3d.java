@@ -119,7 +119,7 @@ public class TestGauss3d
 		//SimpleMultiThreading.threadHaltUnClean();
 		
 		// ransac on all spots
-		Spot.ransac( spots, 100, 0.15, 20.0/100.0, false );
+		Spot.ransac( spots, 100, 0.15, 20.0/100.0, 0, false, 0.0, 0.0, null, null, null, null );
 		
 		// print localizations
 		for ( final Spot spot : spots )

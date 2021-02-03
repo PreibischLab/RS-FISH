@@ -10,7 +10,7 @@ import anisotropy.parameters.AParams;
 import gui.anisotropy.AnisitropyCoefficient;
 import gui.interactive.HelperFunctions;
 import ij.ImagePlus;
-import parameters.GUIParams;
+import parameters.RadialSymParams;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Calculate Anisotropy Coefficient")
 public class Anisotropy_Plugin implements Command {
@@ -38,7 +38,7 @@ public class Anisotropy_Plugin implements Command {
 		// write bestScale somewhere
 		ap.setAnisotropy(bestScale);
 		// save default and calculated anisotropy coefficient
-		GUIParams.defaultAnisotropy = bestScale; 
+		RadialSymParams.defaultAnisotropy = bestScale; 
 		ap.setDefaultValues();
 		logService.info("Anisotropy coefficient: " + bestScale);
 	}

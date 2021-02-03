@@ -2,15 +2,19 @@ package gui.interactive;
 
 import java.awt.Color;
 import java.awt.Rectangle;
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
-import benchmark.TextFileAccess;
+import fitting.Spot;
+import ij.ImagePlus;
+import ij.gui.OvalRoi;
+import ij.gui.Overlay;
+import ij.gui.Roi;
+import ij.process.ImageProcessor;
+import mpicbg.util.RealSum;
 import net.imglib2.Cursor;
 import net.imglib2.Localizable;
 import net.imglib2.Point;
@@ -29,16 +33,6 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
 import net.imglib2.view.Views;
-
-import fitting.Spot;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.gui.OvalRoi;
-import ij.gui.Overlay;
-import ij.gui.Roi;
-import ij.measure.Calibration;
-import ij.process.ImageProcessor;
-import mpicbg.util.RealSum;
 
 public class HelperFunctions {
 	
@@ -120,7 +114,7 @@ public class HelperFunctions {
 		
 		return fullDimensions;
 	}
-	
+
 	public static ArrayList<RefinedPeak<Point>> filterPeaks(final ArrayList<RefinedPeak<Point>> peaks,
 			final Rectangle rectangle, final double threshold) {
 		final ArrayList<RefinedPeak<Point>> filtered = new ArrayList<>();
@@ -132,7 +126,7 @@ public class HelperFunctions {
 
 		return filtered;
 	}
-	
+
 	// TODO: code might be reused instead of copy\pasting
 	public static ArrayList<RefinedPeak<Point>> filterPeaks(final ArrayList<RefinedPeak<Point>> peaks, final double threshold) {
 		final ArrayList<RefinedPeak<Point>> filtered = new ArrayList<>();
@@ -364,12 +358,12 @@ public class HelperFunctions {
 		}
 	}
 
-	public static <T extends RealType<T>> double[] computeMinMax(final RandomAccessibleInterval<T> input) {
+	public static double[] computeMinMax(final RandomAccessibleInterval<? extends RealType<?>> input) {
 		// create a cursor for the image (the order does not matter)
-		final Iterator<T> iterator = Views.iterable(input).iterator();
+		final Iterator<? extends RealType<?>> iterator = Views.iterable(input).iterator();
 
 		// initialize min and max with the first image value
-		T type = iterator.next();
+		RealType<?> type = iterator.next();
 
 		double min = type.getRealDouble();
 		double max = type.getRealDouble();
@@ -387,69 +381,6 @@ public class HelperFunctions {
 		}
 
 		return new double[] { min, max };
-	}
-
-	/*
-	 * initialize calibration 2D and 3D friendly
-	 */
-	public static double[] initCalibration(final ImagePlus imp, int numDimensions) {
-		double[] calibration = new double[numDimensions];
-
-		try {
-			final Calibration cal = imp.getCalibration();
-			double[] calValues = new double[numDimensions];
-
-			// image doesn't have the calibration
-			if (cal != null) {
-				calValues[0] = cal.pixelWidth;
-				calValues[1] = cal.pixelHeight;
-				if (numDimensions == 3)
-					calValues[2] = cal.pixelDepth;
-			}
-
-			boolean isFine = true;
-			boolean isSame = true; // to check the calibration in all dimensions
-
-			// ? calibration has meaningful values
-			for (int d = 0; d < numDimensions; d++) {
-				if (Double.isNaN(calValues[d]) || Double.isInfinite(calValues[d]) || calValues[d] <= 0) {
-					isFine = false;
-				}
-				if (d > 0 && (calValues[d - 1] != calValues[d]))
-					isSame = false;
-			}
-
-			if (!isFine || cal == null || isSame) {
-				for (int d = 0; d < numDimensions; d++)
-					calibration[d] = 1.0;
-			} else {
-				IJ.log("WARNING: Pixel calibration might be not symmetric! Please check this (Image > Properties)");
-				IJ.log("x: " + calValues[0]);
-				IJ.log("y: " + calValues[1]);
-				if (numDimensions == 3)
-					IJ.log("z: " + calValues[2]);
-
-				int iMax = 0;
-				for (int d = 0; d < numDimensions; d++) {
-					calibration[d] = calValues[d];
-					if (calibration[d] < calibration[iMax])
-						iMax = d;
-				}
-
-				for (int d = 0; d < numDimensions; d++) {
-					if (d != iMax)
-						calibration[d] /= calibration[iMax];
-				}
-				calibration[iMax] = 1.0;
-			}
-		} catch (Exception e) {
-			for (int d = 0; d < numDimensions; d++)
-				calibration[d] = 1.0;
-		}
-
-		IJ.log("Using relative calibration: " + Util.printCoordinates(calibration));
-		return calibration;
-
 	}
 
 	public static <T extends RealType<T>> void printCoordinates(RandomAccessibleInterval<T> img) {
@@ -494,10 +425,11 @@ public class HelperFunctions {
 		public int miss = 0;
 		public int count = 0;
 		public double avgError = 0;
+		public double maxError = -1;
 
 		public String toString()
 		{
-			return "miss: " + miss + ", double: " + doubleAssign + ", avg error=" + avgError;
+			return "miss: " + miss + ", double: " + doubleAssign + ", avg error=" + avgError + ", max error=" + maxError;
 		}
 	}
 
@@ -513,6 +445,7 @@ public class HelperFunctions {
 		{
 			Pair< Integer, Double > closest = HelperFunctions.closestPoint( gt, pos );
 
+			d.maxError = Math.max( d.maxError, closest.getB() );
 			d.avgError += closest.getB();
 			++d.count;
 

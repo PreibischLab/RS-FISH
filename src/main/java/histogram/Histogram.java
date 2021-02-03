@@ -50,7 +50,13 @@ public class Histogram extends ApplicationFrame
 	public Histogram( final List< Double > values, final int numBins, final String title, final String units, final Detections detection)
 	{
 		super( title );
-		
+
+		final ValuePair< Double, Double > minmax = getMinMax( values );
+		this.min = minmax.getA();
+		this.max = minmax.getB();
+		this.min -= (minmax.getB() - minmax.getA() ) / 10;
+		this.max += (minmax.getB() - minmax.getA() ) / 10;
+
 		final IntervalXYDataset dataset = createDataset( values, numBins, title );
 		final JFreeChart chart = createChart( dataset, title, units );
 		final ChartPanel chartPanel = new ChartPanel( chart );
@@ -159,10 +165,6 @@ public class Histogram extends ApplicationFrame
 	protected IntervalXYDataset createDataset( final List< Double > values, final int numBins, final String title )
 	{
 		final XYSeries series = new XYSeries( title );
-
-		final ValuePair< Double, Double > minmax = getMinMax( values );
-		this.min = minmax.getA();
-		this.max = minmax.getB();
 
 		final List< ValuePair< Double, Integer > > hist = binData( values, min, max, numBins );
 		

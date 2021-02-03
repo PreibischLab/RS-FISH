@@ -3,6 +3,7 @@ package fitting;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import compute.RadialSymmetry;
 import net.imglib2.util.Util;
 
 import mpicbg.models.IllDefinedDataPointsException;
@@ -111,7 +112,7 @@ public class Center extends AbstractFunction< Center >
 		
 		final Center l = new Center( CenterMethod.MEAN );
 		
-		l.ransac( candidates, inliers, 100, 1, 0.1 );
+		l.ransac( candidates, inliers, RadialSymmetry.bsNumIterations, 1, 0.1 );
 		
 		System.out.println( inliers.size() );
 		

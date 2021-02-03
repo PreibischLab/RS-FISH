@@ -14,7 +14,6 @@ import gradient.Gradient;
 import gradient.GradientPreCompute;
 import gui.interactive.FixROIListener;
 import gui.interactive.HelperFunctions;
-import gui.radial.symmetry.plugin.Radial_Symmetry;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -35,16 +34,14 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
+import parameters.RadialSymParams;
 
 public class AnisitropyCoefficient {
 
 	public static int numIterations = 250; // not a parameter, can be changed through Beanshell
 
-	// calibration in xy, usually [1, 1], will be read from ImagePlus upon initialization
-	final double[] calibration;
-
 	// TODO: Pass as the parameter (?)
-	int sensitivity = Radial_Symmetry.defaultSensitivity;
+	int sensitivity = RadialSymParams.defaultSensitivity;
 
 	// window that is potentially open
 	AnysotropyWindow aWindow; 
@@ -133,8 +130,6 @@ public class AnisitropyCoefficient {
 		else
 			throw new RuntimeException( "Pixels of this type are not supported: " + pixels.getClass().getSimpleName() );
 
-		this.calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions());
-
 		rectangle = new Rectangle(0, 0, (int)dim[0], (int)dim[1]);// always the full image 
 
 		// show the interactive kit 
@@ -181,7 +176,7 @@ public class AnisitropyCoefficient {
 		else // otherwise use
 			img = ImageJFunctions.wrap(imagePlus);
 
-		float sigma2 = HelperFunctions.computeSigma2(sigma, Radial_Symmetry.defaultSensitivity);
+		float sigma2 = HelperFunctions.computeSigma2(sigma, RadialSymParams.defaultSensitivity);
 
 		if (img.numDimensions() != 3)
 			System.out.println("Wrong dimensionality of the image");
@@ -191,6 +186,12 @@ public class AnisitropyCoefficient {
 			// to fix the problem we use an extra factor = 0.5 which will
 			// decrease the threshold value; this might help in some cases but
 			// z-extra smoothing is image depended
+
+			double[] calibration = new double[ img.numDimensions() ];
+			calibration[ 0 ] = 1.0;
+			calibration[ 1 ] = 1.0;
+			if ( calibration.length == 3 )
+				calibration[ 2 ] = 1.0;
 
 			final DogDetection<FloatType> dog2 = new DogDetection<>(img, calibration, sigma, sigma2,
 					DogDetection.ExtremaType.MINIMA, threshold, false);
@@ -330,8 +331,9 @@ public class AnisitropyCoefficient {
 			// USERS SHOULD NOT ADJUST THIS ONE 
 			double maxError = 1.5; // 1.0px error 
 			double inlierRatio = 0.2; // at least 20% inliers 
+			int minNumLiers = RadialSymParams.defaultMinNumInliers;
 
-			Spot.ransac(spots, numIterations, maxError, inlierRatio, false );
+			Spot.ransac(spots, numIterations, maxError, inlierRatio, minNumLiers, false, 0.0, 0.0, null, null, null, null );
 			try{
 				Spot.fitCandidates(spots);
 			}
@@ -448,7 +450,7 @@ public class AnisitropyCoefficient {
 
 		// TODO: CORRECT PLACE TO TURN ON/OFF RANSAC		
 		if (true){ // (params.getRANSAC()){
-			Spot.ransac(spots, numIterations, params.getMaxError(), params.getInlierRatio(), false);
+			Spot.ransac(spots, numIterations, params.getMaxError(), params.getInlierRatio(), 0, false, 0.0, 0.0, null, null, null, null);
 			for (final Spot spot : spots)
 				spot.computeAverageCostInliers();
 		}
@@ -468,18 +470,11 @@ public class AnisitropyCoefficient {
 	{
 		final double sigma2 = HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity );
 
-		final double[] calibration;
-
-		if ( this.calibration.length > image.numDimensions() )
-		{
-			calibration = new double[ image.numDimensions() ];
-			for ( int i = 0; i < calibration.length; ++i )
-				calibration[ i ] = this.calibration[ i ];
-		}
-		else
-		{
-			calibration = this.calibration;
-		}
+		double[] calibration = new double[ image.numDimensions() ];
+		calibration[ 0 ] = 1.0;
+		calibration[ 1 ] = 1.0;
+		if ( calibration.length == 3 )
+			calibration[ 2 ] = 1.0;
 
 		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA,  params.getThresholdDoG()/2, false);
 		peaks = dog2.getPeaks();

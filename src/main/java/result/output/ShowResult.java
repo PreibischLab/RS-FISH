@@ -17,7 +17,6 @@ public class ShowResult {
 	// proper window -> dialog view with the columns
 	public static ResultsTable ransacResultTable(final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
 												 final ArrayList<Long> channelPoint, double histThreshold) {
-		IJ.log("Running RANSAC ... ");
 		// real output
 		ResultsTable rt = new ResultsTable();
 		String[] xyz = { "x", "y", "z" };

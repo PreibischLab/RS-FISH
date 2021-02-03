@@ -1,24 +1,23 @@
 package gui.radial.symmetry.plugin;
 
+import java.awt.Font;
 import java.util.ArrayList;
-
-import org.scijava.ItemVisibility;
-import org.scijava.command.Command;
-import org.scijava.command.CommandService;
-import org.scijava.command.ContextCommand;
-import org.scijava.log.LogService;
-import org.scijava.plugin.Parameter;
-import org.scijava.plugin.Plugin;
+import java.util.Arrays;
 
 import compute.RadialSymmetry;
+import compute.RadialSymmetry.Ransac;
+import fiji.util.gui.GenericDialogPlus;
 import fitting.Spot;
-import gui.imagej.GenericDialogGUIParams;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
 import gui.vizualization.Visualization;
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
 import ij.measure.ResultsTable;
+import ij.plugin.PlugIn;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
 import net.imglib2.RandomAccessibleInterval;
@@ -28,96 +27,90 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Util;
-import parameters.GUIParams;
-import parameters.RadialSymmetryParameters;
+import parameters.RadialSymParams;
 import result.output.ShowResult;
 
-@Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Radial Symmetry")
-public class Radial_Symmetry extends ContextCommand {
-	// Defaults: used to save previous values of the plugin fields
-	public static String[] paramChoice = new String[] { "Manual", "Interactive", "Advanced" };
-	// public static int defaultImg = 0;
-	public static int defaultParam = 0;
-	public static boolean defaultGauss = false;
-	public static boolean defaultRANSAC = true;
-	public static float defaultAnisotropy = 1.0f;
-
-	public static boolean defaultDetections = true;
-	public static boolean defaultInliers = false;
-
-	// steps per octave for DoG
-	public static int defaultSensitivity = 4;
-
-	// TODO:
-	// https://github.com/scijava/scijava-common/issues/42#issuecomment-332724692
-	// that the answer to the question how to hide some of the elements of the
-	// gui
-
-	@Parameter(autoFill = false, label = "Image")
-	ImagePlus imp;
-
-	// parameterType: "Advanced", make a text box for entering all parameters manually
-	@Parameter(choices = { "Manual", "Interactive", "Advanced" }, label = "Parameter's mode")
-	String parameterType = paramChoice[defaultParam];
-
-	@Parameter(label = "Anisotropy coefficient")
-	float anisotropy = defaultAnisotropy;
-
-	@Parameter(label = " ", visibility = ItemVisibility.MESSAGE, persist = false)
-	String anisotropyLabel = "<html>*Use the \"Anisotropy Coefficient Plugin\"<br/>to calculate the anisotropy coefficient<br/> or leave 1.00 for a reasonable result.";
-
-	@Parameter(label = "<html><b>Computation:</h>", visibility = ItemVisibility.MESSAGE)
-	String computationLabel = "";
-	@Parameter(label = "RANSAC")
-	boolean RANSAC = defaultRANSAC;
-	// use gauss fit
-	// defines if we perform the gauss fit or
-	// linear interpolation for peak intensities
-	// @Parameter(label = "Gaussian fitting")
-	boolean gaussFit = defaultGauss;
-
-	@Parameter(label = "<html><b>Visualization:</b>", visibility = org.scijava.ItemVisibility.MESSAGE)
-	String visualizationLabel = "";
-	@Parameter(label = "Detections overlay")
-	boolean showDetections = defaultDetections;
-	@Parameter(label = "RANSAC regions")
-	boolean showInliers = defaultInliers;
-
-	@Parameter(label = "<html><b>Advanced parameter mode:</h>", visibility = ItemVisibility.MESSAGE)
-	String advancedLabel = "";
-	@Parameter(label = "Sigma")
-	float sigma = GUIParams.defaultSigma;
-	@Parameter(label = "Threshold")
-	float threshold = GUIParams.defaultThreshold;
-	@Parameter(label = "Support region radius")
-	int supportRegion = GUIParams.defaultSupportRadius;
-	@Parameter(label = "Min inlier ratio")
-	float inlierRatio = GUIParams.defaultInlierRatio;
-	@Parameter(label = "Max error")
-	float maxError = GUIParams.defaultMaxError;
-	@Parameter(label = "Intensity threshold for a spot")
-	double histThreshold = 0;
-	@Parameter(label = "Results file")
-	String resultsFilePath = "";
-
-	// defines the resolution in x y z dimensions
-	double[] calibration;
-
-	// logging + error message; used instead of the IO.log
-	@Parameter(visibility = org.scijava.ItemVisibility.INVISIBLE)
-	LogService logService;
-
-	@Parameter(visibility = ItemVisibility.INVISIBLE)
-	CommandService commandService;
-
+public class Radial_Symmetry implements PlugIn
+{
 	@Override
-	public void run() {
-		if (this.isCanceled())
+	public void run(String arg) {
+
+		// get list of open image stacks
+		final int[] idList = WindowManager.getIDList();
+
+		if ( idList == null || idList.length == 0 )
+		{
+			IJ.error( "You need at least one open image." );
 			return;
+		}
+
+		// map all id's to image title for those who are 3d stacks
+		final String[] imgList =
+				Arrays.stream( idList ).
+						mapToObj( id -> WindowManager.getImage( id ).getTitle() ).
+							toArray( String[]::new );
+
+		if ( RadialSymParams.defaultImg >= imgList.length )
+			RadialSymParams.defaultImg = 0;
+
+		GenericDialog gd1 = new GenericDialog( "Radial Symmetry (2d/3d)" );
+
+		gd1.addChoice( "Image", imgList, imgList[ RadialSymParams.defaultImg ] );
+		gd1.addChoice( "Mode", RadialSymParams.modeChoice, RadialSymParams.modeChoice[ RadialSymParams.defaultMode ] );
+		gd1.addNumericField( "Anisotropy coefficient", RadialSymParams.defaultAnisotropy, 4, 15, "s(z)/s(xy)" );
+		gd1.addCheckbox( "Use_anisotropy coefficient for DoG", RadialSymParams.defaultUseAnisotropyForDoG );
+
+		gd1.addMessage( "<html>*Use the \"Anisotropy Coefficient Plugin\"<br/>to calculate the anisotropy coefficient<br/> or leave 1.00 for a hopefully reasonable result.", new Font( "Default", Font.ITALIC, 10 ) );
+
+		gd1.addMessage( "Computation:", new Font( "Default", Font.BOLD, 13 ) );
+		gd1.addChoice( "Robust_fitting", RadialSymParams.ransacChoice, RadialSymParams.ransacChoice[ RadialSymParams.defaultRANSACChoice ] );
+
+		gd1.addMessage( "Visualization:", new Font( "Default", Font.BOLD, 13 ) );
+		gd1.addCheckbox( "Visualize_Detections", RadialSymParams.defaultVisualizeDetections );
+		gd1.addCheckbox( "Visualize_Inliers (RANSAC)", RadialSymParams.defaultVisualizeInliers );
+
+		gd1.showDialog();
+		if ( gd1.wasCanceled() )
+			return;
+
+		// set the parameters from the defaults
+		final RadialSymParams params = new RadialSymParams();
+
+		// don't do it by name as often multiple images have the same name
+		ImagePlus imp = WindowManager.getImage( idList[ RadialSymParams.defaultImg = gd1.getNextChoiceIndex() ] );
+		int mode = RadialSymParams.defaultMode = gd1.getNextChoiceIndex();
+		params.anisotropyCoefficient = RadialSymParams.defaultAnisotropy = gd1.getNextNumber();
+		params.useAnisotropyForDoG = RadialSymParams.defaultUseAnisotropyForDoG = gd1.getNextBoolean();
+		params.RANSAC = Ransac.values()[ RadialSymParams.defaultRANSACChoice = gd1.getNextChoiceIndex() ];
+
+		boolean visDetections = RadialSymParams.defaultVisualizeDetections = gd1.getNextBoolean();
+		boolean visInliers = RadialSymParams.defaultVisualizeInliers = gd1.getNextBoolean();
+
 		if (imp.getNChannels() > 1)
-			logService.info(
-					"Multichannel image detected. We recommend to adjust the parameters for each channel separately.");
+		{
+			IJ.log( "Multichannel image detected. Please split by channel and select parameters for each channel separately.");
+			return;
+		}
+
+		if ( params.RANSAC.ordinal() == 2 ) // Multiconsensus RANSAC
+		{
+			GenericDialogPlus gd2 = new GenericDialogPlus( "Multiconsensus RANSAC Options" );
+			gd2.addNumericField( "Min_number_of_inliers", RadialSymParams.defaultMinNumInliers, 0 );
+			gd2.addNumericField( "Initial #inlier threshold for new spot (avg - n*stdev) n=", RadialSymParams.defaultNTimesStDev1, 2 );
+			gd2.addNumericField( "Final #inlier threshold for new spot (avg - n*stdev) n=", RadialSymParams.defaultNTimesStDev2, 2 );
+
+			gd2.showDialog();
+			if ( gd2.wasCanceled() )
+				return;
+
+			params.minNumInliers = RadialSymParams.defaultMinNumInliers = (int)Math.round( gd2.getNextNumber() );
+			params.nTimesStDev1 = RadialSymParams.defaultNTimesStDev1 = gd2.getNextNumber();
+			params.nTimesStDev2 = RadialSymParams.defaultNTimesStDev2 = gd2.getNextNumber();
+		}
+		else
+		{
+			params.minNumInliers = 0;
+		}
 
 		// dirty cast that can't be avoided :(
 		double[] minmax = HelperFunctions.computeMinMax((Img) ImageJFunctions.wrapReal(imp));
@@ -125,43 +118,49 @@ public class Radial_Symmetry extends ContextCommand {
 		float min = (float) minmax[0];
 		float max = (float) minmax[1];
 
-		// set the parameters from the defaults
-		final GUIParams params = new GUIParams();
-		// the 2 below we adjust here because they are defined in the gui
-		params.setAnisotropyCoefficient(anisotropy);
-		params.setRANSAC(RANSAC);
-		params.setGaussFit(gaussFit);
-
-
-		// DEBUG:
-		// System.out.println(gaussFit + " " + RANSAC);
+		IJ.log( "img min=" + min + ", max=" + max );
 
 		// TODO: REMOVE
-		//parameterType = paramChoice[2];
-		//sigma = 1.5f;
-		//threshold = 0.007f;
+		//mode = 1;
+		//params.setSigmaDog( 1.5f );
+		//params.setThresholdDog( 0.007f );
+		//params.setAnisotropyCoefficient( 0.675 );
 
-		if (parameterType.equals(paramChoice[0])) // manual
-		{
-			// set the parameters in the manual mode
-			try {
-				boolean isCanceled = commandService.run(GenericDialogGUIParams.class, true, "guiParams", params).get()
-						.isCanceled();
-				if (isCanceled)
-					return;
-			} catch (Exception e) {
-				logService.info("Internal exception caught");
-				e.printStackTrace();
-			}
-			// calculations are performed further
-		} else if (parameterType.equals(paramChoice[2])) {// advanced
-			params.setAnisotropyCoefficient(anisotropy);
-			params.setSigmaDog(sigma);
-			params.setThresholdDog(threshold);
-			params.setSupportRadius(supportRegion);
-			params.setInlierRatio(inlierRatio);
-			params.setMaxError(maxError);
-		} else // interactive
+		if ( mode == 1) {// advanced
+
+			GenericDialogPlus gd2 = new GenericDialogPlus( "Advanced Options" );
+
+			gd2.addNumericField( "Sigma (DoG)", RadialSymParams.defaultSigma, 5, 15, "" );
+			gd2.addNumericField( "Threshold (DoG)", RadialSymParams.defaultThreshold, 5, 15, "" );
+			gd2.addNumericField( "Support region radius (RANSAC)", RadialSymParams.defaultSupportRadius, 0 );
+			gd2.addNumericField( "Min_inlier_ratio (RANSAC)", RadialSymParams.defaultInlierRatio, 2 );
+			gd2.addNumericField( "Max_error (RANSAC)", RadialSymParams.defaultMaxError, 2 );
+			gd2.addNumericField( "Spot_intensity_threshold", RadialSymParams.defaultIntensityThreshold, 2 );
+
+			gd2.addMessage( "" );
+			gd2.addChoice( "Background subtraction", RadialSymParams.bsMethods, RadialSymParams.bsMethods[ RadialSymParams.defaultBsMethodChoice ]);
+			gd2.addNumericField( "Background_subtraction_max_error", RadialSymParams.defaultBsMaxError, 2 );
+			gd2.addNumericField( "Background_subtraction_min_inlier_ratio", RadialSymParams.defaultBsInlierRatio, 2 );
+
+			gd2.addMessage( "" );
+			gd2.addFileField( "Results_file", RadialSymParams.defaultResultsFilePath );
+
+			gd2.showDialog();
+			if ( gd2.wasCanceled() )
+				return;
+
+			params.sigma = RadialSymParams.defaultSigma = (float)gd2.getNextNumber();
+			params.threshold = RadialSymParams.defaultThreshold = (float)gd2.getNextNumber();
+			params.supportRadius = RadialSymParams.defaultSupportRadius = Math.round( (float)gd2.getNextNumber() );
+			params.inlierRatio = RadialSymParams.defaultInlierRatio = (float)gd2.getNextNumber();
+			params.maxError = RadialSymParams.defaultMaxError = (float)gd2.getNextNumber();
+			params.intensityThreshold = RadialSymParams.defaultIntensityThreshold = gd2.getNextNumber();
+			params.bsMethod = RadialSymParams.defaultBsMethodChoice = gd2.getNextChoiceIndex();
+			params.bsMaxError = RadialSymParams.defaultBsMaxError = (float)gd2.getNextNumber();
+			params.bsInlierRatio = RadialSymParams.defaultBsInlierRatio = (float)gd2.getNextNumber();
+			params.resultsFilePath = RadialSymParams.defaultResultsFilePath = gd2.getNextString().trim();
+		}
+		else // interactive
 		{
 			InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, min, max);
 			do {
@@ -171,18 +170,10 @@ public class Radial_Symmetry extends ContextCommand {
 
 			if (irs.wasCanceled())
 				return;
+
+			// update defaults with selections from the interactive GUI
+			params.setDefaultValuesFromInteractive();
 		}
-
-		// back up the parameter values to the default variables
-		// params.setDefaultValues();
-		if( imp.getDimensions()[3] > 1 )// if non singleton z dimension
-			calibration = HelperFunctions.initCalibration(imp, 3);
-		else
-			calibration = HelperFunctions.initCalibration(imp, 2);
-		System.out.println( "Calibration: " + Util.printCoordinates( calibration ) );
-		//calibration = HelperFunctions.initCalibration(imp, imp.getNDimensions());
-
-		RadialSymmetryParameters rsm = new RadialSymmetryParameters(params, calibration);
 
 		// normalize the whole image if it is possible
 		RandomAccessibleInterval<FloatType> rai;
@@ -207,52 +198,50 @@ public class Radial_Symmetry extends ContextCommand {
 				(a, b) -> b.setReal(a.getRealFloat()),
 				new FloatType());
 
-		RadialSymmetry.processSliceBySlice(input, rai, rsm, impDim, allSpots, timePoint, channelPoint);
+		RadialSymmetry.processSliceBySlice(input, rai, params, impDim, allSpots, timePoint, channelPoint);
 
-		if (parameterType.equals(paramChoice[1])) { // interactive
+		if ( mode == 0 ) { // interactive
 			// TODO: keep here?
 			imp.deleteRoi();
 
 			// shows the histogram and sets the intensity threshold
-			this.histThreshold = Visualization.visuallyDefineThreshold(imp, allSpots, timePoint, showInliers, showDetections,
-					params.getSigmaDoG(), params.getAnisotropyCoefficient());
-			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, histThreshold);
-		} else if (parameterType.equals(paramChoice[0]) || parameterType.equals(paramChoice[2])) { // manual
+			params.intensityThreshold = RadialSymParams.defaultIntensityThreshold = 
+					Visualization.visuallyDefineThreshold(
+							imp, allSpots, timePoint, visInliers, visDetections,
+							params.getSigmaDoG(), params.getAnisotropyCoefficient());
+
+			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
+		}
+		else if ( mode == 1 ) { // advanced
 			// write the result to the csv file
-			IJ.log( "Intensity threshold =" + histThreshold );
-			ResultsTable rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, histThreshold);
-			if( resultsFilePath != "" ) {
-				System.out.println("Writing to results path: " + resultsFilePath);
-				rt.save(resultsFilePath);
+			IJ.log( "Intensity threshold =" + params.intensityThreshold );
+			ResultsTable rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
+
+			if( params.resultsFilePath.length() > 0 )
+			{
+				System.out.println("Writing to results path: " + params.resultsFilePath);
+				rt.save(params.resultsFilePath);
 			}
 		} else
 			System.out.println("Wrong parameters' mode");
 
 	}
 
-	public void setDefaultParams() {
-		// defaultImg = ; // TODO: 
-		// defaultParam = 0;
-		defaultGauss = gaussFit;
-		defaultRANSAC = RANSAC;
-		defaultAnisotropy = anisotropy;
-		defaultDetections = showDetections;
-		defaultInliers = showInliers;
-	}
-
-
-
 	public static void main(String[] args) {
-		net.imagej.ImageJ ij = new net.imagej.ImageJ();
+		//net.imagej.ImageJ ij = new net.imagej.ImageJ();
 		//ij.launch( "/Users/spreibi/Downloads/N2_267-1.tif" );
 		//ij.launch( "/Users/spreibi/Downloads/C0-N2_352_cropped_1240.tif" );
 		//ij.launch( "/home/kharrington/Data/Radial_Symmetry/N2_352-1.tif" );
 
 		//ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_0_I_10000_0_img0.tif");
 		//ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.tif");
-		ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_300spots_bg_200_0_I_10000_0_img0.tif" );
+		//ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_300spots_bg_200_0_I_10000_0_img0.tif" );
 
-		ij.command().run(Radial_Symmetry.class, true);
+		//ij.command().run(Radial_Symmetry.class, true);
+
+		new ImageJ();
+		new ImagePlus("/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.tif" ).show();
+		new Radial_Symmetry().run( null );
 
 	}
 }

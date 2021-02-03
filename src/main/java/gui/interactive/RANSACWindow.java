@@ -11,7 +11,7 @@ import java.awt.Scrollbar;
 import java.awt.TextField;
 
 import gui.interactive.InteractiveRadialSymmetry.ValueChange;
-import parameters.GUIParams;
+import parameters.RadialSymParams;
 
 public class RANSACWindow
 {
@@ -65,7 +65,7 @@ public class RANSACWindow
 
 		final Label bsText = new Label("Local background subtraction:", Label.CENTER);
 		final Choice bsMethodChoice = new Choice();
-		for ( final String s : GUIParams.bsMethods )
+		for ( final String s : RadialSymParams.bsMethods )
 			bsMethodChoice.add( s );
 
 		final Button button = new Button("Done");

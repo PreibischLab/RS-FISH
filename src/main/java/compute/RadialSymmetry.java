@@ -1,18 +1,13 @@
 package compute;
 
 import java.awt.Rectangle;
-import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 import background.NormalizedGradient;
 import background.NormalizedGradientAverage;
 import background.NormalizedGradientMedian;
 import background.NormalizedGradientRANSAC;
-import benchmark.LoadSpotFile;
 import fitting.Center.CenterMethod;
-import fitting.PointFunctionMatch;
 import fitting.Spot;
 import gradient.Gradient;
 import gradient.GradientPreCompute;
@@ -21,18 +16,13 @@ import ij.IJ;
 import intensity.Intensity;
 import net.imglib2.KDTree;
 import net.imglib2.Point;
-import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
-import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.neighborsearch.RadiusNeighborSearch;
 import net.imglib2.neighborsearch.RadiusNeighborSearchOnKDTree;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import parameters.RadialSymParams;
-import test.TestGauss3d;
 
 public class RadialSymmetry {
 	public enum Ransac { NONE, SIMPLE, MULTICONSENSU };
@@ -83,9 +73,9 @@ public class RadialSymmetry {
 		//
 		// ONE IS MISSED WHERE THINGS ARE CLOSE TO EACH OTHER:
 		// 77.757591, 194.33074, 7.099615399999999 -- only found: 79.0, 193.0, 7.0 closest to 79.97478, 192.38965, 6.092944
-		List< mpicbg.models.Point > gt = HelperFunctions.toPoints(
+		//List< mpicbg.models.Point > gt = HelperFunctions.toPoints(
 				//LoadSpotFile.loadSpotsDouble( new File("/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_0_I_10000_0_img0.loc" ) ));
-				LoadSpotFile.loadSpotsDouble( new File( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.loc") ) );
+				//LoadSpotFile.loadSpotsDouble( new File( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.loc") ) );
 				//LoadSpotFile.loadSpotsDouble( new File( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_300spots_bg_200_0_I_10000_0_img0.loc") ) );
 
 		//for ( final mpicbg.models.Point p : gt )
@@ -153,7 +143,7 @@ public class RadialSymmetry {
 
 		IJ.log( "Final #detections (before intensity check): " + rs.spots.size() );
 
-		System.out.println( HelperFunctions.analyzePoints( gt, HelperFunctions.toPointsSpot( rs.spots ), false ) );
+		//System.out.println( HelperFunctions.analyzePoints( gt, HelperFunctions.toPointsSpot( rs.spots ), false ) );
 
 		//SimpleMultiThreading.threadHaltUnClean();
 	}

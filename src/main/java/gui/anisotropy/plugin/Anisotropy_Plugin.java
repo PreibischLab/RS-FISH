@@ -12,7 +12,7 @@ import gui.interactive.HelperFunctions;
 import ij.ImagePlus;
 import parameters.RadialSymParams;
 
-@Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Calculate Anisotropy Coefficient")
+@Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Tools>Calculate Anisotropy Coefficient")
 public class Anisotropy_Plugin implements Command {
 
 	public static String[] paramChoice = new String[] { "Gauss Fit", "Radial Symmetry" };

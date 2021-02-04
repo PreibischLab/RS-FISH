@@ -208,11 +208,19 @@ public class Histogram extends ApplicationFrame
 	public void windowClosing( final WindowEvent evt )
 	{
 		if( evt.getWindow() == this ){
-			
 			dispose();
 		}
 	}
-	
+
+	@Override
+	public void dispose()
+	{
+		if ( detection != null )
+			detection.close();
+
+		super.dispose();
+	}
+
 	public boolean isFinished(){
 		return isFinished;
 	}

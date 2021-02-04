@@ -66,8 +66,8 @@ public class Radial_Symmetry implements PlugIn
 		gd1.addChoice( "Robust_fitting", RadialSymParams.ransacChoice, RadialSymParams.ransacChoice[ RadialSymParams.defaultRANSACChoice ] );
 
 		gd1.addMessage( "Visualization:", new Font( "Default", Font.BOLD, 13 ) );
-		gd1.addCheckbox( "Visualize_Detections", RadialSymParams.defaultVisualizeDetections );
-		gd1.addCheckbox( "Visualize_Inliers (RANSAC)", RadialSymParams.defaultVisualizeInliers );
+		gd1.addCheckbox( "Visually select spots by intensity using a histogram (Interactive Mode only)", RadialSymParams.defaultVisualizeDetections );
+		//gd1.addCheckbox( "Visualize_Inliers (RANSAC)", RadialSymParams.defaultVisualizeInliers );
 
 		gd1.showDialog();
 		if ( gd1.wasCanceled() )
@@ -84,7 +84,7 @@ public class Radial_Symmetry implements PlugIn
 		params.RANSAC = Ransac.values()[ RadialSymParams.defaultRANSACChoice = gd1.getNextChoiceIndex() ];
 
 		boolean visDetections = RadialSymParams.defaultVisualizeDetections = gd1.getNextBoolean();
-		boolean visInliers = RadialSymParams.defaultVisualizeInliers = gd1.getNextBoolean();
+		//boolean visInliers = RadialSymParams.defaultVisualizeInliers = gd1.getNextBoolean();
 
 		if (imp.getNChannels() > 1)
 		{
@@ -207,7 +207,7 @@ public class Radial_Symmetry implements PlugIn
 			// shows the histogram and sets the intensity threshold
 			params.intensityThreshold = RadialSymParams.defaultIntensityThreshold = 
 					Visualization.visuallyDefineThreshold(
-							imp, allSpots, timePoint, visInliers, visDetections,
+							imp, allSpots, timePoint,
 							params.getSigmaDoG(), params.getAnisotropyCoefficient());
 
 			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );

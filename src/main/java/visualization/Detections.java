@@ -124,6 +124,18 @@ public class Detections {
 		isStarted = true;
 	}
 
+	public void close()
+	{
+		try
+		{
+			if ( sliceObserver != null )
+				sliceObserver.unregister();
+		}
+		catch (Exception e) {}
+
+		imp.setOverlay( new Overlay() );
+	}
+
 	// will be triggered by the movement of the slider
 	// TODO: add the threshold value for the overlays that you want to show
 	public void updatePreview(double threshold) {

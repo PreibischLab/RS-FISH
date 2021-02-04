@@ -12,7 +12,7 @@ import org.scijava.plugin.Plugin;
 import gui.csv.overlay.CsvOverlay;
 import ij.ImagePlus;
 
-@Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Show Detections")
+@Plugin(type = Command.class, menuPath = "Plugins>Radial Symmetry Localization>Tools>Show Detections")
 public class CsvOverlay_Plugin implements Command {
 
 	@Parameter(label="Image", autoFill=false)

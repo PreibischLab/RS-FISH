@@ -77,14 +77,9 @@ public class RadialSymmetry {
 				//LoadSpotFile.loadSpotsDouble( new File("/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_0_I_10000_0_img0.loc" ) ));
 				//LoadSpotFile.loadSpotsDouble( new File( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.loc") ) );
 				//LoadSpotFile.loadSpotsDouble( new File( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_300spots_bg_200_0_I_10000_0_img0.loc") ) );
-
 		//for ( final mpicbg.models.Point p : gt )
 		//	System.out.println( Util.printCoordinates( p.getL() ) );
-
 		//System.out.println( HelperFunctions.analyzePoints( gt, HelperFunctions.toPointsLong( simplifiedPeaks ), false ) );
-
-		//p.maxError = 1.5f;
-		//p.supportRadius = 3;
 
 		rs.spots = computeRadialSymmetry(
 				pImg,
@@ -127,6 +122,8 @@ public class RadialSymmetry {
 
 		ImageJFunctions.show( out );
 		ImageJFunctions.show( gtImg );
+
+		SimpleMultiThreading.threadHaltUnClean();
 		*/
 
 		if ( p.RANSAC.ordinal() > 0 )
@@ -138,14 +135,13 @@ public class RadialSymmetry {
 			IJ.log( "#detections (after RANSAC): " + rs.spots.size() );
 		}
 
+		// TODO: trash the one with lower intensity
 		IJ.log( "Filtering double-detections (dist < 0.5 px)");
 		filterDoubleDetections( rs.spots, 0.5 );
 
 		IJ.log( "Final #detections (before intensity check): " + rs.spots.size() );
 
 		//System.out.println( HelperFunctions.analyzePoints( gt, HelperFunctions.toPointsSpot( rs.spots ), false ) );
-
-		//SimpleMultiThreading.threadHaltUnClean();
 	}
 
 	public static void filterDoubleDetections( final ArrayList< Spot > spots, final double threshold )
@@ -222,7 +218,7 @@ public class RadialSymmetry {
 		if (numDimensions == 3)
 			fixAnisotropy(pSpots, pAnisotropy);
 
-		IJ.log("DoG pre-detected spots: " + pSpots.size() + ", " + numIterations  + ", " + pMaxError );
+		IJ.log("DoG pre-detected spots: " + pSpots.size() );//+ ", " + numIterations  + ", " + pMaxError );
 
 		if (ransac != Ransac.NONE )
 		{

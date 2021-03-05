@@ -25,17 +25,17 @@ Important to mention:
 
 1. Preprocessing step
 
-   - Subtract background (median filtering) per plane;
-   - Subtract `medianMedianPerPlane` from each pixel;
-   - Normalize image between [min_intensity, max_intensity] => [0, 1].
+   - Subtract background (median filtering) per plane, [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/Preprocess.java#L447);
+   - Subtract `medianMedianPerPlane` from each pixel, [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/Preprocess.java#L450-L462);
+   - Normalize image between [min_intensity, max_intensity] => [0, 1], [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/Preprocess.java#L474).
 
 2. RS step
 
-   - Run radial symmetry (see parameters' values below);
-   - Filter spots outside embryo (ROI);
-   - Run z-correction on the detected spots (quadratic fit over intensities and z-location).
+   - Run radial symmetry (see parameters' values below), [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/BatchProcess.java#L266);
+   - Filter spots outside embryo (ROI), [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/BatchProcess.java#L285);
+   - Run z-correction on the detected spots (quadratic fit over intensities and z-location), [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/BatchProcess.java#L313).
 
-3. Python step
+3. Python step, [code](https://github.com/PreibischLab/pretty-graphs/blob/master/up-to-date/create-distributions-after-first-run-all-types.ipynb)
 
    - Plot distibutions of the spots;
    - Fit Gamma distibution over the histogram (Gamma is more stable than Gaussian);
@@ -43,7 +43,7 @@ Important to mention:
 
 4. Preprocessing step
 
-   - Normalize image between [min_intensity, max_intensity] => [0, `center`];
+   - Normalize image between [min_intensity, max_intensity] => [0, `center`], [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/Preprocess.java#L509-L521);
 
 5. RS step
 

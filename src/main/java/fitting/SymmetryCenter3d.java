@@ -134,13 +134,15 @@ public class SymmetryCenter3d extends AbstractFunction<SymmetryCenter3d> impleme
 		final double bk = p.getOrientationW()[ 1 ]; 
 		final double ck = p.getOrientationW()[ 2 ]; 
 
+		// 
 		final double dx = xk - xc;
 		final double dy = yk - yc;
 		final double dz = zk - zc;
 		
 		final double tmp1 = ak*dx + bk*dy + ck*dz;
-		
-		return ( dx*dx + dy*dy + dz*dz ) - ( ( tmp1 * tmp1 )/( ak*ak + bk*bk + ck*ck ) );
+	
+		// numerical instabilities can lead to negative square distances
+		return Math.sqrt( Math.max( 0, ( dx*dx + dy*dy + dz*dz ) - ( ( tmp1 * tmp1 )/( ak*ak + bk*bk + ck*ck ) ) ) );
 	}
 
 	@Override
@@ -220,11 +222,11 @@ public class SymmetryCenter3d extends AbstractFunction<SymmetryCenter3d> impleme
 			list.add( new OrientedPoint( p, v, 1 ) );
 		}
 		
-		//list.add( new OrientedPoint( new float[]{ -1, 0, 0 }, new float[]{ 1, 0, 0 }, 1 ) );
-		//list.add( new OrientedPoint( new float[]{ 0, -5, 0 }, new float[]{ 0, 1, 0 }, 1 ) );
-		//list.add( new OrientedPoint( new float[]{ 0.0f, 0, -5 }, new float[]{ 0, 0, 1 }, 1 ) );
+		//list.add( new OrientedPoint( new double[]{ -1, 0, 0 }, new double[]{ 1, 0, 0 }, 1 ) );
+		//list.add( new OrientedPoint( new double[]{ 0, -5, 0 }, new double[]{ 0, 1, 0 }, 1 ) );
+		//list.add( new OrientedPoint( new double[]{ 0.0f, 0, -5 }, new double[]{ 0, 0, 1 }, 1 ) );
 		
-		final SymmetryCenter3d center = new SymmetryCenter3d();
+		SymmetryCenter3d center = new SymmetryCenter3d();
 		
 		center.fitFunction( list );
 		
@@ -234,6 +236,13 @@ public class SymmetryCenter3d extends AbstractFunction<SymmetryCenter3d> impleme
 		{
 			System.out.println( "Distance: " + center.distanceTo( p ) );
 		}
+
+		//center = new SymmetryCenter3d();
+		center.setSymmetryCenter( 0, 0 );
+		center.setSymmetryCenter( 0, 1 );
+		center.setSymmetryCenter( 2, 2 );
+		OrientedPoint op = new OrientedPoint( new double[]{ -10, 0, 0 }, new double[]{ 1, 0, 0 }, 1 );
+		System.out.println( "Test Distance: " + center.distanceTo( op ) );
 	}
 
 	@Override

@@ -1,4 +1,5 @@
 # Radial Symmetry Localization
+
 Implementation of Radial Symmetry Localization for Java using ImgLib2 (http://imglib2.net)
 
 After the Nature Methods paper "Rapid, accurate particle tracking by calculation of radial symmetry centers" by Raghuveer Parthasarathy (http://www.nature.com/nmeth/journal/v9/n7/abs/nmeth.2071.html)
@@ -7,45 +8,50 @@ Including derivation for 3d + integration with RANSAC
 
 License: GPLv2, written by Stephan Preibisch & Timothee Lionnet
 
-# Tutorial 
+## Tutorial
 
 If you are looking for GUI step-by-step guide: https://imagej.net/Radial_Symmetry.
 
-# Running pipeline on cluster 
+## Running pipeline on cluster
 
-Pipeline description 
+Pipeline description
+
 - Filtering images (Median, normalization, z-correction) > what is set to what
 - Computations of the centers for the dected spots
 - Filtering images (Normalization) > what is set to what
 - Perfectly defined spots
 
-
 Important to mention:
 
 1. Preprocessing step
-- Subtract background (median filtering) per plane;
-- Subtract `medianMedianPerPlane` from each pixel;
-- Normalize image between [min_intensity, max_intensity] => [0, 1].
 
-2. RS step 
-- Run radial symmetry (see parameters' values below);
-- Filter spots outside embryo (ROI);
-- Run z-correction on the detected spots (quadratic fit over intensities and z-location).
+   - Subtract background (median filtering) per plane, [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/Preprocess.java#L447);
+   - Subtract `medianMedianPerPlane` from each pixel, [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/Preprocess.java#L450-L462);
+   - Normalize image between [min_intensity, max_intensity] => [0, 1], [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/Preprocess.java#L474).
 
-3. Python step
-- Plot distibutions of the spots;
-- Fit Gamma distibution over the histogram (Gamma is more stable than Gaussian);
-- Find `center` of the distibution. 
+2. RS step
+
+   - Run radial symmetry (see parameters' values below), [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/BatchProcess.java#L266);
+   - Filter spots outside embryo (ROI), [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/BatchProcess.java#L285);
+   - Run z-correction on the detected spots (quadratic fit over intensities and z-location), [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/BatchProcess.java#L313).
+
+3. Python step, [code](https://github.com/PreibischLab/pretty-graphs/blob/master/up-to-date/create-distributions-after-first-run-all-types.ipynb)
+
+   - Plot distibutions of the spots;
+   - Fit Gamma distibution over the histogram (Gamma is more stable than Gaussian);
+   - Find `center` of the distibution.
 
 4. Preprocessing step
-- Normalize image between [min_intensity, max_intensity] => [0, `center`];
+
+   - Normalize image between [min_intensity, max_intensity] => [0, `center`], [code](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/a8a064580af8eaa08d9298dc615bf7e65bacba39/src/main/java/process/radialsymmetry/cluster/Preprocess.java#L509-L521);
 
 5. RS step
-- Run radial symmetry (see parameters' values below).
+
+   - Run radial symmetry (see parameters' values below).
 
 **Folders structure:**
 
-```
+```bash
 |-- centers
 |-- channels
 |-- csv
@@ -71,7 +77,7 @@ Some constants that are used below in naming convention.
 
 Here are the folders with description of the files contained and format.
 
-- `centers` -- format: `all-centers.csv` contains centers of all images from the batch; 
+- `centers` -- format: `all-centers.csv` contains centers of all images from the batch;
 - `channels` -- format: `<channel>-<line>_<id>.tif`; images split into channels.
 - `csv` -- format: `<channel>-<line>_<id>.csv`; csv-files with the detections after 1st RS run.
 - `csv-2` -- format: `<channel>-<line>_<id>.csv`; csv-files with the detections after 2nd RS run.
@@ -82,38 +88,40 @@ Here are the folders with description of the files contained and format.
 - `median` -- format: `<channel>-<line>_<id>.tif`; images after 1st iteration of processing.
 - `median-2` -- format: `<channel>-<line>_<id>.tif`; images after 2nd iteration of processing.
 - `roi` -- format: `<line>_<id>.tif`; masks.
-- `smFISH-database` -- format: `<line>-Table 1.csv`; csv-file with all information about the images. 
+- `smFISH-database` -- format: `<line>-Table 1.csv`; csv-file with all information about the images.
 - `zCorrected` -- format: `<channel>-<line>_<id>.tif`; images after 1st z-correction.
 
-[RadialSymmetryBothSteps.java](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/intron-cluster/src/main/java/cluster/radial/symmetry/process/RadialSymmetryBothSteps.java ) triggers the computations of Radial Symmetry, one has to specify which `step` should be used – 1st or 2nd.   
+[RadialSymmetryBothSteps.java](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/intron-cluster/src/main/java/cluster/radial/symmetry/process/RadialSymmetryBothSteps.java) triggers the computations of Radial Symmetry, one has to specify which `step` should be used – 1st or 2nd.
 
-It contains 2 important functions: 
+It contains 2 important functions:
 
 - `runFullProcess1StepN2` or `runFullProcess1StepSEA12` which processes all images in the folder; way to go if you don't have too many images;
 - `runFullProcess1Step1Image` which process only one specified image; way to go if you have too many images and want to process them in parallel.
 
 **Important:**
-- The parameters for Radial Symmetry runs do not change from experiment-to-experiment and are set to the best I've found empirically: 
 
-```
+- The parameters for Radial Symmetry runs do not change from experiment-to-experiment and are set to the best I've found empirically:
+
+```java
 dogSigma = 1.5
 dogThreshold = 0.0081
 supportRadius = 3
 inlierRatio = 0.37
 maxError = 0.5034
 anisotropyCoefficient = 1.08
-useRansac = true		
+useRansac = true
 ```
 
 [ParametersFirstRun.java](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/intron-cluster/src/main/java/cluster/radial/symmetry/process/parameters/ParametersFirstRun.java) with the parameters.
 
 For the detailed description of the parameters refer to step-by-step [guide](https://imagej.net/Radial_Symmetry#Detailed_Tutorial).
 
-
 TODO:
+
 - how cluster .sh file looks like
 - folder structure, write a script to create all necessary folders before hand
-- remember to write what type of are stored in the folders 
+- remember to write what type of are stored in the folders
 
 TODO:
-- link to the specific class files  
+
+- link to the specific class files

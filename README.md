@@ -96,12 +96,9 @@ _Important: It is OK to skip this step if the objects are more or less round in 
 
 _**Localizing Spots**_
 
-The main RS-FISH plugin can be found under: ```Plugins > RS-FISH > RS-FISH```. There are two different modes of processing images: **interactive** and **advanced**. The Interactive method is used to adjust the parameters for further dataset processing or is the right choice if single images need to be processed. The interactive mode provides the visual feedback necessary to adjust the advanced automated processing parameters on large datasets.
+The main RS-FISH plugin can be found under: ```Plugins > RS-FISH > RS-FISH```. There are two different modes of processing images: **interactive** and **advanced**. The Interactive method is used to adjust the parameters for further dataset processing or is the right choice if single images need to be processed. The interactive mode provides the visual feedback necessary to adjust the advanced automated processing parameters on large datasets.  
 
-
-
-
-<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/smFISH_embryo.png" alt="Fift pop-up" align="center" width="600">
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/smFISH_embryo.png" alt="Fift pop-up" width="600">
 
 _**Interactive mode**_
 
@@ -111,15 +108,13 @@ A window will pop up.
 Ensure that the correct image is chosen in the **Image** drop-down menu. 
 Next, you choose the **Mode** that you want to run RS-FISH in. For finding the best parameters or analyzing a small set of images, choose the **Interactive Mode**. 
 
-
-![Sixt pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/RS_interactive.png)
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/RS_interactive.png" alt="Sixt pop-up" width="600">
 
 **Anisotropy coefficient** defines how much the z-resolution differs from the x/y-resolution. The parameter would be set automatically if you ran the **Calculate Anisotropy Coefficient** plugin before-hand (```Plugins > RS-FISH > Calculate Anisotropy Coefficient```). In general, 1.0 gives a good result if the spots are somewhat round in 3d. You can choose to use the same anisotropy coefficient for computing the Difference of Gaussian (DoG), which will lead to a more robust DoG detection for anisotropic spots.
 
 There are various options for **Robust fitting Computation**. 
 
-
-![Seventh pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/select_RANSAC.png)
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/select_RANSAC.png" alt="Seventh pop-up" width="600">
 
 * **RANSAC** defines if you want to use radial symmetry with robust outlier removal, it will identify all gradients within every local patch that supports the same center point (Fig. 1)
 * **No RANSAC** for the use of radial symmetry without robust outlier removal, simply all gradients of a local spot will be used to compute the center point (classic RS)
@@ -130,10 +125,8 @@ The last option during this first step is whether you want to visually select th
 Once you are done with the settings, press the **OK** button.
 In the second step, and based on your selection, multiple windows will open. 
 
-
-![Eight pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/adjust_DoG_values.png)
-
-![Ninth pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/detection_preview.png)
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/adjust_DoG_values.png" alt="Eight pop-up" width="600">
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/detection_preview.png" alt="Ninth pop-up" width="600">
 
 In the **Difference of Gaussian** window, you can adjust the parameters for the initial detection of the spots. The goal of this step is to minimize false detections. Adjust the **Sigma** and **Threshold** slider so that the red circles in the image detect as many single spots as possible. Try to slightly find more spots if you chose RANSAC; the RANSAC window allows additional restrictive settings. If you are working with a 3D stack, it helps to move through z while adjusting the parameters as the red circle appears only in the z-slices where the signal is the strongest. It can help to adjust the yellow preview box during this step. If the image is very large, it can help to choose a smaller box to speed up the visualization (the detection will be performed in the whole image). 
 

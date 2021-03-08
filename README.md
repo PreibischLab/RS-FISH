@@ -157,7 +157,7 @@ The Background removal step allows you to remove a non-planar background prior t
 Once the parameters are adjusted, hit any of the **Done** buttons and wait a bit while the computations are performed.
 
 
-![Thirteenth pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/Intensity_distribution.png)
+![Thirteenth pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/intensity_distribution.png)
 ![Fourteenth pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/display_spots.png)
 
 If you selected the “visually select the spots from an Intensity histogram” option, you would have the option of thresholding the detected spots based on their intensity in the next window. The **Intensity distribution** window displays all detected spots and their corresponding intensity value as a histogram. By clicking at an intensity value in the histogram, the blue thresholding bar can be adjusted. All spots that currently pass the thresholding are displayed in the image window and marked by a red circle. If you are satisfied with the selected spots, press the **OK** button and continue to the results table. 
@@ -167,7 +167,7 @@ If you selected the “visually select the spots from an Intensity histogram” 
 The **Log** window gives you a summary of all spots found at every step and the final number of detections. The **Results table** contains the spot coordinates, time, channel, and intensity values in the corresponding columns. You can save the results and use them in the **Show Detections** part of the plugin to visualize all found spots’ locations. 
 
 
-![Sixteenth pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/Results_csv.png)
+![Sixteenth pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/results_csv.png)
 
 
 _**Advanced mode**_

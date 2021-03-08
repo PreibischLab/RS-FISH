@@ -22,6 +22,7 @@ import fitting.Center.CenterMethod;
 import fitting.PointFunctionMatch;
 import fitting.Spot;
 import gradient.Gradient;
+import gradient.GradientOnDemand;
 import gradient.GradientPreCompute;
 import ij.IJ;
 import ij.ImageJ;
@@ -50,6 +51,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import parameters.RadialSymParams;
+import radial.symmetry.utils.DoGDetection;
 
 public class InteractiveRadialSymmetry// extends GUIParams
 {
@@ -194,8 +196,8 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			rectangle = new Rectangle(
 					imagePlus.getWidth() / 4,
 					imagePlus.getHeight() / 4,
-					imagePlus.getWidth() / 2,
-					imagePlus.getHeight() / 2);
+					Math.min( 100, imagePlus.getWidth() / 2 ),
+					Math.min( 100, imagePlus.getHeight() / 2) );
 
 			imagePlus.setRoi( rectangle );
 		}
@@ -307,7 +309,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		if (params.getRANSAC().ordinal() != 0){
 
-			Spot.ransac(spots, RadialSymmetry.numIterations, params.getMaxError(), params.getInlierRatio(), 0, false, 0.0, 0.0, null, null, null, null, true);
+			Spot.ransac(spots, 100, params.getMaxError(), params.getInlierRatio(), 0, false, 0.0, 0.0, null, null, null, null, true);
 			for (final Spot spot : spots)
 				spot.computeAverageCostInliers();
 		}
@@ -613,7 +615,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		if (roiChanged || peaks == null || change == ValueChange.SIGMA || change == ValueChange.SLICE || change == ValueChange.ALL )
 		{
 			dogDetection( extendedRoi );
-			derivative = new GradientPreCompute( extendedRoi );
+			derivative = new GradientOnDemand( extendedRoi );//new GradientPreCompute( extendedRoi );
 		}
 
 		final double radius = ( params.getSigmaDoG() + HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity  ) );
@@ -641,8 +643,21 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		if ( calibration.length == 3 )
 			calibration[ 2 ] = params.useAnisotropyForDoG ? (1.0/params.anisotropyCoefficient) : 1.0;
 
-		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA, InteractiveRadialSymmetry.thresholdMin, false);
-		peaks = dog2.getSubpixelPeaks(); 
+		final DoGDetection<FloatType> dog2 =
+				new DoGDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DoGDetection.ExtremaType.MINIMA, InteractiveRadialSymmetry.thresholdMin, false);
+		//final DogDetection<FloatType> dog2 =
+				//new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA, InteractiveRadialSymmetry.thresholdMin, false);
+
+		ArrayList<Point> simplePeaks = dog2.getPeaks();
+		RandomAccess dog = (Views.extendBorder(dog2.getDogImage())).randomAccess();
+
+		peaks = new ArrayList<>();
+		for ( final Point p : simplePeaks )
+		{
+			dog.setPosition( p );
+			peaks.add( new RefinedPeak<Point>( p, p, ((RealType)dog.get()).getRealDouble(), true ) );
+		}
+		//peaks = dog2.getSubpixelPeaks(); 
 	}
 
 	// APPROVED:

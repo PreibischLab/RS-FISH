@@ -9,6 +9,7 @@ _**For further details have a look at the paper:**_
 <br />
 
 _**RS-FISH: Precise, interactive and scalable smFISH spot detection using Radial Symmetry**_
+
 Ella Bahry, Laura Breimann, Leo Epstein, Klim Kolyvanov, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch
 bioRxiv XX; doi: XX
 
@@ -17,7 +18,7 @@ bioRxiv XX; doi: XX
 * _**1.	Introduction & Overview**_
 * _**2.	Download**_
 * _**3.	RS-FISH tutorial**_
-* _**4.	Batch processing with RS-FISH**_
+* _**4.	Batch processing using RS-FISH**_
 
 <br />
 <br />
@@ -55,9 +56,15 @@ The simulation data that generated to benchmark the method can be downloaded [he
 
 
 
+### 3.	Running RS-FSIH
+
+<br />
 
 
 
+
+
+### 4.	Batch processing using RS-FISH
 
 #
 

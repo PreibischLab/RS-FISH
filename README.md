@@ -68,12 +68,12 @@ Since the effective size of objects along the z-axis is usually different than i
 
 -image-
 
-Open the image with the beads or the smFISH detections and navigate to the ```Plugins > RS-FISH >Tools> Calculate Anisotropy Coefficient```.
+Open the image with the beads or the smFISH detections and navigate to the ```Plugins > RS-FISH > Tools > Calculate Anisotropy Coefficient```.
 You will see the dialog window:
 
 - image- 
 
-Make sure your bead image is selected in the Image drop-down menu. Next, you can choose between two Detection methods: Gauss fit or Radial Symmetry. If you have fewer detections Gaussian fit might be the better choice, however, both methods usually provide reasonable results. It can even be useful to simply average the results of both methods. The resulting number can be visually confirmed by turning the input image around its x or y-axis (Image > Stacks > Reslice > Top) as it simply describes the ratio of the size in z versus xy.
+Make sure your bead image is selected in the Image drop-down menu. Next, you can choose between two Detection methods: Gauss fit or Radial Symmetry. If you have fewer detections Gaussian fit might be the better choice, however, both methods usually provide reasonable results. It can even be useful to simply average the results of both methods. The resulting number can be visually confirmed by turning the input image around its x or y-axis (```Image > Stacks > Reslice > Top```) as it simply describes the ratio of the size in z versus xy.
 After you choose a detection method, two windows will open once you press OK. 
 
 - image -
@@ -91,14 +91,14 @@ _**Localizing Spots**_
 The main RS-FISH plugin can be found under: Plugins > RS-FISH > RS-FISH. There are two different modes of processing images: interactive and advanced. The Interactive method is used to adjust the parameters for further dataset processing or is the right choice if single images need to be processed. The interactive mode provides the visual feedback necessary to adjust the advanced automated processing parameters on large datasets.
 
 _**Interactive mode**_
-Open a 2D or 3D single-channel image for analysis and navigate to the 'Plugins' menu under 'Radial Symmetry Localization' > 'Radial Symmetry'.
+Open a 2D or 3D single-channel image for analysis and navigate to the ```Plugins``` menu under ```Radial Symmetry Localization > Radial Symmetry```.
 A window will pop up.
 
 Ensure that the correct image is chosen in the Image drop-down menu. 
 Next, you choose the Mode that you want to run RS-FISH in. For finding the best parameters or analyzing a small set of images, choose the Interactive Mode. 
  - image- 
 
-Anisotropy coefficient defines how much the z-resolution differs from the x/y-resolution. The parameter would be set automatically if you ran the 'Calculate Anisotropy Coefficient' plugin before-hand (Plugins > RS-FISH > Calculate Anisotropy Coefficient'). In general, 1.0 gives a good result if the spots are somewhat round in 3d. You can choose to use the same anisotropy coefficient for computing the Difference of Gaussian (DoG), which will lead to a more robust DoG detection for anisotropic spots.
+Anisotropy coefficient defines how much the z-resolution differs from the x/y-resolution. The parameter would be set automatically if you ran the 'Calculate Anisotropy Coefficient' plugin before-hand (```Plugins > RS-FISH > Calculate Anisotropy Coefficient```). In general, 1.0 gives a good result if the spots are somewhat round in 3d. You can choose to use the same anisotropy coefficient for computing the Difference of Gaussian (DoG), which will lead to a more robust DoG detection for anisotropic spots.
 
 There are various options for Robust fitting Computation. 
 
@@ -152,7 +152,7 @@ After you press OK, the computation is done in all RS-FISH steps automatically, 
 
 Scripting / headless
 
-When using the advanced more you can simply record the parameters you used for running RS-FISH (Plugins > Macro > Record). You are then able to apply it to a set of images using the Fiji/ImageJ macro language.
+When using the advanced more you can simply record the parameters you used for running RS-FISH (```Plugins > Macro > Record```). You are then able to apply it to a set of images using the Fiji/ImageJ macro language.
 
 - image - 
 
@@ -160,7 +160,7 @@ When using the advanced more you can simply record the parameters you used for r
 
 _**Showing Detections**_
 
-After RS-FISH computed all spots, you can save the result table as CSV. The Show Detections plugins (Plugins > RS-FISH > Tools > Show Detections) then allows you to overlay all spots stored in a CSV onto the current image for visual inspection of the final result.
+After RS-FISH computed all spots, you can save the result table as CSV. The Show Detections plugins (```Plugins > RS-FISH > Tools > Show Detections```) then allows you to overlay all spots stored in a CSV onto the current image for visual inspection of the final result.
 
 
 

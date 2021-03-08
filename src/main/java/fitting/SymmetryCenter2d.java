@@ -114,7 +114,8 @@ public class SymmetryCenter2d extends AbstractFunction<SymmetryCenter2d> impleme
 		
 		final double tmp1 = ak*dx + bk*dy;
 		
-		return ( dx*dx + dy*dy ) - ( ( tmp1 * tmp1 )/( ak*ak + bk*bk ) );
+		// numerical instabilities can lead to negative square distances
+		return Math.sqrt( Math.max( 0, ( dx*dx + dy*dy ) - ( ( tmp1 * tmp1 )/( ak*ak + bk*bk ) ) ) );
 	}
 
 	@Override
@@ -186,11 +187,7 @@ public class SymmetryCenter2d extends AbstractFunction<SymmetryCenter2d> impleme
 		
 			list.add( new OrientedPoint( p, v, 1 ) );
 		}
-		
-		//list.add( new OrientedPoint( new float[]{ -1, 0, 0 }, new float[]{ 1, 0, 0 }, 1 ) );
-		//list.add( new OrientedPoint( new float[]{ 0, -5, 0 }, new float[]{ 0, 1, 0 }, 1 ) );
-		//list.add( new OrientedPoint( new float[]{ 0.0f, 0, -5 }, new float[]{ 0, 0, 1 }, 1 ) );
-		
+
 		final SymmetryCenter2d center = new SymmetryCenter2d();
 		
 		center.fitFunction( list );
@@ -201,6 +198,12 @@ public class SymmetryCenter2d extends AbstractFunction<SymmetryCenter2d> impleme
 		{
 			System.out.println( "Distance: " + center.distanceTo( p ) );
 		}
+
+		center.setSymmetryCenter( 0, 0 );
+		center.setSymmetryCenter( 10, 1 );
+		OrientedPoint op = new OrientedPoint( new double[]{ -10, 0 }, new double[]{ 1, 0 }, 1 );
+		System.out.println( "Test Distance: " + center.distanceTo( op ) );
+
 	}
 
 	@Override

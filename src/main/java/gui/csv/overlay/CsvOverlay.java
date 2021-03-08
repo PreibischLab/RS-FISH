@@ -25,15 +25,15 @@ public class CsvOverlay {
 		this.imp = imp;
 		this.csvPath = csvPath;
 		// TODO: detect the separator automatically
-		this.peaks = readAndSortPositionsFromCsv(csvPath, '\t');
+		this.peaks = readAndSortPositionsFromCsv(csvPath);
 		// add listener to the imageplus slice slider
 		sliceObserver = new SliceObserver(imp, new ImagePlusListener( this ));
 		// to prevent any concurrency bugs 
 		this.isStarted = true;
 	}
 
-	public static ArrayList< RealPoint >  readAndSortPositionsFromCsv(File csvPath, char separator) {
-		ArrayList<RealPoint> peaks = IOUtils.readPositionsFromCSV(csvPath, separator);
+	public static ArrayList< RealPoint >  readAndSortPositionsFromCsv(File csvPath) {
+		ArrayList<RealPoint> peaks = IOUtils.readPositionsFromCSV(csvPath);
 		Collections.sort(peaks, new CustomComparators().new PosComparator());
 		return peaks;
 	}

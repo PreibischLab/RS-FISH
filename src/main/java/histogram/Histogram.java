@@ -61,7 +61,7 @@ public class Histogram extends ApplicationFrame
 		final JFreeChart chart = createChart( dataset, title, units );
 		final ChartPanel chartPanel = new ChartPanel( chart );
 		
-		double startValue = getMin() + ( getMax() - getMin() ) / 2;
+		double startValue = getMin() + ( getMax() - getMin() ) / 10;
 		this.histThresold = startValue;
 		
 		chartPanel.addChartMouseListener( new MouseListenerValue( this, chartPanel, startValue, detection));

@@ -122,8 +122,8 @@ public class Radial_Symmetry implements PlugIn
 
 		// TODO: REMOVE
 		//mode = 1;
-		//params.setSigmaDog( 1.5f );
-		//params.setThresholdDog( 0.007f );
+		//RadialSymParams.defaultSigma = 2.0f;
+		//RadialSymParams.defaultThreshold =  0.02f;
 		//params.setAnisotropyCoefficient( 0.675 );
 
 		if ( mode == 1) {// advanced
@@ -241,6 +241,7 @@ public class Radial_Symmetry implements PlugIn
 
 		new ImageJ();
 		new ImagePlus("/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.tif" ).show();
+		//new ImagePlus( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_0_I_10000_0_img0.tif" ).show();
 		new Radial_Symmetry().run( null );
 
 	}

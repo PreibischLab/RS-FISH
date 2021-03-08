@@ -71,14 +71,17 @@ Since the effective size of objects along the z-axis is usually different than i
 Open the image with the beads or the smFISH detections and navigate to the ```Plugins > RS-FISH > Tools > Calculate Anisotropy Coefficient```.
 You will see the dialog window:
 
-- image- 
+![Second pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/documents/Tutorial_screenshots/calculate_anisotropy_coefficient.png)
 
 Make sure your bead image is selected in the **Image** drop-down menu. Next, you can choose between two **Detection methods**: **Gauss fit** or **Radial Symmetry**. If you have fewer detections Gaussian fit might be the better choice, however, both methods usually provide reasonable results. It can even be useful to simply average the results of both methods. The resulting number can be visually confirmed by turning the input image around its x or y-axis (```Image > Stacks > Reslice > Top```) as it simply describes the ratio of the size in z versus xy.
 After you choose a detection method, two windows will open once you press **OK**. 
 
-- image -
+![Third pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/documents/Tutorial_screenshots/adjust_DoG.png)
 
 In the **Adjust difference-of-gaussian values** window, you can choose **Sigma** and **Threshold** values to detect the majority of subpixel resolution spots.
+
+![Fourth pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/documents/Tutorial_screenshots/one_spot_detected.png)
+
 Once you are done – press the **Done** button.
 
 Depending on the number of spots, the calculations might take some time as the Gaussian fit is slower and the RS-RANSAC needs to iterate over a range of potential anisotropy coefficients. The program will calculate the corresponding anisotropy coefficient, which shows how we should squeeze the objects in the z-axis to make them look radially symmetric.
@@ -92,6 +95,11 @@ _Important: It is OK to skip this step if the objects are more or less round in 
 _**Localizing Spots**_
 
 The main RS-FISH plugin can be found under: ```Plugins > RS-FISH > RS-FISH```. There are two different modes of processing images: **interactive** and **advanced**. The Interactive method is used to adjust the parameters for further dataset processing or is the right choice if single images need to be processed. The interactive mode provides the visual feedback necessary to adjust the advanced automated processing parameters on large datasets.
+
+
+
+![Fift pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/documents/Tutorial_screenshots/smFISH_embryo.png)
+
 
 _**Interactive mode**_
 

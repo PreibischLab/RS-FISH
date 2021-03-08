@@ -66,21 +66,21 @@ _**Calculating Anisotropy Coefficient**_
 
 Since the effective size of objects along the z-axis is usually different than in the x- and y-axis of your images, you should correct this to achieve a more accurate smFISH detection. To estimate your anisotropy coefficient, you can acquire a fluorescent bead image on the same microscope, using the same settings and equipment or you can use the smFISH image directly.
 
-![First pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/documents/Tutorial_screenshots/one_spot.png)
+![First pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/one_spot.png)
 
 Open the image with the beads or the smFISH detections and navigate to the ```Plugins > RS-FISH > Tools > Calculate Anisotropy Coefficient```.
 You will see the dialog window:
 
-![Second pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/documents/Tutorial_screenshots/calculate_anisotropy_coefficient.png)
+![Second pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/calculate_anisotropy_coefficient.png)
 
 Make sure your bead image is selected in the **Image** drop-down menu. Next, you can choose between two **Detection methods**: **Gauss fit** or **Radial Symmetry**. If you have fewer detections Gaussian fit might be the better choice, however, both methods usually provide reasonable results. It can even be useful to simply average the results of both methods. The resulting number can be visually confirmed by turning the input image around its x or y-axis (```Image > Stacks > Reslice > Top```) as it simply describes the ratio of the size in z versus xy.
 After you choose a detection method, two windows will open once you press **OK**. 
 
-![Third pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/documents/Tutorial_screenshots/adjust_DoG.png)
+![Third pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/adjust_DoG.png)
 
 In the **Adjust difference-of-gaussian values** window, you can choose **Sigma** and **Threshold** values to detect the majority of subpixel resolution spots.
 
-![Fourth pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/documents/Tutorial_screenshots/one_spot_detected.png)
+![Fourth pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/one_spot_detected.png)
 
 Once you are done – press the **Done** button.
 
@@ -98,7 +98,7 @@ The main RS-FISH plugin can be found under: ```Plugins > RS-FISH > RS-FISH```. T
 
 
 
-![Fift pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/documents/Tutorial_screenshots/smFISH_embryo.png)
+![Fift pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/smFISH_embryo.png)
 
 
 _**Interactive mode**_

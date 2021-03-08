@@ -10,8 +10,10 @@ _**For further details have a look at the paper:**_
 
 _**RS-FISH: Precise, interactive and scalable smFISH spot detection using Radial Symmetry**_
 
-Ella Bahry*, Laura Breimann*, Leo Epstein*, Klim Kolyvanov, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch
-bioRxiv XX; doi: XX
+Ella Bahry\*, Laura Breimann\*, Leo Epstein\*, Klim Kolyvanov, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch  
+bioRxiv XX; doi: XX  
+
+\* equal contribution  
 
 ### Content
 
@@ -56,7 +58,7 @@ The simulation data that was generated to benchmark the method can be downloaded
 
 
 
-### 3.	Running RS-FSIH
+### 3.	Running RS-FISH
 
 <br />
 
@@ -98,7 +100,7 @@ The main RS-FISH plugin can be found under: ```Plugins > RS-FISH > RS-FISH```. T
 
 
 
-![Fift pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/smFISH_embryo.png)
+![Fift pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/smFISH_embryo.png|width=100)
 
 
 _**Interactive mode**_

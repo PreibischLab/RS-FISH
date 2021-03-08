@@ -36,7 +36,7 @@ Implementation of Radial Symmetry Localization for Java using ImgLib2 (http://im
 
 After the Nature Methods paper "Rapid, accurate particle tracking by calculation of radial symmetry centers" by Raghuveer Parthasarathy (http://www.nature.com/nmeth/journal/v9/n7/abs/nmeth.2071.html)
 
-Including derivation for 3d + integration with RANSAC
+Including derivation for 3D + integration with RANSAC
 
 <br />
 <br />
@@ -49,7 +49,7 @@ The source code is available on [GitHub](https://github.com/PreibischLab/RadialS
 
 <br />
 
-The simulation data that was generated to benchmark the method can be downloaded [here](https://github.com/PreibischLab/RadialSymmetryLocalization/documents/Simulation_of_data). The smFISH image of the C. elegans emrbyo can be found [here](https://github.com/PreibischLab/RadialSymmetryLocalization/documents/Example_smFISH_images)
+The simulation data that was generated to benchmark the method can be downloaded [here](https://github.com/PreibischLab/RadialSymmetryLocalization/documents/Simulation_of_data). The smFISH image of the _C. elegans_ emrbyo can be found [here](https://github.com/PreibischLab/RadialSymmetryLocalization/documents/Example_smFISH_images)
 
 <br />
 <br />
@@ -82,8 +82,10 @@ In the **Adjust difference-of-gaussian values** window, you can choose **Sigma**
 Once you are done – press the **Done** button.
 
 Depending on the number of spots, the calculations might take some time as the Gaussian fit is slower and the RS-RANSAC needs to iterate over a range of potential anisotropy coefficients. The program will calculate the corresponding anisotropy coefficient, which shows how we should squeeze the objects in the z-axis to make them look radially symmetric.
+
 The Log window will show the corresponding anisotropy value, and it should be transferred to the next step automatically.
-Important: It is OK to skip this step if the objects are more or less round in 3D. The plugin will be able to do a decent job even with the default value of the anisotropy coefficient. However, we advise performing this prior to actual RS detection.
+
+_Important: It is OK to skip this step if the objects are more or less round in 3D. The plugin will be able to do a decent job even with the default value of the anisotropy coefficient. However, we advise performing this prior to actual RS detection._
 
 
 
@@ -117,7 +119,7 @@ In the second step, and based on your selection, multiple windows will open.
 
 In the **Difference of Gaussian** window, you can adjust the parameters for the initial detection of the spots. The goal of this step is to minimize false detections. Adjust the **Sigma** and **Threshold** slider so that the red circles in the image detect as many single spots as possible. Try to slightly find more spots if you chose RANSAC; the RANSAC window allows additional restrictive settings. If you are working with a 3D stack, it helps to move through z while adjusting the parameters as the red circle appears only in the z-slices where the signal is the strongest. It can help to adjust the yellow preview box during this step. If the image is very large, it can help to choose a smaller box to speed up the visualization (the detection will be performed in the whole image). 
 
-Important: If you choose to run RANSAC robust fitting, don’t click the Done button on the Difference of Gaussian window at this step; simply continue setting the parameters in the Adjust RANSAC values window.
+_Important: If you choose to run RANSAC robust fitting, don’t click the Done button on the Difference of Gaussian window at this step; simply continue setting the parameters in the Adjust RANSAC values window._
 
 - image - 
 
@@ -125,7 +127,7 @@ The **Adjust RANSAC values** dialog allows you to find the right setting for the
 
 While moving the sliders, you will see the updates in both image windows. Firstly the **RANSAC preview** window displays the pixels used by RANSAC and the error values at each of the used pixels. The second window is the initial image window with the preview of the detections. Additionally to the red circles, the blue crosses indicate spots that were detected using RANSAC outlier removal. So the goal of this part is to find all spots with a red circle and a blue cross inside while not detecting noise or background.   
  
-The Background removal step allows you to remove a non-planar background prior to computing the RS. It will try to estimate a plane using the intensity values of the edges of each local patch using any of the outlined methods. Note: constant backgrounds do not need to be removed, only if strong gradients are present.
+The Background removal step allows you to remove a non-planar background prior to computing the RS. It will try to estimate a plane using the intensity values of the edges of each local patch using any of the outlined methods. _Note: constant backgrounds do not need to be removed, only if strong gradients are present._
 
 - image - 
 

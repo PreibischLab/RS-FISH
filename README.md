@@ -10,7 +10,7 @@ _**For further details have a look at the paper:**_
 
 _**RS-FISH: Precise, interactive and scalable smFISH spot detection using Radial Symmetry**_
 
-Ella Bahry, Laura Breimann, Leo Epstein, Klim Kolyvanov, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch
+Ella Bahry*, Laura Breimann*, Leo Epstein*, Klim Kolyvanov, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch
 bioRxiv XX; doi: XX
 
 ### Content
@@ -66,7 +66,7 @@ _**Calculating Anisotropy Coefficient**_
 
 Since the effective size of objects along the z-axis is usually different than in the x- and y-axis of your images, you should correct this to achieve a more accurate smFISH detection. To estimate your anisotropy coefficient, you can acquire a fluorescent bead image on the same microscope, using the same settings and equipment or you can use the smFISH image directly.
 
--image-
+![First pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/documents/Tutorial_screenshots/one_spot.png)
 
 Open the image with the beads or the smFISH detections and navigate to the ```Plugins > RS-FISH > Tools > Calculate Anisotropy Coefficient```.
 You will see the dialog window:

@@ -100,6 +100,9 @@ The main RS-FISH plugin can be found under: ```Plugins > RS-FISH > RS-FISH```. T
 
 
 
+
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/smFISH_embryo.png" alt="Fift pop-up" width="200">
+
 ![Fift pop-up](https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/smFISH_embryo.png | width=100)
 
 

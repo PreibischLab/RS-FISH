@@ -68,7 +68,7 @@ Since the effective size of objects along the z-axis is usually different than i
 
 -image-
 
-Open the image with the beads or the smFISH detections and navigate to the 'Plugins' > 'RS-FISH' >’Tools’> 'Calculate Anisotropy Coefficient'.
+Open the image with the beads or the smFISH detections and navigate to the ```Plugins > RS-FISH >Tools> Calculate Anisotropy Coefficient```.
 You will see the dialog window:
 
 - image- 

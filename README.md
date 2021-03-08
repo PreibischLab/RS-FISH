@@ -49,7 +49,7 @@ The source code is available on [GitHub](https://github.com/PreibischLab/RadialS
 
 <br />
 
-The simulation data that was generated to benchmark the method can be downloaded [here](https://github.com/PreibischLab/RadialSymmetryLocalization/documents/Simulation_of_data). The smFISH image of the _C. elegans_ emrbyo can be found [here](https://github.com/PreibischLab/RadialSymmetryLocalization/documents/Example_smFISH_images)
+The simulation data that was generated to benchmark the method can be downloaded [here](https://github.com/PreibischLab/RadialSymmetryLocalization/documents/Simulation_of_data ). The smFISH image of the _C. elegans_ emrbyo can be found [here](https://github.com/PreibischLab/RadialSymmetryLocalization/documents/Example_smFISH_images )
 
 <br />
 <br />

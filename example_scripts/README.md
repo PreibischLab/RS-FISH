@@ -26,8 +26,9 @@ Steps:
 `fiji_dir_path/ImageJ-linux64 --headless --run /path/to/this/script/RS_macro.ijm &> /path/to/where/you/want/yourlogfile.log`  
 
 The macro described runs the same command as the command that is recorded if you record running the RS plugin in advanced mode.  
-Command Template:  
-`run("Radial Symmetry", "image=" + imName + 
+Command Template:
+
+`parameterString = "image=" + imName + 
 	" mode=Advanced anisotropy=" + aniso + " use_anisotropy" +
 	" robust_fitting=RANSAC" +
 	" sigma=" + sig + 
@@ -37,10 +38,12 @@ Command Template:
 	" max_error=" + maxErr +
 	" spot_intensity_threshold=" + intesThr +
 	" background=[No background subtraction]" +
-	" results_file=[" + results_csv_path + "]");`  
-
+	" results_file=[" + results_csv_path + "]"`
+	
+`run("Radial Symmetry", parameterString);`  
+	
 Example command:  
-`run("Radial Symmetry", "image=myimg.tif mode=Advanced anisotropy=0.75 use_anisotropy robust_fitting=RANSAC sigma=1.5 threshold=0.05 support= min_inlier_ratio=0.3 max_error=0.3 spot_intensity_threshold=0 background=[No background subtraction]" results_file=["path/to/result/file.txt"]);`  
+`run("Radial Symmetry", "image=myimg.tif mode=Advanced anisotropy=0.75 use_anisotropy robust_fitting=RANSAC sigma=1.5 threshold=0.008 support=3 min_inlier_ratio=0.3 max_error=0.5 spot_intensity_threshold=0 background=[No background subtraction]" results_file=["path/to/result/file.txt"]);`  
 
 Warning - running the tool/macro with a combination of parameters where `sigma<1.5`, `threshold<0.002`, and `Support region>=3` will cause both longer running times and requires bigger memory, especially on bigger images.
 

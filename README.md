@@ -3,8 +3,7 @@
 # RS-FISH documentation
 
 </div>
-**RS-FISH: Precise, interactive and scalable smFISH spot detection using Radial Symmetry**
-
+## RS-FISH: Precise, interactive and scalable smFISH spot detection using Radial Symmetry
 Ella Bahry\*, Laura Breimann\*, Leo Epstein\*, Klim Kolyvanov, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch  
 bioRxiv XX; doi: XX  
 \* equal contribution  

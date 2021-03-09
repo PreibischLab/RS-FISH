@@ -19,7 +19,7 @@ bioRxiv XX; doi: XX
 
 ### Content
 
-* _**1.	Introduction & Overview**_
+* _**1.	Abstract & Availability**_
 * _**2.	Download**_
 * _**3.	RS-FISH tutorial**_
 * _**4.	Batch processing using RS-FISH**_

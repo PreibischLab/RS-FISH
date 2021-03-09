@@ -134,7 +134,7 @@ _Important: If you choose to run RANSAC robust fitting, don’t click the Done b
 
 The **Adjust RANSAC values** dialog allows you to find the right setting for the robust outlier removal. The **Support Region Radius** defines the radius for each spot in which gradients are extracted for RS. You might want to play with this parameter. Sometimes it is helpful to increase the radius and decrease the Inlier Ratio at the same time. The **Inlier ratio** defines the ratio of the gradients (i.e. pixels) that have to support the RS center point (Simply speaking, the ratio of pixels should 'belong' to the current spot), given the **Max error** that defines maximally allowed error for RS fitting (see Fig. 1). 
 
-<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/adjust_RANSAC_preview.png" alt="RS_FISH RANSAC preview" width="600">
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/RANSAC_preview.png" alt="RS_FISH RANSAC preview" width="600">
 
 While moving the sliders, you will see the updates in both image windows. Firstly the **RANSAC preview** window displays the pixels used by RANSAC and the error values at each of the used pixels. The second window is the initial image window with the preview of the detections. Additionally to the red circles, the blue crosses indicate spots that were detected using RANSAC outlier removal. So the goal of this part is to find all spots with a red circle and a blue cross inside while not detecting noise or background.   
  

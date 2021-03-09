@@ -150,7 +150,7 @@ The Background removal step allows you to remove a non-planar background prior t
 Once the parameters are adjusted, hit any of the **Done** buttons and wait a bit while the computations are performed.
 
 <img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/intensity_distribution.png" alt="RS_FISH screenshot intensity distribution histogram" width="600">
-<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/display_spots.png" alt="RS_FISH display spots" width="600">s
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/display_spots.png" alt="RS_FISH display spots" width="600">
 
 If you selected the “visually select the spots from an Intensity histogram” option, you would have the option of thresholding the detected spots based on their intensity in the next window. The **Intensity distribution** window displays all detected spots and their corresponding intensity value as a histogram. By clicking at an intensity value in the histogram, the blue thresholding bar can be adjusted. All spots that currently pass the thresholding are displayed in the image window and marked by a red circle. If you are satisfied with the selected spots, press the **OK** button and continue to the results table. 
 

@@ -29,8 +29,7 @@ public class RadialSymParams {
 	public static int defaultMode = 0;
 	public static int defaultImg = 0;
 
-	public static boolean defaultVisualizeDetections = true;
-	//public static boolean defaultVisualizeInliers = true;
+	public static boolean defaultAddToROIManager = false;
 
 	public static String defaultResultsFilePath = "";
 

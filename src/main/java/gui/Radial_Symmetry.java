@@ -16,8 +16,10 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.PointRoi;
 import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
+import ij.plugin.frame.RoiManager;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
 import net.imglib2.RandomAccessibleInterval;
@@ -66,7 +68,7 @@ public class Radial_Symmetry implements PlugIn
 		gd1.addChoice( "Robust_fitting", RadialSymParams.ransacChoice, RadialSymParams.ransacChoice[ RadialSymParams.defaultRANSACChoice ] );
 
 		gd1.addMessage( "Visualization:", new Font( "Default", Font.BOLD, 13 ) );
-		gd1.addCheckbox( "Visually select spots by intensity using a histogram (Interactive Mode only)", RadialSymParams.defaultVisualizeDetections );
+		gd1.addCheckbox( "Add detections to ROI-Manager", RadialSymParams.defaultAddToROIManager );
 		//gd1.addCheckbox( "Visualize_Inliers (RANSAC)", RadialSymParams.defaultVisualizeInliers );
 
 		gd1.showDialog();
@@ -83,7 +85,7 @@ public class Radial_Symmetry implements PlugIn
 		params.useAnisotropyForDoG = RadialSymParams.defaultUseAnisotropyForDoG = gd1.getNextBoolean();
 		params.RANSAC = Ransac.values()[ RadialSymParams.defaultRANSACChoice = gd1.getNextChoiceIndex() ];
 
-		boolean visDetections = RadialSymParams.defaultVisualizeDetections = gd1.getNextBoolean();
+		boolean addToROIManager = RadialSymParams.defaultAddToROIManager = gd1.getNextBoolean();
 		//boolean visInliers = RadialSymParams.defaultVisualizeInliers = gd1.getNextBoolean();
 
 		if (imp.getNChannels() > 1)
@@ -201,7 +203,6 @@ public class Radial_Symmetry implements PlugIn
 		RadialSymmetry.processSliceBySlice(input, rai, params, impDim, allSpots, timePoint, channelPoint);
 
 		if ( mode == 0 ) { // interactive
-			// TODO: keep here?
 			imp.deleteRoi();
 
 			// shows the histogram and sets the intensity threshold
@@ -225,6 +226,20 @@ public class Radial_Symmetry implements PlugIn
 		} else
 			System.out.println("Wrong parameters' mode");
 
+		if ( addToROIManager )
+		{
+			IJ.log( "Adding spots to ROI Manager" );
+			RoiManager roim = RoiManager.getRoiManager();
+			imp.setActivated();
+
+			for ( final Spot spot : allSpots )
+			{
+				PointRoi p = new PointRoi( spot.getDoublePosition( 0 ), spot.getDoublePosition( 1 ) );
+				imp.setSliceWithoutUpdate( 1 + (int)Math.round( spot.getDoublePosition( 2 ) ) );
+				imp.unlock();
+				roim.addRoi( p );
+			}
+		}
 	}
 
 	public static void main(String[] args) {

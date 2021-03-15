@@ -1,4 +1,4 @@
-package gui.csv.overlay.plugin;
+package gui;
 
 import java.io.File;
 

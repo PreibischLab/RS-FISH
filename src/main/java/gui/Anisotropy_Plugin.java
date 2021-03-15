@@ -1,4 +1,4 @@
-package gui.anisotropy.plugin;
+package gui;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;

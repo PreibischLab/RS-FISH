@@ -24,6 +24,7 @@ import fitting.Spot;
 import gradient.Gradient;
 import gradient.GradientOnDemand;
 import gradient.GradientPreCompute;
+import gui.anisotropy.AnisitropyCoefficient.ValueChange;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -552,7 +553,8 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		final Rectangle roiBounds = roi.getBounds(); 
 
 		// change the img2 size if the roi or the support radius size was changed
-		if (isRoiChanged(change, roiBounds, roiChanged) || change == ValueChange.SUPPORTRADIUS) {
+		if ( isRoiChanged(change, roiBounds, roiChanged) || change == ValueChange.SUPPORTRADIUS || change == ValueChange.SIGMA )
+		{
 			rectangle = roiBounds;
 
 			// make sure the size is not 0 (is possible in ImageJ when making the Rectangle, not when changing it ... yeah)
@@ -627,12 +629,6 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		isComputing = false;
 	}
 
-	// APPROVED:
-	/*
-	 * this function is used for Difference-of-Gaussian calculation in the 
-	 * interactive case. No calibration adjustment is needed.
-	 * (thresholdMin) - always compute all spots, select later
-	 * */
 	protected void dogDetection( final RandomAccessibleInterval <FloatType> image )
 	{
 		final double sigma2 = HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity );

@@ -2,21 +2,30 @@ package gui.anisotropy;
 
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import anisotropy.parameters.AParams;
 import background.NormalizedGradient;
 import fiji.tool.SliceObserver;
 import fitting.Spot;
 import gradient.Gradient;
+import gradient.GradientOnDemand;
 import gradient.GradientPreCompute;
 import gui.interactive.FixROIListener;
 import gui.interactive.HelperFunctions;
+import gui.interactive.InteractiveRadialSymmetry;
+import gui.interactive.ROIListener;
+import gui.interactive.InteractiveRadialSymmetry.ValueChange;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.gui.Roi;
 import ij.io.Opener;
 import ij.process.ImageProcessor;
 import imglib2.RealTypeNormalization;
@@ -26,15 +35,24 @@ import milkyklim.algorithm.localization.GenericPeakFitter;
 import milkyklim.algorithm.localization.LevenbergMarquardtSolver;
 import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
 import net.imglib2.Point;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
+import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.converter.Converters;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.img.imageplus.ImagePlusImgs;
 import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import parameters.RadialSymParams;
+import radial.symmetry.utils.DoGDetection;
 
 public class AnisitropyCoefficient {
 
@@ -48,11 +66,12 @@ public class AnisitropyCoefficient {
 
 	// TODO: Pass them or their values
 	SliceObserver sliceObserver;
-	FixROIListener fixROIListener;
+	SimpleROIListener roiListener;
 
 	// TODO: you probably need one image plus object 
 	ImagePlus imagePlus;
-	final boolean normalize; // do we normalize intensities?
+	final RandomAccessibleInterval< FloatType > img;
+	final RandomAccessible< FloatType > imgExtended;
 	final double min, max; // intensity of the imageplus
 	final long[] dim;
 	final int type;
@@ -60,13 +79,10 @@ public class AnisitropyCoefficient {
 
 	final String paramType; // defines which method will be used: gaussfit or radial symmetry 
 
-	ArrayList< Point > peaks;
-	ArrayList< RefinedPeak< Point> > refPeaks;
+	ArrayList<RefinedPeak<Point>> peaks;
 
 	// TODO: always process only this part of the initial image READ ONLY
 	RandomAccessibleInterval<FloatType> extendedRoi;
-	// the pre-computed gradient
-	Gradient derivative;
 
 	boolean isComputing = false;
 	boolean isStarted = false;
@@ -76,7 +92,7 @@ public class AnisitropyCoefficient {
 	}
 
 	// stores all the parameters 
-	final AParams params;
+	final public AParams params;
 
 	// min/max value
 	final float sigmaMin = 0.5f;
@@ -103,9 +119,7 @@ public class AnisitropyCoefficient {
 		this.imagePlus = imp;
 		this.paramType = paramType;
 
-		dim = new long[imp.getNDimensions()];
-		for (int d = 0; d< imp.getNDimensions(); ++d)
-			this.dim[d] = imp.getDimensions()[d];
+		dim = new long[] { imp.getWidth(), imp.getHeight() };
 
 		imp.setZ( Math.max( 1, imp.getNSlices() / 2 ) );
 
@@ -114,9 +128,23 @@ public class AnisitropyCoefficient {
 		this.max = max;
 
 		if ( Double.isNaN( min ) || Double.isNaN( max ) )
-			this.normalize = false;
+		{
+			this.img = Converters.convert( (RandomAccessibleInterval<RealType>)(Object)ImagePlusImgs.from( imp ), (i,o) -> o.set(i.getRealFloat()), new FloatType() );
+		}
 		else
-			this.normalize = true;
+		{
+			final double range = max - min;
+
+			this.img = Converters.convert(
+					(RandomAccessibleInterval<RealType>)(Object)ImagePlusImgs.from( imp ),
+					(i,o) ->
+					{
+						o.set( (float)( ( i.getRealFloat() - min ) / range ) );
+					},
+					new FloatType() );
+		}
+
+		this.imgExtended = Views.extendMirrorSingle( img );
 
 		// TODO: do we need this check? Maybe it is enough have a wrapper here?
 		// which type of imageplus image is it?
@@ -130,7 +158,23 @@ public class AnisitropyCoefficient {
 		else
 			throw new RuntimeException( "Pixels of this type are not supported: " + pixels.getClass().getSimpleName() );
 
-		rectangle = new Rectangle(0, 0, (int)dim[0], (int)dim[1]);// always the full image 
+		final Roi roi = imagePlus.getRoi();
+
+		if ( roi != null && roi.getType() == Roi.RECTANGLE  )
+		{
+			rectangle = roi.getBounds();
+		}
+		else
+		{
+			// initial rectangle
+			rectangle = new Rectangle(
+					imagePlus.getWidth() / 4,
+					imagePlus.getHeight() / 4,
+					Math.min( 100, imagePlus.getWidth() / 2 ),
+					Math.min( 100, imagePlus.getHeight() / 2) );
+
+			imagePlus.setRoi( rectangle );
+		}
 
 		// show the interactive kit 
 		this.aWindow = new AnysotropyWindow( this );
@@ -138,12 +182,14 @@ public class AnisitropyCoefficient {
 
 		// add listener to the imageplus slice slider
 		sliceObserver = new SliceObserver(imagePlus, new ImagePlusListener( this ));
+
+		roiListener = new SimpleROIListener( this, imagePlus );
+		imagePlus.getCanvas().addMouseListener( roiListener );
+
 		// compute first version
 		updatePreview(ValueChange.ALL);
 		isStarted = true;
-		// TODO: don't need roi becasue the full image is used
-		// check whenever roi is modified to update accordingly
-		// imagePlus.getCanvas().addMouseListener( roiListener );
+
 
 
 		// triggers on the dispose method 
@@ -163,20 +209,10 @@ public class AnisitropyCoefficient {
 
 		// System.out.println("BEEP");
 
-		// TODO Add this parameters to the gui?
 		float sigma = params.getSigmaDoG(); 
 		float threshold = params.getThresholdDoG();
 		
 		System.out.println(sigma + " " + threshold);
-
-		RandomAccessibleInterval<FloatType> img;
-		if (!Double.isNaN(min) && !Double.isNaN(max)) // if normalizable
-			img = new TypeTransformingRandomAccessibleInterval<>(ImageJFunctions.wrap(imagePlus),
-					new RealTypeNormalization<>(min, max - min), new FloatType());
-		else // otherwise use
-			img = ImageJFunctions.wrap(imagePlus);
-
-		float sigma2 = HelperFunctions.computeSigma2(sigma, RadialSymParams.defaultSensitivity);
 
 		if (img.numDimensions() != 3)
 			System.out.println("Wrong dimensionality of the image");
@@ -187,37 +223,29 @@ public class AnisitropyCoefficient {
 			// decrease the threshold value; this might help in some cases but
 			// z-extra smoothing is image depended
 
-			double[] calibration = new double[ img.numDimensions() ];
-			calibration[ 0 ] = 1.0;
-			calibration[ 1 ] = 1.0;
-			if ( calibration.length == 3 )
-				calibration[ 2 ] = 1.0;
+			// make sure the size is not 0 (is possible in ImageJ when making the Rectangle, not when changing it ... yeah)
+			rectangle.width = Math.max( 1, rectangle.width );
+			rectangle.height = Math.max( 1, rectangle.height );
 
-			final DogDetection<FloatType> dog2 = new DogDetection<>(img, calibration, sigma, sigma2,
-					DogDetection.ExtremaType.MINIMA, threshold, false);
-			peaks = dog2.getPeaks();
-			refPeaks = dog2.getSubpixelPeaks();
+			long[] min, max;
 
-			// ugly but this is probably the way at the moment because the 
-			// peakfitter is only working with localizable at the moment 
-			// this is also the thresholding of the peaks that must be done, in general! 
-			refPeaks = HelperFunctions.filterPeaks(refPeaks, threshold);	
-			peaks = HelperFunctions.resavePeaks(refPeaks, threshold, img.numDimensions());
+			// 'channel', 'slice' and 'frame' are one-based indexes
+			min = new long []{
+					rectangle.x - params.getSupportRadius(),
+					rectangle.y - params.getSupportRadius(),
+					img.min( 2 ) };
+			max = new long []{
+					rectangle.width + rectangle.x + params.getSupportRadius() - 1,
+					rectangle.height + rectangle.y + params.getSupportRadius() - 1,
+					img.max( 2 ) };
 
-			// FIXME: debug 
-			// System.out.println("total refined peaks after filtering: " + refPeaks.size());
-			System.out.println("total _______ peaks after filtering: " + peaks.size());
-			
-			
-			// FIXME: debug 
-			for (Point peak : peaks){
-				for (int d = 0; d < peak.numDimensions(); d++)
-					System.out.print(peak.getIntPosition(d) + " ");
-				System.out.println();
-			}
+			extendedRoi = Views.interval( this.imgExtended, min, max);
 
-			// TODO: FIXME: Do we have to filter peaks here? 
-			// Otherwise we use all peaks that we detected! 
+			dogDetection( extendedRoi );
+
+			peaks = HelperFunctions.filterPeaks( peaks, rectangle, params.getThresholdDoG() );
+
+			IJ.log("Found " + peaks.size() + " peaks in the 3D substack defined by the ROI." );
 
 			if (paramType.equals("Gauss Fit")) // gauss fit 
 				bestScale = calculateAnisotropyCoefficientGF(img, threshold, sigma); 
@@ -226,7 +254,8 @@ public class AnisitropyCoefficient {
 
 			// bestScale = anisotropyChooseImageDialog();
 		}
-		System.out.println("Best scale = " + bestScale);
+
+		IJ.log("Best scale = " + bestScale);
 		return bestScale;
 	}
 
@@ -241,8 +270,21 @@ public class AnisitropyCoefficient {
 			typicalSigmas[d] = sigma;
 
 		// TODO: implement the background subtraction here, otherwise peakfitter will give the wrong result 
-		
-		GenericPeakFitter< FloatType, Point > pf = new GenericPeakFitter<>(img, peaks,
+		final List< Point > points = peaks.stream().map( p -> p.getOriginalPeak() ).collect( Collectors.toList() );
+
+		IJ.log( "Removing background (gauss fit required empty bg)..." );
+		RandomAccessibleInterval< FloatType > tmp = ArrayImgs.floats( img.dimension( 0 ), img.dimension( 1 ), img.dimension( 2 ) );
+		Gauss3.gauss( 10, imgExtended, tmp );
+
+		RandomAccessibleInterval< FloatType > bg =
+				Converters.convert( img, tmp, (i1,i2,o) -> { o.set( Math.max( 0, i1.get() - i2.get() ) ); }, new FloatType() );
+
+		//ImagePlus tmpImp = ImageJFunctions.show( bg );
+		//tmpImp.setTitle( "Image used for Gauss fitting");
+
+		IJ.log( "fitting...." );
+
+		GenericPeakFitter< FloatType, Point > pf = new GenericPeakFitter<>(bg, points,
 				new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(),
 				new MLEllipticGaussianEstimator(typicalSigmas));
 		pf.process();
@@ -254,20 +296,23 @@ public class AnisitropyCoefficient {
 			sigmas[d] = 0;
 
 		// FIXME: is the order consistent
-		for (final Point peak : peaks)
+		for (final Point peak : points)
 		{
 			double[] params = fits.get( peak );
+			System.out.println( Util.printCoordinates( peak ));
+			System.out.println( "sigma (fit): " + Util.printCoordinates( params ) );
 			for (int j = 0; j < numDimensions; j++){
 				sigmas[j] += params[numDimensions + 1 + j];
 			}
 		}
 
 		// skip division by zero		
-		for(int d = 0; d < numDimensions; d++)
-			sigmas[d] = (peaks.size() == 0) ? 1 : sigmas[d]/peaks.size();
 		for(int d = 0; d < numDimensions; d++){
+			sigmas[d] = (peaks.size() == 0) ? 1 : sigmas[d]/peaks.size();
 			sigmas[d] = 1 / (Math.sqrt(2 * sigmas[d]));
 		}
+
+		IJ.log( "sigma (fit): " + Util.printCoordinates( sigmas ) );
 
 		// TODO: here we suppose that the x and y sigmas are the same
 		bestScale = sigmas[numDimensions - 1] / sigmas[0]; // x/z
@@ -283,14 +328,14 @@ public class AnisitropyCoefficient {
 	public double calculateAnisotropyCoefficientRS(RandomAccessibleInterval<FloatType> img, float threshold, float sigma){
 
 		double bestScale = 1.0;
-		derivative = new GradientPreCompute(img);
+		Gradient derivative = new GradientPreCompute(img);
 
 		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
 		int numDimensions = img.numDimensions();
 		// copy all peaks
 		// TODO: USE FUNCTION FROM HELPERFUNCTIONS
-		for (final RefinedPeak<Point> peak : refPeaks) {
-			if (-peak.getValue() > threshold) {
+		for (final RefinedPeak<Point> peak : peaks) {
+			if ( Math.abs( peak.getValue()) > threshold) {
 				final long[] coordinates = new long[numDimensions];
 				for (int d = 0; d < peak.numDimensions(); ++d)
 					coordinates[d] = Util.round(peak.getDoublePosition(d));
@@ -333,7 +378,7 @@ public class AnisitropyCoefficient {
 			double inlierRatio = 0.2; // at least 20% inliers 
 			int minNumLiers = RadialSymParams.defaultMinNumInliers;
 
-			Spot.ransac(spots, numIterations, maxError, inlierRatio, minNumLiers, false, 0.0, 0.0, null, null, null, null );
+			Spot.ransac(spots, numIterations, maxError, inlierRatio, minNumLiers, false, 0.0, 0.0, null, null, null, null, true );
 			try{
 				Spot.fitCandidates(spots);
 			}
@@ -361,11 +406,7 @@ public class AnisitropyCoefficient {
 			} 
 
 			IJ.log(scale + " inlier pixels=" + totalInliers + " for spots=" + total);
-
 		}
-
-		IJ.log("best: " + bestScale);
-
 
 		return bestScale;
 	}
@@ -381,11 +422,23 @@ public class AnisitropyCoefficient {
 			sliceObserver.unregister();
 
 		if ( imagePlus != null) {
+			if ( roiListener != null )
+				imagePlus.getCanvas().removeMouseListener(roiListener);
+
 			imagePlus.getOverlay().clear();
 			imagePlus.updateAndDraw();
 		}
 
 		isFinished = true;
+	}
+
+	// TODO: fix the check: "==" must not be used with floats
+	protected boolean isRoiChanged(final ValueChange change, final Rectangle rect, boolean roiChanged){
+		boolean res = false;
+		res = (roiChanged || extendedRoi == null || change == ValueChange.SLICE ||rect.getMinX() != rectangle.getMinX()
+				|| rect.getMaxX() != rectangle.getMaxX() || rect.getMinY() != rectangle.getMinY()
+				|| rect.getMaxY() != rectangle.getMaxY());
+		return res;
 	}
 
 	/*
@@ -396,76 +449,75 @@ public class AnisitropyCoefficient {
 	 *            - what did change
 	 */
 	protected void updatePreview(final ValueChange change) {
-		// TODO : verify
-		long offset = (long)(params.getSigmaDoG() + 1);
 
-		long [] min = new long []{rectangle.x - offset, rectangle.y - offset};
-		long [] max = new long []{rectangle.width + rectangle.x + offset - 1, rectangle.height + rectangle.y + offset - 1};
+		// set up roi 
+		boolean roiChanged = false;
+		Roi roi = imagePlus.getRoi();
 
-		// get the currently selected slice
-		final RandomAccessibleInterval< FloatType > imgTmp;
-		if ( normalize )
-			imgTmp = new TypeTransformingRandomAccessibleInterval<>( HelperFunctions.currentSliceToImg( imagePlus, dim, type ), new RealTypeNormalization<>( this.min, this.max - this.min ), new FloatType() );
-		else
-			imgTmp = HelperFunctions.currentSliceToImg( imagePlus, dim, type );
+		if ( roi == null || roi.getType() != Roi.RECTANGLE )
+		{
+			imagePlus.setRoi(rectangle);
+			roi = imagePlus.getRoi();
+			roiChanged = true;
+		}
 
-		extendedRoi = Views.interval( Views.extendMirrorSingle( imgTmp ), min, max);
+		// Do I need this one or it is just the copy of the same thing?
+		// sourceRectangle or rectangle
+		final Rectangle roiBounds = roi.getBounds(); 
 
-		// only recalculate DOG & gradient image if: sigma, slider
-		if (peaks == null || change == ValueChange.SIGMA || change == ValueChange.SLICE || change == ValueChange.ALL )
+		// change the img2 size if the roi or the support radius size was changed
+		if ( isRoiChanged(change, roiBounds, roiChanged) || change == ValueChange.SIGMA )
+		{
+			rectangle = roiBounds;
+
+			// make sure the size is not 0 (is possible in ImageJ when making the Rectangle, not when changing it ... yeah)
+			rectangle.width = Math.max( 1, rectangle.width );
+			rectangle.height = Math.max( 1, rectangle.height );
+
+			// a 2d or 3d view where we'll run DoG on
+			RandomAccessibleInterval< FloatType > imgTmp;
+			long[] min, max;
+
+			// 3d case
+
+			// 'channel', 'slice' and 'frame' are one-based indexes
+			final int currentSlice = imagePlus.getZ() - 1;
+
+			final int extZ = 
+					Gauss3.halfkernelsizes(
+							new double[] {
+									HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity ) } )[ 0 ];
+
+			min = new long []{
+					rectangle.x - params.getSupportRadius(),
+					rectangle.y - params.getSupportRadius(),
+					Math.max( img.min( 2 ), currentSlice - extZ ) };
+			max = new long []{
+					rectangle.width + rectangle.x + params.getSupportRadius() - 1,
+					rectangle.height + rectangle.y + params.getSupportRadius() - 1,
+					Math.min( img.max( 2 ), currentSlice + extZ ) };
+
+			extendedRoi = Views.interval( this.imgExtended, min, max);
+
+			roiChanged = true;
+		}
+
+		// only recalculate DOG & gradient image if: sigma, slider, ROI
+		if (peaks == null || change == ValueChange.SIGMA || change == ValueChange.SLICE || change == ValueChange.ROI || change == ValueChange.ALL )
 		{
 			dogDetection( extendedRoi );
-			derivative = new GradientPreCompute( extendedRoi );
 		}
 
 		final double radius = ( params.getSigmaDoG() + HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity  ) ) / 2.0;
-		final ArrayList< RefinedPeak< Point > > filteredPeaks = HelperFunctions.filterPeaks( refPeaks, rectangle, params.getThresholdDoG() );
+		final ArrayList< RefinedPeak< Point > > filteredPeaks = HelperFunctions.filterPeaks( peaks, rectangle, params.getThresholdDoG() );
 
 		HelperFunctions.drawRealLocalizable( filteredPeaks, imagePlus, radius, Color.RED, true);
 
 		// TODO Should adjust the parameters? 
-		ransacInteractive( derivative );
+		//ransacInteractive( derivative );
 		isComputing = false;
 	}
 
-	protected void ransacInteractive( final Gradient derivative ) {
-		// TODO: I think this problem with the rectangle was previously fixed
-		// make sure the size is not 0 (is possible in ImageJ when making the Rectangle, not when changing it ... yeah)
-		rectangle.width = Math.max( 1, rectangle.width );
-		rectangle.height = Math.max( 1, rectangle.height );
-
-		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>(1);
-		int numDimensions = extendedRoi.numDimensions(); // DEBUG: should always be 2 
-		// extract peaks for the roi
-		HelperFunctions.copyPeaks(refPeaks, simplifiedPeaks, numDimensions, rectangle, params.getThresholdDoG() );
-
-		// the size of the RANSAC area
-		final long[] range = new long[numDimensions];
-
-		range[ 0 ] = range[ 1 ] = (long)(2*params.getSigmaDoG() + 1);
-
-		// ImageJFunctions.show(new GradientPreCompute(extendedRoi).preCompute(extendedRoi));
-		final NormalizedGradient ng = null;
-		final ArrayList<Spot> spots = Spot.extractSpots(extendedRoi, simplifiedPeaks, derivative, ng, range);
-
-		// TODO: CORRECT PLACE TO TURN ON/OFF RANSAC		
-		if (true){ // (params.getRANSAC()){
-			Spot.ransac(spots, numIterations, params.getMaxError(), params.getInlierRatio(), 0, false, 0.0, 0.0, null, null, null, null);
-			for (final Spot spot : spots)
-				spot.computeAverageCostInliers();
-		}
-
-		// System.out.println("total RS: " + spots.size());
-
-
-	}
-
-	// APPROVED:
-	/*
-	 * this function is used for Difference-of-Gaussian calculation in the 
-	 * interactive case. No calibration adjustment is needed.
-	 * (threshold/2) - because some peaks might be skipped - always compute all spots, select later
-	 * */
 	protected void dogDetection( final RandomAccessibleInterval <FloatType> image )
 	{
 		final double sigma2 = HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity );
@@ -476,9 +528,60 @@ public class AnisitropyCoefficient {
 		if ( calibration.length == 3 )
 			calibration[ 2 ] = 1.0;
 
-		final DogDetection<FloatType> dog2 = new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA,  params.getThresholdDoG()/2, false);
-		peaks = dog2.getPeaks();
-		refPeaks = dog2.getSubpixelPeaks(); 
+		final DoGDetection<FloatType> dog2 =
+				new DoGDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DoGDetection.ExtremaType.MINIMA, InteractiveRadialSymmetry.thresholdMin, false);
+		//final DogDetection<FloatType> dog2 =
+				//new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA, InteractiveRadialSymmetry.thresholdMin, false);
+
+		ArrayList<Point> simplePeaks = dog2.getPeaks();
+		RandomAccess dog = (Views.extendBorder(dog2.getDogImage())).randomAccess();
+
+		peaks = new ArrayList<>();
+		for ( final Point p : simplePeaks )
+		{
+			dog.setPosition( p );
+			peaks.add( new RefinedPeak<Point>( p, p, ((RealType)dog.get()).getRealDouble(), true ) );
+		}
+		//peaks = dog2.getSubpixelPeaks(); 
+	}
+
+	public class SimpleROIListener implements MouseListener {
+		final AnisitropyCoefficient parent;
+		final ImagePlus source;
+
+		public SimpleROIListener( final AnisitropyCoefficient parent, final ImagePlus s ){
+			this.parent = parent;
+			this.source = s;
+		}
+
+		@Override
+		public void mouseClicked(MouseEvent e) {}
+
+		@Override
+		public void mouseEntered(MouseEvent e) {}
+
+		@Override
+		public void mouseExited(MouseEvent e) {}
+
+		@Override
+		public void mousePressed(MouseEvent e) {}
+
+		@Override
+		public void mouseReleased(final MouseEvent e) {		
+			// here the ROI might have been modified, let's test for that
+			final Roi roi = source.getRoi();
+
+			// roi is wrong, clear the screen 
+			if (roi == null || roi.getType() != Roi.RECTANGLE){
+				source.setRoi( parent.rectangle );
+			}
+
+			// TODO: might put the update part for the roi here instead of the updatePreview
+			while (parent.isComputing)
+				SimpleMultiThreading.threadWait(10);
+
+			parent.updatePreview(ValueChange.ROI);
+		}
 	}
 
 	public static void main(String[] args)

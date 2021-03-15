@@ -258,6 +258,7 @@ public class HelperFunctions {
 		final ImageProcessor ip = imagePlus.getStack().getProcessor(imagePlus.getCurrentSlice());
 		final Object pixels = ip.getPixels();
 
+		System.out.println( "dim:" + Util.printCoordinates( dim ));
 		final Img<FloatType> imgTmp;
 
 		if (type == 0) {

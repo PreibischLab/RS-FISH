@@ -109,7 +109,8 @@ public class Preprocess {
 
 		try {
 			int toSkip = 1; 
-			reader = new CSVReader(new FileReader(filePath), ',', CSVWriter.DEFAULT_QUOTE_CHARACTER, toSkip);
+			reader = new CSVReader(new FileReader(filePath) );
+			reader.skip( toSkip );
 			// while there are rows in the file
 			while ((nextLine = reader.readNext()) != null) {
 				String filename = nextLine[0];
@@ -142,7 +143,8 @@ public class Preprocess {
 
 		try {
 			int toSkip = 1; 
-			reader = new CSVReader(new FileReader(databasePath), ',', CSVWriter.DEFAULT_QUOTE_CHARACTER, toSkip);
+			reader = new CSVReader(new FileReader(databasePath) );
+			reader.skip( toSkip );
 			// while there are rows in the file
 			while ((nextLine = reader.readNext()) != null) {
 				// iterate over the row; that is 25 elements long

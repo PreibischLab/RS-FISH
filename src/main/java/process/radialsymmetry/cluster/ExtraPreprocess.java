@@ -80,7 +80,8 @@ public class ExtraPreprocess {
 
 		try {
 			int toSkip = 1; 
-			reader = new CSVReader(new FileReader(path), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER, toSkip);
+			reader = new CSVReader(new FileReader(path));
+			reader.skip( toSkip );
 			// while there are rows in the file
 			while ((nextLine = reader.readNext()) != null) {
 

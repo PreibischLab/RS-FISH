@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvValidationException;
 
 import ij.IJ;
 import net.imglib2.RealPoint;
@@ -18,7 +19,7 @@ public class IOUtils {
 			String[] nextLine = reader.readNext();
 			numDimensions = nextLine.length; 
 			reader.close();
-		} catch (IOException e) {
+		} catch (IOException | CsvValidationException e) {
 			e.printStackTrace();
 		}
 		return numDimensions;
@@ -48,7 +49,7 @@ public class IOUtils {
 			}
 			reader.close();
 			IJ.log( "read " + peaks.size() + " spots." );
-		} catch (IOException e) {
+		} catch (IOException | CsvValidationException e) {
 			e.printStackTrace();
 		}
 

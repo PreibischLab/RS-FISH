@@ -155,7 +155,7 @@ public class BatchProcessing {
 		String[] nextLine = new String [5];
 
 		try {
-			writer = new CSVWriter(new FileWriter(path + "/" + fileName.substring(0, fileName.length() - 4) + ".csv"), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+			writer = new CSVWriter(new FileWriter(path + "/" + fileName.substring(0, fileName.length() - 4) + ".csv"), '\t', CSVWriter.NO_QUOTE_CHARACTER, CSVWriter.DEFAULT_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END );
 			for (int j = 0; j < spots.size(); j++) {
 
 				nextLine = new String[]{

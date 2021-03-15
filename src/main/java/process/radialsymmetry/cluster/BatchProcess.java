@@ -372,7 +372,7 @@ public class BatchProcess {
 		String[] nextLine = new String [5];
 
 		try {
-			writer = new CSVWriter(new FileWriter(path.getAbsolutePath()), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+			writer = new CSVWriter(new FileWriter(path.getAbsolutePath()), '\t', CSVWriter.NO_QUOTE_CHARACTER, CSVWriter.DEFAULT_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END);
 			for (int j = 0; j < spots.size(); j++) {
 
 				nextLine = new String[]{
@@ -394,7 +394,7 @@ public class BatchProcess {
 		CSVWriter writer = null;
 		String[] nextLine = new String [coeff.length];
 		try {
-			writer = new CSVWriter(new FileWriter(path.getAbsolutePath()), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+			writer = new CSVWriter(new FileWriter(path.getAbsolutePath()), '\t', CSVWriter.NO_QUOTE_CHARACTER, CSVWriter.DEFAULT_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END );
 			for (int j = 0; j < coeff.length; j++) {
 				nextLine[j] = String.valueOf(coeff[j]); // use max precision possible otherwise we don't capture the x^2 coefficient 
 			}

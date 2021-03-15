@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>28.0.0</version>
+		<version>30.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -30,10 +30,11 @@
 
 	<developers>
 		<developer>
-			<id>milkyklim</id>
-			<name>Klim Kolyvanov</name>
-			<url>http://imagej.net/User:MilkyKlim</url>
+			<id>StephanPreibisch</id>
+			<name>Stephan Preibisch</name>
+			<url>http://imagej.net/User:StephanP</url>
 			<roles>
+				<role>founder</role>
 				<role>lead</role>
 				<role>developer</role>
 				<role>debugger</role>
@@ -43,12 +44,10 @@
 			</roles>
 		</developer>
 		<developer>
-			<id>StephanPreibisch</id>
-			<name>Stephan Preibisch</name>
-			<url>http://imagej.net/User:StephanP</url>
+			<id>milkyklim</id>
+			<name>Klim Kolyvanov</name>
+			<url>http://imagej.net/User:MilkyKlim</url>
 			<roles>
-				<role>founder</role>
-				<role>lead</role>
 				<role>developer</role>
 				<role>debugger</role>
 				<role>reviewer</role>

@@ -1,10 +1,25 @@
 package process.radialsymmetry.cluster;
 
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
+import java.awt.Rectangle;
+import java.io.File;
+import java.io.FileReader;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import org.apache.commons.math3.fitting.PolynomialCurveFitter;
+import org.apache.commons.math3.fitting.WeightedObservedPoints;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
+
+import com.opencsv.CSVReader;
+
+import fit.PointFunctionMatch;
 import fit.polynomial.QuadraticFunction;
-import fitting.PointFunctionMatch;
 import fitting.Spot;
 import ij.IJ;
 import ij.ImageJ;
@@ -19,18 +34,6 @@ import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
-import org.apache.commons.math3.fitting.PolynomialCurveFitter;
-import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.apache.commons.math3.stat.regression.SimpleRegression;
-
-import java.awt.*;
-import java.io.File;
-import java.io.FileReader;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.List;
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class ExtraPreprocess {
 	// this class performs extra preprocessing of the images: 
@@ -289,8 +292,7 @@ public class ExtraPreprocess {
 		}
 		return points;
 	}
-	
-	
+
 	public static ImagePlus fixIntensitiesOnlySpotsRansac(Img<FloatType> img, ArrayList<Spot> spots, ArrayList<Float> intensity, double [] gCoeff, boolean doZcorrection) {
 	
 		int numDimensions = 3;

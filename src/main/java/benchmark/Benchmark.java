@@ -3,8 +3,8 @@ package benchmark;
 import java.io.File;
 import java.util.ArrayList;
 
+import fit.PointFunctionMatch;
 import fitting.OrientedPoint;
-import fitting.PointFunctionMatch;
 import fitting.Spot;
 import gauss.GaussFit;
 import gauss.GaussianMaskFit;

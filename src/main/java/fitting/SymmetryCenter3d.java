@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
 
+import fit.AbstractFunction;
+import fit.util.MatrixFunctions;
 import net.imglib2.util.Util;
 
 import mpicbg.models.NoninvertibleModelException;

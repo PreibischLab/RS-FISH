@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import compute.RadialSymmetry;
+import fit.AbstractFunction;
+import fit.PointFunctionMatch;
 import net.imglib2.util.Util;
 
 import mpicbg.models.IllDefinedDataPointsException;

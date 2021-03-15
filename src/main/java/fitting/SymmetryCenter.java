@@ -1,5 +1,7 @@
 package fitting;
 
+import fit.AbstractFunction;
+import fit.Function;
 import mpicbg.models.Model;
 import mpicbg.models.Point;
 import net.imglib2.EuclideanSpace;
@@ -22,7 +24,7 @@ import net.imglib2.EuclideanSpace;
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de) and Timothee Lionnet
  */
-public interface SymmetryCenter< M extends AbstractFunction< M > > extends Model< M >, Function< Point >, EuclideanSpace
+public interface SymmetryCenter< M extends AbstractFunction< M > > extends Model< M >, Function< M, Point >, EuclideanSpace
 {
 	/**
 	 * WARNING! This value still needs to be divided by the scale set it Spot!

@@ -1,6 +1,6 @@
 package milkyklim.algorithm.localization;
 
-import fitting.PointFunctionMatch;
+import fit.PointFunctionMatch;
 import intensity.Intensity.WrappedSpot;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;

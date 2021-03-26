@@ -7,7 +7,7 @@
 _**RS-FISH: Precise, interactive and scalable smFISH spot detection using Radial Symmetry**_
 
 Ella Bahry\*, Laura Breimann\*, Leo Epstein\*, Klim Kolyvanov, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch  
-bioRxiv https://www.biorxiv.org/content/10.1101/2021.03.09.434205v1 ; doi: https://doi.org/10.1101/2021.03.09.434205  
+*[bioRxiv]*(https://www.biorxiv.org/content/10.1101/2021.03.09.434205v1) 2021, doi: https://doi.org/10.1101/2021.03.09.434205  
 
 \* equal contribution  
 

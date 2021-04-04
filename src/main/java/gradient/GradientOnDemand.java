@@ -1,6 +1,7 @@
 package gradient;
 
 import net.imglib2.Localizable;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.real.FloatType;
 
@@ -31,7 +32,7 @@ public class GradientOnDemand extends Gradient
 {
 	final ComputeGradient computeGradient;	
 	
-	public GradientOnDemand( final RandomAccessibleInterval<FloatType> source )
+	public GradientOnDemand( final RandomAccessible<FloatType> source )
 	{
 		super( source.numDimensions() );
 		

@@ -202,6 +202,8 @@ public class Radial_Symmetry implements PlugIn
 
 		RadialSymmetry.processSliceBySlice(input, rai, params, impDim, allSpots, timePoint, channelPoint);
 
+		ResultsTable rt = null;
+
 		if ( mode == 0 ) { // interactive
 			imp.deleteRoi();
 
@@ -211,20 +213,25 @@ public class Radial_Symmetry implements PlugIn
 							imp, allSpots, timePoint,
 							params.getSigmaDoG(), params.getAnisotropyCoefficient());
 
-			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
+			rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
 		}
 		else if ( mode == 1 ) { // advanced
 			// write the result to the csv file
 			IJ.log( "Intensity threshold =" + params.intensityThreshold );
-			ResultsTable rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
+			rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
 
-			if( params.resultsFilePath.length() > 0 )
-			{
-				System.out.println("Writing to results path: " + params.resultsFilePath);
-				rt.save(params.resultsFilePath);
-			}
 		} else
-			System.out.println("Wrong parameters' mode");
+			throw new RuntimeException("Wrong parameters' mode");
+
+		if( params.resultsFilePath.length() > 0 )
+		{
+			System.out.println("Writing CSV: " + params.resultsFilePath);
+			rt.save(params.resultsFilePath);
+		}
+		else
+		{
+			System.out.println("No CSV output given.");
+		}
 
 		if ( addToROIManager )
 		{
@@ -258,6 +265,5 @@ public class Radial_Symmetry implements PlugIn
 		new ImagePlus("/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.tif" ).show();
 		//new ImagePlus( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_0_I_10000_0_img0.tif" ).show();
 		new Radial_Symmetry().run( null );
-
 	}
 }

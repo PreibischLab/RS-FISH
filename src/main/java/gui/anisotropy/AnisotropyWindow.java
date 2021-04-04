@@ -10,12 +10,12 @@ import java.awt.Scrollbar;
 
 import gui.interactive.HelperFunctions;
 
-public class AnysotropyWindow {
+public class AnisotropyWindow {
 
-	final AnisitropyCoefficient parent;
+	final AnisotropyCoefficient parent;
 	final Frame aFrame; // anisotropy frame 
 
-	public AnysotropyWindow( final AnisitropyCoefficient parent )
+	public AnisotropyWindow( final AnisotropyCoefficient parent )
 	{
 		this.parent = parent;
 		this.aFrame = new Frame( "Adjust difference-of-gaussian values" );

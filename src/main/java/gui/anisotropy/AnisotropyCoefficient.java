@@ -47,7 +47,7 @@ import net.imglib2.view.Views;
 import parameters.RadialSymParams;
 import radial.symmetry.utils.DoGDetection;
 
-public class AnisitropyCoefficient {
+public class AnisotropyCoefficient {
 
 	public static int numIterations = 250; // not a parameter, can be changed through Beanshell
 
@@ -55,7 +55,7 @@ public class AnisitropyCoefficient {
 	int sensitivity = RadialSymParams.defaultSensitivity;
 
 	// window that is potentially open
-	AnysotropyWindow aWindow; 
+	AnisotropyWindow aWindow; 
 
 	// TODO: Pass them or their values
 	SliceObserver sliceObserver;
@@ -108,7 +108,7 @@ public class AnisitropyCoefficient {
 	}
 
 	// paramType defines if we use RS or Gaussian Fit
-	public AnisitropyCoefficient(ImagePlus imp, final AParams params, final String paramType, final double min, final double max){
+	public AnisotropyCoefficient(ImagePlus imp, final AParams params, final String paramType, final double min, final double max){
 		this.imagePlus = imp;
 		this.paramType = paramType;
 
@@ -170,7 +170,7 @@ public class AnisitropyCoefficient {
 		}
 
 		// show the interactive kit 
-		this.aWindow = new AnysotropyWindow( this );
+		this.aWindow = new AnisotropyWindow( this );
 		this.aWindow.getFrame().setVisible( true );
 
 		// add listener to the imageplus slice slider
@@ -534,10 +534,10 @@ public class AnisitropyCoefficient {
 	}
 
 	public class SimpleROIListener implements MouseListener {
-		final AnisitropyCoefficient parent;
+		final AnisotropyCoefficient parent;
 		final ImagePlus source;
 
-		public SimpleROIListener( final AnisitropyCoefficient parent, final ImagePlus s ){
+		public SimpleROIListener( final AnisotropyCoefficient parent, final ImagePlus s ){
 			this.parent = parent;
 			this.source = s;
 		}
@@ -613,7 +613,7 @@ public class AnisitropyCoefficient {
 
 		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
-		new AnisitropyCoefficient( imp, new AParams(), "Gauss fit", min, max );
+		new AnisotropyCoefficient( imp, new AParams(), "Gauss fit", min, max );
 
 		System.out.println("DOGE!");
 	}

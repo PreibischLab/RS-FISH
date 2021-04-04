@@ -4,17 +4,17 @@ import java.awt.Label;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 
-import gui.anisotropy.AnisitropyCoefficient.ValueChange;
+import gui.anisotropy.AnisotropyCoefficient.ValueChange;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 public class ThresholdListener implements AdjustmentListener {
-	final AnisitropyCoefficient parent;
+	final AnisotropyCoefficient parent;
 	final Label label;
 	final float min, max;
 	final float log1001 = (float) Math.log10(1001);
 
 	public ThresholdListener(
-			final AnisitropyCoefficient parent,
+			final AnisotropyCoefficient parent,
 			final Label label, final float min, final float max) {
 		this.parent = parent;
 		this.label = label;

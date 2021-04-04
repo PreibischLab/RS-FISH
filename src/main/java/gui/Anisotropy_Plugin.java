@@ -7,7 +7,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import anisotropy.parameters.AParams;
-import gui.anisotropy.AnisitropyCoefficient;
+import gui.anisotropy.AnisotropyCoefficient;
 import gui.interactive.HelperFunctions;
 import ij.IJ;
 import ij.ImagePlus;
@@ -53,7 +53,7 @@ public class Anisotropy_Plugin implements Command {
 		float bestScale = 1.0f;
 		AParams ap = new AParams();
 		double [] minmax = HelperFunctions.calculateMinMax(imagePlus);
-		AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, paramType, minmax[0], minmax[1]);
+		AnisotropyCoefficient ac = new AnisotropyCoefficient(imagePlus, ap, paramType, minmax[0], minmax[1]);
 		if ( ac.wasCanceled() )
 			return;
 		bestScale = (float) ac.calculateAnisotropyCoefficient();

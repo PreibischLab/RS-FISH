@@ -15,36 +15,29 @@ import background.NormalizedGradient;
 import fiji.tool.SliceObserver;
 import fitting.Spot;
 import gradient.Gradient;
-import gradient.GradientOnDemand;
 import gradient.GradientPreCompute;
-import gui.interactive.FixROIListener;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
-import gui.interactive.ROIListener;
-import gui.interactive.InteractiveRadialSymmetry.ValueChange;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.io.Opener;
 import ij.process.ImageProcessor;
-import imglib2.RealTypeNormalization;
-import imglib2.TypeTransformingRandomAccessibleInterval;
 import milkyklim.algorithm.localization.EllipticGaussianOrtho;
 import milkyklim.algorithm.localization.GenericPeakFitter;
 import milkyklim.algorithm.localization.LevenbergMarquardtSolver;
 import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
+import net.imglib2.FinalInterval;
+import net.imglib2.Interval;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.converter.Converters;
-import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.img.imageplus.ImagePlusImgs;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.RealType;
@@ -82,7 +75,7 @@ public class AnisitropyCoefficient {
 	ArrayList<RefinedPeak<Point>> peaks;
 
 	// TODO: always process only this part of the initial image READ ONLY
-	RandomAccessibleInterval<FloatType> extendedRoi;
+	Interval extendedRoi;
 
 	boolean isComputing = false;
 	boolean isStarted = false;
@@ -231,17 +224,17 @@ public class AnisitropyCoefficient {
 
 			// 'channel', 'slice' and 'frame' are one-based indexes
 			min = new long []{
-					rectangle.x - params.getSupportRadius(),
-					rectangle.y - params.getSupportRadius(),
+					rectangle.x,
+					rectangle.y,
 					img.min( 2 ) };
 			max = new long []{
-					rectangle.width + rectangle.x + params.getSupportRadius() - 1,
-					rectangle.height + rectangle.y + params.getSupportRadius() - 1,
+					rectangle.width + rectangle.x - 1,
+					rectangle.height + rectangle.y - 1,
 					img.max( 2 ) };
 
-			extendedRoi = Views.interval( this.imgExtended, min, max);
+			extendedRoi = new FinalInterval( min, max);
 
-			dogDetection( extendedRoi );
+			dogDetection( this.imgExtended, extendedRoi );
 
 			peaks = HelperFunctions.filterPeaks( peaks, rectangle, params.getThresholdDoG() );
 
@@ -483,21 +476,16 @@ public class AnisitropyCoefficient {
 			// 'channel', 'slice' and 'frame' are one-based indexes
 			final int currentSlice = imagePlus.getZ() - 1;
 
-			final int extZ = 
-					Gauss3.halfkernelsizes(
-							new double[] {
-									HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity ) } )[ 0 ];
-
 			min = new long []{
-					rectangle.x - params.getSupportRadius(),
-					rectangle.y - params.getSupportRadius(),
-					Math.max( img.min( 2 ), currentSlice - extZ ) };
+					rectangle.x,
+					rectangle.y,
+					Math.max( img.min( 2 ), currentSlice - 1 ) };
 			max = new long []{
-					rectangle.width + rectangle.x + params.getSupportRadius() - 1,
-					rectangle.height + rectangle.y + params.getSupportRadius() - 1,
-					Math.min( img.max( 2 ), currentSlice + extZ ) };
+					rectangle.width + rectangle.x - 1,
+					rectangle.height + rectangle.y - 1,
+					Math.min( img.max( 2 ), currentSlice + 1 ) };
 
-			extendedRoi = Views.interval( this.imgExtended, min, max);
+			extendedRoi = new FinalInterval( min, max);
 
 			roiChanged = true;
 		}
@@ -505,7 +493,7 @@ public class AnisitropyCoefficient {
 		// only recalculate DOG & gradient image if: sigma, slider, ROI
 		if (peaks == null || change == ValueChange.SIGMA || change == ValueChange.SLICE || change == ValueChange.ROI || change == ValueChange.ALL )
 		{
-			dogDetection( extendedRoi );
+			dogDetection( this.imgExtended, extendedRoi );
 		}
 
 		final double radius = ( params.getSigmaDoG() + HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity  ) ) / 2.0;
@@ -518,7 +506,7 @@ public class AnisitropyCoefficient {
 		isComputing = false;
 	}
 
-	protected void dogDetection( final RandomAccessibleInterval <FloatType> image )
+	protected void dogDetection( final RandomAccessible <FloatType> image, final Interval interval )
 	{
 		final double sigma2 = HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity );
 
@@ -529,7 +517,7 @@ public class AnisitropyCoefficient {
 			calibration[ 2 ] = 1.0;
 
 		final DoGDetection<FloatType> dog2 =
-				new DoGDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DoGDetection.ExtremaType.MINIMA, InteractiveRadialSymmetry.thresholdMin, false);
+				new DoGDetection<>(image, interval, calibration, params.getSigmaDoG(), sigma2 , DoGDetection.ExtremaType.MINIMA, InteractiveRadialSymmetry.thresholdMin, false);
 		//final DogDetection<FloatType> dog2 =
 				//new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA, InteractiveRadialSymmetry.thresholdMin, false);
 

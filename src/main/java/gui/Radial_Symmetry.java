@@ -118,7 +118,7 @@ public class Radial_Symmetry implements PlugIn
 			params.minNumInliers = 0;
 		}
 
-		final RandomAccessibleInterval<RealType> img = (RandomAccessibleInterval<RealType>)ImagePlusImgs.from( imp );
+		final RandomAccessibleInterval<RealType> img = (RandomAccessibleInterval)ImagePlusImgs.from( imp );
 
 		// dirty cast that can't be avoided :(
 		if ( params.autoMinMax )

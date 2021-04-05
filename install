@@ -36,7 +36,7 @@ echo ""
 
 echo '#!/bin/bash' > rs-fish
 echo '' >> rs-fish
-echo "JAR=\$HOME/.m2/repository/net/preibisch/imglib2-st/${VERSION}/imglib2-st-${VERSION}.jar" >> rs-fish
+echo "JAR=\$HOME/.m2/repository/net/preibisch/Radial_SymmetryLocalization/${VERSION}/Radial_SymmetryLocalization-${VERSION}.jar" >> rs-fish
 echo 'java \' >> rs-fish
 echo "  -Xmx${MEM}g \\" >> rs-fish
 echo '  -XX:+UseConcMarkSweepGC \' >> rs-fish
@@ -52,7 +52,7 @@ echo ""
 
 echo '#!/bin/bash' > rs-fish-anisotropy
 echo '' >> rs-fish-anisotropy
-echo "JAR=\$HOME/.m2/repository/net/preibisch/imglib2-st/${VERSION}/imglib2-st-${VERSION}.jar" >> rs-fish-anisotropy
+echo "JAR=\$HOME/.m2/repository/net/preibisch/Radial_SymmetryLocalization/${VERSION}/Radial_SymmetryLocalization-${VERSION}.jar" >> rs-fish-anisotropy
 echo 'java \' >> rs-fish-anisotropy
 echo "  -Xmx${MEM}g \\" >> rs-fish-anisotropy
 echo '  -XX:+UseConcMarkSweepGC \' >> rs-fish-anisotropy
@@ -67,7 +67,7 @@ echo ""
 
 echo '#!/bin/bash' > csv-overlay
 echo '' >> csv-overlay
-echo "JAR=\$HOME/.m2/repository/net/preibisch/imglib2-st/${VERSION}/imglib2-st-${VERSION}.jar" >> csv-overlay
+echo "JAR=\$HOME/.m2/repository/net/preibisch/Radial_SymmetryLocalization/${VERSION}/Radial_SymmetryLocalization-${VERSION}.jar" >> csv-overlay
 echo 'java \' >> csv-overlay
 echo "  -Xmx${MEM}g \\" >> csv-overlay
 echo '  -XX:+UseConcMarkSweepGC \' >> csv-overlay

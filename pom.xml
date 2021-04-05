@@ -169,4 +169,5 @@
 			<artifactId>n5-imglib2</artifactId>
 		</dependency>
 	</dependencies>
+	<groupId>net.preibisch</groupId>
 </project>

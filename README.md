@@ -51,10 +51,7 @@ The source code is available on [GitHub](https://github.com/PreibischLab/RadialS
 
 The simulation data that was generated to benchmark the method can be downloaded [here](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/documents/Simulation_of_data ). The smFISH image of the _C. elegans_ emrbyo can be found [here](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/documents/Example_smFISH_images )  
 
-<br />
-<br />
-
-## 2.1. Installation as command-line tools
+#### 2.1. Installation as command-line tools
 
 Command-line installation requires maven and OpenJDK8 (or newer) on Ubuntu:
 ```bash
@@ -76,6 +73,8 @@ Install into your favorite local binary `$PATH` (or leave empty for using the ch
 All dependencies will be downloaded and managed by maven automatically.
 
 This currently installs three tools, `rs-fish, rs-fish-anisotropy, csv-overlay`. Please execute them in order to get detailed execution instructions.
+<br />
+<br />
 
 ### 3.	Running RS-FISH
 

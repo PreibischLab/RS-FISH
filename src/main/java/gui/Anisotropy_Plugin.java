@@ -70,7 +70,7 @@ public class Anisotropy_Plugin implements Command {
 	{
 		net.imagej.ImageJ ij = new net.imagej.ImageJ();
 		//ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_300spots_bg_200_0_I_10000_0_img0.tif" );
-		ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/N2_702_cropped_1620 (high SNR)_ch0.tif" );
+		//ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/N2_702_cropped_1620 (high SNR)_ch0.tif" );
 		//ij.launch( "/Users/spreibi/Downloads/in_situ_HCR_tekt2_514_otogl_488_itln_546_spdf_647_zoom_2_no_DAPI_stage_13_embryo_1_cell_1.tif" );
 		ij.command().run(Anisotropy_Plugin.class, true);
 

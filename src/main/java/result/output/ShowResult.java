@@ -57,7 +57,6 @@ public class ShowResult {
 			idx++;
 		}
 		IJ.log("Spots found = " + rt.getCounter());
-		rt.show("Results");
 
 		return rt;
 	}

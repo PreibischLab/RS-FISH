@@ -1,5 +1,6 @@
 package cmd;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 
 import org.janelia.saalfeldlab.n5.N5FSReader;
@@ -109,7 +110,32 @@ public class RadialSymmetry implements Callable<Void> {
 		RadialSymParams.defaultBsInlierRatio = params.bsInlierRatio = (float)backgroundMinInlierRatio;
 		RadialSymParams.defaultResultsFilePath = params.resultsFilePath = output;
 
-		System.out.println( params.resultsFilePath );
+		final ImagePlus imp = open( image, dataset );
+
+		if ( imp == null )
+		{
+			System.out.println( "Could not open file: " + image  + " (if N5, dataset=" + dataset + ")");
+			return null;
+		}
+
+		if ( interactive )
+		{
+			new ImageJ();
+
+			if ( imp.getStackSize() > 1 )
+				imp.setSlice( imp.getStackSize() / 2 );
+	
+			imp.resetDisplayRange();
+			imp.show();
+	
+			new Radial_Symmetry().run( null );
+		}
+
+		return null;
+	}
+
+	protected static ImagePlus open( String image, String dataset ) throws IOException
+	{
 		final ImagePlus imp;
 
 		if ( image.trim().toLowerCase().endsWith( ".n5") )
@@ -128,20 +154,7 @@ public class RadialSymmetry implements Callable<Void> {
 			imp = new ImagePlus( image );
 		}
 
-		if ( interactive )
-		{
-			new ImageJ();
-
-			if ( imp.getStackSize() > 1 )
-				imp.setSlice( imp.getStackSize() / 2 );
-	
-			imp.resetDisplayRange();
-			imp.show();
-	
-			new Radial_Symmetry().run( null );
-		}
-
-		return null;
+		return imp;
 	}
 
 	public static final void main(final String... args) {

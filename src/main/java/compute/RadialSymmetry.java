@@ -277,7 +277,7 @@ public class RadialSymmetry {
 	}
 
 	// process each 2D/3D slice of the image to search for the spots
-	public static void processSliceBySlice(
+	public static void process(
 			RandomAccessibleInterval<FloatType> img,
 			RandomAccessibleInterval<FloatType> rai,
 			RadialSymParams rsm,

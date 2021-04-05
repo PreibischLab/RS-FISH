@@ -368,12 +368,12 @@ public class HelperFunctions {
 		}
 	}
 
-	public static double[] computeMinMax(final RandomAccessibleInterval<? extends RealType<?>> input) {
+	public static < T extends RealType<T>> double[] computeMinMax(final RandomAccessibleInterval<T> input) {
 		// create a cursor for the image (the order does not matter)
-		final Iterator<? extends RealType<?>> iterator = Views.iterable(input).iterator();
+		final Iterator<T> iterator = Views.iterable(input).iterator();
 
 		// initialize min and max with the first image value
-		RealType<?> type = iterator.next();
+		T type = iterator.next();
 
 		double min = type.getRealDouble();
 		double max = type.getRealDouble();

@@ -13,6 +13,7 @@ import milkyklim.algorithm.localization.LevenbergMarquardtSolver;
 import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
 import milkyklim.algorithm.localization.SparseObservationGatherer;
 import net.imglib2.Localizable;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
@@ -52,7 +53,7 @@ public class Intensity {
 		}
 	}
 
-	public static void calulateIntesitiesGF(RandomAccessibleInterval<FloatType> xyz, int numDimensions,
+	public static void calulateIntesitiesGF(RandomAccessible<FloatType> xyz, int numDimensions,
 			double anisotropy, double sigma, ArrayList<Spot> filteredSpots) {
 		double[] typicalSigmas = new double[numDimensions];
 		for (int d = 0; d < numDimensions; d++)
@@ -85,14 +86,14 @@ public class Intensity {
 	}
 
 	public static void calculateIntensitiesLinear(
-			RandomAccessibleInterval<FloatType> xyz,
+			RandomAccessible<FloatType> xyz,
 			ArrayList<Spot> filteredSpots) {
 		// iterate over all points and perform the linear interpolation for each
 		// of the spots
 		// FIXME: the factory should depend on the imp > floatType, ByteType,
 		// etc.
 		NLinearInterpolatorFactory<FloatType> factory = new NLinearInterpolatorFactory<>();
-		RealRandomAccessible<FloatType> interpolant = Views.interpolate(Views.extendBorder(xyz), factory);
+		RealRandomAccessible<FloatType> interpolant = Views.interpolate(xyz, factory);
 		RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
 		for (Spot fSpot : filteredSpots) {
 			rra.setPosition(fSpot);

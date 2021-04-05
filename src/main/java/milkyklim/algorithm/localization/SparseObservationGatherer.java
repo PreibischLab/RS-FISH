@@ -2,7 +2,7 @@ package milkyklim.algorithm.localization;
 
 import fit.PointFunctionMatch;
 import intensity.Intensity.WrappedSpot;
-import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.algorithm.localization.Observation;
@@ -12,10 +12,10 @@ import net.imglib2.view.Views;
 
 public class SparseObservationGatherer < T extends RealType< T > > implements ObservationGatherer< WrappedSpot > 
 {
-	RandomAccessibleInterval <T> img; // initial image
+	RandomAccessible <T> img; // initial image
 	RealRandomAccessible<T> interpolant; // interpolated image for non-integer intensities
 	
-	public SparseObservationGatherer(RandomAccessibleInterval< T > img)
+	public SparseObservationGatherer(RandomAccessible< T > img)
 	{
 		// set the lookup image; necessary to get the intensities
 		// TODO: we need a lookup from peak >> which pixels to use (inliers)
@@ -23,7 +23,7 @@ public class SparseObservationGatherer < T extends RealType< T > > implements Ob
 		
 		this.img = img;
 		NLinearInterpolatorFactory<T> factory = new NLinearInterpolatorFactory<>();
-		interpolant = Views.interpolate(Views.extendBorder(img), factory);
+		interpolant = Views.interpolate(img, factory);
 	}
 
 	@Override

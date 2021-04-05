@@ -22,6 +22,9 @@ import ij.plugin.PlugIn;
 import ij.plugin.frame.RoiManager;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
+import net.imglib2.FinalInterval;
+import net.imglib2.Interval;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
@@ -30,6 +33,7 @@ import net.imglib2.img.imageplus.ImagePlusImgs;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 import parameters.RadialSymParams;
 import result.output.ShowResult;
 
@@ -203,7 +207,8 @@ public class Radial_Symmetry implements PlugIn
 		int[] impDim = imp.getDimensions(); // x y c z t
 
 		ResultsTable rt = runRSFISH(
-				img,
+				Views.extendMirrorSingle( img ),
+				new FinalInterval( img ),
 				params,
 				mode,
 				imp,
@@ -213,7 +218,8 @@ public class Radial_Symmetry implements PlugIn
 	}
 
 	public static < T extends RealType< T > > ResultsTable runRSFISH(
-			final RandomAccessibleInterval< T > img,
+			final RandomAccessible< T > img,
+			final Interval interval,
 			final RadialSymParams params )
 	{
 		if ( img.numDimensions() < 2 || img.numDimensions() > 3 )
@@ -221,17 +227,18 @@ public class Radial_Symmetry implements PlugIn
 
 		final int[] impDim = new int[ 5 ]; // x y c z t
 
-		impDim[ 0 ] = (int)img.dimension( 0 );
-		impDim[ 1 ] = (int)img.dimension( 1 );
+		impDim[ 0 ] = (int)interval.dimension( 0 );
+		impDim[ 1 ] = (int)interval.dimension( 1 );
 		impDim[ 2 ] = 1;
-		impDim[ 3 ] = img.numDimensions() > 2 ? (int)img.dimension( 2 ) : 1;
+		impDim[ 3 ] = interval.numDimensions() > 2 ? (int)interval.dimension( 2 ) : 1;
 		impDim[ 4 ] = 1;
 
-		return runRSFISH( img, params, 1, null, impDim);
+		return runRSFISH( img, interval, params, 1, null, impDim);
 	}
 
 	public static < T extends RealType< T > > ResultsTable runRSFISH(
-			final RandomAccessibleInterval< T > img,
+			final RandomAccessible< T > img,
+			final Interval interval,
 			final RadialSymParams params,
 			final int mode,
 			final ImagePlus imp,
@@ -239,7 +246,7 @@ public class Radial_Symmetry implements PlugIn
 	{
 		if ( params.autoMinMax )
 		{
-			double[] minmax = HelperFunctions.computeMinMax(img);
+			double[] minmax = HelperFunctions.computeMinMax( Views.interval( img, interval ) );
 
 			if (Double.isNaN( params.min ) )
 				params.min = (float) minmax[0];
@@ -257,7 +264,7 @@ public class Radial_Symmetry implements PlugIn
 		ArrayList<Long> channelPoint = new ArrayList<>(0);
 
 		// un-normalized image for intensity measurement
-		final RandomAccessibleInterval<FloatType> input = Converters.convert(
+		final RandomAccessible<FloatType> input = Converters.convert(
 				img,
 				(a, b) -> b.setReal(a.getRealFloat()),
 				new FloatType());
@@ -265,12 +272,12 @@ public class Radial_Symmetry implements PlugIn
 		// normalized image for detection
 		final double range = params.max - params.min;
 
-		final RandomAccessibleInterval<FloatType> rai = Converters.convert(
+		final RandomAccessible<FloatType> rai = Converters.convert(
 				img,
 				(a, b) -> b.setReal( ( a.getRealFloat() - params.min ) / range ),
 				new FloatType());
 
-		RadialSymmetry.process(input, rai, params, impDim, allSpots, timePoint, channelPoint);
+		RadialSymmetry.process(input, rai, interval, params, impDim, allSpots, timePoint, channelPoint);
 
 		ResultsTable rt = null;
 

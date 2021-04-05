@@ -12,9 +12,11 @@ import gui.Radial_Symmetry;
 import gui.interactive.HelperFunctions;
 import ij.ImageJ;
 import ij.ImagePlus;
+import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.img.imageplus.ImagePlusImgs;
+import net.imglib2.view.Views;
 import parameters.RadialSymParams;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -164,7 +166,10 @@ public class RadialSymmetry implements Callable<Void> {
 				img = ImagePlusImgs.from( new ImagePlus( image ) );
 
 			HelperFunctions.headless = true;
-			Radial_Symmetry.runRSFISH(img, params );
+			Radial_Symmetry.runRSFISH(
+					Views.extendMirrorSingle( img ),
+					new FinalInterval( img ),
+					params );
 
 			System.out.println( "done.");
 		}

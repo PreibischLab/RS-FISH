@@ -16,6 +16,7 @@ import ij.ImagePlus;
 import ij.gui.Roi;
 import imglib2.RealTypeNormalization;
 import imglib2.TypeTransformingRandomAccessibleInterval;
+import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
@@ -338,7 +339,10 @@ public class BatchProcess {
 	 * */
 	public static ArrayList<Spot> processImage(Img<FloatType> img, RandomAccessibleInterval<FloatType> rai, RadialSymParams rsm,
 		long[] dims, double sigma, ArrayList<Float> intensity) {
-		RadialSymmetry rs = new RadialSymmetry(rai, rsm);
+		RadialSymmetry rs = new RadialSymmetry(
+				Views.extendMirrorSingle( rai ),
+				new FinalInterval( rai ),
+				rsm);
 		rs.compute();
 
 		// TODO: Check if this part is redundant 

@@ -43,7 +43,7 @@ Including derivation for 3D + integration with RANSAC
 
 ### 2.	Download & Installation
 
-The RS-FISH plugin can be downloaded via the Fiji Updater. Go to ```Help > Update …```, click ```Manage update sites``` and select Radial Symmetry in the list. Then click ```“Apply changes”``` and restart Fiji. You will now find the RS-FISH plugin under ```Plugins```.  
+The RS-FISH plugin can be downloaded via the Fiji Updater. Go to ```Help > Update …```, click ```Manage update sites``` and select **Radial Symmetry** in the list. Then click ```“Apply changes”``` and restart Fiji. You will now find the RS-FISH plugin under ```Plugins```.  
 
 The source code is available on [GitHub](https://github.com/PreibischLab/RadialSymmetryLocalization ). If you encounter bugs or want to report a feature request, please report everything there.  
 

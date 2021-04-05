@@ -41,7 +41,7 @@ Including derivation for 3D + integration with RANSAC
 <br />
 <br />
 
-### 2.	Download
+### 2.	Download & Installation
 
 The RS-FISH plugin can be downloaded via the Fiji Updater. Go to ```Help > Update …```, click ```Manage update sites``` and select Radial Symmetry in the list. Then click ```“Apply changes”``` and restart Fiji. You will now find the RS-FISH plugin under ```Plugins```.  
 
@@ -54,7 +54,28 @@ The simulation data that was generated to benchmark the method can be downloaded
 <br />
 <br />
 
+## 2.1. Installation as command-line tools
 
+Command-line installation requires maven and OpenJDK8 (or newer) on Ubuntu:
+```bash
+sudo apt-get install openjdk-8-jdk maven
+```
+On other platforms, please find your way and report back if interested.
+
+Next, please check out this repository and go into the folder
+
+```
+git clone https://github.com/PreibischLab/RadialSymmetryLocalization.git
+cd RadialSymmetryLocalization
+```
+
+Install into your favorite local binary `$PATH` (or leave empty for using the checked out directory):
+```bash
+./install $HOME/bin
+```
+All dependencies will be downloaded and managed by maven automatically.
+
+This currently installs three tools, `rs-fish, rs-fish-anisotropy, csv-overlay`. Please execute them in order to get detailed execution instructions.
 
 ### 3.	Running RS-FISH
 

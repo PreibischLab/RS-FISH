@@ -1,15 +1,15 @@
 package gui.anisotropy;
 
 import fiji.tool.SliceListener;
-import gui.anisotropy.AnisitropyCoefficient.ValueChange;
+import gui.anisotropy.AnisotropyCoefficient.ValueChange;
 import ij.ImagePlus;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 public class ImagePlusListener implements SliceListener
 {
-	final AnisitropyCoefficient parent;
+	final AnisotropyCoefficient parent;
 
-	public ImagePlusListener( final AnisitropyCoefficient parent )
+	public ImagePlusListener( final AnisotropyCoefficient parent )
 	{
 		this.parent = parent;
 	}

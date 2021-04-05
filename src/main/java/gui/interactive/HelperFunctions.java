@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import fitting.Spot;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Overlay;
@@ -36,6 +37,16 @@ import net.imglib2.view.Views;
 
 public class HelperFunctions {
 	
+	public static boolean headless = false;
+
+	public static void log( String s )
+	{
+		if ( headless )
+			System.out.println( s );
+		else
+			IJ.log( s );
+	}
+
 	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel,
 			long time, int[] impDim) {
 		
@@ -368,12 +379,12 @@ public class HelperFunctions {
 		}
 	}
 
-	public static double[] computeMinMax(final RandomAccessibleInterval<? extends RealType<?>> input) {
+	public static < T extends RealType<T>> double[] computeMinMax(final RandomAccessibleInterval<T> input) {
 		// create a cursor for the image (the order does not matter)
-		final Iterator<? extends RealType<?>> iterator = Views.iterable(input).iterator();
+		final Iterator<T> iterator = Views.iterable(input).iterator();
 
 		// initialize min and max with the first image value
-		RealType<?> type = iterator.next();
+		T type = iterator.next();
 
 		double min = type.getRealDouble();
 		double max = type.getRealDouble();

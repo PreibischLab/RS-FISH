@@ -7,9 +7,8 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import anisotropy.parameters.AParams;
-import gui.anisotropy.AnisitropyCoefficient;
+import gui.anisotropy.AnisotropyCoefficient;
 import gui.interactive.HelperFunctions;
-import ij.IJ;
 import ij.ImagePlus;
 import parameters.RadialSymParams;
 
@@ -34,26 +33,26 @@ public class Anisotropy_Plugin implements Command {
 
 		if ( imagePlus.getNFrames() > 1 )
 		{
-			IJ.log( "More than one frame detected, need a plain 3D image for Anisotropy detection (check Image>Properties)." );
+			HelperFunctions.log( "More than one frame detected, need a plain 3D image for Anisotropy detection (check Image>Properties)." );
 			return;
 		}
 
 		if ( imagePlus.getNChannels() > 1 )
 		{
-			IJ.log( "More than one channel detected, need a plain 3D image for Anisotropy detection (check Image>Properties)." );
+			HelperFunctions.log( "More than one channel detected, need a plain 3D image for Anisotropy detection (check Image>Properties)." );
 			return;
 		}
 
 		if ( imagePlus.getNSlices() <= 1 )
 		{
-			IJ.log( "Only one slice detected, need a 3D image for Anisotropy detection (check Image>Properties)." );
+			HelperFunctions.log( "Only one slice detected, need a 3D image for Anisotropy detection (check Image>Properties)." );
 			return;
 		}
 
 		float bestScale = 1.0f;
 		AParams ap = new AParams();
 		double [] minmax = HelperFunctions.calculateMinMax(imagePlus);
-		AnisitropyCoefficient ac = new AnisitropyCoefficient(imagePlus, ap, paramType, minmax[0], minmax[1]);
+		AnisotropyCoefficient ac = new AnisotropyCoefficient(imagePlus, ap, paramType, minmax[0], minmax[1]);
 		if ( ac.wasCanceled() )
 			return;
 		bestScale = (float) ac.calculateAnisotropyCoefficient();
@@ -63,14 +62,14 @@ public class Anisotropy_Plugin implements Command {
 		RadialSymParams.defaultSigma = ac.params.getSigmaDoG(); 
 		RadialSymParams.defaultThreshold = ac.params.getThresholdDoG();
 
-		IJ.log("Anisotropy coefficient: " + bestScale);
+		HelperFunctions.log("Anisotropy coefficient: " + bestScale);
 	}
 
 	public static void main(String[] args)
 	{
 		net.imagej.ImageJ ij = new net.imagej.ImageJ();
 		//ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_300spots_bg_200_0_I_10000_0_img0.tif" );
-		ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/N2_702_cropped_1620 (high SNR)_ch0.tif" );
+		//ij.launch( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/N2_702_cropped_1620 (high SNR)_ch0.tif" );
 		//ij.launch( "/Users/spreibi/Downloads/in_situ_HCR_tekt2_514_otogl_488_itln_546_spdf_647_zoom_2_no_DAPI_stage_13_embryo_1_cell_1.tif" );
 		ij.command().run(Anisotropy_Plugin.class, true);
 

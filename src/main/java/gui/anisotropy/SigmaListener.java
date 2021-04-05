@@ -5,12 +5,12 @@ import java.awt.Scrollbar;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 
-import gui.anisotropy.AnisitropyCoefficient.ValueChange;
+import gui.anisotropy.AnisotropyCoefficient.ValueChange;
 import gui.interactive.HelperFunctions;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 public class SigmaListener implements AdjustmentListener {
-	final AnisitropyCoefficient parent;
+	final AnisotropyCoefficient parent;
 	final Label label;
 	final float min, max;
 	final int scrollbarSize;
@@ -18,7 +18,7 @@ public class SigmaListener implements AdjustmentListener {
 	final Scrollbar sigmaScrollbar1;
 
 	public SigmaListener(
-			final AnisitropyCoefficient parent,
+			final AnisotropyCoefficient parent,
 			final Label label, final float min, final float max,
 			final int scrollbarSize,
 			final Scrollbar sigmaScrollbar1) {

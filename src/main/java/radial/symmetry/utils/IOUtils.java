@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 
+import gui.interactive.HelperFunctions;
 import ij.IJ;
 import net.imglib2.RealPoint;
 
@@ -30,7 +31,7 @@ public class IOUtils {
 		ArrayList<RealPoint> peaks = new ArrayList<>();
 		String[] nextLine;
 		int numDimensions = getNumDimensions(filepath) - 3;
-		IJ.log( "numDimensions=" + numDimensions );
+		HelperFunctions.log( "numDimensions=" + numDimensions );
 		try {
 			CSVReader reader = new CSVReader(new FileReader(filepath)); // figure the delimiter yourself
 			int i = 0;
@@ -43,12 +44,12 @@ public class IOUtils {
 					{
 						pos[d] = Double.parseDouble(nextLine[d]);
 					}
-					catch (Exception e ) { IJ.log( "no entries in line: " + i ); break; }
+					catch (Exception e ) { HelperFunctions.log( "no entries in line: " + i ); break; }
 				}
 				peaks.add(new RealPoint(pos));
 			}
 			reader.close();
-			IJ.log( "read " + peaks.size() + " spots." );
+			HelperFunctions.log( "read " + peaks.size() + " spots." );
 		} catch (IOException | CsvValidationException e) {
 			e.printStackTrace();
 		}

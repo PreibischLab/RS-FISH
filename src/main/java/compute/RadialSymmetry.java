@@ -56,16 +56,16 @@ public class RadialSymmetry {
 			final RadialSymParams p ) {
 
 		// perform DOG
+
+		HelperFunctions.log( "Computing DoG..." );
+
 		rs.peaks = computeDog(pImg, p.sigma, p.threshold, p.anisotropyCoefficient, p.useAnisotropyForDoG );
+
+		HelperFunctions.log("DoG pre-detected spots: " + rs.peaks.size() );//+ ", " + numIterations  + ", " + pMaxError );
 
 		// calculate (normalized) derivatives
 		rs.derivative = new GradientPreCompute(pImg);
 		rs.ng = calculateNormalizedGradient(rs.derivative, RadialSymParams.bsMethods[ p.bsMethod ], p.bsMaxError, p.bsInlierRatio);
-
-		// use light weighted structure for the radial symmetry computations
-		final ArrayList<long[]> simplifiedPeaks = new ArrayList<>();
-		Rectangle rectangle = new Rectangle(0, 0, (int) pImg.dimension(0), (int) pImg.dimension(1));
-		HelperFunctions.copySimplePeaks(rs.peaks, simplifiedPeaks, rectangle );
 
 		// CODE FOR DEBUGGING DoG OUTPUT
 		// FOR Poiss_30spots_bg_200_1_I_300_0_img0.loc ONE SPOT IS DOUBLE-DETECTED:
@@ -81,11 +81,13 @@ public class RadialSymmetry {
 		//	System.out.println( Util.printCoordinates( p.getL() ) );
 		//System.out.println( HelperFunctions.analyzePoints( gt, HelperFunctions.toPointsLong( simplifiedPeaks ), false ) );
 
+		HelperFunctions.log( "Computing Radial Symmetry..." );
+
 		rs.spots = computeRadialSymmetry(
 				pImg,
 				rs.ng,
 				rs.derivative,
-				simplifiedPeaks,
+				rs.peaks,
 				Util.getArrayFromValue( p.supportRadius, pImg.numDimensions() ),
 				p.inlierRatio,
 				p.maxError,
@@ -132,14 +134,14 @@ public class RadialSymmetry {
 				if ( rs.spots.get( i ).inliers.size() == 0 )
 					rs.spots.remove( i );
 	
-			IJ.log( "#detections (after RANSAC): " + rs.spots.size() );
+			HelperFunctions.log( "#detections (after RANSAC): " + rs.spots.size() );
 		}
 
 		// TODO: trash the one with lower intensity
-		IJ.log( "Filtering double-detections (dist < 0.5 px)");
+		HelperFunctions.log( "Filtering double-detections (dist < 0.5 px)");
 		filterDoubleDetections( rs.spots, 0.5 );
 
-		IJ.log( "Final #detections (before intensity check): " + rs.spots.size() );
+		HelperFunctions.log( "Final #detections (before intensity check): " + rs.spots.size() );
 
 		//System.out.println( HelperFunctions.analyzePoints( gt, HelperFunctions.toPointsSpot( rs.spots ), false ) );
 	}
@@ -203,7 +205,7 @@ public class RadialSymmetry {
 	}
 
 	public static ArrayList<Spot> computeRadialSymmetry(final RandomAccessibleInterval<FloatType> pImg, NormalizedGradient pNg,
-			Gradient pDerivative, ArrayList<long[]> simplifiedPeaks, int[] pSupportRadius, float pInlierRatio,
+			Gradient pDerivative, ArrayList<Point> peaks, int[] pSupportRadius, float pInlierRatio,
 			float pMaxError, float pAnisotropy, Ransac ransac, final int minNumInliers, final double nTimesStDev1, final double nTimesStDev2 ) {
 		int numDimensions = pImg.numDimensions();
 
@@ -212,13 +214,11 @@ public class RadialSymmetry {
 		for (int d = 0; d < numDimensions; ++d)
 			range[d] = pSupportRadius[d]*2;
 
-		ArrayList<Spot> pSpots = Spot.extractSpots(pImg, simplifiedPeaks, pDerivative, pNg, range);
+		ArrayList<Spot> pSpots = Spot.extractSpotsPoints(pImg, peaks, pDerivative, pNg, range);
 
 		// scale the z-component according to the anisotropy coefficient
 		if (numDimensions == 3)
 			fixAnisotropy(pSpots, pAnisotropy);
-
-		IJ.log("DoG pre-detected spots: " + pSpots.size() );//+ ", " + numIterations  + ", " + pMaxError );
 
 		if (ransac != Ransac.NONE )
 		{
@@ -277,7 +277,7 @@ public class RadialSymmetry {
 	}
 
 	// process each 2D/3D slice of the image to search for the spots
-	public static void processSliceBySlice(
+	public static void process(
 			RandomAccessibleInterval<FloatType> img,
 			RandomAccessibleInterval<FloatType> rai,
 			RadialSymParams rsm,

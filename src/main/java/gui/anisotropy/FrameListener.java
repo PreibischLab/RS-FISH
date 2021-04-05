@@ -4,10 +4,10 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 public class FrameListener extends WindowAdapter {
-	final AnisitropyCoefficient parent;
+	final AnisotropyCoefficient parent;
 
 	public FrameListener(
-			final AnisitropyCoefficient parent )
+			final AnisotropyCoefficient parent )
 	{
 		super();
 		this.parent = parent;

@@ -31,8 +31,11 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import mpicbg.models.PointMatch;
 import net.imglib2.Cursor;
+import net.imglib2.FinalInterval;
+import net.imglib2.Interval;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
@@ -68,13 +71,15 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	final RandomAccessibleInterval< FloatType > img;
 
 	final long[] dim;
-	final int type;
+	//final int type;
 	Rectangle rectangle;
 
 	ArrayList<RefinedPeak<Point>> peaks;
 
 	// TODO: always process only this part of the initial image READ ONLY
-	RandomAccessibleInterval<FloatType> extendedRoi;
+	RandomAccessibleInterval<FloatType> imgTmp;
+	Interval extendedRoi;
+
 	// the pre-computed gradient
 	Gradient derivative;
 
@@ -163,18 +168,6 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		}
 
 		this.params = params;
-
-		// which type of imageplus image is it?
-		final Object pixels = imp.getProcessor().getPixels();
-		if ( pixels instanceof byte[] )
-			this.type = 0;
-		else if ( pixels instanceof short[] )
-			this.type = 1;
-		else if ( pixels instanceof float[] )
-			this.type = 2;
-		else
-			throw new RuntimeException( "Pixels of this type are not supported: " + pixels.getClass().getSimpleName() );
-
 		this.dim = new long[]{ imp.getWidth(), imp.getHeight() };
 
 		final Roi roi = imagePlus.getRoi();
@@ -557,7 +550,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			impRansacError.setRoi(rectangle);
 
 			// a 2d or 3d view where we'll run DoG on
-			RandomAccessibleInterval< FloatType > imgTmp;
+			//RandomAccessibleInterval< FloatType > imgTmp;
 			long[] min, max;
 
 			if ( imagePlus.getNSlices() > 1 ) { // 3d, 3d+t case
@@ -572,20 +565,22 @@ public class InteractiveRadialSymmetry// extends GUIParams
 				// 'channel', 'slice' and 'frame' are one-based indexes
 				final int currentSlice = imagePlus.getZ() - 1;
 
+				/*
 				final int extZ = 
 						Gauss3.halfkernelsizes(
 								new double[] {
 										HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity ) *
 										( params.useAnisotropyForDoG ? params.anisotropyCoefficient : 1.0 ) } )[ 0 ];
-
+				*/
+				// we need only one plane (+-1) in Z since we anyways use the entire image for convolution
 				min = new long []{
-						rectangle.x - params.getSupportRadius(),
-						rectangle.y - params.getSupportRadius(),
-						Math.max( imgTmp.min( 2 ), currentSlice - extZ ) };
+						rectangle.x,
+						rectangle.y,
+						Math.max( imgTmp.min( 2 ), currentSlice - 1 ) };
 				max = new long []{
-						rectangle.width + rectangle.x + params.getSupportRadius() - 1,
-						rectangle.height + rectangle.y + params.getSupportRadius() - 1,
-						Math.min( imgTmp.max( 2 ), currentSlice + extZ ) };
+						rectangle.width + rectangle.x - 1,
+						rectangle.height + rectangle.y - 1,
+						Math.min( imgTmp.max( 2 ), currentSlice + 1 ) };
 			}
 			else { // 2d or 2d+t case
 
@@ -596,11 +591,11 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 				// 2d case
 
-				min = new long []{rectangle.x - params.getSupportRadius(), rectangle.y - params.getSupportRadius()};
-				max = new long []{rectangle.width + rectangle.x + params.getSupportRadius() - 1, rectangle.height + rectangle.y + params.getSupportRadius() - 1};
+				min = new long []{rectangle.x, rectangle.y};
+				max = new long []{rectangle.width + rectangle.x - 1, rectangle.height + rectangle.y - 1};
 			}
 
-			extendedRoi = Views.interval( Views.extendMirrorSingle( imgTmp ), min, max);
+			extendedRoi = new FinalInterval(min, max);//Views.interval( Views.extendMirrorSingle( imgTmp ), min, max);
 
 			roiChanged = true;
 		}
@@ -608,8 +603,8 @@ public class InteractiveRadialSymmetry// extends GUIParams
 		// only recalculate DOG & gradient image if: sigma, roi (also through support region), slider
 		if (roiChanged || peaks == null || change == ValueChange.SIGMA || change == ValueChange.SLICE || change == ValueChange.ALL )
 		{
-			dogDetection( extendedRoi );
-			derivative = new GradientOnDemand( extendedRoi );//new GradientPreCompute( extendedRoi );
+			dogDetection( Views.extendMirrorSingle( imgTmp ), extendedRoi );
+			derivative = new GradientOnDemand( Views.extendMirrorSingle( imgTmp ) );//new GradientPreCompute( extendedRoi );
 		}
 
 		final double radius = ( params.getSigmaDoG() + HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity  ) );
@@ -617,11 +612,17 @@ public class InteractiveRadialSymmetry// extends GUIParams
 
 		HelperFunctions.drawRealLocalizable( filteredPeaks, imagePlus, radius, Color.RED, true );
 
+		// TODO: fix interactive ransac with efficient 3d computation extendedROI/imgTmp
 		ransacInteractive( derivative );
 		isComputing = false;
 	}
 
 	protected void dogDetection( final RandomAccessibleInterval <FloatType> image )
+	{
+		dogDetection( image, image );
+	}
+
+	protected void dogDetection( final RandomAccessible<FloatType> image, final Interval interval )
 	{
 		final double sigma2 = HelperFunctions.computeSigma2( params.getSigmaDoG(), sensitivity );
 
@@ -632,7 +633,7 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			calibration[ 2 ] = params.useAnisotropyForDoG ? (1.0/params.anisotropyCoefficient) : 1.0;
 
 		final DoGDetection<FloatType> dog2 =
-				new DoGDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DoGDetection.ExtremaType.MINIMA, InteractiveRadialSymmetry.thresholdMin, false);
+				new DoGDetection<>(image, interval, calibration, params.getSigmaDoG(), sigma2 , DoGDetection.ExtremaType.MINIMA, InteractiveRadialSymmetry.thresholdMin, false);
 		//final DogDetection<FloatType> dog2 =
 				//new DogDetection<>(image, calibration, params.getSigmaDoG(), sigma2 , DogDetection.ExtremaType.MINIMA, InteractiveRadialSymmetry.thresholdMin, false);
 
@@ -708,8 +709,8 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			}
 		}
 		
-		IJ.log( "min=" + min );
-		IJ.log( "max=" + max );
+		HelperFunctions.log( "min=" + min );
+		HelperFunctions.log( "max=" + max );
 
 		imp.show();
 

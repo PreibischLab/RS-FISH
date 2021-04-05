@@ -8,6 +8,7 @@ import java.util.List;
 import background.NormalizedGradient;
 import fit.PointFunctionMatch;
 import gradient.Gradient;
+import gui.interactive.HelperFunctions;
 import ij.IJ;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
@@ -15,6 +16,7 @@ import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
+import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
@@ -183,6 +185,34 @@ public class Spot implements RealLocalizable//, Localizable
 			spots.add( extractSpot(interval, peak, derivative, normalizer, spotSize ) );
 
 		return spots;
+	}
+
+	public static <T extends RealType<T> > ArrayList< Spot > extractSpotsPoints(
+			final Interval interval,
+			final ArrayList< ? extends Localizable > peaks,
+			final Gradient derivative,
+			final NormalizedGradient normalizer,
+			final long[] spotSize )
+	{
+		final ArrayList< Spot > spots = new ArrayList<>();
+
+		for ( final Localizable peak : peaks )
+			spots.add( extractSpot(interval, peak, derivative, normalizer, spotSize ) );
+
+		return spots;
+	}
+
+	public static <T extends RealType<T> > Spot extractSpot(
+			final Interval interval,
+			final Localizable peak,
+			final Gradient derivative,
+			final NormalizedGradient normalizer,
+			final long[] spotSize )
+	{
+		final long[] p = new long[ peak.numDimensions() ];
+		peak.localize( p );
+
+		return extractSpot(interval, p, derivative, normalizer, spotSize );
 	}
 
 	public static <T extends RealType<T> > Spot extractSpot(
@@ -358,10 +388,10 @@ public class Spot implements RealLocalizable//, Localizable
 
 			if ( !silent )
 			{
-				IJ.log( "min #inliers=" + min );
-				IJ.log( "max #inliers=" + max );
-				IJ.log( "average #inliers=" + avg );
-				IJ.log( "stdev #inliers=" + stdev );
+				HelperFunctions.log( "min #inliers=" + min );
+				HelperFunctions.log( "max #inliers=" + max );
+				HelperFunctions.log( "average #inliers=" + avg );
+				HelperFunctions.log( "stdev #inliers=" + stdev );
 			}
 
 			// select extra consensus areas that might be spots
@@ -372,9 +402,9 @@ public class Spot implements RealLocalizable//, Localizable
 
 				if ( !silent )
 				{
-					IJ.log( "Finding additional spots ... " );
-					IJ.log( "MultiConsensus initial threshold #inliers=" + thr1 );
-					IJ.log( "MultiConsensus final threshold #inliers=" + thr2 );
+					HelperFunctions.log( "Finding additional spots ... " );
+					HelperFunctions.log( "MultiConsensus initial threshold #inliers=" + thr1 );
+					HelperFunctions.log( "MultiConsensus final threshold #inliers=" + thr2 );
 				}
 
 				final ArrayList< Spot > newSpots = new ArrayList<>();
@@ -475,7 +505,7 @@ public class Spot implements RealLocalizable//, Localizable
 		else
 		{
 			if (!silent )
-				IJ.log( "No spots remaining after RANSAC." );
+				HelperFunctions.log( "No spots remaining after RANSAC." );
 		}
 
 		return additionalSpots;

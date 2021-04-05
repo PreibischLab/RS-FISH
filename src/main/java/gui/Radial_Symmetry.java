@@ -26,6 +26,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.img.imageplus.ImagePlusImgs;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -60,12 +61,13 @@ public class Radial_Symmetry implements PlugIn
 		gd1.addChoice( "Image", imgList, imgList[ RadialSymParams.defaultImg ] );
 		gd1.addChoice( "Mode", RadialSymParams.modeChoice, RadialSymParams.modeChoice[ RadialSymParams.defaultMode ] );
 		gd1.addNumericField( "Anisotropy coefficient", RadialSymParams.defaultAnisotropy, 4, 15, "s(z)/s(xy)" );
-		gd1.addCheckbox( "Use_anisotropy coefficient for DoG", RadialSymParams.defaultUseAnisotropyForDoG );
 
 		gd1.addMessage( "<html>*Use the \"Anisotropy Coefficient Plugin\"<br/>to calculate the anisotropy coefficient<br/> or leave 1.00 for a hopefully reasonable result.", new Font( "Default", Font.ITALIC, 10 ) );
 
 		gd1.addMessage( "Computation:", new Font( "Default", Font.BOLD, 13 ) );
 		gd1.addChoice( "Robust_fitting", RadialSymParams.ransacChoice, RadialSymParams.ransacChoice[ RadialSymParams.defaultRANSACChoice ] );
+		gd1.addCheckbox( "Compute_min/max intensity from image", RadialSymParams.defaultAutoMinMax );
+		gd1.addCheckbox( "Use_anisotropy coefficient for DoG", RadialSymParams.defaultUseAnisotropyForDoG );
 
 		gd1.addMessage( "Visualization:", new Font( "Default", Font.BOLD, 13 ) );
 		gd1.addCheckbox( "Add detections to ROI-Manager", RadialSymParams.defaultAddToROIManager );
@@ -82,15 +84,17 @@ public class Radial_Symmetry implements PlugIn
 		ImagePlus imp = WindowManager.getImage( idList[ RadialSymParams.defaultImg = gd1.getNextChoiceIndex() ] );
 		int mode = RadialSymParams.defaultMode = gd1.getNextChoiceIndex();
 		params.anisotropyCoefficient = RadialSymParams.defaultAnisotropy = gd1.getNextNumber();
-		params.useAnisotropyForDoG = RadialSymParams.defaultUseAnisotropyForDoG = gd1.getNextBoolean();
 		params.RANSAC = Ransac.values()[ RadialSymParams.defaultRANSACChoice = gd1.getNextChoiceIndex() ];
 
-		boolean addToROIManager = RadialSymParams.defaultAddToROIManager = gd1.getNextBoolean();
+		params.autoMinMax = RadialSymParams.defaultAutoMinMax = gd1.getNextBoolean();
+		params.useAnisotropyForDoG = RadialSymParams.defaultUseAnisotropyForDoG = gd1.getNextBoolean();
+
+		params.addToROIManager = RadialSymParams.defaultAddToROIManager = gd1.getNextBoolean();
 		//boolean visInliers = RadialSymParams.defaultVisualizeInliers = gd1.getNextBoolean();
 
 		if (imp.getNChannels() > 1)
 		{
-			IJ.log( "Multichannel image detected. Please split by channel and select parameters for each channel separately.");
+			HelperFunctions.log( "Multichannel image detected. Please split by channel and select parameters for each channel separately.");
 			return;
 		}
 
@@ -114,13 +118,30 @@ public class Radial_Symmetry implements PlugIn
 			params.minNumInliers = 0;
 		}
 
+		final RandomAccessibleInterval<RealType> img = (RandomAccessibleInterval)ImagePlusImgs.from( imp );
+
 		// dirty cast that can't be avoided :(
-		double[] minmax = HelperFunctions.computeMinMax((Img) ImageJFunctions.wrapReal(imp));
+		if ( params.autoMinMax )
+		{
+			double[] minmax = HelperFunctions.computeMinMax(img);
 
-		float min = (float) minmax[0];
-		float max = (float) minmax[1];
+			params.min = (float) minmax[0];
+			params.max = (float) minmax[1];
+			params.autoMinMax = false; // have done it already
+		}
+		else
+		{
+			GenericDialogPlus gd2 = new GenericDialogPlus( "Image Min/Max" );
+			gd2.addNumericField( "Image_min", RadialSymParams.defaultMin );
+			gd2.addNumericField( "Image_max", RadialSymParams.defaultMax );
 
-		IJ.log( "img min=" + min + ", max=" + max );
+			gd2.showDialog();
+			if (gd2.wasCanceled() )
+				return;
+
+			params.min = RadialSymParams.defaultMin = gd2.getNextNumber();
+			params.max = RadialSymParams.defaultMax = gd2.getNextNumber();
+		}
 
 		// TODO: REMOVE
 		//mode = 1;
@@ -164,7 +185,9 @@ public class Radial_Symmetry implements PlugIn
 		}
 		else // interactive
 		{
-			InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, min, max);
+			HelperFunctions.log( "img min intensity=" + params.min + ", max intensity=" + params.max );
+
+			InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, params.min, params.max);
 			do {
 				// TODO: change to something that is not deprecated
 				SimpleMultiThreading.threadWait(100);
@@ -177,15 +200,55 @@ public class Radial_Symmetry implements PlugIn
 			params.setDefaultValuesFromInteractive();
 		}
 
-		// normalize the whole image if it is possible
-		RandomAccessibleInterval<FloatType> rai;
-		if (!Double.isNaN(min) && !Double.isNaN(max)) // if normalizable
-			rai = new TypeTransformingRandomAccessibleInterval<>(ImageJFunctions.wrap(imp),
-					new RealTypeNormalization<>(min, max - min), new FloatType());
-		else // otherwise use
-			rai = ImageJFunctions.wrap(imp);
-
 		int[] impDim = imp.getDimensions(); // x y c z t
+
+		ResultsTable rt = runRSFISH(
+				img,
+				params,
+				mode,
+				imp,
+				impDim );
+
+		rt.show( "smFISH localizations");
+	}
+
+	public static < T extends RealType< T > > ResultsTable runRSFISH(
+			final RandomAccessibleInterval< T > img,
+			final RadialSymParams params )
+	{
+		if ( img.numDimensions() < 2 || img.numDimensions() > 3 )
+			throw new RuntimeException( "Only dimensionality of 2 or 3 is supported right now, here we have: " + img.numDimensions() );
+
+		final int[] impDim = new int[ 5 ]; // x y c z t
+
+		impDim[ 0 ] = (int)img.dimension( 0 );
+		impDim[ 1 ] = (int)img.dimension( 1 );
+		impDim[ 2 ] = 1;
+		impDim[ 3 ] = img.numDimensions() > 2 ? (int)img.dimension( 2 ) : 1;
+		impDim[ 4 ] = 1;
+
+		return runRSFISH( img, params, 1, null, impDim);
+	}
+
+	public static < T extends RealType< T > > ResultsTable runRSFISH(
+			final RandomAccessibleInterval< T > img,
+			final RadialSymParams params,
+			final int mode,
+			final ImagePlus imp,
+			final int[] impDim )
+	{
+		if ( params.autoMinMax )
+		{
+			double[] minmax = HelperFunctions.computeMinMax(img);
+
+			if (Double.isNaN( params.min ) )
+				params.min = (float) minmax[0];
+
+			if (Double.isNaN( params.max ) )
+				params.max = (float) minmax[1];
+		}
+
+		HelperFunctions.log( "img min intensity=" + params.min + ", max intensity=" + params.max );
 
 		ArrayList<Spot> allSpots = new ArrayList<>(0);
 		// stores number of detected spots per time point
@@ -193,14 +256,23 @@ public class Radial_Symmetry implements PlugIn
 		// stores number of detected spots per channel
 		ArrayList<Long> channelPoint = new ArrayList<>(0);
 
-		// Ensure that the input is a FloatType
-		RandomAccessibleInterval<RealType> wrapped = ImageJFunctions.wrapReal(imp);
-		RandomAccessibleInterval<FloatType> input = Converters.convert(
-				wrapped,
+		// un-normalized image for intensity measurement
+		final RandomAccessibleInterval<FloatType> input = Converters.convert(
+				img,
 				(a, b) -> b.setReal(a.getRealFloat()),
 				new FloatType());
 
-		RadialSymmetry.processSliceBySlice(input, rai, params, impDim, allSpots, timePoint, channelPoint);
+		// normalized image for detection
+		final double range = params.max - params.min;
+
+		final RandomAccessibleInterval<FloatType> rai = Converters.convert(
+				img,
+				(a, b) -> b.setReal( ( a.getRealFloat() - params.min ) / range ),
+				new FloatType());
+
+		RadialSymmetry.process(input, rai, params, impDim, allSpots, timePoint, channelPoint);
+
+		ResultsTable rt = null;
 
 		if ( mode == 0 ) { // interactive
 			imp.deleteRoi();
@@ -211,24 +283,38 @@ public class Radial_Symmetry implements PlugIn
 							imp, allSpots, timePoint,
 							params.getSigmaDoG(), params.getAnisotropyCoefficient());
 
-			ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
+			rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
 		}
 		else if ( mode == 1 ) { // advanced
 			// write the result to the csv file
-			IJ.log( "Intensity threshold =" + params.intensityThreshold );
-			ResultsTable rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
+			HelperFunctions.log( "Intensity threshold = " + params.intensityThreshold );
+			if ( HelperFunctions.headless )
+				ShowResult.ransacResultCsv(allSpots, timePoint, channelPoint, params.intensityThreshold, params.resultsFilePath );
+			else
+				rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
 
-			if( params.resultsFilePath.length() > 0 )
+		}
+		else
+		{
+			throw new RuntimeException("Wrong parameters' mode");
+		}
+
+		if ( !HelperFunctions.headless )
+		{
+			if ( params.resultsFilePath.length() > 0 )
 			{
-				System.out.println("Writing to results path: " + params.resultsFilePath);
+				System.out.println("Writing CSV: " + params.resultsFilePath);
 				rt.save(params.resultsFilePath);
 			}
-		} else
-			System.out.println("Wrong parameters' mode");
+			else
+			{
+				System.out.println("No CSV output given.");
+			}
+		}
 
-		if ( addToROIManager )
+		if ( params.addToROIManager )
 		{
-			IJ.log( "Adding spots to ROI Manager" );
+			HelperFunctions.log( "Adding spots to ROI Manager" );
 			RoiManager roim = RoiManager.getRoiManager();
 			imp.setActivated();
 
@@ -240,6 +326,8 @@ public class Radial_Symmetry implements PlugIn
 				roim.addRoi( p );
 			}
 		}
+
+		return rt;
 	}
 
 	public static void main(String[] args) {
@@ -258,6 +346,5 @@ public class Radial_Symmetry implements PlugIn
 		new ImagePlus("/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.tif" ).show();
 		//new ImagePlus( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_0_I_10000_0_img0.tif" ).show();
 		new Radial_Symmetry().run( null );
-
 	}
 }

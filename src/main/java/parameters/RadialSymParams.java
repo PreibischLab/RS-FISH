@@ -9,6 +9,10 @@ public class RadialSymParams {
 
 	final public static String[] bsMethods = new String[] { "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
 
+	public static boolean defaultAutoMinMax = true;
+	public static double defaultMin = 0;
+	public static double defaultMax = 255;
+
 	public static double defaultIntensityThreshold = 0.0;
 	public static float defaultSigma = 1.5f;
 	public static float defaultThreshold = 0.007f;
@@ -41,6 +45,11 @@ public class RadialSymParams {
 	public static double defaultNTimesStDev1 = 8.0;
 	public static double defaultNTimesStDev2 = 6.0;
 
+	// min/max
+	public boolean autoMinMax = defaultAutoMinMax;
+	public double min = Double.NaN;
+	public double max = Double.NaN;
+
 	// RANSAC parameters
 	// current value
 	public Ransac RANSAC = Ransac.values()[ defaultRANSACChoice ];
@@ -69,6 +78,9 @@ public class RadialSymParams {
 	// multiconsensus options
 	public int minNumInliers = defaultMinNumInliers;
 	public double nTimesStDev1 = defaultNTimesStDev1, nTimesStDev2 = defaultNTimesStDev2;
+
+	// ROI manager
+	public boolean addToROIManager = defaultAddToROIManager;
 
 	// advanced output
 	public String resultsFilePath = defaultResultsFilePath;

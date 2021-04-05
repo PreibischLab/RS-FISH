@@ -9,10 +9,12 @@ import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 
 import compute.RadialSymmetry.Ransac;
 import gui.Radial_Symmetry;
+import gui.interactive.HelperFunctions;
 import ij.ImageJ;
 import ij.ImagePlus;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.img.imageplus.ImagePlusImgs;
 import parameters.RadialSymParams;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -33,6 +35,13 @@ public class RadialSymmetry implements Callable<Void> {
 	// interactive mode
 	@Option(names = {"--interactive"}, required = false, description = "run the plugin interactively, ImageJ window and image pop up (default: false)")
 	private boolean interactive = false;
+
+	// intensity settings
+	@Option(names = {"-i0", "--minIntensity"}, required = false, description = "minimal intensity of the image (default: compute from image)")
+	private double minIntensity = Double.NaN;
+
+	@Option(names = {"-i1", "--maxIntensity"}, required = false, description = "maximal intensity of the image (default: compute from image)")
+	private double maxIntensity = Double.NaN;
 
 	// RS settings
 	@Option(names = {"-a", "--anisotropy"}, required = false, description = "the anisotropy factor (scaling of z relative to xy, can be determined using the anisotropy plugin), e.g. -a 0.8 (default: 1.0)")
@@ -90,6 +99,21 @@ public class RadialSymmetry implements Callable<Void> {
 		RadialSymParams.defaultRANSACChoice = ransac;
 		params.RANSAC = Ransac.values()[ ransac ]; //"No RANSAC", "RANSAC", "Multiconsensus RANSAC"
 
+		params.min = minIntensity;
+		params.max = maxIntensity;
+
+		if (Double.isNaN( params.min ) )
+		{
+			RadialSymParams.defaultMin = minIntensity;
+			params.autoMinMax = true;
+		}
+
+		if (Double.isNaN( params.max ) )
+		{
+			RadialSymParams.defaultMax = maxIntensity;
+			params.autoMinMax = true;
+		}
+
 		// multiconsensus
 		if ( ransac == 2 )
 		{
@@ -110,16 +134,16 @@ public class RadialSymmetry implements Callable<Void> {
 		RadialSymParams.defaultBsInlierRatio = params.bsInlierRatio = (float)backgroundMinInlierRatio;
 		RadialSymParams.defaultResultsFilePath = params.resultsFilePath = output;
 
-		final ImagePlus imp = open( image, dataset );
-
-		if ( imp == null )
-		{
-			System.out.println( "Could not open file: " + image  + " (if N5, dataset=" + dataset + ")");
-			return null;
-		}
-
 		if ( interactive )
 		{
+			final ImagePlus imp = open( image, dataset );
+
+			if ( imp == null )
+			{
+				System.out.println( "Could not open file: " + image  + " (if N5, dataset=" + dataset + ")");
+				return null;
+			}
+
 			new ImageJ();
 
 			if ( imp.getStackSize() > 1 )
@@ -130,15 +154,34 @@ public class RadialSymmetry implements Callable<Void> {
 	
 			new Radial_Symmetry().run( null );
 		}
+		else
+		{
+			final RandomAccessibleInterval img;
+
+			if ( isN5( image ) )
+				img = N5Utils.open( new N5FSReader( image ), dataset );
+			else
+				img = ImagePlusImgs.from( new ImagePlus( image ) );
+
+			HelperFunctions.headless = true;
+			Radial_Symmetry.runRSFISH(img, params );
+
+			System.out.println( "done.");
+		}
 
 		return null;
+	}
+
+	protected static boolean isN5( final String image )
+	{
+		return image.trim().toLowerCase().endsWith( ".n5" );
 	}
 
 	protected static ImagePlus open( String image, String dataset ) throws IOException
 	{
 		final ImagePlus imp;
 
-		if ( image.trim().toLowerCase().endsWith( ".n5") )
+		if ( isN5( image ) )
 		{
 			if ( dataset == null || dataset.length() < 1 )
 				throw new RuntimeException( "no dataset for the N5 container defined, please use -d 'dataset'." );

@@ -1,15 +1,69 @@
 package result.output;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import benchmark.TextFileAccess;
 import fitting.Spot;
-import ij.IJ;
+import gui.interactive.HelperFunctions;
 import ij.measure.ResultsTable;
 
 public class ShowResult {
-	public static void ransacResultCsv(final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
-			final ArrayList<Long> channelPoint, ArrayList<Float> intensity) {
-		// TODO: Put the writting part here, too (csv?)
+	public static void ransacResultCsv(
+			final ArrayList<Spot> spots, final ArrayList<Long> timePoint,
+			final ArrayList<Long> channelPoint, double histThreshold, final String csvFile)
+	{
+		if ( spots == null || spots.size() == 0 )
+		{
+			HelperFunctions.log( "No spots found, nothing to write.");
+			return;
+		}
+
+		PrintWriter out = TextFileAccess.openFileWrite( csvFile );
+
+		if ( spots.get( 0 ).numDimensions() == 3 )
+			out.println("x,y,z,t,c,intensity");
+		else
+			out.println("x,y,t,c,intensity");
+
+		int currentTimePoint = 0;
+		int totalSpotsPerTimePoint = 0;
+
+		int currentChannelPoint = 0;
+		int totalSpotsPerChannelPoint = 0;
+
+		int idx = 0;
+		for (Spot spot : spots) {
+			// if spot was not discarded
+			if (spot.inliers.size() != 0) { // TODO: filtered already?
+					if (spot.getIntensity() >= histThreshold) {
+
+						idx++;
+
+						for (int d = 0; d < spot.numDimensions(); ++d)
+							out.print( String.format(java.util.Locale.US, "%.4f", spot.getDoublePosition(d)) + "," );
+
+						totalSpotsPerTimePoint++;
+						if (totalSpotsPerTimePoint > timePoint.get(currentTimePoint)) {
+							currentTimePoint++;
+							totalSpotsPerTimePoint = 1;
+						}
+						out.print( (currentTimePoint + 1) + "," );
+
+						totalSpotsPerChannelPoint++;
+						if (totalSpotsPerChannelPoint > channelPoint.get(currentChannelPoint)) {
+							currentChannelPoint++;
+							totalSpotsPerChannelPoint = 1;
+						}
+						out.print( (currentChannelPoint + 1) + "," ); // user-friendly, starting the counting from 1
+
+						out.println(String.format(java.util.Locale.US, "%.4f", spot.getIntensity()));
+
+					}
+			}
+		}
+		HelperFunctions.log("Spots found = " + idx);
+		out.close();
 	}
 
 	// ineractive mode
@@ -56,7 +110,7 @@ public class ShowResult {
 			}
 			idx++;
 		}
-		IJ.log("Spots found = " + rt.getCounter());
+		HelperFunctions.log("Spots found = " + rt.getCounter());
 
 		return rt;
 	}

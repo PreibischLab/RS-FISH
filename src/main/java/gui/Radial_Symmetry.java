@@ -94,7 +94,7 @@ public class Radial_Symmetry implements PlugIn
 
 		if (imp.getNChannels() > 1)
 		{
-			IJ.log( "Multichannel image detected. Please split by channel and select parameters for each channel separately.");
+			HelperFunctions.log( "Multichannel image detected. Please split by channel and select parameters for each channel separately.");
 			return;
 		}
 
@@ -124,9 +124,10 @@ public class Radial_Symmetry implements PlugIn
 		if ( params.autoMinMax )
 		{
 			double[] minmax = HelperFunctions.computeMinMax(img);
-	
+
 			params.min = (float) minmax[0];
 			params.max = (float) minmax[1];
+			params.autoMinMax = false; // have done it already
 		}
 		else
 		{
@@ -141,8 +142,6 @@ public class Radial_Symmetry implements PlugIn
 			params.min = RadialSymParams.defaultMin = gd2.getNextNumber();
 			params.max = RadialSymParams.defaultMax = gd2.getNextNumber();
 		}
-
-		IJ.log( "img min intensity=" + params.min + ", max intensity=" + params.max );
 
 		// TODO: REMOVE
 		//mode = 1;
@@ -186,6 +185,8 @@ public class Radial_Symmetry implements PlugIn
 		}
 		else // interactive
 		{
+			HelperFunctions.log( "img min intensity=" + params.min + ", max intensity=" + params.max );
+
 			InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, params.min, params.max);
 			do {
 				// TODO: change to something that is not deprecated
@@ -222,9 +223,9 @@ public class Radial_Symmetry implements PlugIn
 
 		impDim[ 0 ] = (int)img.dimension( 0 );
 		impDim[ 1 ] = (int)img.dimension( 1 );
-		impDim[ 2 ] = (int)img.dimension( 1 );
-		impDim[ 3 ] = img.numDimensions() > 2 ? (int)img.dimension( 1 ) : 1;
-		impDim[ 4 ] = (int)img.dimension( 1 );
+		impDim[ 2 ] = 1;
+		impDim[ 3 ] = img.numDimensions() > 2 ? (int)img.dimension( 2 ) : 1;
+		impDim[ 4 ] = 1;
 
 		return runRSFISH( img, params, 1, null, impDim);
 	}
@@ -236,6 +237,19 @@ public class Radial_Symmetry implements PlugIn
 			final ImagePlus imp,
 			final int[] impDim )
 	{
+		if ( params.autoMinMax )
+		{
+			double[] minmax = HelperFunctions.computeMinMax(img);
+
+			if (Double.isNaN( params.min ) )
+				params.min = (float) minmax[0];
+
+			if (Double.isNaN( params.max ) )
+				params.max = (float) minmax[1];
+		}
+
+		HelperFunctions.log( "img min intensity=" + params.min + ", max intensity=" + params.max );
+
 		ArrayList<Spot> allSpots = new ArrayList<>(0);
 		// stores number of detected spots per time point
 		ArrayList<Long> timePoint = new ArrayList<>(0);
@@ -273,25 +287,34 @@ public class Radial_Symmetry implements PlugIn
 		}
 		else if ( mode == 1 ) { // advanced
 			// write the result to the csv file
-			IJ.log( "Intensity threshold =" + params.intensityThreshold );
-			rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
+			HelperFunctions.log( "Intensity threshold = " + params.intensityThreshold );
+			if ( HelperFunctions.headless )
+				ShowResult.ransacResultCsv(allSpots, timePoint, channelPoint, params.intensityThreshold, params.resultsFilePath );
+			else
+				rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
 
-		} else
-			throw new RuntimeException("Wrong parameters' mode");
-
-		if( params.resultsFilePath.length() > 0 )
-		{
-			System.out.println("Writing CSV: " + params.resultsFilePath);
-			rt.save(params.resultsFilePath);
 		}
 		else
 		{
-			System.out.println("No CSV output given.");
+			throw new RuntimeException("Wrong parameters' mode");
+		}
+
+		if ( !HelperFunctions.headless )
+		{
+			if ( params.resultsFilePath.length() > 0 )
+			{
+				System.out.println("Writing CSV: " + params.resultsFilePath);
+				rt.save(params.resultsFilePath);
+			}
+			else
+			{
+				System.out.println("No CSV output given.");
+			}
 		}
 
 		if ( params.addToROIManager )
 		{
-			IJ.log( "Adding spots to ROI Manager" );
+			HelperFunctions.log( "Adding spots to ROI Manager" );
 			RoiManager roim = RoiManager.getRoiManager();
 			imp.setActivated();
 

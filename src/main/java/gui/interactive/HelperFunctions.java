@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import fitting.Spot;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.OvalRoi;
 import ij.gui.Overlay;
@@ -36,6 +37,16 @@ import net.imglib2.view.Views;
 
 public class HelperFunctions {
 	
+	public static boolean headless = false;
+
+	public static void log( String s )
+	{
+		if ( headless )
+			System.out.println( s );
+		else
+			IJ.log( s );
+	}
+
 	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel,
 			long time, int[] impDim) {
 		

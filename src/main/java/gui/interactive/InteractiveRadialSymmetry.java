@@ -709,8 +709,8 @@ public class InteractiveRadialSymmetry// extends GUIParams
 			}
 		}
 		
-		IJ.log( "min=" + min );
-		IJ.log( "max=" + max );
+		HelperFunctions.log( "min=" + min );
+		HelperFunctions.log( "max=" + max );
 
 		imp.show();
 

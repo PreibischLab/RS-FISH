@@ -238,7 +238,7 @@ public class AnisotropyCoefficient {
 
 			peaks = HelperFunctions.filterPeaks( peaks, rectangle, params.getThresholdDoG() );
 
-			IJ.log("Found " + peaks.size() + " peaks in the 3D substack defined by the ROI." );
+			HelperFunctions.log("Found " + peaks.size() + " peaks in the 3D substack defined by the ROI." );
 
 			if (paramType.equals("Gauss Fit")) // gauss fit 
 				bestScale = calculateAnisotropyCoefficientGF(img, threshold, sigma); 
@@ -248,7 +248,7 @@ public class AnisotropyCoefficient {
 			// bestScale = anisotropyChooseImageDialog();
 		}
 
-		IJ.log("Best scale = " + bestScale);
+		HelperFunctions.log("Best scale = " + bestScale);
 		return bestScale;
 	}
 
@@ -265,7 +265,7 @@ public class AnisotropyCoefficient {
 		// TODO: implement the background subtraction here, otherwise peakfitter will give the wrong result 
 		final List< Point > points = peaks.stream().map( p -> p.getOriginalPeak() ).collect( Collectors.toList() );
 
-		IJ.log( "Removing background (gauss fit required empty bg)..." );
+		HelperFunctions.log( "Removing background (gauss fit required empty bg)..." );
 		RandomAccessibleInterval< FloatType > tmp = ArrayImgs.floats( img.dimension( 0 ), img.dimension( 1 ), img.dimension( 2 ) );
 		Gauss3.gauss( 10, imgExtended, tmp );
 
@@ -275,7 +275,7 @@ public class AnisotropyCoefficient {
 		//ImagePlus tmpImp = ImageJFunctions.show( bg );
 		//tmpImp.setTitle( "Image used for Gauss fitting");
 
-		IJ.log( "fitting...." );
+		HelperFunctions.log( "fitting...." );
 
 		GenericPeakFitter< FloatType, Point > pf = new GenericPeakFitter<>(bg, points,
 				new LevenbergMarquardtSolver(), new EllipticGaussianOrtho(),
@@ -305,7 +305,7 @@ public class AnisotropyCoefficient {
 			sigmas[d] = 1 / (Math.sqrt(2 * sigmas[d]));
 		}
 
-		IJ.log( "sigma (fit): " + Util.printCoordinates( sigmas ) );
+		HelperFunctions.log( "sigma (fit): " + Util.printCoordinates( sigmas ) );
 
 		// TODO: here we suppose that the x and y sigmas are the same
 		bestScale = sigmas[numDimensions - 1] / sigmas[0]; // x/z
@@ -363,7 +363,7 @@ public class AnisotropyCoefficient {
 				spots.get(j).updateScale(new float []{1, 1, scale});
 			}
 
-			// IJ.log( "num spots: " + spots.size() );
+			// HelperFunctions.log( "num spots: " + spots.size() );
 
 			// TODO: MOVE TO THE DEFAULT PARAMETERS
 			// USERS SHOULD NOT ADJUST THIS ONE 
@@ -398,7 +398,7 @@ public class AnisotropyCoefficient {
 				bestTotalInliers = totalInliers;
 			} 
 
-			IJ.log(scale + " inlier pixels=" + totalInliers + " for spots=" + total);
+			HelperFunctions.log(scale + " inlier pixels=" + totalInliers + " for spots=" + total);
 		}
 
 		return bestScale;
@@ -603,8 +603,8 @@ public class AnisotropyCoefficient {
 			}
 		}
 
-		IJ.log( "min=" + min );
-		IJ.log( "max=" + max );
+		HelperFunctions.log( "min=" + min );
+		HelperFunctions.log( "max=" + max );
 
 		imp.show();
 

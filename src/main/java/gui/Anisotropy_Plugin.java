@@ -9,7 +9,6 @@ import org.scijava.plugin.Plugin;
 import anisotropy.parameters.AParams;
 import gui.anisotropy.AnisotropyCoefficient;
 import gui.interactive.HelperFunctions;
-import ij.IJ;
 import ij.ImagePlus;
 import parameters.RadialSymParams;
 
@@ -34,19 +33,19 @@ public class Anisotropy_Plugin implements Command {
 
 		if ( imagePlus.getNFrames() > 1 )
 		{
-			IJ.log( "More than one frame detected, need a plain 3D image for Anisotropy detection (check Image>Properties)." );
+			HelperFunctions.log( "More than one frame detected, need a plain 3D image for Anisotropy detection (check Image>Properties)." );
 			return;
 		}
 
 		if ( imagePlus.getNChannels() > 1 )
 		{
-			IJ.log( "More than one channel detected, need a plain 3D image for Anisotropy detection (check Image>Properties)." );
+			HelperFunctions.log( "More than one channel detected, need a plain 3D image for Anisotropy detection (check Image>Properties)." );
 			return;
 		}
 
 		if ( imagePlus.getNSlices() <= 1 )
 		{
-			IJ.log( "Only one slice detected, need a 3D image for Anisotropy detection (check Image>Properties)." );
+			HelperFunctions.log( "Only one slice detected, need a 3D image for Anisotropy detection (check Image>Properties)." );
 			return;
 		}
 
@@ -63,7 +62,7 @@ public class Anisotropy_Plugin implements Command {
 		RadialSymParams.defaultSigma = ac.params.getSigmaDoG(); 
 		RadialSymParams.defaultThreshold = ac.params.getThresholdDoG();
 
-		IJ.log("Anisotropy coefficient: " + bestScale);
+		HelperFunctions.log("Anisotropy coefficient: " + bestScale);
 	}
 
 	public static void main(String[] args)

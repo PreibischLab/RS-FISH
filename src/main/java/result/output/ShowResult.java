@@ -66,6 +66,37 @@ public class ShowResult {
 		out.close();
 	}
 
+	public static ArrayList<double[]> points( final ArrayList<Spot> spots, double histThreshold)
+	{
+		if ( spots == null || spots.size() == 0 )
+		{
+			HelperFunctions.log( "No spots found, nothing to write.");
+			return null;
+		}
+
+		ArrayList<double[]> points = new ArrayList<>();
+
+		int idx = 0;
+		for (Spot spot : spots) {
+			// if spot was not discarded
+			if (spot.inliers.size() != 0) { // TODO: filtered already?
+					if (spot.getIntensity() >= histThreshold) {
+
+						idx++;
+
+						final double[] l = new double[ spot.numDimensions() + 1 ];
+						for (int d = 0; d < spot.numDimensions(); ++d)
+							l[ d ] = spot.getDoublePosition(d);
+						l[ spot.numDimensions() ] = spot.getIntensity();
+
+					}
+			}
+		}
+		HelperFunctions.log("Spots found = " + idx);
+
+		return points;
+	}
+
 	// ineractive mode
 	// this function will show the result of RANSAC
 	// proper window -> dialog view with the columns

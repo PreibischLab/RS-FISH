@@ -88,7 +88,7 @@ public class Radial_Symmetry implements PlugIn
 		ImagePlus imp = WindowManager.getImage( idList[ RadialSymParams.defaultImg = gd1.getNextChoiceIndex() ] );
 		int mode = RadialSymParams.defaultMode = gd1.getNextChoiceIndex();
 		params.anisotropyCoefficient = RadialSymParams.defaultAnisotropy = gd1.getNextNumber();
-		params.RANSAC = Ransac.values()[ RadialSymParams.defaultRANSACChoice = gd1.getNextChoiceIndex() ];
+		params.ransacSelection = RadialSymParams.defaultRANSACChoice = gd1.getNextChoiceIndex();
 
 		params.autoMinMax = RadialSymParams.defaultAutoMinMax = gd1.getNextBoolean();
 		params.useAnisotropyForDoG = RadialSymParams.defaultUseAnisotropyForDoG = gd1.getNextBoolean();
@@ -102,7 +102,7 @@ public class Radial_Symmetry implements PlugIn
 			return;
 		}
 
-		if ( params.RANSAC.ordinal() == 2 ) // Multiconsensus RANSAC
+		if ( params.RANSAC().ordinal() == 2 ) // Multiconsensus RANSAC
 		{
 			GenericDialogPlus gd2 = new GenericDialogPlus( "Multiconsensus RANSAC Options" );
 			gd2.addNumericField( "Min_number_of_inliers", RadialSymParams.defaultMinNumInliers, 0 );

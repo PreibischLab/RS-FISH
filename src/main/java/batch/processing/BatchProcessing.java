@@ -183,7 +183,7 @@ public class BatchProcessing {
 		final RadialSymParams params = new RadialSymParams();
 		// apparently the best value for now
 		params.setAnisotropyCoefficient(1.09f);
-		params.setRANSAC(Ransac.SIMPLE);
+		params.setRANSAC(Ransac.SIMPLE.ordinal());
 		// pre-detection
 		params.setSigmaDog(1.50f);
 		params.setThresholdDog(0.0083f);

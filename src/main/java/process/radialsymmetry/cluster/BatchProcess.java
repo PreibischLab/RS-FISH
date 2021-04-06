@@ -37,7 +37,7 @@ public class BatchProcess {
 
 		// same for all lambda values
 		params.setAnisotropyCoefficient(1.08f);
-		params.setRANSAC(Ransac.SIMPLE);
+		params.setRANSAC(Ransac.SIMPLE.ordinal());
 
 		// FIXME: Check that the values for the params are correct
 		// Larger support radius smaller number of inliers
@@ -91,7 +91,7 @@ public class BatchProcess {
 
 		// same for all lambda values
 		params.setAnisotropyCoefficient(1.08f);
-		params.setRANSAC(Ransac.SIMPLE);
+		params.setRANSAC(Ransac.SIMPLE.ordinal());
 
 		// FIXME: Check that the values for the params are correct
 		// Larger support radius smaller number of inliers
@@ -145,7 +145,7 @@ public class BatchProcess {
 
 		// same for all lambda values
 		params.setAnisotropyCoefficient(1.08f);
-		params.setRANSAC(Ransac.SIMPLE);
+		params.setRANSAC(Ransac.SIMPLE.ordinal());
 
 		// FIXME: Check that the values for the params are correct
 		// Larger support radius smaller number of inliers

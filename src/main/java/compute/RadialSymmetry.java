@@ -98,7 +98,7 @@ public class RadialSymmetry {
 				p.inlierRatio,
 				p.maxError,
 				(float)p.anisotropyCoefficient,
-				p.RANSAC,
+				p.RANSAC(),
 				p.minNumInliers,
 				p.nTimesStDev1,
 				p.nTimesStDev2 );
@@ -134,7 +134,7 @@ public class RadialSymmetry {
 		SimpleMultiThreading.threadHaltUnClean();
 		*/
 
-		if ( p.RANSAC.ordinal() > 0 )
+		if ( p.RANSAC().ordinal() > 0 )
 		{
 			for ( int i = rs.spots.size() - 1; i >= 0; --i )
 				if ( rs.spots.get( i ).inliers.size() == 0 )

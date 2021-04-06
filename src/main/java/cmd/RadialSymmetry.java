@@ -100,7 +100,7 @@ public class RadialSymmetry implements Callable<Void> {
 		RadialSymParams.defaultAnisotropy = params.anisotropyCoefficient = anisotropy;
 		RadialSymParams.defaultUseAnisotropyForDoG = params.useAnisotropyForDoG = true;
 		RadialSymParams.defaultRANSACChoice = ransac;
-		params.RANSAC = Ransac.values()[ ransac ]; //"No RANSAC", "RANSAC", "Multiconsensus RANSAC"
+		params.ransacSelection = ransac; //"No RANSAC", "RANSAC", "Multiconsensus RANSAC"
 
 		params.min = minIntensity;
 		params.max = maxIntensity;

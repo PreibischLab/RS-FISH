@@ -59,7 +59,8 @@ public class RadialSymParams implements Serializable {
 
 	// RANSAC parameters
 	// current value
-	public Ransac RANSAC = Ransac.values()[ defaultRANSACChoice ];
+	public Ransac RANSAC() { return Ransac.values()[ ransacSelection ]; }
+	public int ransacSelection = defaultRANSACChoice;
 	public float maxError = defaultMaxError, inlierRatio = defaultInlierRatio;
 	public int supportRadius = defaultSupportRadius;
 
@@ -95,7 +96,7 @@ public class RadialSymParams implements Serializable {
 	public void printParams() {
 		System.out.println("SigmaDoG      : " + sigma);
 		System.out.println("ThresholdDoG  : " + threshold);
-		System.out.println("RANSAC        : " + RANSAC );
+		System.out.println("RANSAC        : " + RANSAC() );
 		System.out.println("MaxError      : " + maxError);
 		System.out.println("InlierRatio   : " + inlierRatio);
 		System.out.println("supportRadius : " + supportRadius);
@@ -124,11 +125,11 @@ public class RadialSymParams implements Serializable {
 
 	// RANSAC
 	public Ransac getRANSAC() {
-		return RANSAC;
+		return RANSAC();
 	}
 
 	public int getRANSACIndex() {
-		return RANSAC.ordinal();
+		return RANSAC().ordinal();
 	}
 
 	public float getMaxError() {
@@ -173,7 +174,7 @@ public class RadialSymParams implements Serializable {
 		defaultSigma = sigma;
 		defaultThreshold = threshold;
 
-		defaultRANSACChoice = RANSAC.ordinal();
+		defaultRANSACChoice = RANSAC().ordinal();
 		defaultMaxError = maxError;
 		defaultInlierRatio = inlierRatio;
 		defaultSupportRadius = supportRadius;
@@ -194,13 +195,8 @@ public class RadialSymParams implements Serializable {
 		this.threshold = threshold;
 	}
 
-	// RANSAC
-	public void setRANSAC(Ransac ransac) {
-		this.RANSAC = ransac;
-	}
-
 	public void setRANSAC(int ransacChoice) {
-		this.RANSAC = Ransac.values()[ ransacChoice ];
+		this.ransacSelection = ransacChoice;
 	}
 
 	public void setMaxError(float maxError) {

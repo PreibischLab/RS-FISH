@@ -554,7 +554,7 @@ public class Spot implements RealLocalizable//, Localizable
 		}
 		else
 		{
-			spot.center.ransac( spot.candidates, spot.inliers, iterations, maxError, inlierRatio,  minNumInliers );
+			spot.center.filterRansac( spot.candidates, spot.inliers, iterations, maxError, inlierRatio,  minNumInliers );
 			spot.numRemoved = spot.candidates.size() - spot.inliers.size();
 
 			//System.out.println( Util.printCoordinates( spot.getOriginalLocation() ));

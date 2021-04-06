@@ -33,7 +33,7 @@ public class RadialSymmetry {
 
 	public static int bsNumIterations = 500; // not a parameter, can be changed
 												// through Beanshell
-	public static int numIterations = 500; // not a parameter, can be changed
+	public static int numIterations = 250; // not a parameter, can be changed
 											// through Beanshell
 
 	ArrayList<Point> peaks;

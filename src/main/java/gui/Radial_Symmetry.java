@@ -206,18 +206,16 @@ public class Radial_Symmetry implements PlugIn
 
 		int[] impDim = imp.getDimensions(); // x y c z t
 
-		ResultsTable rt = runRSFISH(
+		runRSFISH(
 				Views.extendMirrorSingle( img ),
 				new FinalInterval( img ),
 				params,
 				mode,
 				imp,
 				impDim );
-
-		rt.show( "smFISH localizations");
 	}
 
-	public static < T extends RealType< T > > ResultsTable runRSFISH(
+	public static < T extends RealType< T > > ArrayList<double[]> runRSFISH(
 			final RandomAccessible< T > img,
 			final Interval interval,
 			final RadialSymParams params )
@@ -236,7 +234,7 @@ public class Radial_Symmetry implements PlugIn
 		return runRSFISH( img, interval, params, 1, null, impDim);
 	}
 
-	public static < T extends RealType< T > > ResultsTable runRSFISH(
+	public static < T extends RealType< T > > ArrayList<double[]> runRSFISH(
 			final RandomAccessible< T > img,
 			final Interval interval,
 			final RadialSymParams params,
@@ -295,11 +293,11 @@ public class Radial_Symmetry implements PlugIn
 		else if ( mode == 1 ) { // advanced
 			// write the result to the csv file
 			HelperFunctions.log( "Intensity threshold = " + params.intensityThreshold );
-			if ( HelperFunctions.headless )
+			if ( HelperFunctions.headless && params.resultsFilePath.length() > 0 )
 				ShowResult.ransacResultCsv(allSpots, timePoint, channelPoint, params.intensityThreshold, params.resultsFilePath );
-			else
-				rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
 
+			if ( !HelperFunctions.headless )
+				rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
 		}
 		else
 		{
@@ -308,6 +306,8 @@ public class Radial_Symmetry implements PlugIn
 
 		if ( !HelperFunctions.headless )
 		{
+			rt.show( "smFISH localizations");
+
 			if ( params.resultsFilePath.length() > 0 )
 			{
 				System.out.println("Writing CSV: " + params.resultsFilePath);
@@ -334,7 +334,7 @@ public class Radial_Symmetry implements PlugIn
 			}
 		}
 
-		return rt;
+		return ShowResult.points(allSpots, params.intensityThreshold );
 	}
 
 	public static void main(String[] args) {

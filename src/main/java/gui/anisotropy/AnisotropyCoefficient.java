@@ -18,7 +18,6 @@ import gradient.Gradient;
 import gradient.GradientPreCompute;
 import gui.interactive.HelperFunctions;
 import gui.interactive.InteractiveRadialSymmetry;
-import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -70,7 +69,7 @@ public class AnisotropyCoefficient {
 	final int type;
 	Rectangle rectangle;
 
-	final String paramType; // defines which method will be used: gaussfit or radial symmetry 
+	final int mode; // defines which method will be used: gaussfit or radial symmetry 
 
 	ArrayList<RefinedPeak<Point>> peaks;
 
@@ -108,9 +107,9 @@ public class AnisotropyCoefficient {
 	}
 
 	// paramType defines if we use RS or Gaussian Fit
-	public AnisotropyCoefficient(ImagePlus imp, final AParams params, final String paramType, final double min, final double max){
+	public AnisotropyCoefficient(ImagePlus imp, final AParams params, final int mode, final double min, final double max){
 		this.imagePlus = imp;
-		this.paramType = paramType;
+		this.mode = mode;
 
 		dim = new long[] { imp.getWidth(), imp.getHeight() };
 
@@ -240,7 +239,7 @@ public class AnisotropyCoefficient {
 
 			HelperFunctions.log("Found " + peaks.size() + " peaks in the 3D substack defined by the ROI." );
 
-			if (paramType.equals("Gauss Fit")) // gauss fit 
+			if ( mode == 0 ) // gauss fit 
 				bestScale = calculateAnisotropyCoefficientGF(img, threshold, sigma); 
 			else
 				bestScale = calculateAnisotropyCoefficientRS(img, threshold, sigma);
@@ -613,7 +612,7 @@ public class AnisotropyCoefficient {
 
 		// imp.setRoi(imp.getWidth() / 4, imp.getHeight() / 4, imp.getWidth() / 2, imp.getHeight() / 2);
 
-		new AnisotropyCoefficient( imp, new AParams(), "Gauss fit", min, max );
+		new AnisotropyCoefficient( imp, new AParams(), 0, min, max );
 
 		System.out.println("DOGE!");
 	}

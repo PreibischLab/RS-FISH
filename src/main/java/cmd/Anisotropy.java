@@ -3,14 +3,13 @@ package cmd;
 import java.util.concurrent.Callable;
 
 import gui.Anisotropy_Plugin;
+import ij.ImageJ;
 import ij.ImagePlus;
 import net.imagej.patcher.LegacyInjector;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 public class Anisotropy implements Callable<Void> {
-
-	static { LegacyInjector.preinit(); }
 
 	// input file
 	@Option(names = {"-i", "--image"}, required = true, description = "input image or N5 container path (requires additional -d for N5), e.g. -i /home/smFish.tif or /home/smFish.n5")
@@ -30,10 +29,15 @@ public class Anisotropy implements Callable<Void> {
 			return null;
 		}
 
-		final net.imagej.ImageJ ij = new net.imagej.ImageJ();
-		ij.ui().showUI();
-		ij.ui().show(imp);
-		ij.command().run(Anisotropy_Plugin.class, true);
+		new ImageJ();
+
+		if ( imp.getStackSize() > 1 )
+			imp.setSlice( imp.getStackSize() / 2 );
+
+		imp.resetDisplayRange();
+		imp.show();
+
+		new Anisotropy_Plugin().run( null );
 
 		return null;
 	}

@@ -13,6 +13,7 @@ import gui.interactive.HelperFunctions;
 import ij.ImageJ;
 import ij.ImagePlus;
 import net.imglib2.FinalInterval;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.img.imageplus.ImagePlusImgs;
@@ -167,7 +168,7 @@ public class RadialSymmetry implements Callable<Void> {
 
 			HelperFunctions.headless = true;
 			Radial_Symmetry.runRSFISH(
-					Views.extendMirrorSingle( img ),
+					(RandomAccessible)(Object)Views.extendMirrorSingle( img ),
 					new FinalInterval( img ),
 					params );
 

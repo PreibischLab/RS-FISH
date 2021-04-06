@@ -9,6 +9,7 @@ import background.NormalizedGradientMedian;
 import background.NormalizedGradientRANSAC;
 import fitting.Center.CenterMethod;
 import fitting.Spot;
+import fitting.SymmetryCenter3d;
 import gradient.Gradient;
 import gradient.GradientOnDemand;
 import gradient.GradientPreCompute;
@@ -32,7 +33,7 @@ public class RadialSymmetry {
 
 	public static int bsNumIterations = 500; // not a parameter, can be changed
 												// through Beanshell
-	public static int numIterations = 250; // not a parameter, can be changed
+	public static int numIterations = 500; // not a parameter, can be changed
 											// through Beanshell
 
 	ArrayList<Point> peaks;
@@ -42,30 +43,36 @@ public class RadialSymmetry {
 
 	final RandomAccessible<FloatType> img;
 	final RadialSymParams params;
-	final Interval interval;
+	final Interval globalInterval, computeInterval;
 
 	// set all parameters in the constructor
-	public RadialSymmetry(final RandomAccessible<FloatType> img, final Interval interval, final RadialSymParams params) {
+	public RadialSymmetry(
+			final RandomAccessible<FloatType> img,
+			final Interval globalInterval, // we need to know where to cut off gradients at image borders
+			final Interval computeInterval,
+			final RadialSymParams params) {
 		this.img = img;
 		this.params = params;
-		this.interval = interval;
+		this.globalInterval = globalInterval;
+		this.computeInterval = computeInterval;
 	}
 
 	public void compute() {
-		compute(this,img, interval, params);
+		compute(this,img, globalInterval, computeInterval, params);
 	}
 
 	public static void compute(
 			final RadialSymmetry rs,
 			final RandomAccessible<FloatType> pImg,
-			final Interval interval,
+			final Interval globalInterval, // we need to know where to cut off gradients at image borders
+			final Interval computeInterval,
 			final RadialSymParams p ) {
 
 		// perform DOG
 
 		HelperFunctions.log( "Computing DoG..." );
 
-		rs.peaks = computeDog(pImg, interval, p.sigma, p.threshold, p.anisotropyCoefficient, p.useAnisotropyForDoG );
+		rs.peaks = computeDog(pImg, computeInterval, p.sigma, p.threshold, p.anisotropyCoefficient, p.useAnisotropyForDoG, p.numThreads );
 
 		HelperFunctions.log("DoG pre-detected spots: " + rs.peaks.size() );//+ ", " + numIterations  + ", " + pMaxError );
 
@@ -90,7 +97,7 @@ public class RadialSymmetry {
 		HelperFunctions.log( "Computing Radial Symmetry..." );
 
 		rs.spots = computeRadialSymmetry(
-				interval,
+				globalInterval,
 				rs.ng,
 				rs.derivative,
 				rs.peaks,
@@ -194,7 +201,7 @@ public class RadialSymmetry {
 	}
 
 	public static ArrayList<Point> computeDog(final RandomAccessible<FloatType> pImg, final Interval interval, float pSigma,
-			float pThreshold, final double anisotropy, final boolean useAnisotropy ) {
+			float pThreshold, final double anisotropy, final boolean useAnisotropy, final int numThreads ) {
 
 		float pSigma2 = HelperFunctions.computeSigma2(pSigma, RadialSymParams.defaultSensitivity);
 
@@ -206,6 +213,8 @@ public class RadialSymmetry {
 
 		final DogDetection<FloatType> dog2 = new DogDetection<>(pImg, interval, calibration, pSigma, pSigma2,
 				DogDetection.ExtremaType.MINIMA, pThreshold, false);
+
+		dog2.setNumThreads(numThreads);
 
 		return dog2.getPeaks();
 	}
@@ -247,12 +256,59 @@ public class RadialSymmetry {
 				pSpots.addAll( additionalSpots );
 		}
 		else
+		{
+			/*
+			for ( final Spot s : pSpots )
+			{
+				final SymmetryCenter3d c = new SymmetryCenter3d();
+				c.xc = s.getOriginalLocation()[ 0 ];
+				c.yc = s.getOriginalLocation()[ 1 ];
+				c.zc = s.getOriginalLocation()[ 2 ];
+
+				((SymmetryCenter3d)s.center).set(c);
+			}
+			*/
+
 			try {
 				Spot.fitCandidates(pSpots);
+				/*
+				for ( final Spot spot : pSpots )
+				{
+					//boolean lookAt = false;
+					//if ( spot.getOriginalLocation()[ 0 ] == 230 && spot.getOriginalLocation()[ 1 ] == 229 && spot.getOriginalLocation()[ 2 ] == 55 )
+					//	lookAt = true;
+
+					//if ( spot.getOriginalLocation()[ 0 ] == 219 && spot.getOriginalLocation()[ 1 ] == 213 && spot.getOriginalLocation()[ 2 ] == 59 )
+					//	lookAt = true;
+
+					spot.center.fit( spot.candidates );
+
+					if ( lookAt )
+					{
+						// SINGLE: original location: (219, 213, 59) localized as (219.09322, 212.95442, 58.740772)
+						// SPARK:  original location: (219, 213, 59) localized as (219.17636, 212.91121, 58.17321)
+						// spark: when using different block boundaries it localizes right (50, 50, 50) instead of (32, 32, 32)
+						System.out.println( "original location: " + Util.printCoordinates( spot.getOriginalLocation() ) + " localized as " + Util.printCoordinates( spot ));
+						//System.exit( 0 );
+					}
+
+					// original location: (230, 229, 55) for (229.86337, 228.90987, 54.77498)
+					// no match for: (229.8634, 228.9099, 54.775), d=0.27821317366364656
+
+					// original location: (219, 213, 59) for (219.09322, 212.95442, 58.740772)
+					// no match for: (219.0932, 212.9544, 58.7408), d=0.5752897009333628
+					if ( Math.abs( spot.getDoublePosition(2) - 58.7408 ) < 0.0001 )
+					{
+						System.out.println( "original location: " + Util.printCoordinates( spot.getOriginalLocation() ) + " for " + Util.printCoordinates( spot ));
+					}
+				}*/
+
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.out.println("Something went wrong, please report the bug.");
 			}
+
+		}
 
 		return pSpots;
 	}
@@ -286,7 +342,8 @@ public class RadialSymmetry {
 	public static void process(
 			RandomAccessible<FloatType> img,
 			RandomAccessible<FloatType> rai,
-			final Interval interval,
+			final Interval globalInterval, // we need to know where to cut off gradients at image borders
+			final Interval computeInterval,
 			RadialSymParams rsm,
 			int[] impDim,
 			ArrayList<Spot> allSpots,
@@ -303,11 +360,12 @@ public class RadialSymmetry {
 				timeFrame 			= HelperFunctions.reduceImg(img, c, t, impDim);
 
 				// TODO: finish double-points
-				RadialSymmetry rs = new RadialSymmetry(timeFrameNormalized, interval, rsm);
+				RadialSymmetry rs = new RadialSymmetry(timeFrameNormalized, globalInterval, computeInterval, rsm);
 				rs.compute();
 
-				int minNumInliers = 1;
+				int minNumInliers = rsm.ransacSelection == 0 ? 0 : 1; // TODO: horrible!
 				ArrayList<Spot> filteredSpots = HelperFunctions.filterSpots(rs.getSpots(), minNumInliers);
+
 				allSpots.addAll(filteredSpots);
 				timePoint.add(new Long(filteredSpots.size()));
 
@@ -328,7 +386,6 @@ public class RadialSymmetry {
 				// FIXME: make this a parameter, not doing this by default, will crash on 2d
 				if ( false )
 					Intensity.fixIntensities(filteredSpots);
-				
 			}
 			if (c != 0) // FIXME: formula is wrong
 				channelPoint.add(new Long(allSpots.size() - channelPoint.get(c - 1)));

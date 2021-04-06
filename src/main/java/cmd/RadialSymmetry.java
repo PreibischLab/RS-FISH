@@ -7,7 +7,6 @@ import org.janelia.saalfeldlab.n5.N5FSReader;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 
-import compute.RadialSymmetry.Ransac;
 import gui.Radial_Symmetry;
 import gui.interactive.HelperFunctions;
 import ij.ImageJ;
@@ -169,6 +168,7 @@ public class RadialSymmetry implements Callable<Void> {
 			HelperFunctions.headless = true;
 			Radial_Symmetry.runRSFISH(
 					(RandomAccessible)(Object)Views.extendMirrorSingle( img ),
+					new FinalInterval( img ),
 					new FinalInterval( img ),
 					params );
 

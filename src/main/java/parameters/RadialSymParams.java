@@ -44,6 +44,9 @@ public class RadialSymParams implements Serializable {
 
 	public static String defaultResultsFilePath = "";
 
+	// only used for DoG
+	public int numThreads = Runtime.getRuntime().availableProcessors();
+
 	// steps per octave for DoG
 	public static int defaultSensitivity = 4;
 

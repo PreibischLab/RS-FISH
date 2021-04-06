@@ -94,6 +94,7 @@ public class BatchProcessing {
 		RadialSymmetry rs = new RadialSymmetry(
 				Views.extendMirrorSingle( rai ),
 				new FinalInterval( rai ),
+				new FinalInterval( rai ),
 				rsm);
 		rs.compute();
 

@@ -217,7 +217,8 @@ public class Radial_Symmetry implements PlugIn
 
 	public static < T extends RealType< T > > ArrayList<double[]> runRSFISH(
 			final RandomAccessible< T > img,
-			final Interval interval,
+			final Interval globalInterval, // we need to know where to cut off gradients at image borders
+			final Interval computeInterval,
 			final RadialSymParams params )
 	{
 		if ( img.numDimensions() < 2 || img.numDimensions() > 3 )
@@ -225,13 +226,13 @@ public class Radial_Symmetry implements PlugIn
 
 		final int[] impDim = new int[ 5 ]; // x y c z t
 
-		impDim[ 0 ] = (int)interval.dimension( 0 );
-		impDim[ 1 ] = (int)interval.dimension( 1 );
+		impDim[ 0 ] = (int)computeInterval.dimension( 0 );
+		impDim[ 1 ] = (int)computeInterval.dimension( 1 );
 		impDim[ 2 ] = 1;
-		impDim[ 3 ] = interval.numDimensions() > 2 ? (int)interval.dimension( 2 ) : 1;
+		impDim[ 3 ] = computeInterval.numDimensions() > 2 ? (int)computeInterval.dimension( 2 ) : 1;
 		impDim[ 4 ] = 1;
 
-		return runRSFISH( img, interval, params, 1, null, impDim);
+		return runRSFISH( img, globalInterval, computeInterval, params, 1, null, impDim);
 	}
 
 	public static < T extends RealType< T > > ArrayList<double[]> runRSFISH(
@@ -242,9 +243,21 @@ public class Radial_Symmetry implements PlugIn
 			final ImagePlus imp,
 			final int[] impDim )
 	{
+		return runRSFISH(img, interval, interval, params, mode, imp, impDim);
+	}
+
+	public static < T extends RealType< T > > ArrayList<double[]> runRSFISH(
+			final RandomAccessible< T > img,
+			final Interval globalInterval, // we need to know where to cut off gradients at image borders
+			final Interval computeInterval,
+			final RadialSymParams params,
+			final int mode,
+			final ImagePlus imp,
+			final int[] impDim )
+	{
 		if ( params.autoMinMax )
 		{
-			double[] minmax = HelperFunctions.computeMinMax( Views.interval( img, interval ) );
+			double[] minmax = HelperFunctions.computeMinMax( Views.interval( img, computeInterval ) );
 
 			if (Double.isNaN( params.min ) )
 				params.min = (float) minmax[0];
@@ -275,7 +288,7 @@ public class Radial_Symmetry implements PlugIn
 				(a, b) -> b.setReal( ( a.getRealFloat() - params.min ) / range ),
 				new FloatType());
 
-		RadialSymmetry.process(input, rai, interval, params, impDim, allSpots, timePoint, channelPoint);
+		RadialSymmetry.process(input, rai, globalInterval, computeInterval, params, impDim, allSpots, timePoint, channelPoint);
 
 		ResultsTable rt = null;
 

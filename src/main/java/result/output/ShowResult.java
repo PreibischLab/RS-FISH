@@ -35,7 +35,6 @@ public class ShowResult {
 		int idx = 0;
 		for (Spot spot : spots) {
 			// if spot was not discarded
-			if (spot.inliers.size() != 0) { // TODO: filtered already?
 					if (spot.getIntensity() >= histThreshold) {
 
 						idx++;
@@ -60,7 +59,6 @@ public class ShowResult {
 						out.println(String.format(java.util.Locale.US, "%.4f", spot.getIntensity()));
 
 					}
-			}
 		}
 		HelperFunctions.log("Spots found = " + idx);
 		out.close();
@@ -71,28 +69,24 @@ public class ShowResult {
 		if ( spots == null || spots.size() == 0 )
 		{
 			HelperFunctions.log( "No spots found, nothing to write.");
-			return null;
+			return new ArrayList<>();
 		}
 
 		ArrayList<double[]> points = new ArrayList<>();
 
-		int idx = 0;
 		for (Spot spot : spots) {
 			// if spot was not discarded
-			if (spot.inliers.size() != 0) { // TODO: filtered already?
 					if (spot.getIntensity() >= histThreshold) {
-
-						idx++;
 
 						final double[] l = new double[ spot.numDimensions() + 1 ];
 						for (int d = 0; d < spot.numDimensions(); ++d)
 							l[ d ] = spot.getDoublePosition(d);
 						l[ spot.numDimensions() ] = spot.getIntensity();
 
+						points.add( l );
 					}
-			}
 		}
-		HelperFunctions.log("Spots found = " + idx);
+		HelperFunctions.log("Spots found = " + points.size());
 
 		return points;
 	}
@@ -114,7 +108,6 @@ public class ShowResult {
 		int idx = 0;
 		for (Spot spot : spots) {
 			// if spot was not discarded
-			if (spot.inliers.size() != 0) { // TODO: filtered already?
 					if (spot.getIntensity() >= histThreshold) {
 						rt.incrementCounter();
 						for (int d = 0; d < spot.numDimensions(); ++d) {
@@ -138,7 +131,6 @@ public class ShowResult {
 						rt.addValue("intensity", String.format(java.util.Locale.US, "%.4f", spot.getIntensity()));
 
 					}
-			}
 			idx++;
 		}
 		HelperFunctions.log("Spots found = " + rt.getCounter());

@@ -38,15 +38,17 @@ public class IOUtils {
 			while ((nextLine = reader.readNext()) != null) {
 				++i;
 				double [] pos = new double[numDimensions];
+				boolean failed = false;
 				for (int d = 0; d < numDimensions; d++)
 				{
 					try
 					{
 						pos[d] = Double.parseDouble(nextLine[d]);
 					}
-					catch (Exception e ) { HelperFunctions.log( "no entries in line: " + i ); break; }
+					catch (Exception e ) { failed = true; HelperFunctions.log( "no entries in line: " + i ); break; }
 				}
-				peaks.add(new RealPoint(pos));
+				if ( !failed )
+					peaks.add(new RealPoint(pos));
 			}
 			reader.close();
 			HelperFunctions.log( "read " + peaks.size() + " spots." );

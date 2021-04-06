@@ -1,8 +1,15 @@
 package parameters;
 
+import java.io.Serializable;
+
 import compute.RadialSymmetry.Ransac;
 
-public class RadialSymParams {
+public class RadialSymParams implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -9045686244206165151L;
 
 	public static String[] modeChoice = new String[] { "Interactive", "Advanced" };
 	public static String[] ransacChoice = new String[] { "No RANSAC", "RANSAC", "Multiconsensus RANSAC" };

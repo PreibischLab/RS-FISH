@@ -7,14 +7,16 @@ import org.janelia.saalfeldlab.n5.N5FSReader;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 
-import compute.RadialSymmetry.Ransac;
 import gui.Radial_Symmetry;
 import gui.interactive.HelperFunctions;
 import ij.ImageJ;
 import ij.ImagePlus;
+import net.imglib2.FinalInterval;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.img.imageplus.ImagePlusImgs;
+import net.imglib2.view.Views;
 import parameters.RadialSymParams;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -97,7 +99,7 @@ public class RadialSymmetry implements Callable<Void> {
 		RadialSymParams.defaultAnisotropy = params.anisotropyCoefficient = anisotropy;
 		RadialSymParams.defaultUseAnisotropyForDoG = params.useAnisotropyForDoG = true;
 		RadialSymParams.defaultRANSACChoice = ransac;
-		params.RANSAC = Ransac.values()[ ransac ]; //"No RANSAC", "RANSAC", "Multiconsensus RANSAC"
+		params.ransacSelection = ransac; //"No RANSAC", "RANSAC", "Multiconsensus RANSAC"
 
 		params.min = minIntensity;
 		params.max = maxIntensity;
@@ -164,7 +166,11 @@ public class RadialSymmetry implements Callable<Void> {
 				img = ImagePlusImgs.from( new ImagePlus( image ) );
 
 			HelperFunctions.headless = true;
-			Radial_Symmetry.runRSFISH(img, params );
+			Radial_Symmetry.runRSFISH(
+					(RandomAccessible)(Object)Views.extendMirrorSingle( img ),
+					new FinalInterval( img ),
+					new FinalInterval( img ),
+					params );
 
 			System.out.println( "done.");
 		}

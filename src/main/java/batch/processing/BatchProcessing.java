@@ -22,6 +22,7 @@ import milkyklim.algorithm.localization.EllipticGaussianOrtho;
 import milkyklim.algorithm.localization.LevenbergMarquardtSolver;
 import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
 import milkyklim.algorithm.localization.PeakFitter;
+import net.imglib2.FinalInterval;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
@@ -90,7 +91,11 @@ public class BatchProcessing {
 
 		int numDimensions = dim.length;
 
-		RadialSymmetry rs = new RadialSymmetry(rai, rsm);
+		RadialSymmetry rs = new RadialSymmetry(
+				Views.extendMirrorSingle( rai ),
+				new FinalInterval( rai ),
+				new FinalInterval( rai ),
+				rsm);
 		rs.compute();
 
 		// TODO: Check if this part is redundant 
@@ -179,7 +184,7 @@ public class BatchProcessing {
 		final RadialSymParams params = new RadialSymParams();
 		// apparently the best value for now
 		params.setAnisotropyCoefficient(1.09f);
-		params.setRANSAC(Ransac.SIMPLE);
+		params.setRANSAC(Ransac.SIMPLE.ordinal());
 		// pre-detection
 		params.setSigmaDog(1.50f);
 		params.setThresholdDog(0.0083f);

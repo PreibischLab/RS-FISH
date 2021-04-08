@@ -1,8 +1,15 @@
 package parameters;
 
+import java.io.Serializable;
+
 import compute.RadialSymmetry.Ransac;
 
-public class RadialSymParams {
+public class RadialSymParams implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -9045686244206165151L;
 
 	public static String[] modeChoice = new String[] { "Interactive", "Advanced" };
 	public static String[] ransacChoice = new String[] { "No RANSAC", "RANSAC", "Multiconsensus RANSAC" };
@@ -37,6 +44,9 @@ public class RadialSymParams {
 
 	public static String defaultResultsFilePath = "";
 
+	// only used for DoG
+	public int numThreads = Runtime.getRuntime().availableProcessors();
+
 	// steps per octave for DoG
 	public static int defaultSensitivity = 4;
 
@@ -52,7 +62,8 @@ public class RadialSymParams {
 
 	// RANSAC parameters
 	// current value
-	public Ransac RANSAC = Ransac.values()[ defaultRANSACChoice ];
+	public Ransac RANSAC() { return Ransac.values()[ ransacSelection ]; }
+	public int ransacSelection = defaultRANSACChoice;
 	public float maxError = defaultMaxError, inlierRatio = defaultInlierRatio;
 	public int supportRadius = defaultSupportRadius;
 
@@ -88,7 +99,7 @@ public class RadialSymParams {
 	public void printParams() {
 		System.out.println("SigmaDoG      : " + sigma);
 		System.out.println("ThresholdDoG  : " + threshold);
-		System.out.println("RANSAC        : " + RANSAC );
+		System.out.println("RANSAC        : " + RANSAC() );
 		System.out.println("MaxError      : " + maxError);
 		System.out.println("InlierRatio   : " + inlierRatio);
 		System.out.println("supportRadius : " + supportRadius);
@@ -117,11 +128,11 @@ public class RadialSymParams {
 
 	// RANSAC
 	public Ransac getRANSAC() {
-		return RANSAC;
+		return RANSAC();
 	}
 
 	public int getRANSACIndex() {
-		return RANSAC.ordinal();
+		return RANSAC().ordinal();
 	}
 
 	public float getMaxError() {
@@ -166,7 +177,7 @@ public class RadialSymParams {
 		defaultSigma = sigma;
 		defaultThreshold = threshold;
 
-		defaultRANSACChoice = RANSAC.ordinal();
+		defaultRANSACChoice = RANSAC().ordinal();
 		defaultMaxError = maxError;
 		defaultInlierRatio = inlierRatio;
 		defaultSupportRadius = supportRadius;
@@ -187,13 +198,8 @@ public class RadialSymParams {
 		this.threshold = threshold;
 	}
 
-	// RANSAC
-	public void setRANSAC(Ransac ransac) {
-		this.RANSAC = ransac;
-	}
-
 	public void setRANSAC(int ransacChoice) {
-		this.RANSAC = Ransac.values()[ ransacChoice ];
+		this.ransacSelection = ransacChoice;
 	}
 
 	public void setMaxError(float maxError) {

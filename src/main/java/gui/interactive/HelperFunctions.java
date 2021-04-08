@@ -20,6 +20,7 @@ import net.imglib2.Cursor;
 import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
@@ -47,10 +48,13 @@ public class HelperFunctions {
 			IJ.log( s );
 	}
 
-	public static RandomAccessibleInterval<FloatType> copyImg(RandomAccessibleInterval<FloatType> rai, long channel,
-			long time, int[] impDim) {
+	public static RandomAccessible<FloatType> reduceImg(
+			final RandomAccessible<FloatType> rai,
+			final long channel,
+			final long time,
+			final int[] impDim) {
 		
-		RandomAccessibleInterval<FloatType> img = rai;
+		RandomAccessible<FloatType> img = rai;
 		// this one is always the loop over 5-dims
 		// cut 5-th, and 3-d and drop them after that 
 		int [] mapping = new int[5]; // mapping for all dimensions
@@ -67,7 +71,7 @@ public class HelperFunctions {
 		if (mapping[4] != -1) // if there are timepoints
 			img = Views.hyperSlice(img, mapping[4], time);
 					
-		return Views.dropSingletonDimensions(img);
+		return img;
 	}
 	
 	public static double[] calculateMinMax(ImagePlus imp){

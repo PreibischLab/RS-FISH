@@ -19,6 +19,7 @@ Ella Bahry\*, Laura Breimann\*, Leo Epstein\*, Klim Kolyvanov, Kyle I S Harringt
 * _**2.	Download**_
 * _**3.	RS-FISH tutorial**_
 * _**4.	Batch processing using RS-FISH**_
+* _**5. Running RS-FISH on large volumes**_
 
 <br />
 <br />
@@ -201,5 +202,10 @@ After RS-FISH computed all spots, you can save the result table as CSV. The **Sh
 ### 4.	Batch processing using RS-FISH
 
 For batch processing instructions and running on computing cluster please see the README in the [example_scripts](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/example_scripts) folder.
+
+
+### 5.	Running RS-FISH on large volumes
+
+There is a dedicated repository for [Spark](http://spark.apache.org)-based execution of RS-FISH on large (and also smaller) volumes: https://github.com/PreibischLab/RS-FISH-Spark
 
 License: GPLv2

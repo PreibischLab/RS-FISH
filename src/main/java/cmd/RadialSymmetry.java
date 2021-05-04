@@ -1,5 +1,6 @@
 package cmd;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
@@ -180,7 +181,7 @@ public class RadialSymmetry implements Callable<Void> {
 
 	protected static boolean isN5( final String image )
 	{
-		return image.trim().toLowerCase().endsWith( ".n5" );
+		return new File( image ).isDirectory();// e.trim().toLowerCase().endsWith( ".n5" );
 	}
 
 	protected static ImagePlus open( String image, String dataset ) throws IOException

@@ -9,7 +9,6 @@ import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 
 import gui.interactive.HelperFunctions;
-import ij.IJ;
 import net.imglib2.RealPoint;
 
 public class IOUtils {
@@ -18,7 +17,10 @@ public class IOUtils {
 		try {
 			CSVReader reader = new CSVReader(new FileReader(filepath)); // we don't care about the delimiter
 			String[] nextLine = reader.readNext();
-			numDimensions = nextLine.length; 
+			if ( !nextLine[ 0 ].equals( "x" ) )
+				numDimensions = nextLine.length+2; //x,y,z,i (from Tim)
+			else
+				numDimensions = nextLine.length; 
 			reader.close();
 		} catch (IOException | CsvValidationException e) {
 			e.printStackTrace();

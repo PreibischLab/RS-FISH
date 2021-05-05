@@ -69,7 +69,7 @@ public class Histogram extends ApplicationFrame
 		chartPanel.setPreferredSize( new Dimension( 600, 270 ) );
 		setContentPane( chartPanel );
 		
-		final JButton button = new JButton("OK");
+		final JButton button = new JButton("OK - press to proceed to final results");
 		button.addActionListener( new ButtonFinishedListener(this) );
 		
 		// create a wrapper panel that contains graph and button 

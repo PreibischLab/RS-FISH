@@ -3,8 +3,11 @@ package cmd;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 import org.janelia.saalfeldlab.n5.N5FSReader;
 import org.janelia.saalfeldlab.n5.N5Reader;
@@ -26,7 +29,6 @@ import net.imglib2.RealPoint;
 import net.imglib2.RealPointSampleList;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.img.imageplus.ImagePlusImgs;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
@@ -43,7 +45,7 @@ import util.st.render.Render;
 
 public class VisualizePointsBDV implements Callable<Void> {
 
-	// input file
+	// TODO: as plugin
 	@Option(names = {"-i", "--image"}, required = true, description = "input image or N5 container path, e.g. -i /home/smFish.tif or /home/smFish.n5")
 	private String image = null;
 
@@ -56,9 +58,16 @@ public class VisualizePointsBDV implements Callable<Void> {
 	@Option(names = {"-s", "--sigma"}, required = false, description = "the sigma for each rendered point (default: 1.0)")
 	private double sigma = 1.0;
 
+	@Option(names = {"--calibration"}, required = false, description = "calibration for the image as comma-separated list of doubles (default: 1.0,1.0,...)")
+	private String calibration = null;
+
+	@Option(names = {"--noPointScaling"}, required = false, description = "use this option to apply calibration only to the image, but not to the points")
+	private boolean noPointScaling = false;
+
 	public static Source<?> openMultiRes(
 			final String n5Path,
-			final String n5Group ) throws IOException {
+			final String n5Group,
+			final List< Double > calibration ) throws IOException {
 
 		final N5Reader n5 = new N5FSReader(n5Path);
 		final String group = n5Group;
@@ -85,17 +94,29 @@ public class VisualizePointsBDV implements Callable<Void> {
 			System.out.println( "Scale /s" + s + ": " + Util.printCoordinates( scales[ s ] ) + ", dim=" + Util.printCoordinates( Intervals.dimensionsAsLongArray( mipmaps[ s ] ) ) );
 		}
 
+		final double[] cal = new double[ mipmaps[ 0 ].numDimensions() ];
+
+		for ( int d = 0; d < cal.length; ++d )
+		{
+			if ( calibration == null || calibration.size() == 0 )
+				cal[ d ] = 1.0;
+			else
+				cal[ d ] = calibration.get( d );
+		}
+
+		System.out.println( Util.printCoordinates( cal ));
+
+		final AffineTransform3D t = new AffineTransform3D();
+		t.scale( cal[ 0 ], cal[ 1 ], cal.length >= 3 ? cal[ 2 ] : 1.0 );
+
 		final RandomAccessibleIntervalMipmapSource<?> mipmapSource =
 				new RandomAccessibleIntervalMipmapSource<>(
 						mipmaps,
 						 (NumericType)Views.iterable( mipmaps[ 0 ] ).firstElement(),
 						scales,
-						new FinalVoxelDimensions("px", new double[] { 1, 1, 1 } ),
-						new AffineTransform3D(),
+						new FinalVoxelDimensions("px", cal ),
+						t,
 						group);
-
-		//final BdvOptions bdvOptions = Bdv.options()./*screenScales(new double[] {1, 0.5}).*/numRenderingThreads(Math.max(3, Runtime.getRuntime().availableProcessors() / 5)).addTo( bdv );
-		//final BdvOptions bdvOptions = Bdv.options().numRenderingThreads(Math.max(3, Runtime.getRuntime().availableProcessors() / 5));
 
 		final Source<?> volatileMipmapSource = mipmapSource.asVolatile(queue);
 
@@ -115,11 +136,11 @@ public class VisualizePointsBDV implements Callable<Void> {
 		return Render.render( list, new GaussianFilterFactory<>( new DoubleType(), sigma, WeightType.NONE ) );
 	}
 
-	protected static RandomAccessibleInterval open( String image, String dataset ) throws IOException
+	public static RandomAccessibleInterval open( String image, String dataset ) throws IOException
 	{
 		RandomAccessibleInterval img;
 
-		if ( RadialSymmetry.isN5( image ) )
+		if ( dataset != null && RadialSymmetry.isN5( image ) )
 		{
 			if ( dataset == null || dataset.length() < 1 )
 				throw new RuntimeException( "no dataset for the N5 container defined, please use -d 'dataset'." );
@@ -138,61 +159,87 @@ public class VisualizePointsBDV implements Callable<Void> {
 	@Override
 	public Void call() throws Exception {
 
-		csvFile = "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/EASI-FISH/R7_LHA5/c0/merged_points_c0.txt";
-		image = "/Volumes/multifish/Yuhan/LHA5/stitch/R7_LHA5/export.n5/";
-		dataset = "c0";
-		sigma = 2.0;
+		//csvFile = "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/EASI-FISH/R7_LHA5/c0/merged_points_c0.txt";
+		//image = "/Volumes/multifish/Yuhan/LHA5/stitch/R7_LHA5/export.n5/";
+		//dataset = "c0";
+		//sigma = 2.0;
+		//calibration = "0.23,0.23,0.42";
+		//noPointScaling = true;
 
-		BdvStackSource<?> bdv;
-		BdvOptions options = new BdvOptions().numRenderingThreads( Runtime.getRuntime().availableProcessors() );
+		// -i '/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/test.n5'
+		// -d 'N2-702-ch0/c0'
+		// N2_702_cropped_1620 (high SNR)_ch0.tif
 
-		if ( RadialSymmetry.isN5( image ) )
-			bdv = BdvFunctions.show( openMultiRes( image, dataset ), options );
-		else
-			bdv = BdvFunctions.show( open( image, dataset ), new File( image ).getName(), options );
+		
+		List< Double > cal = null;
 
-		bdv.setDisplayRange( 0, 512 );
+		if ( calibration != null )
+		{
+			cal = Arrays.asList( calibration.split( "," ) ).stream().map( s -> Double.parseDouble( s ) ).collect( Collectors.toList() );
+			sigma *= cal.get( 0 );
+		}
+
+		BdvStackSource<?> bdv = null;
+
+		if ( dataset != null && RadialSymmetry.isN5( image ) )
+		{
+			try
+			{
+				bdv = BdvFunctions.show( openMultiRes( image, dataset, cal ), new BdvOptions().numRenderingThreads( Runtime.getRuntime().availableProcessors() ) );
+			}
+			catch (Exception e )
+			{
+				System.out.println( "Could not open as multi-resolution N5 (if you want to do so please do not specify s0, s1, ... but only the parent folder. " );
+			}
+		}
+
+		if ( bdv == null )
+		{
+			System.out.println( "Opening: " + ( dataset == null ? new File( image ) : new File( image, dataset ) ) );
+			RandomAccessibleInterval img = open( image, dataset );
+
+			final double[] calArray = getCalibration( cal, img.numDimensions() );
+			System.out.println( "Calibration: " + Util.printCoordinates( calArray ) );
+
+			bdv = BdvFunctions.show( img, new File( image ).getName(), new BdvOptions().numRenderingThreads( Runtime.getRuntime().availableProcessors() ).sourceTransform( calArray ) );
+		}
 
 		if ( ! new File( csvFile ).exists() )
 			throw new RuntimeException( "csvFile does not exist: " + csvFile );
 
-		ArrayList<RealPoint> peaks = CsvOverlay.readAndSortPositionsFromCsv( new File( csvFile) );
+		final ArrayList<RealPoint> peaks = CsvOverlay.readAndSortPositionsFromCsv( new File( csvFile ) );
 
-		for ( final RealPoint p : peaks )
-		{
-			p.setPosition( p.getDoublePosition( 0 ) * 4.347449623547185, 0 );
-			p.setPosition( p.getDoublePosition( 1 ) * 4.347449623547185, 1 );
-			p.setPosition( p.getDoublePosition( 2 ) * 2.378892926071238, 2 );
-		}
-
-		double min[] = new double[ peaks.iterator().next().numDimensions() ];
-		double max[] = new double[ peaks.iterator().next().numDimensions() ];
-
-		for (int d = 0; d < min.length; ++d )
-		{
-			min[ d ] = Double.MAX_VALUE;
-			max[ d ] = -Double.MAX_VALUE;
-		}
-
-		for ( final RealPoint p : peaks )
-		{
-			for (int d = 0; d < min.length; ++d )
-			{
-				min[ d ] = Math.min( min[ d ], p.getDoublePosition( d ) );
-				max[ d ] = Math.max( max[ d ], p.getDoublePosition( d ) );
-			}
-		}
-
-		System.out.println( "spots min=" + Util.printCoordinates( min ) + ", max=" + Util.printCoordinates( max ) );
 		System.out.println( "initializing point drawing ... " );
 
+		BdvOptions options = new BdvOptions().numRenderingThreads( Runtime.getRuntime().availableProcessors() );
+
+		if ( noPointScaling )
+			options = options.sourceTransform( Util.getArrayFromValue( 1.0, peaks.iterator().next().numDimensions() ) );
+		else
+			options = options.sourceTransform( getCalibration( cal, peaks.iterator().next().numDimensions() ) );
+
 		bdv = BdvFunctions.show( renderPoints( peaks, sigma ), Intervals.createMinMax( 0, 0, 0, 1, 1, 1), "detections", options.addTo( bdv ) );
-		bdv.setColor(new ARGBType( ARGBType.rgba(255, 0, 0, 0) ) );
+		bdv.setColor(new ARGBType( ARGBType.rgba(0, 255, 0, 0) ) );
 		bdv.setDisplayRange( 0, 256 );
 
 		System.out.println( "done" );
 
 		return null;
+	}
+
+	public static double[] getCalibration( final List< Double > cal, final int numDimensions )
+	{
+		final double[] calArray = new double[ numDimensions ];
+
+		for ( int d = 0; d < calArray.length; ++d )
+		{
+			if ( cal == null || cal.size() == 0 )
+				calArray[ d ] = 1.0;
+			else
+				calArray[ d ] = cal.get( d );
+		}
+
+		return calArray;
 	}
 
 	public static final void main(final String... args) {

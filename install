@@ -59,27 +59,43 @@ echo '  -XX:+UseConcMarkSweepGC \' >> rs-fish-anisotropy
 echo -n '  -cp $JAR:' >> rs-fish-anisotropy
 echo -n $(cat cp.txt) >> rs-fish-anisotropy
 echo ' \' >> rs-fish-anisotropy
-echo '  cmd.RadialSymmetry "$@"' >> rs-fish-anisotropy
+echo '  cmd.Anisotropy "$@"' >> rs-fish-anisotropy
 
 echo ""
 echo "Installing 'csv-overlay' command into" $INSTALL_DIR
 echo ""
 
-echo '#!/bin/bash' > csv-overlay
-echo '' >> csv-overlay
-echo "JAR=\$HOME/.m2/repository/net/preibisch/Radial_SymmetryLocalization/${VERSION}/Radial_SymmetryLocalization-${VERSION}.jar" >> csv-overlay
-echo 'java \' >> csv-overlay
-echo "  -Xmx${MEM}g \\" >> csv-overlay
-echo '  -XX:+UseConcMarkSweepGC \' >> csv-overlay
-echo -n '  -cp $JAR:' >> csv-overlay
-echo -n $(cat cp.txt) >> csv-overlay
-echo ' \' >> csv-overlay
-echo '  cmd.RadialSymmetry "$@"' >> csv-overlay
+echo '#!/bin/bash' > csv-overlay-imagej
+echo '' >> csv-overlay-imagej
+echo "JAR=\$HOME/.m2/repository/net/preibisch/Radial_SymmetryLocalization/${VERSION}/Radial_SymmetryLocalization-${VERSION}.jar" >> csv-overlay-imagej
+echo 'java \' >> csv-overlay-imagej
+echo "  -Xmx${MEM}g \\" >> csv-overlay-imagej
+echo '  -XX:+UseConcMarkSweepGC \' >> csv-overlay-imagej
+echo -n '  -cp $JAR:' >> csv-overlay-imagej
+echo -n $(cat cp.txt) >> csv-overlay-imagej
+echo ' \' >> csv-overlay-imagej
+echo '  cmd.OverlayCSV "$@"' >> csv-overlay-imagej
+
+echo ""
+echo "Installing 'bdv-overlay' command into" $INSTALL_DIR
+echo ""
+
+echo '#!/bin/bash' > csv-overlay-bdv
+echo '' >> csv-overlay-bdv
+echo "JAR=\$HOME/.m2/repository/net/preibisch/Radial_SymmetryLocalization/${VERSION}/Radial_SymmetryLocalization-${VERSION}.jar" >> csv-overlay-bdv
+echo 'java \' >> csv-overlay-bdv
+echo "  -Xmx${MEM}g \\" >> csv-overlay-bdv
+echo '  -XX:+UseConcMarkSweepGC \' >> csv-overlay-bdv
+echo -n '  -cp $JAR:' >> csv-overlay-bdv
+echo -n $(cat cp.txt) >> csv-overlay-bdv
+echo ' \' >> csv-overlay-bdv
+echo '  cmd.VisualizePointsBDV "$@"' >> csv-overlay-bdv
 
 
 chmod a+x rs-fish
 chmod a+x rs-fish-anisotropy
-chmod a+x csv-overlay
+chmod a+x csv-overlay-imagej
+chmod a+x csv-overlay-bdv
 
 if [ $(pwd) == "$INSTALL_DIR" ]; then
     echo "Installation directory equals current directory, we are done."

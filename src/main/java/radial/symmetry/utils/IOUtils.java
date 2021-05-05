@@ -2,11 +2,9 @@ package radial.symmetry.utils;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 
 import com.opencsv.CSVReader;
-import com.opencsv.exceptions.CsvValidationException;
 
 import gui.interactive.HelperFunctions;
 import net.imglib2.RealPoint;
@@ -22,7 +20,7 @@ public class IOUtils {
 			else
 				numDimensions = nextLine.length; 
 			reader.close();
-		} catch (IOException | CsvValidationException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return numDimensions;
@@ -54,7 +52,7 @@ public class IOUtils {
 			}
 			reader.close();
 			HelperFunctions.log( "read " + peaks.size() + " spots." );
-		} catch (IOException | CsvValidationException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 

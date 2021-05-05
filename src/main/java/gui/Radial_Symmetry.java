@@ -39,6 +39,9 @@ import result.output.ShowResult;
 
 public class Radial_Symmetry implements PlugIn
 {
+	public static ImagePlus lastImp = null;
+	public static ResultsTable lastRt = null;
+
 	@Override
 	public void run(String arg) {
 
@@ -85,7 +88,7 @@ public class Radial_Symmetry implements PlugIn
 		final RadialSymParams params = new RadialSymParams();
 
 		// don't do it by name as often multiple images have the same name
-		ImagePlus imp = WindowManager.getImage( idList[ RadialSymParams.defaultImg = gd1.getNextChoiceIndex() ] );
+		ImagePlus imp = lastImp = WindowManager.getImage( idList[ RadialSymParams.defaultImg = gd1.getNextChoiceIndex() ] );
 		int mode = RadialSymParams.defaultMode = gd1.getNextChoiceIndex();
 		params.anisotropyCoefficient = RadialSymParams.defaultAnisotropy = gd1.getNextNumber();
 		params.ransacSelection = RadialSymParams.defaultRANSACChoice = gd1.getNextChoiceIndex();
@@ -301,7 +304,7 @@ public class Radial_Symmetry implements PlugIn
 							imp, allSpots, timePoint,
 							params.getSigmaDoG(), params.getAnisotropyCoefficient());
 
-			rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
+			rt = lastRt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
 		}
 		else if ( mode == 1 ) { // advanced
 			// write the result to the csv file
@@ -310,7 +313,7 @@ public class Radial_Symmetry implements PlugIn
 				ShowResult.ransacResultCsv(allSpots, timePoint, channelPoint, params.intensityThreshold, params.resultsFilePath );
 
 			if ( !HelperFunctions.headless )
-				rt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
+				rt = lastRt = ShowResult.ransacResultTable(allSpots, timePoint, channelPoint, params.intensityThreshold );
 		}
 		else
 		{

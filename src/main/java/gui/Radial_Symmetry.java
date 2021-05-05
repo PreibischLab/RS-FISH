@@ -343,10 +343,12 @@ public class Radial_Symmetry implements PlugIn
 
 			for ( final Spot spot : allSpots )
 			{
-				PointRoi p = new PointRoi( spot.getDoublePosition( 0 ), spot.getDoublePosition( 1 ) );
-				imp.setSliceWithoutUpdate( 1 + (int)Math.round( spot.getDoublePosition( 2 ) ) );
-				imp.unlock();
-				roim.addRoi( p );
+				if (spot.getIntensity() >= params.intensityThreshold) {
+					PointRoi p = new PointRoi( spot.getDoublePosition( 0 ), spot.getDoublePosition( 1 ) );
+					imp.setSliceWithoutUpdate( 1 + (int)Math.round( spot.getDoublePosition( 2 ) ) );
+					imp.unlock();
+					roim.addRoi( p );
+				}
 			}
 		}
 

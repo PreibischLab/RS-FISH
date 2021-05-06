@@ -154,6 +154,9 @@ public class VisualizePointsBDV implements Callable<Void> {
 		}
 		else
 		{
+			if ( new File( image ).exists() )
+				throw new RuntimeException( "image '" + new File( image ) + "' does not exist." );
+
 			img = ImagePlusImgs.from( new ImagePlus( image ) );
 		}
 
@@ -266,7 +269,6 @@ public class VisualizePointsBDV implements Callable<Void> {
 					}
 				}
 			}
-
 
 			System.out.println( "initializing point drawing ... " );
 

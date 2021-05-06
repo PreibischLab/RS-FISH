@@ -65,6 +65,9 @@ public class VisualizePointsBDV implements Callable<Void> {
 	@Option(names = {"--pointScaling"}, required = false, description = "scaling applied to each csv dataset as comma-separated list of doubles (default: 1.0,1.0,...)")
 	private List<String> pointScaling = null;
 
+	@Option(names = {"--pointOffset"}, required = false, description = "offset applied to each csv dataset (after scaling) as comma-separated list of doubles (default: 1.0,1.0,...)")
+	private List<String> pointOffset = null;
+
 	public static Source<?> openMultiRes(
 			final String n5Path,
 			final String n5Group,
@@ -228,9 +231,13 @@ public class VisualizePointsBDV implements Callable<Void> {
 				throw new RuntimeException( "csvFile does not exist: " + csvFile );
 
 			List< Double > scaling = null;
+			List< Double > offset = null;
 
 			if ( pointScaling != null && i < pointScaling.size() )
 				scaling = Arrays.asList( pointScaling.get( i ).split( "," ) ).stream().map( s -> Double.parseDouble( s ) ).collect( Collectors.toList() );
+
+			if ( pointOffset != null && i < pointOffset.size() )
+				offset = Arrays.asList( pointOffset.get( i ).split( "," ) ).stream().map( s -> Double.parseDouble( s ) ).collect( Collectors.toList() );
 
 			final ArrayList<RealPoint> peaks = CsvOverlay.readAndSortPositionsFromCsv( new File( csvFile ) );
 
@@ -246,6 +253,20 @@ public class VisualizePointsBDV implements Callable<Void> {
 					}
 				}
 			}
+
+			if ( offset != null )
+			{
+				System.out.println( "Adding following offset to all points " + offset );
+
+				for ( final RealPoint p : peaks )
+				{
+					for ( int d = 0; d < scaling.size(); ++d )
+					{
+						p.setPosition( p.getDoublePosition( d ) + offset.get( d ), d);
+					}
+				}
+			}
+
 
 			System.out.println( "initializing point drawing ... " );
 

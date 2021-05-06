@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
@@ -50,19 +51,19 @@ public class VisualizePointsBDV implements Callable<Void> {
 	private String image = null;
 
 	@Option(names = {"-d", "--dataset"}, required = false, description = "if you selected an N5 path, you need to define the dataset within the N5, e.g. -d 'embryo_5_ch0/c0'")
-	private String dataset = null;
+	private List<String> datasets = null;
 
 	@Option(names = {"-c", "--csvFile"}, required = true, description = "the csv file stored from RS-FISH'")
-	private String csvFile = null;
+	private List<String> csvFiles = null;
 
 	@Option(names = {"-s", "--sigma"}, required = false, description = "the sigma for each rendered point (default: 1.0)")
 	private double sigma = 1.0;
 
-	@Option(names = {"--calibration"}, required = false, description = "calibration for the image as comma-separated list of doubles (default: 1.0,1.0,...)")
-	private String calibration = null;
+	@Option(names = {"--calibration"}, required = false, description = "calibration for each image/dataset as comma-separated list of doubles (default: 1.0,1.0,...)")
+	private List<String> calibration = null;
 
-	@Option(names = {"--noPointScaling"}, required = false, description = "use this option to apply calibration only to the image, but not to the points")
-	private boolean noPointScaling = false;
+	@Option(names = {"--pointScaling"}, required = false, description = "scaling applied to each csv dataset as comma-separated list of doubles (default: 1.0,1.0,...)")
+	private List<String> pointScaling = null;
 
 	public static Source<?> openMultiRes(
 			final String n5Path,
@@ -160,67 +161,105 @@ public class VisualizePointsBDV implements Callable<Void> {
 	public Void call() throws Exception {
 
 		//csvFile = "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/EASI-FISH/R7_LHA5/c0/merged_points_c0.txt";
-		//image = "/Volumes/multifish/Yuhan/LHA5/stitch/R7_LHA5/export.n5/";
+		//image = "/nrs/multifish/Yuhan/LHA5/stitch/R7_LHA5/export.n5/";
 		//dataset = "c0";
 		//sigma = 2.0;
 		//calibration = "0.23,0.23,0.42";
 		//noPointScaling = true;
 
-		// -i '/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/test.n5'
-		// -d 'N2-702-ch0/c0'
-		// N2_702_cropped_1620 (high SNR)_ch0.tif
-
-		
-		List< Double > cal = null;
-
-		if ( calibration != null )
-		{
-			cal = Arrays.asList( calibration.split( "," ) ).stream().map( s -> Double.parseDouble( s ) ).collect( Collectors.toList() );
-			sigma *= cal.get( 0 );
-		}
+		/*
+		-i '/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/test.n5'
+		-d 'N2-702-ch0/c0'
+		-c '/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/test.csv'
+		*/
 
 		BdvStackSource<?> bdv = null;
 
-		if ( dataset != null && RadialSymmetry.isN5( image ) )
+		if ( datasets == null ) // loading a normal image
 		{
-			try
-			{
-				bdv = BdvFunctions.show( openMultiRes( image, dataset, cal ), new BdvOptions().numRenderingThreads( Runtime.getRuntime().availableProcessors() ) );
-			}
-			catch (Exception e )
-			{
-				System.out.println( "Could not open as multi-resolution N5 (if you want to do so please do not specify s0, s1, ... but only the parent folder. " );
-			}
+			datasets = new ArrayList<>();
+			datasets.add( null );
 		}
 
-		if ( bdv == null )
+		for ( int i = 0; i < datasets.size(); ++i )
 		{
+			final String dataset = datasets.get( i );
+
+			List< Double > cal = null;
+
+			if ( calibration != null && i < calibration.size() )
+				cal = Arrays.asList( calibration.get( i ).split( "," ) ).stream().map( s -> Double.parseDouble( s ) ).collect( Collectors.toList() );
+
 			System.out.println( "Opening: " + ( dataset == null ? new File( image ) : new File( image, dataset ) ) );
-			RandomAccessibleInterval img = open( image, dataset );
 
-			final double[] calArray = getCalibration( cal, img.numDimensions() );
-			System.out.println( "Calibration: " + Util.printCoordinates( calArray ) );
-
-			bdv = BdvFunctions.show( img, new File( image ).getName(), new BdvOptions().numRenderingThreads( Runtime.getRuntime().availableProcessors() ).sourceTransform( calArray ) );
+			if ( dataset != null && RadialSymmetry.isN5( image ) )
+			{
+				try
+				{
+					bdv = BdvFunctions.show( openMultiRes( image, dataset, cal ), new BdvOptions().numRenderingThreads( Runtime.getRuntime().availableProcessors() ).addTo( bdv ) );
+				}
+				catch (Exception e )
+				{
+					System.out.println( "Could not open as multi-resolution N5 (if you want to do so please do not specify s0, s1, ... but only the parent folder. " );
+				}
+			}
+	
+			if ( bdv == null )
+			{
+				RandomAccessibleInterval img = open( image, dataset );
+	
+				final double[] calArray = getCalibration( cal, img.numDimensions() );
+				System.out.println( "Calibration: " + Util.printCoordinates( calArray ) );
+	
+				bdv = BdvFunctions.show( img, new File( image ).getName(), new BdvOptions().numRenderingThreads( Runtime.getRuntime().availableProcessors() ).sourceTransform( calArray ).addTo( bdv ) );
+			}
 		}
 
-		if ( ! new File( csvFile ).exists() )
-			throw new RuntimeException( "csvFile does not exist: " + csvFile );
+		// random gene coloring
+		Random rnd = new Random( 343 );
 
-		final ArrayList<RealPoint> peaks = CsvOverlay.readAndSortPositionsFromCsv( new File( csvFile ) );
+		for ( int i = 0; i < csvFiles.size(); ++i )
+		{
+			final String csvFile = csvFiles.get( i );
 
-		System.out.println( "initializing point drawing ... " );
+			System.out.println( "Loading points from: " + csvFile );
 
-		BdvOptions options = new BdvOptions().numRenderingThreads( Runtime.getRuntime().availableProcessors() );
+			if ( ! new File( csvFile ).exists() )
+				throw new RuntimeException( "csvFile does not exist: " + csvFile );
 
-		if ( noPointScaling )
-			options = options.sourceTransform( Util.getArrayFromValue( 1.0, peaks.iterator().next().numDimensions() ) );
-		else
-			options = options.sourceTransform( getCalibration( cal, peaks.iterator().next().numDimensions() ) );
+			List< Double > scaling = null;
 
-		bdv = BdvFunctions.show( renderPoints( peaks, sigma ), Intervals.createMinMax( 0, 0, 0, 1, 1, 1), "detections", options.addTo( bdv ) );
-		bdv.setColor(new ARGBType( ARGBType.rgba(0, 255, 0, 0) ) );
-		bdv.setDisplayRange( 0, 256 );
+			if ( pointScaling != null && i < pointScaling.size() )
+				scaling = Arrays.asList( pointScaling.get( i ).split( "," ) ).stream().map( s -> Double.parseDouble( s ) ).collect( Collectors.toList() );
+
+			final ArrayList<RealPoint> peaks = CsvOverlay.readAndSortPositionsFromCsv( new File( csvFile ) );
+
+			if ( scaling != null )
+			{
+				System.out.println( "Scaling all points with " + scaling );
+
+				for ( final RealPoint p : peaks )
+				{
+					for ( int d = 0; d < scaling.size(); ++d )
+					{
+						p.setPosition( p.getDoublePosition( d ) * scaling.get( d ), d);
+					}
+				}
+			}
+
+			System.out.println( "initializing point drawing ... " );
+
+			BdvOptions options = new BdvOptions().numRenderingThreads( Runtime.getRuntime().availableProcessors() );
+	
+			bdv = BdvFunctions.show( renderPoints( peaks, sigma ), Intervals.createMinMax( 0, 0, 0, 1, 1, 1), "detections", options.addTo( bdv ) );
+
+			if ( csvFiles.size() == 1 )
+				bdv.setColor(new ARGBType( ARGBType.rgba(0, 255, 0, 0) ) );
+			else
+				bdv.setColor( Render.randomColor( rnd ) );
+
+			bdv.setDisplayRange( 0, 256 );
+		}
 
 		System.out.println( "done" );
 

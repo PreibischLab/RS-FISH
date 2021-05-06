@@ -1,5 +1,8 @@
 package util.st.render;
 
+import java.awt.Color;
+import java.util.Random;
+
 import net.imglib2.Interval;
 import net.imglib2.IterableRealInterval;
 import net.imglib2.KDTree;
@@ -7,6 +10,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.interpolation.neighborsearch.NearestNeighborSearchInterpolatorFactory;
 import net.imglib2.neighborsearch.NearestNeighborSearchOnKDTree;
+import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 import util.st.filter.RadiusSearchFilterFactory;
@@ -44,5 +48,15 @@ public class Render
 						new KDTree<> ( data ),
 						filterFactory ),
 				new IntegratingNeighborSearchInterpolatorFactory< T >() );
+	}
+
+	public static ARGBType randomColor( Random rnd )
+	{
+		final float h = rnd.nextFloat();
+		final float s = rnd.nextFloat();
+		final float b = 0.9f + 0.1f * rnd.nextFloat();
+		final Color c = Color.getHSBColor(h, s, b);
+
+		return new ARGBType( ARGBType.rgba(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()));
 	}
 }

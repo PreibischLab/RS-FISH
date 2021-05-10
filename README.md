@@ -213,11 +213,12 @@ The **Show Detections (ImageJ/Fiji)** plugin (```Plugins > RS-FISH > Tools > Sho
 
 The **Show Detections (BigDataViewer)** plugin (```Plugins > RS-FISH > Tools > Show Detections (BigDataViewer)```) can be used to visulaize the spots using the Big Data Viewer. In the first window are four options wether to open a saved image or csv or use the currently active image and table. The intensity of the overlay points can be changed with the sigma slider. 
 
-<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/options_bdv.png" alt="Options for the display in the Big data viewer" width="600">
 
 <img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/detection_tool_bdv.png" alt="Show detection in the Big data viewer" width="600">
 
-<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/bdv.png" alt="Overlay of detected points using the Big Data Viewer" width="600">
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/options_bdv.png" alt="Options for the display in the Big data viewer" width="600">
+
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/bdv.png" alt="Overlay of detected points using the Big Data Viewer" width="800">
 
 
 ### 6.	Batch processing using RS-FISH

@@ -211,7 +211,7 @@ The **Show Detections (ImageJ/Fiji)** plugin (```Plugins > RS-FISH > Tools > Sho
 
 <img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/show_detections.png" alt="Embryo with smFISH spots detection overlay" width="600">
 
-The **Show Detections (BigDataViewer)** plugin (```Plugins > RS-FISH > Tools > Show Detections (BigDataViewer)```) can be used to visulaize the spots using the Big Data Viewer. In the first window are four options wether to open a saved image or csv or use the currently active image and table. The intensity of the overlay points can be changed with the sigma slider. 
+The **Show Detections (BigDataViewer)** plugin (```Plugins > RS-FISH > Tools > Show Detections (BigDataViewer)```) can be used to visualize the spots using the Big Data Viewer. In the first window are four options whether to open a saved image or CSV or use the currently active image and table. The intensity of the overlay points can be changed with the sigma slider. 
 
 
 <img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/detection_tool_bdv.png" alt="Show detection in the Big data viewer" width="600">

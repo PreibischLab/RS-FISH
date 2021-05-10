@@ -193,14 +193,31 @@ When using the advanced mode you can simply record the parameters you used for r
 ### 5.	Show Detections 
 
 
-After RS-FISH computed all spots, you can save the result table as CSV or directly use the results to visualize the detected spots. There three ways to visulaize the RS-FISH detected spots:
+After RS-FISH computed all spots, the results table can be saved as CSV or directly be used to visualize the detected spots. There are three ways to visulaize the RS-FISH detected spots:
 
-* ROI Manager
-* Fiji/ImageJ overlay
-* Big Data Viewer 
+* **ROI Manager**
+* **Fiji/ImageJ overlay**
+* **Big Data Viewer** 
 
-The **Show Detections** plugins (```Plugins > RS-FISH > Tools > Show Detections```) then allows you to overlay all spots stored in a CSV onto the current image for visual inspection of the final result.
+If the option to transfer spots directly to ROI manager was chosen in the begining, the **ROI manager** will pop up with the results table in the last step. 
 
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/ROI_manager.png" alt="Fiji ROI Manager with detected spot coordinates" width="600">
+
+
+The **Show Detections (ImageJ/Fiji)** plugin (```Plugins > RS-FISH > Tools > Show Detections (ImageJ/Fiji)```) can be used to overlay all spots stored in a CSV onto the current image for visual inspection of the final result using Fiji. The detected spots will be highlighted by red circles that are largest in the z position where the center of the spot is. 
+
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/show_detections.png" alt="Embryo with smFISH spots detection overlay" width="600">
+
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/detections_tool_fiji.png" alt="Show detections in Fiji tool" width="600">
+
+
+The **Show Detections (BigDataViewer)** plugin (```Plugins > RS-FISH > Tools > Show Detections (BigDataViewer)```) can be used to visulaize the spots using the Big Data Viewer. In the first window are four options wether to open a saved image or csv or use the currently active image and table. The intensity of the overlay points can be changed with the sigma slider. 
+
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/options_bdv.png" alt="Options for the display in the Big data viewer" width="600">
+
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/detections_tool_bdv.png" alt="Show detection in the Big data viewer" width="600">
+
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/bdv.png" alt="Overlay of detected points using the Big Data Viewer" width="600">
 
 
 ### 6.	Batch processing using RS-FISH

@@ -201,7 +201,7 @@ After RS-FISH computed all spots, the results table can be saved as CSV or direc
 
 If the option to transfer spots directly to ROI manager was chosen in the begining, the **ROI manager** will pop up with the results table in the last step. 
 
-<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/ROI_Manager.png" alt="Fiji ROI Manager with detected spot coordinates" width="600">
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/ROI_Manager.png" alt="Fiji ROI Manager with detected spot coordinates" width="400">
 
 
 The **Show Detections (ImageJ/Fiji)** plugin (```Plugins > RS-FISH > Tools > Show Detections (ImageJ/Fiji)```) can be used to overlay all spots stored in a CSV onto the current image for visual inspection of the final result using Fiji. The detected spots will be highlighted by red circles that are largest in the z position where the center of the spot is. 

@@ -173,7 +173,7 @@ In the next window, you have the option of thresholding the detected spots based
 
 The **Log** window gives you a summary of all spots found at every step and the final number of detections. The **Results table** contains the spot coordinates, time, channel, and intensity values in the corresponding columns. You can save the results and use them in the **Show Detections** part of the plugin to visualize all found spots’ locations. 
 
-<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/results_csv.png" alt="RS_FISH result table" width="600">
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/results_csv.png" alt="RS_FISH result table" width="400">
 
 
 _**Advanced mode**_

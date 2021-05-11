@@ -7,22 +7,22 @@ This readme has info about:
 
 ### Macro script for batch processing:
 
-A recommended procedure for running the plugin on a dataset will be to first run the plugin in FIJI in interactive mode on one (or a few) example images, to find the best parameters for spot detection. Then use the parameters in a macro script that can be run from FIJI or headless (e.g. on cluster).  
+A recommended procedure for running the plugin on a dataset will be to first run the plugin in Fiji in interactive mode on one (or a few) example images, to find the best parameters for spot detection. Then use the parameters in a macro script that can be run from Fiji or headless (e.g. on cluster).  
 
 Steps:  
 * Find best parameters:
-1. Open an example image from the dataset on FIJI.
-2. Plugins > Radial Symmetry Localization > Radial Symmetry
+1. Open an example image from the dataset on Fiji.
+2. Plugins > RS-FISH > RS-FISH
 3. In the menu that opened - choose "Interactive" Mode, set your image anisotropy coefficient (z resolution / xy resolution), and leave the rest as default values, then click ok.
 4. Change the slide bar values of the parameters until you're happy with the detections you see on the image.
 5. Write down the parameters used - anisotropy, sigma, threshold, support region, inline ratio, max error, and the intensity threshold.
 6. Click done.
 * Run on batch:
-1. Open the `RS_macro.ijm` (in FIJI, or text editor) 
+1. Open the `RS_macro.ijm` (in Fiji, or text editor) 
 2. Change the parameters (sigma, threshold..) at the beginning of the file to the values you found.
 3. Change the `path` variable value to the parent directory of your images
 4. Change the `timeFile` variable value to the path where you wish running times file will be saved.
-5. Call the script. Can be done from FIJI GUI, from the terminal, or from a cluster. Example linux command to run the macro script:  
+5. Call the script. Can be done from Fiji GUI, from the terminal, or from a cluster. Example linux command to run the macro script:  
 `fiji_dir_path/ImageJ-linux64 --headless --run /path/to/this/script/RS_macro.ijm &> /path/to/where/you/want/yourlogfile.log`  
 
 The macro described runs the same command as the command that is recorded if you record running the RS plugin in advanced mode.  
@@ -64,9 +64,9 @@ BigFish grid search parameters:
 * sigmaYX = default + [-0.5,-0.25,0,0.25,0.5]
 * threshold = value of index in threshold array, with indices relative to location of the default. Relative to default indices: [-6,-3,-2,-1,0,1,2,3,6]
 
-To run the grid search as is, you need a SunGrid computing cluster (calls qsub jobs), RadialSymmetry plugin installation in FIJI, and a BigFish installation (details below). First open all the files in the grid search subdirectories and change the paths to your desired paths. Then call the first python script (0_xxx.py), as this script calls the shell script that calls multiple (distributed) jobs.  
+To run the grid search as is, you need a SunGrid computing cluster (calls qsub jobs), RadialSymmetry plugin installation in Fiji, and a BigFish installation (details below). First open all the files in the grid search subdirectories and change the paths to your desired paths. Then call the first python script (0_xxx.py), as this script calls the shell script that calls multiple (distributed) jobs.  
 
-The radial symmetry grid search as is calls 234 jobs, one for each combination of sigma, threshold, and supportRadius. The defined relatively big memory used is only needed for edge cases. Notice that each job copies the FIJI folder (you need to delete it after), as without it there are JAVA memory errors.    
+The radial symmetry grid search as is calls 234 jobs, one for each combination of sigma, threshold, and supportRadius. The defined relatively big memory used is only needed for edge cases. Notice that each job copies the Fiji folder (you need to delete it after), as without it there are JAVA memory errors.    
 The BigFish grid search calls 63 jobs, one for each image in the `selected simulations` subdirectories.
 
 

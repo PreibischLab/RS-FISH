@@ -1,4 +1,4 @@
-## RS-FISH: Radial Symmetry (RS) FIJI plugin - example scripts:
+## RS-FISH: Radial Symmetry (RS) Fiji plugin - example scripts:
 
 This readme has info about:  
 1. How to run the plugin from a macro script for batch processing.

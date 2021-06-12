@@ -216,7 +216,7 @@ public class RadialSymmetry {
 
 		dog2.setNumThreads(numThreads);
 
-		return dog2.getPeaks();
+		return new ArrayList<>( dog2.getPeaks() );
 	}
 
 	public static ArrayList<Spot> computeRadialSymmetry(final Interval interval, NormalizedGradient pNg,

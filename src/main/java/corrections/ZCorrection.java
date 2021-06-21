@@ -116,6 +116,8 @@ public class ZCorrection implements Callable<Void>
 			//
 			// read CSV
 			//
+			System.out.println( "Reading " + csvIn.get( i ) );
+
 			String[] nextLine;
 			CSVReader reader = new CSVReader(new FileReader(csvIn.get( i )));
 			ArrayList< InputSpot > spots = new ArrayList<>();
@@ -223,6 +225,8 @@ public class ZCorrection implements Callable<Void>
 			}
 
 			// correct and write new CSV
+			System.out.println( "Writing " + csvOut.get( i ) );
+
 			final CSVWriter writer = new CSVWriter(new FileWriter(csvOut.get( i )), ',', CSVWriter.NO_QUOTE_CHARACTER);
 
 			nextLine = new String[ 6 ];

@@ -70,6 +70,13 @@ public class VisualizePointsBDV implements Callable<Void> {
 
 	public static Source<?> openMultiRes(
 			final String n5Path,
+			final String n5Group ) throws IOException {
+
+		return openMultiRes(n5Path, n5Group, null );
+	}
+
+	public static Source<?> openMultiRes(
+			final String n5Path,
 			final String n5Group,
 			final List< Double > calibration ) throws IOException {
 

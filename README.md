@@ -55,7 +55,7 @@ The simulation data that was generated to benchmark the method can be downloaded
 
 #### 2.1. Installation as command-line tools
 
-Command-line installation requires maven and OpenJDK8 (or newer) on Ubuntu:
+Command-line installation requires maven (>=3.8.1) and OpenJDK8 (or newer) on Ubuntu:
 ```bash
 sudo apt-get install openjdk-8-jdk maven
 ```
@@ -64,8 +64,8 @@ On other platforms, please find your way and report back if interested.
 Next, please check out this repository and go into the folder
 
 ```
-git clone https://github.com/PreibischLab/RadialSymmetryLocalization.git
-cd RadialSymmetryLocalization
+git clone https://github.com/PreibischLab/RS-FISH.git
+cd RS-FISH
 ```
 
 Install into your favorite local binary `$PATH` (or leave empty for using the checked out directory):

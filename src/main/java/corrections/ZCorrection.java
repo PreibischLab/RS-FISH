@@ -10,12 +10,20 @@ import java.util.stream.Collectors;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 
+import cmd.VisualizePointsBDV;
 import fit.PointFunctionMatch;
 import fit.polynomial.NewtonRaphson;
 import fit.polynomial.QuadraticFunction;
 import mpicbg.models.Point;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealRandomAccess;
+import net.imglib2.RealRandomAccessible;
+import net.imglib2.interpolation.randomaccess.NearestNeighborInterpolatorFactory;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Pair;
+import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
+import net.imglib2.view.Views;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import umontreal.ssj.probdist.GammaDist;
@@ -30,6 +38,9 @@ public class ZCorrection implements Callable<Void>
 
 	@Option(names = {"-o"}, required = true, description = "output CSV, e.g. -o corrected.csv")
 	private List< String > csvOut = null;
+
+	@Option(names = {"-m"}, required = false, description = "mask image (background = 0, foreground > 0), e.g. -m mask.tif")
+	private List< String > mask = null;
 
 	public static Pair< QuadraticFunction, ArrayList<PointFunctionMatch> > quadraticFit(
 			final List<Point> points,
@@ -140,6 +151,43 @@ public class ZCorrection implements Callable<Void>
 
 			System.out.println( "Loaded: " + spots.size() + " spots.");
 			reader.close();
+
+			//
+			// optionally filter the spots with the mask
+			//
+			if ( mask != null && mask.size() > 0 )
+			{
+				System.out.println( "Filtering locations using mask image: " + mask.get( i ) );
+
+				final ArrayList< InputSpot > spotsTmp = new ArrayList<>();
+
+				final RandomAccessibleInterval img = VisualizePointsBDV.open( mask.get( i ), null );
+
+				if ( img.numDimensions() != 2 )
+				{
+					System.out.println( "2D image required, but is " + img.numDimensions() );
+					System.exit( 0 );
+				}
+				else
+				{
+					System.out.println( "Image size=" + Util.printInterval( img ) );
+				}
+
+				final RealRandomAccess rra = Views.interpolate( Views.extendBorder( img ) , new NearestNeighborInterpolatorFactory<>() ).realRandomAccess();
+
+				for ( final InputSpot s : spots )
+				{
+					rra.setPosition( s.x, 0 );
+					rra.setPosition( s.y, 1 );
+
+					if ( ((RealType)rra.get()).getRealDouble() > 0 )
+						spotsTmp.add( s );
+				}
+
+				System.out.println( "Remaining spots=" + spotsTmp.size() + ", previously=" + spots.size() );
+
+				spots = spotsTmp;
+			}
 
 			//
 			// fit quadratic function

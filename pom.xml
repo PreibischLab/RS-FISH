@@ -90,7 +90,7 @@
 		<scijava.jvm.version>1.8</scijava.jvm.version>
 		<license.licenseName>gpl_v2</license.licenseName>
 		<license.copyrightOwners>Developers.</license.copyrightOwners>
-	    <maven.compiler.release>8</maven.compiler.release>
+<!--  	    <maven.compiler.release>8</maven.compiler.release> -->
 	    <maven.compiler.source>8</maven.compiler.source>
 	    <maven.compiler.target>8</maven.compiler.target>
 	</properties>

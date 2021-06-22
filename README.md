@@ -55,7 +55,7 @@ The simulation data that was generated to benchmark the method can be downloaded
 
 #### 2.1. Installation as command-line tools
 
-Command-line installation requires maven and OpenJDK8 (or newer) on Ubuntu:
+Command-line installation requires maven (>=3.8.1) and OpenJDK8 (or newer) on Ubuntu:
 ```bash
 sudo apt-get install openjdk-8-jdk maven
 ```

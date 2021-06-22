@@ -64,8 +64,8 @@ On other platforms, please find your way and report back if interested.
 Next, please check out this repository and go into the folder
 
 ```
-git clone https://github.com/PreibischLab/RadialSymmetryLocalization.git
-cd RadialSymmetryLocalization
+git clone https://github.com/PreibischLab/RS-FISH.git
+cd RS-FISH
 ```
 
 Install into your favorite local binary `$PATH` (or leave empty for using the checked out directory):

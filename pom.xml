@@ -90,12 +90,15 @@
 		<scijava.jvm.version>1.8</scijava.jvm.version>
 		<license.licenseName>gpl_v2</license.licenseName>
 		<license.copyrightOwners>Developers.</license.copyrightOwners>
+	    <maven.compiler.release>8</maven.compiler.release>
+	    <maven.compiler.source>8</maven.compiler.source>
+	    <maven.compiler.target>8</maven.compiler.target>
 	</properties>
 	<repositories>
 		<!-- NB: for project parent -->
 		<repository>
-			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
+			<id>scijava.public</id>
+			<url>https://maven.scijava.org/content/groups/public</url>
 		</repository>
         <repository>
             <id>jitpack.io</id>

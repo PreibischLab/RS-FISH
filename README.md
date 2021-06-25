@@ -16,7 +16,7 @@ Ella Bahry\*, Laura Breimann\*, Leo Epstein\*, Klim Kolyvanov, Kyle I S Harringt
 ### Content
 
 * _**1.	Abstract & Availability**_
-* _**2.	Download**_
+* [_**2.	Download & Installation **_](#download)
 * _**3.	Calculating Anisotropy Coefficient**_
 * _**4.	RS-FISH tutorial**_
 * _**5.	Show detections**_
@@ -44,7 +44,10 @@ Including derivation for 3D + integration with RANSAC
 <br />
 <br />
 
-### 2.	Download & Installation
+ ### 2.	Download & Installation
+<a name="download">
+</a> 
+  
 
 The RS-FISH plugin can be downloaded via the Fiji Updater. Go to ```Help > Update …```, click ```Manage update sites``` and select **Radial Symmetry** in the list. Then click ```“Apply changes”``` and restart Fiji. You will now find the RS-FISH plugin under ```Plugins```.  
 

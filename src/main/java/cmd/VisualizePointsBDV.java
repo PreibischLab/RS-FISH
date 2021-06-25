@@ -1,19 +1,5 @@
 package cmd;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
-
-import org.janelia.saalfeldlab.n5.N5FSReader;
-import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
-
 import bdv.util.BdvFunctions;
 import bdv.util.BdvOptions;
 import bdv.util.BdvStackSource;
@@ -38,11 +24,24 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Intervals;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
+import org.janelia.saalfeldlab.n5.N5FSReader;
+import org.janelia.saalfeldlab.n5.N5Reader;
+import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import util.st.filter.GaussianFilterFactory;
 import util.st.filter.GaussianFilterFactory.WeightType;
 import util.st.render.Render;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 public class VisualizePointsBDV implements Callable<Void> {
 
@@ -161,7 +160,7 @@ public class VisualizePointsBDV implements Callable<Void> {
 		}
 		else
 		{
-			if ( new File( image ).exists() )
+			if ( !new File( image ).exists() )
 				throw new RuntimeException( "image '" + new File( image ) + "' does not exist." );
 
 			img = ImagePlusImgs.from( new ImagePlus( image ) );

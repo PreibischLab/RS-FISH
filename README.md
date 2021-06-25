@@ -16,7 +16,7 @@ Ella Bahry\*, Laura Breimann\*, Leo Epstein\*, Klim Kolyvanov, Kyle I S Harringt
 ### Content
 
 * _**1.	Abstract & Availability**_
-* [_**2.	Download & Installation **_](#download)
+* [_**2.Download & Installation**_](#download)
 * _**3.	Calculating Anisotropy Coefficient**_
 * _**4.	RS-FISH tutorial**_
 * _**5.	Show detections**_

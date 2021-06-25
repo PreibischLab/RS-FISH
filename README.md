@@ -15,20 +15,21 @@ Ella Bahry\*, Laura Breimann\*, Leo Epstein\*, Klim Kolyvanov, Kyle I S Harringt
 
 ### Content
 
-* _**1.	Abstract & Availability**_
+* [_**1.	Abstract & Availability**_](#abstract)
 * [_**2.Download & Installation**_](#download)
-* _**3.	Calculating Anisotropy Coefficient**_
-* _**4.	RS-FISH tutorial**_
-* _**5.	Show detections**_
-* _**6.	Batch processing using RS-FISH**_
-* _**7. Running RS-FISH on large volumes**_
+* [_**3.	Calculating Anisotropy Coefficient**_](#anisotropy)
+* [_**4.	RS-FISH tutorial**_](#tutorial)
+* [_**5.	Show detections**_](#detections)
+* [_**6.	Batch processing using RS-FISH**_](#batch)
+* [_**7. Running RS-FISH on large volumes**_](#spark)
 
 <br />
 <br />
 
 <div style="text-align: justify">
  
-### 1.	Abstract & Availability
+### 1.	Abstract & Availability<a name="abstract">
+</a> 
 Abstract:
 Studying transcription using single-molecule RNA-FISH (smFISH) is a powerful method to gain insights into gene regulation on a single cell basis, relying on accurate identification of sub-resolution fluorescent spots in microscopy images. Here we present Radial Symmetry-FISH (RS-FISH), which can robustly and quickly detect even close single-molecule spots in two and three dimensions with high precision, allows interactive parameter tuning, and can easily be applied to large sets of images.   
 
@@ -44,8 +45,7 @@ Including derivation for 3D + integration with RANSAC
 <br />
 <br />
 
- ### 2.	Download & Installation
-<a name="download">
+ ### 2.	Download & Installation <a name="download">
 </a> 
   
 
@@ -81,7 +81,8 @@ This currently installs three tools, `rs-fish, rs-fish-anisotropy, csv-overlay`.
 <br />
 <br />
 
-### 3.	Calculating Anisotropy Coefficient
+### 3.	Calculating Anisotropy Coefficient<a name="anisotropy">
+</a> 
 
 <br />
 
@@ -112,7 +113,8 @@ The Log window will show the corresponding anisotropy value, and it should be tr
 _Important: It is OK to skip this step if the objects are more or less round in 3D. The plugin will be able to do a decent job even with the default value of the anisotropy coefficient. However, we advise performing this prior to actual RS detection._  
 
 
-### 4.	Running RS-FISH
+### 4.	Running RS-FISH<a name="tutorial">
+</a> 
 
 _**Localizing Spots**_
 
@@ -193,7 +195,8 @@ After you press **OK**, the computation is done in all RS-FISH steps automatical
 
 When using the advanced mode you can simply record the parameters you used for running RS-FISH (```Plugins > Macro > Record```). You are then able to apply it to a set of images using the Fiji/ImageJ macro language.
 
-### 5.	Show Detections 
+### 5.	Show Detections<a name="detections">
+</a>  
 
 
 After RS-FISH computed all spots, the results table can be saved as CSV or directly be used to visualize the detected spots. There are three ways to visulaize the RS-FISH detected spots:
@@ -224,12 +227,14 @@ The **Show Detections (BigDataViewer)** plugin (```Plugins > RS-FISH > Tools > S
 <img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/bdv.png" alt="Overlay of detected points using the Big Data Viewer" width="800">
 
 
-### 6.	Batch processing using RS-FISH
+### 6.	Batch processing using RS-FISH<a name="batch">
+</a> 
 
 For batch processing instructions and running on computing cluster please see the README in the [example_scripts](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/example_scripts) folder.
 
 
-### 7.	Running RS-FISH on large volumes
+### 7.	Running RS-FISH on large volumes<a name="spark">
+</a> 
 
 There is a dedicated repository for [Spark](http://spark.apache.org)-based execution of RS-FISH on large (and also smaller) volumes: https://github.com/PreibischLab/RS-FISH-Spark
 

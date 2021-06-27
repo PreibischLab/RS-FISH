@@ -258,6 +258,8 @@ public class Radial_Symmetry implements PlugIn
 			final ImagePlus imp,
 			final int[] impDim )
 	{
+		params.printParams();
+
 		if ( params.autoMinMax )
 		{
 			double[] minmax = HelperFunctions.computeMinMax( Views.interval( img, computeInterval ) );

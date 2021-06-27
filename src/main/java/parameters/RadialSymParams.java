@@ -3,6 +3,7 @@ package parameters;
 import java.io.Serializable;
 
 import compute.RadialSymmetry.Ransac;
+import ij.IJ;
 
 public class RadialSymParams implements Serializable {
 
@@ -97,23 +98,32 @@ public class RadialSymParams implements Serializable {
 	public String resultsFilePath = defaultResultsFilePath;
 
 	public void printParams() {
-		System.out.println("SigmaDoG      : " + sigma);
-		System.out.println("ThresholdDoG  : " + threshold);
-		System.out.println("RANSAC        : " + RANSAC() );
-		System.out.println("MaxError      : " + maxError);
-		System.out.println("InlierRatio   : " + inlierRatio);
-		System.out.println("supportRadius : " + supportRadius);
-		System.out.println("GaussFit      : " + gaussFit);
-	}
+		IJ.log("SigmaDoG               : " + sigma);
+		IJ.log("ThresholdDoG           : " + threshold);
+		IJ.log("anisotropyCoefficient  : " + anisotropyCoefficient);
+		IJ.log("useAnisotropyForDoG    : " + useAnisotropyForDoG);
+		IJ.log("RANSAC                 : " + RANSAC() );
+		IJ.log("MaxError               : " + maxError);
+		IJ.log("InlierRatio            : " + inlierRatio);
+		IJ.log("supportRadius          : " + supportRadius);
+		IJ.log("GaussFit               : " + gaussFit);
+		IJ.log("intensityThreshold     : " + intensityThreshold);
+		IJ.log("min intensity          : " + min);
+		IJ.log("max intensity          : " + max);
+		IJ.log("autoMinMax             : " + autoMinMax);
+		IJ.log("resultsFilePath        : " + resultsFilePath);
 
-	public void printDefaultParams() {
-		System.out.println("DSigmaDoG      : " + defaultSigma);
-		System.out.println("DThresholdDoG  : " + defaultThreshold);
-		System.out.println("DRANSAC        : " + Ransac.values()[ defaultRANSACChoice ]);
-		System.out.println("DMaxError      : " + defaultMaxError);
-		System.out.println("DInlierRatio   : " + defaultInlierRatio);
-		System.out.println("DSupportRadius : " + defaultSupportRadius);
-		System.out.println("DGaussFit      : " + defaultGaussFit);
+		if ( ransacSelection == 2 )
+		{
+			IJ.log("minNumInliers          : " + minNumInliers);
+			IJ.log("nTimesStDev1           : " + nTimesStDev1);
+			IJ.log("nTimesStDe             : " + nTimesStDev2);
+		}
+
+		IJ.log("bsMethod               : " + bsMethod);
+		IJ.log("bsMaxError             : " + bsMaxError);
+		IJ.log("bsInlierRatio          : " + bsInlierRatio);
+
 	}
 
 	// getters

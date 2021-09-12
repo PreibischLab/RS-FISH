@@ -2,6 +2,7 @@ package result.output;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 import benchmark.TextFileAccess;
 import fitting.Spot;
@@ -137,4 +138,25 @@ public class ShowResult {
 
 		return rt;
 	}
+
+	public static ResultsTable ransacResultTable(final List<double[]> spots ) {
+		// real output
+		ResultsTable rt = new ResultsTable();
+		String[] xyz = { "x", "y", "z" };
+
+		for (final double[] spot : spots) {
+			rt.incrementCounter();
+
+			for (int d = 0; d < spot.length - 1; ++d)
+				rt.addValue(xyz[d], String.format(java.util.Locale.US, "%.4f", spot[ d ] ) );
+
+			rt.addValue("t", 1 ); // user-friendly, starting the counting from 1
+			rt.addValue("c", 1 ); // user-friendly, starting the counting from 1
+
+			rt.addValue("intensity", String.format(java.util.Locale.US, "%.4f", spot[ spot.length - 1 ] ));
+		}
+
+		return rt;
+	}
+
 }

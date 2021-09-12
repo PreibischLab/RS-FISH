@@ -1,11 +1,18 @@
 package gui;
 
 import java.awt.Font;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import compute.RadialSymmetry;
-import compute.RadialSymmetry.Ransac;
 import fiji.util.gui.GenericDialogPlus;
 import fitting.Spot;
 import gui.interactive.HelperFunctions;
@@ -14,25 +21,23 @@ import gui.vizualization.Visualization;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.PointRoi;
 import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.RoiManager;
-import imglib2.RealTypeNormalization;
-import imglib2.TypeTransformingRandomAccessibleInterval;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.Converters;
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.img.imageplus.ImagePlusImgs;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import parameters.RadialSymParams;
 import result.output.ShowResult;
@@ -42,6 +47,10 @@ public class Radial_Symmetry implements PlugIn
 	public static ImagePlus lastImp = null;
 	public static ResultsTable lastRt = null;
 
+	public static boolean defaultUseMultithreading = false;
+	public static int[] defaultBlockSize = new int[] { 128, 128, 16 };
+	public static int defaultNumThreads = Math.max( 1, Prefs.getThreads() );
+	
 	@Override
 	public void run(String arg) {
 
@@ -156,6 +165,10 @@ public class Radial_Symmetry implements PlugIn
 		//RadialSymParams.defaultThreshold =  0.02f;
 		//params.setAnisotropyCoefficient( 0.675 );
 
+		final boolean useMultithreading;
+		final int numThreads;
+		final int[] blockSize;
+
 		if ( mode == 1) {// advanced
 
 			GenericDialogPlus gd2 = new GenericDialogPlus( "Advanced Options" );
@@ -175,6 +188,15 @@ public class Radial_Symmetry implements PlugIn
 			gd2.addMessage( "" );
 			gd2.addFileField( "Results_file", RadialSymParams.defaultResultsFilePath );
 
+			gd2.addMessage( "" );
+			gd2.addMessage( "Multi-Threading:", new Font( "Default", Font.BOLD, 13 ) );
+			gd2.addMessage( "(Warning: if using RANSAC, results might slightly change\nfrom run to run due to inherent randomness)", new Font( "Default", Font.ITALIC, 11 ) );
+			gd2.addCheckbox( "Use multithreading", defaultUseMultithreading );
+			gd2.addNumericField( "Num_threads", defaultNumThreads, 0 );
+			gd2.addNumericField( "Block_size_X", defaultBlockSize[ 0 ], 0 );
+			gd2.addNumericField( "Block_size_Y", defaultBlockSize[ 1 ], 0 );
+			gd2.addNumericField( "Block_size_Z", defaultBlockSize[ 2 ], 0 );
+
 			gd2.showDialog();
 			if ( gd2.wasCanceled() )
 				return;
@@ -189,9 +211,19 @@ public class Radial_Symmetry implements PlugIn
 			params.bsMaxError = RadialSymParams.defaultBsMaxError = (float)gd2.getNextNumber();
 			params.bsInlierRatio = RadialSymParams.defaultBsInlierRatio = (float)gd2.getNextNumber();
 			params.resultsFilePath = RadialSymParams.defaultResultsFilePath = gd2.getNextString().trim();
+			useMultithreading = defaultUseMultithreading = gd2.getNextBoolean();
+			numThreads = defaultNumThreads = (int)Math.round( gd2.getNextNumber() );
+			blockSize = new int[ defaultBlockSize.length ];
+			blockSize[ 0 ] = defaultBlockSize[ 0 ] = (int)Math.round( gd2.getNextNumber() );
+			blockSize[ 1 ] = defaultBlockSize[ 1 ] = (int)Math.round( gd2.getNextNumber() );
+			blockSize[ 2 ] = defaultBlockSize[ 2 ] = (int)Math.round( gd2.getNextNumber() );
 		}
 		else // interactive
 		{
+			useMultithreading = false;
+			numThreads = -1;
+			blockSize = null;
+
 			HelperFunctions.log( "img min intensity=" + params.min + ", max intensity=" + params.max );
 
 			InteractiveRadialSymmetry irs = new InteractiveRadialSymmetry(imp, params, params.min, params.max);
@@ -209,13 +241,89 @@ public class Radial_Symmetry implements PlugIn
 
 		int[] impDim = imp.getDimensions(); // x y c z t
 
-		runRSFISH(
-				Views.extendMirrorSingle( img ),
-				new FinalInterval( img ),
-				params,
-				mode,
-				imp,
-				impDim );
+		if ( !useMultithreading )
+		{
+			final long time = System.currentTimeMillis();
+
+			runRSFISH(
+					Views.extendMirrorSingle( img ),
+					new FinalInterval( img ),
+					params,
+					mode,
+					imp,
+					impDim );
+
+			if ( mode == 1 )
+				HelperFunctions.log( "Compute time = " + (System.currentTimeMillis() - time ) + " msec." );
+		}
+		else
+		{
+			final long time = System.currentTimeMillis();
+			HelperFunctions.headless = true;
+
+			// only 2 pixel overlap necessary to find local max/min to start - we then anyways load the full underlying image for each block
+			final ArrayList< Block > blocks = Block.splitIntoBlocks( new FinalInterval( img ), blockSize );
+
+			HelperFunctions.log( "Using multithreading ... num threads = " + numThreads + ", num blocks = " + blocks.size() + ", block size = " + Util.printCoordinates( blockSize )  );
+
+			final List< double[] > allPoints = new ArrayList<>();
+			final List< Callable< List< double[] > > > tasks = new ArrayList<>();
+			final AtomicInteger nextBlock = new AtomicInteger();
+
+			for ( int threadNum = 0; threadNum < numThreads; ++threadNum )
+			{
+				tasks.add( () ->
+				{
+					final List< double[] > points = new ArrayList<>();
+
+					for ( int b = nextBlock.getAndIncrement(); b < blocks.size(); b = nextBlock.getAndIncrement() )
+					{
+						final Block block = blocks.get( b );
+
+						final ArrayList<double[]> pointsLocal = Radial_Symmetry.runRSFISH(
+								(RandomAccessible)(Object)Views.extendMirrorSingle( img ),
+								new FinalInterval( img ),
+								block.createInterval(),
+								params );
+
+						HelperFunctions.log( "block " + block.id() + " found " + pointsLocal.size() + " spots.");
+
+						points.addAll( pointsLocal );
+					}
+
+					return points;
+				});
+			}
+
+			final ExecutorService service = Executors.newFixedThreadPool( numThreads );
+
+			try
+			{
+				final List< Future< List< double[] > > > futures = service.invokeAll( tasks );
+				for ( final Future< List< double[] > > future : futures )
+					allPoints.addAll( future.get() );
+			}
+			catch ( final InterruptedException | ExecutionException e )
+			{
+				e.printStackTrace();
+				throw new RuntimeException( e );
+			}
+
+			service.shutdown();
+
+			HelperFunctions.log( "Compute time = " + (System.currentTimeMillis() - time ) + " msec." );
+
+			HelperFunctions.log( "Found " + allPoints.size() + " spots in total." );
+
+			lastRt = ShowResult.ransacResultTable(allPoints);
+			lastRt.show( "smFISH localizations" );
+
+			if ( params.resultsFilePath != null && params.resultsFilePath.length() > 0 )
+			{
+				HelperFunctions.log( "Writing result to " + params.resultsFilePath );
+				Block.writeCSV( allPoints, params.resultsFilePath );
+			}
+		}
 	}
 
 	public static < T extends RealType< T > > ArrayList<double[]> runRSFISH(
@@ -370,8 +478,12 @@ public class Radial_Symmetry implements PlugIn
 		//ij.command().run(Radial_Symmetry.class, true);
 
 		new ImageJ();
-		new ImagePlus("/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.tif" ).show();
-		//new ImagePlus( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_0_I_10000_0_img0.tif" ).show();
+		//ImagePlus imp = new ImagePlus("/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.tif" );
+		ImagePlus imp = new ImagePlus( "/Users/spreibi/Downloads/C0-N2_352_cropped_1240.tif" );
+
+		imp.show();
+		imp.setSlice( imp.getStackSize() / 2 );
+
 		new Radial_Symmetry().run( null );
 	}
 }

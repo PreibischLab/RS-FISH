@@ -258,9 +258,11 @@ public class Radial_Symmetry implements PlugIn
 		}
 		else
 		{
-			final long time = System.currentTimeMillis();
-			HelperFunctions.headless = true;
+			params.printParams();
 			params.numThreads = 1; // DoG numThreads is now 1
+			HelperFunctions.headless = true;
+
+			final long time = System.currentTimeMillis();
 
 			final int[] blockSize;
 			if ( img.numDimensions() == 3 )

@@ -191,7 +191,7 @@ public class Radial_Symmetry implements PlugIn
 			gd2.addMessage( "" );
 			gd2.addMessage( "Multi-Threading:", new Font( "Default", Font.BOLD, 13 ) );
 			gd2.addMessage( "(Warning: if using RANSAC, results might slightly change\nfrom run to run due to inherent randomness)", new Font( "Default", Font.ITALIC, 11 ) );
-			gd2.addCheckbox( "Use multithreading", defaultUseMultithreading );
+			gd2.addCheckbox( "Use_multithreading", defaultUseMultithreading );
 			gd2.addNumericField( "Num_threads", defaultNumThreads, 0 );
 			gd2.addNumericField( "Block_size_X", defaultBlockSize[ 0 ], 0 );
 			gd2.addNumericField( "Block_size_Y", defaultBlockSize[ 1 ], 0 );

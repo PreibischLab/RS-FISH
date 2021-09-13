@@ -3,6 +3,7 @@ package parameters;
 import java.io.Serializable;
 
 import compute.RadialSymmetry.Ransac;
+import gui.interactive.HelperFunctions;
 import ij.IJ;
 
 public class RadialSymParams implements Serializable {
@@ -98,31 +99,31 @@ public class RadialSymParams implements Serializable {
 	public String resultsFilePath = defaultResultsFilePath;
 
 	public void printParams() {
-		IJ.log("SigmaDoG               : " + sigma);
-		IJ.log("ThresholdDoG           : " + threshold);
-		IJ.log("anisotropyCoefficient  : " + anisotropyCoefficient);
-		IJ.log("useAnisotropyForDoG    : " + useAnisotropyForDoG);
-		IJ.log("RANSAC                 : " + RANSAC() );
-		IJ.log("MaxError               : " + maxError);
-		IJ.log("InlierRatio            : " + inlierRatio);
-		IJ.log("supportRadius          : " + supportRadius);
-		IJ.log("GaussFit               : " + gaussFit);
-		IJ.log("intensityThreshold     : " + intensityThreshold);
-		IJ.log("min intensity          : " + min);
-		IJ.log("max intensity          : " + max);
-		IJ.log("autoMinMax             : " + autoMinMax);
-		IJ.log("resultsFilePath        : " + resultsFilePath);
+		HelperFunctions.log("SigmaDoG               : " + sigma);
+		HelperFunctions.log("ThresholdDoG           : " + threshold);
+		HelperFunctions.log("anisotropyCoefficient  : " + anisotropyCoefficient);
+		HelperFunctions.log("useAnisotropyForDoG    : " + useAnisotropyForDoG);
+		HelperFunctions.log("RANSAC                 : " + RANSAC() );
+		HelperFunctions.log("MaxError               : " + maxError);
+		HelperFunctions.log("InlierRatio            : " + inlierRatio);
+		HelperFunctions.log("supportRadius          : " + supportRadius);
+		HelperFunctions.log("GaussFit               : " + gaussFit);
+		HelperFunctions.log("intensityThreshold     : " + intensityThreshold);
+		HelperFunctions.log("min intensity          : " + min);
+		HelperFunctions.log("max intensity          : " + max);
+		HelperFunctions.log("autoMinMax             : " + autoMinMax);
+		HelperFunctions.log("resultsFilePath        : " + resultsFilePath);
 
 		if ( ransacSelection == 2 )
 		{
-			IJ.log("minNumInliers          : " + minNumInliers);
-			IJ.log("nTimesStDev1           : " + nTimesStDev1);
-			IJ.log("nTimesStDe             : " + nTimesStDev2);
+			HelperFunctions.log("minNumInliers          : " + minNumInliers);
+			HelperFunctions.log("nTimesStDev1           : " + nTimesStDev1);
+			HelperFunctions.log("nTimesStDe             : " + nTimesStDev2);
 		}
 
-		IJ.log("bsMethod               : " + bsMethod);
-		IJ.log("bsMaxError             : " + bsMaxError);
-		IJ.log("bsInlierRatio          : " + bsInlierRatio);
+		HelperFunctions.log("bsMethod               : " + bsMethod);
+		HelperFunctions.log("bsMaxError             : " + bsMaxError);
+		HelperFunctions.log("bsInlierRatio          : " + bsInlierRatio);
 
 	}
 

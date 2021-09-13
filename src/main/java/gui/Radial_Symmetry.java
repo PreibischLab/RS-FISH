@@ -167,7 +167,7 @@ public class Radial_Symmetry implements PlugIn
 
 		final boolean useMultithreading;
 		final int numThreads;
-		final int[] blockSize;
+		final int[] blockSize3d;
 
 		if ( mode == 1) {// advanced
 
@@ -213,16 +213,16 @@ public class Radial_Symmetry implements PlugIn
 			params.resultsFilePath = RadialSymParams.defaultResultsFilePath = gd2.getNextString().trim();
 			useMultithreading = defaultUseMultithreading = gd2.getNextBoolean();
 			numThreads = defaultNumThreads = (int)Math.round( gd2.getNextNumber() );
-			blockSize = new int[ defaultBlockSize.length ];
-			blockSize[ 0 ] = defaultBlockSize[ 0 ] = (int)Math.round( gd2.getNextNumber() );
-			blockSize[ 1 ] = defaultBlockSize[ 1 ] = (int)Math.round( gd2.getNextNumber() );
-			blockSize[ 2 ] = defaultBlockSize[ 2 ] = (int)Math.round( gd2.getNextNumber() );
+			blockSize3d = new int[ defaultBlockSize.length ];
+			blockSize3d[ 0 ] = defaultBlockSize[ 0 ] = (int)Math.round( gd2.getNextNumber() );
+			blockSize3d[ 1 ] = defaultBlockSize[ 1 ] = (int)Math.round( gd2.getNextNumber() );
+			blockSize3d[ 2 ] = defaultBlockSize[ 2 ] = (int)Math.round( gd2.getNextNumber() );
 		}
 		else // interactive
 		{
 			useMultithreading = false;
 			numThreads = -1;
-			blockSize = null;
+			blockSize3d = null;
 
 			HelperFunctions.log( "img min intensity=" + params.min + ", max intensity=" + params.max );
 
@@ -261,6 +261,12 @@ public class Radial_Symmetry implements PlugIn
 			final long time = System.currentTimeMillis();
 			HelperFunctions.headless = true;
 			params.numThreads = 1; // DoG numThreads is now 1
+
+			final int[] blockSize;
+			if ( img.numDimensions() == 3 )
+				blockSize = blockSize3d;
+			else
+				blockSize = new int[] { blockSize3d[ 0 ], blockSize3d[ 2 ] };
 
 			// only 2 pixel overlap necessary to find local max/min to start - we then anyways load the full underlying image for each block
 			final ArrayList< Block > blocks = Block.splitIntoBlocks( new FinalInterval( img ), blockSize );
@@ -311,6 +317,8 @@ public class Radial_Symmetry implements PlugIn
 			}
 
 			service.shutdown();
+
+			HelperFunctions.headless = false;
 
 			HelperFunctions.log( "Compute time = " + (System.currentTimeMillis() - time ) + " msec." );
 

@@ -260,6 +260,7 @@ public class Radial_Symmetry implements PlugIn
 		{
 			final long time = System.currentTimeMillis();
 			HelperFunctions.headless = true;
+			params.numThreads = 1; // DoG numThreads is now 1
 
 			// only 2 pixel overlap necessary to find local max/min to start - we then anyways load the full underlying image for each block
 			final ArrayList< Block > blocks = Block.splitIntoBlocks( new FinalInterval( img ), blockSize );

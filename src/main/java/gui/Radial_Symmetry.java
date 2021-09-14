@@ -259,8 +259,6 @@ public class Radial_Symmetry implements PlugIn
 		else
 		{
 			params.printParams();
-			params.numThreads = 1; // DoG numThreads is now 1
-			HelperFunctions.headless = true;
 
 			final long time = System.currentTimeMillis();
 
@@ -274,6 +272,9 @@ public class Radial_Symmetry implements PlugIn
 			final ArrayList< Block > blocks = Block.splitIntoBlocks( new FinalInterval( img ), blockSize );
 
 			HelperFunctions.log( "Using multithreading ... num threads = " + numThreads + ", num blocks = " + blocks.size() + ", block size = " + Util.printCoordinates( blockSize )  );
+
+			params.numThreads = 1; // DoG numThreads is now 1
+			HelperFunctions.headless = true;
 
 			final List< double[] > allPoints = new ArrayList<>();
 			final List< Callable< List< double[] > > > tasks = new ArrayList<>();

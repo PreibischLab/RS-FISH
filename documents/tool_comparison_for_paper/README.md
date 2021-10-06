@@ -27,3 +27,5 @@ BigFish installation instructions can be found in their github repo:
 `https://github.com/fish-quant/big-fish`  
 
 Used BigFish version = `0.5.0` you must use the current dev version.  
+
+Some of the current setup was run on a SunGrid computing cluster (it calls qsub jobs) and requires installing the RS-FISH plugin in FIJI and the installation of Big-FISH. To run the grid search scripts for both RS-FISH and Big-FISH, only the first file (0_xxx.py) in each subdirectory should be called, as this script submits all of the required jobs. Before calling the python script, open each script in the grid search subdirectory and ensure that all the paths are defined correctly.

@@ -10,11 +10,9 @@
 
 // Path the tif files to be processed, searches all sub-directories.
 dir = "<PATH/TO/YOUR/TIFFILES/PARENT/DIR/>";
-dir = "/home/ella/Desktop/test/";
 
 // Location of file where all run times will be saved:
 timeFile = "</PATH/TO/DIR>/RS_Exe_times.txt";
-timeFile = "/home/ella/Desktop/test.txt"
 
 
 //////// Define RS parameters: //////////

@@ -41,7 +41,7 @@ Example command:
 Notably, running the tool/macro with a combination of parameters where `sigma<1.5`, `threshold<0.002`, and `Support region>=3` will cause both longer running times and requires bigger memory, especially on bigger images.  
 
 
-### Installation details
+### Cluster installation details
 
 To install the RS-FISH plugin in headless mode (for cluster use):   
 In the FIJI directory run:   

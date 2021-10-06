@@ -2,84 +2,52 @@
 
 This readme has info about:  
 1. How to run the plugin from a macro script for batch processing.
-2. Information about the parameters grid search and the process, and how to rerun the grid search described in the RS-FISH paper. 
-3. Installation on cluster details.
+2. Installation on cluster details.
 
 ### Macro script for batch processing:
 
 A recommended procedure for running the plugin on a dataset will be to first run the plugin in Fiji in interactive mode on one (or a few) example images, to find the best parameters for spot detection. Then use the parameters in a macro script that can be run from Fiji or headless (e.g. on cluster).  
 
-Steps:  
-* Find best parameters:
-1. Open an example image from the dataset on Fiji.
-2. Plugins > RS-FISH > RS-FISH
-3. In the menu that opened - choose "Interactive" Mode, set your image anisotropy coefficient (z resolution / xy resolution), and leave the rest as default values, then click ok.
-4. Change the slide bar values of the parameters until you're happy with the detections you see on the image.
-5. Write down the parameters used - anisotropy, sigma, threshold, support region, inline ratio, max error, and the intensity threshold.
-6. Click done.
-* Run on batch:
-1. Open the `RS_macro.ijm` (in Fiji, or text editor) 
-2. Change the parameters (sigma, threshold..) at the beginning of the file to the values you found.
-3. Change the `path` variable value to the parent directory of your images
-4. Change the `timeFile` variable value to the path where you wish running times file will be saved.
-5. Call the script. Can be done from Fiji GUI, from the terminal, or from a cluster. Example linux command to run the macro script:  
-`fiji_dir_path/ImageJ-linux64 --headless --run /path/to/this/script/RS_macro.ijm &> /path/to/where/you/want/yourlogfile.log`  
+Steps:   
+* Find the best parameters for your dataset:
+1. Open an example image from the dataset in FIJI.
+2. Go to: Plugins > RS-FISH > RS-FISH
+3. In the menu that opened - choose "Interactive" Mode, set your image anisotropy coefficient (z resolution / XY resolution), leave the rest as default values, then click ok.
+4. Change the slider values of the parameters until you are happy with the detections you see on the image. Then click “Done”.
+5. You can also change the intensity threshold in the “Intensity distribution” window according to the detections seen on the image. Once the correct threshold has been set, write it down and click “OK - press to proceed to final results”.
+6. Save the FIJI log, as it details the parameters used. For this, in the “Log” window, go to: File > Save As, and save the Log.txt file at your chosen location.
+* Run in batch mode:
+1. Open the Log.txt file you just saved, so you could copy the parameters you found in interactive mode to the macro script.
+2. Open the `RS_macro.ijm` (in FIJI or a text editor) from the GitHub link above.
+3. In the macro file, change the parameters (e.g., `anisotropyCoefficient`, `sigmaDoG`) at the beginning of the macro file (under the line `Define RS parameter`) to the values from the Log.txt file. Unless you’re sure otherwise, only change the values of existing variables in the macro file.
+4. In the macro file, change the `intensityThreshold` variable to the threshold value you wrote down (in step 5 in the previous section).
+5. In the macro file, it’s recommended to keep the `useMultithread` variable as “use_multithreading” for a speedier run. This option is not available when RS-FISH is run in “Interactive” mode. If multithreading is used, `numThreads` should be set according to the number of threads on your machine. `blockSizX`,  `blockSizY`, and `blockSizZ` should be set for chunking each image in the analysis to blocks. Note, different multithreading runs may result in ever so slightly inconsistent results.
+6. In the macro file, change the `path` variable value to the parent directory of your .tif images (all tifs in all sub-directories will be processed).
+7. In the macro file, change the `timeFile` variable value to the path you wish to save the running times file.
+8. Call the script. It can be done from the FIJI GUI, from the terminal, or from a computing cluster. Example Linux command to run the macro script:  
+`<fiji_dir_path>/ImageJ-linux64 --headless --run </path/to/this/script>/RS_macro.ijm &> </path/to/where/you/want/yourlogfile>.log`  
+
 
 The macro described runs the same command as the command that is recorded if you record running the RS plugin in advanced mode.  
-Command Template:
+Command Template:   
 
-`parameterString = "image=" + imName + 
-	" mode=Advanced anisotropy=" + aniso + " use_anisotropy" +
-	" robust_fitting=RANSAC" +
-	" sigma=" + sig + 
-	" threshold=" + thr + 
-	" support=" + suppReg + 
-	" min_inlier_ratio=" + inRat +  
-	" max_error=" + maxErr +
-	" spot_intensity_threshold=" + intesThr +
-	" background=[No background subtraction]" +
-	" results_file=[" + results_csv_path + "]"`
-	
-`run("Radial Symmetry", parameterString);`  
+`parameterString = "image=" + imName + " mode=Advanced anisotropy=" + anisotropyCoefficient + " robust_fitting=[" + ransacStr + "] use_anisotropy" +  " image_min=" + imMin + " image_max=" + imMax + " sigma=" + sigmaDoG + " threshold=" + thresholdDoG + " support=" + supportRadius + " min_inlier_ratio=" + inlierRatio + " max_error=" + maxError + " spot_intensity_threshold=" + intensityThreshold +  " background=[" + bsMethodStr + "] background_subtraction_max_error=" + bsMaxError + " background_subtraction_min_inlier_ratio=" + bsInlierRatio + " results_file=[" + results_csv_path + "]" +  " " + useMultithreadStr + " num_threads=" + numThreads + " block_size_x=" + blockSizX + " block_size_y=" + blockSizY + " block_size_z=" + blockSizZ;`    
+
+`run("RS-FISH", parameterString);`   
 	
 Example command:  
-`run("Radial Symmetry", "image=myimg.tif mode=Advanced anisotropy=0.75 use_anisotropy robust_fitting=RANSAC sigma=1.5 threshold=0.008 support=3 min_inlier_ratio=0.3 max_error=0.5 spot_intensity_threshold=0 background=[No background subtraction]" results_file=["path/to/result/file.txt"]);`  
+`run("RS-FISH", "image=im.tif mode=Advanced anisotropy=0.6500 robust_fitting=[RANSAC] use_anisotropy  image_min=0 image_max=65535 sigma=1.203 threshold=0.0025 support=3 min_inlier_ratio=0.30 max_error=1.12237 spot_intensity_threshold=0  background=[No background subtraction] background_subtraction_max_error=0.05 background_subtraction_min_inlier_ratio=0.10 results_file=[/home/bob/Desktop/im_spots.csv] [use_multithreading] num_threads=40 block_size_x=128 block_size_y=128 block_size_z=16");`  
 
-Warning - running the tool/macro with a combination of parameters where `sigma<1.5`, `threshold<0.002`, and `Support region>=3` will cause both longer running times and requires bigger memory, especially on bigger images.
-
-### Parameter Grid Search
-
-In order to benchmark RS-FISH, we compared its accuracy of spot detection in the simulated data with the FISHquant’s python version, BigFish. For each of the tools, we ran a grid search of the parameter space within a range of sensible values. As BigFish calculates a default value for each parameter automatically, the parameter space was derived from the default value. We also ran a grid search for BigFish’s decompose_dense function parameters, but as the returned detections are not sub-pixel localized, we excluded those from the benchmarking results. The parameter value combinations that were run (inclusive):
-
-RS-FISH grid search parameters:
-* dogSigma = 1-2.5, step size += 0.25
-* threshold = 0.001-0.13, step size x= 1.5
-* supportRadius: 2-4, step size +=1
-* inlierRatio: 0.0-0.3, step size += 0.1
-* maxError: 0.1-2.6 step size += 0.5
-* intensityThreshold: [0,100,150,200]
-
-BigFish grid search parameters:
-* sigmaZ = default + [-0.5,-0.25,0,0.25,0.5]
-* sigmaYX = default + [-0.5,-0.25,0,0.25,0.5]
-* threshold = value of index in threshold array, with indices relative to location of the default. Relative to default indices: [-6,-3,-2,-1,0,1,2,3,6]
-
-To run the grid search as is, you need a SunGrid computing cluster (calls qsub jobs), RadialSymmetry plugin installation in Fiji, and a BigFish installation (details below). First open all the files in the grid search subdirectories and change the paths to your desired paths. Then call the first python script (0_xxx.py), as this script calls the shell script that calls multiple (distributed) jobs.  
-
-The radial symmetry grid search as is calls 234 jobs, one for each combination of sigma, threshold, and supportRadius. The defined relatively big memory used is only needed for edge cases. Notice that each job copies the Fiji folder (you need to delete it after), as without it there are JAVA memory errors.    
-The BigFish grid search calls 63 jobs, one for each image in the `selected simulations` subdirectories.
+Notably, running the tool/macro with a combination of parameters where `sigma<1.5`, `threshold<0.002`, and `Support region>=3` will cause both longer running times and requires bigger memory, especially on bigger images.  
 
 
 ### Installation details
 
-To install the Radial Symmetry plugin in headless mode (for cluster use):  
-In the FIJI directory run:  
-`./ImageJ-linux64 --update add-update-site RadialSymmetry http://sites.imagej.net/RadialSymmetry/`  
+To install the RS-FISH plugin in headless mode (for cluster use):   
+In the FIJI directory run:   
+`./ImageJ-linux64 --update add-update-site RadialSymmetry http://sites.imagej.net/RadialSymmetry/`   
 
-BigFish installation instructions can be found in their github repo:  
-`https://github.com/fish-quant/big-fish`
 
-If using BigFish version < `0.5.0` you must use the current dev version.  
 
 
 

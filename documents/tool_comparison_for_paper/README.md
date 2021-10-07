@@ -20,6 +20,8 @@ To run the grid search as is, you need a SunGrid computing cluster (calls qsub j
 The radial symmetry grid search as is calls 234 jobs, one for each combination of sigma, threshold, and supportRadius. The defined relatively big memory used is only needed for edge cases. Notice that each job copies the Fiji folder (you need to delete it after), as without it there are JAVA memory errors.    
 The BigFish grid search calls 63 jobs, one for each image in the `selected simulations` subdirectories.
 
+Link to download embryo images:  
+bimsbstatic.mdc-berlin.de/akalin/preibisch/RSFISH_embryos.zip  
 
 ### Compared software installation info:
 

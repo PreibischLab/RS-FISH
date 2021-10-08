@@ -230,7 +230,7 @@ The **Show Detections (BigDataViewer)** plugin (```Plugins > RS-FISH > Tools > S
 ### 6.	Batch processing using RS-FISH<a name="batch">
 </a> 
 
-For batch processing instructions and running on computing cluster please see the README in the [example_scripts](https://github.com/PreibischLab/RadialSymmetryLocalization/tree/master/example_scripts) folder.
+For batch processing instructions and running on computing cluster please see the README in the [example_scripts](https://github.com/PreibischLab/RS-FISH/tree/master/documents/example_scripts) folder.
 
 
 ### 7.	Running RS-FISH on large volumes<a name="spark">

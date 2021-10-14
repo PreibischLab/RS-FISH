@@ -62,7 +62,7 @@ echo ' \' >> rs-fish-anisotropy
 echo '  cmd.Anisotropy "$@"' >> rs-fish-anisotropy
 
 echo ""
-echo "Installing 'csv-overlay' command into" $INSTALL_DIR
+echo "Installing 'csv-overlay-imagej' command into" $INSTALL_DIR
 echo ""
 
 echo '#!/bin/bash' > csv-overlay-imagej
@@ -77,7 +77,7 @@ echo ' \' >> csv-overlay-imagej
 echo '  cmd.OverlayCSV "$@"' >> csv-overlay-imagej
 
 echo ""
-echo "Installing 'bdv-overlay' command into" $INSTALL_DIR
+echo "Installing 'csv-overlay-bdv' command into" $INSTALL_DIR
 echo ""
 
 echo '#!/bin/bash' > csv-overlay-bdv
@@ -91,11 +91,26 @@ echo -n $(cat cp.txt) >> csv-overlay-bdv
 echo ' \' >> csv-overlay-bdv
 echo '  cmd.VisualizePointsBDV "$@"' >> csv-overlay-bdv
 
+echo ""
+echo "Installing 'embryo-correction' command into" $INSTALL_DIR
+echo ""
+
+echo '#!/bin/bash' > embryo-correction
+echo '' >> embryo-correction
+echo "JAR=\$HOME/.m2/repository/net/preibisch/Radial_SymmetryLocalization/${VERSION}/Radial_SymmetryLocalization-${VERSION}.jar" >> embryo-correction
+echo 'java \' >> embryo-correction
+echo "  -Xmx${MEM}g \\" >> embryo-correction
+echo '  -XX:+UseConcMarkSweepGC \' >>embryo-correction
+echo -n '  -cp $JAR:' >> embryo-correction
+echo -n $(cat cp.txt) >> embryo-correction
+echo ' \' >> embryo-correction
+echo '  corrections.ZCorrection "$@"' >> embryo-correction
 
 chmod a+x rs-fish
 chmod a+x rs-fish-anisotropy
 chmod a+x csv-overlay-imagej
 chmod a+x csv-overlay-bdv
+chmod a+x embryo-correction
 
 if [ $(pwd) == "$INSTALL_DIR" ]; then
     echo "Installation directory equals current directory, we are done."

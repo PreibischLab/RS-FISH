@@ -98,7 +98,8 @@ public class RadialSymParams implements Serializable {
 	// advanced output
 	public String resultsFilePath = defaultResultsFilePath;
 
-	public void printParams() {
+	public void printParams() { printParams(true); }
+	public void printParams( final boolean printIntensityThreshold ) {
 		HelperFunctions.log("SigmaDoG               : " + sigma);
 		HelperFunctions.log("ThresholdDoG           : " + threshold);
 		HelperFunctions.log("anisotropyCoefficient  : " + anisotropyCoefficient);
@@ -108,7 +109,8 @@ public class RadialSymParams implements Serializable {
 		HelperFunctions.log("InlierRatio            : " + inlierRatio);
 		HelperFunctions.log("supportRadius          : " + supportRadius);
 		HelperFunctions.log("GaussFit               : " + gaussFit);
-		HelperFunctions.log("intensityThreshold     : " + intensityThreshold);
+		if ( printIntensityThreshold )
+			HelperFunctions.log("intensityThreshold     : " + intensityThreshold);
 		HelperFunctions.log("min intensity          : " + min);
 		HelperFunctions.log("max intensity          : " + max);
 		HelperFunctions.log("autoMinMax             : " + autoMinMax);

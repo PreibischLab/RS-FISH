@@ -1,0 +1,1 @@
+As FISHquant was run with the GUI (as it can't be scripted), the used parameter files/found spots for the simulated data can be found in the subdirs here.

@@ -1,0 +1,52 @@
+FISH-QUANT	v3a
+ANALYSIS SETTINGS 24-Sep-2021 
+
+# EXPERIMENTAL PARAMETERS
+lambda_EM=583
+lambda_Ex=547
+NA=1.4
+RI=1.33
+Microscope=widefield
+Pixel_XY=160
+Pixel_Z=300
+PSF_THEO_XY=98.46
+PSF_THEO_Z=398.125
+status_3D=1
+use_tiffread=0
+
+# FILTERING
+Filter_method=3D_LoG
+LoG_H=5
+LoG_sigma=1
+
+# PRE-DETECTION
+Detect_Mode=nonMaxSupr
+Detect_Thresh_int=2
+Detect_Score=Standard deviation
+Detect_Thresh_score=1
+Detect_Region_XY=2
+Detect_Region_Z=3
+Detect_FLAG_reg_pos_sep=0
+Detect_Region_Z_sep=3
+Detect_Region_XY_sep=2
+Detect_FLAG_reg_smaller=0
+flag_detect_region=0
+
+# Fitting 
+N_spots_fit_max=-1
+
+# RESTRICTION OF FITTING PARAMETERS
+sigma_xy_min=0
+sigma_xy_max=492
+sigma_z_min=0
+sigma_z_max=1991
+
+# THRESHOLDING OF DETECTED SPOTS
+Spots_min_dist=160
+
+# AVERAGING
+AVG_Region_XY=9
+AVG_Region_Z=9
+AVG_OS_XY=1
+AVG_OS_Z=1
+AVG_bgd_sub=0

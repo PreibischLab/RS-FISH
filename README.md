@@ -4,9 +4,9 @@
 
 </div>
 
-_**RS-FISH: Precise, interactive and scalable smFISH spot detection using Radial Symmetry**_
+_**RS-FISH: Precise, interactive, fast, and scalable smFISH spot detection**_
 
-Ella Bahry\*, Laura Breimann\*, Leo Epstein\*, Klim Kolyvanov, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch  
+Ella Bahry\*, Laura Breimann\*, Marwan Zouhinkhi\*, Leo Epstein, Klim Kolyvanov, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch  
 *[bioRxiv](https://www.biorxiv.org/content/10.1101/2021.03.09.434205v1)* 2021, doi: https://doi.org/10.1101/2021.03.09.434205  
 
 \* equal contribution  
@@ -30,19 +30,17 @@ Ella Bahry\*, Laura Breimann\*, Leo Epstein\*, Klim Kolyvanov, Kyle I S Harringt
  
 ### 1.	Abstract & Availability<a name="abstract">
 </a> 
-Abstract:
-Studying transcription using single-molecule RNA-FISH (smFISH) is a powerful method to gain insights into gene regulation on a single cell basis, relying on accurate identification of sub-resolution fluorescent spots in microscopy images. Here we present Radial Symmetry-FISH (RS-FISH), which can robustly and quickly detect even close single-molecule spots in two and three dimensions with high precision, allows interactive parameter tuning, and can easily be applied to large sets of images.   
 
-Availability and implementation:
-RS-FISH is implemented as open-source in Java/ImgLib2 and provided as a macro-scriptable Fiji plugin. Code source, tutorial, documentation, and example images are available at:  https://github.com/PreibischLab/RadialSymmetryLocalization   
-
-Implementation of Radial Symmetry Localization for Java using ImgLib2 (http://imglib2.net)  
-
-After the Nature Methods paper "Rapid, accurate particle tracking by calculation of radial symmetry centers" by Raghuveer Parthasarathy (http://www.nature.com/nmeth/journal/v9/n7/abs/nmeth.2071.html)  
-
-Including derivation for 3D + integration with RANSAC  
-
+Fluorescent in-situ hybridization (FISH)-based methods are powerful tools to study molecular processes with subcellular resolution, relying on accurate identification and localization of diffraction-limited spots in microscopy images. We developed the Radial Symmetry-FISH (RS-FISH) software that accurately, robustly, and quickly detects single-molecule spots in two and three dimensions, making it applicable to several key assays, including single-molecule FISH (smFISH), spatial transcriptomics, and spatial genomics. RS-FISH allows interactive parameter tuning and scales to large sets of images and tera-byte sized image volumes such as entire brain scans using straight-forward distributed processing on workstations, clusters, and in the cloud.
+  
+ <br />
 <br />
+Availability and implementation:
+  
+RS-FISH is implemented as open-source in Java/ImgLib2 and provided as a macro-scriptable Fiji plugin and stand-alone command-line application capable of cluster and cloud execution.   
+
+Code source, tutorial, documentation, and example images are available at:  https://github.com/PreibischLab/RS-FISH and https://github.com/PreibischLab/RS-FISH-Spark 
+
 <br />
 
  ### 2.	Download & Installation <a name="download">

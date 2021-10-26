@@ -378,7 +378,7 @@ public class Radial_Symmetry implements PlugIn
 			final ImagePlus imp,
 			final int[] impDim )
 	{
-		params.printParams();
+		params.printParams( false );
 
 		if ( params.autoMinMax )
 		{
@@ -430,7 +430,6 @@ public class Radial_Symmetry implements PlugIn
 		}
 		else if ( mode == 1 ) { // advanced
 			// write the result to the csv file
-			HelperFunctions.log( "Intensity threshold = " + params.intensityThreshold );
 			if ( HelperFunctions.headless && params.resultsFilePath.length() > 0 )
 				ShowResult.ransacResultCsv(allSpots, timePoint, channelPoint, params.intensityThreshold, params.resultsFilePath );
 
@@ -441,6 +440,8 @@ public class Radial_Symmetry implements PlugIn
 		{
 			throw new RuntimeException("Wrong parameters' mode");
 		}
+
+		HelperFunctions.log("intensityThreshold     : " + params.intensityThreshold);
 
 		if ( !HelperFunctions.headless )
 		{

@@ -1,23 +1,13 @@
 package corrections;
 
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
-
+import cmd.VisualizePointsBDV;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
-
-import cmd.VisualizePointsBDV;
 import fit.PointFunctionMatch;
-import fit.polynomial.NewtonRaphson;
 import fit.polynomial.QuadraticFunction;
 import mpicbg.models.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
-import net.imglib2.RealRandomAccessible;
 import net.imglib2.interpolation.randomaccess.NearestNeighborInterpolatorFactory;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Pair;
@@ -27,20 +17,25 @@ import net.imglib2.view.Views;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import umontreal.ssj.probdist.GammaDist;
-import umontreal.ssj.probdist.LognormalDist;
-import umontreal.ssj.probdist.NormalDist;
+
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 public class ZCorrection implements Callable<Void>
 {
 	// input file
 	@Option(names = {"-i"}, required = true, description = "input CSV, e.g. -i input.csv")
-	private List< String > csvIn = null;
+	protected List< String > csvIn = null;
 
 	@Option(names = {"-o"}, required = true, description = "output CSV, e.g. -o corrected.csv")
-	private List< String > csvOut = null;
+	protected List< String > csvOut = null;
 
 	@Option(names = {"-m"}, required = false, description = "mask image (background = 0, foreground > 0), e.g. -m mask.tif")
-	private List< String > mask = null;
+	protected List< String > mask = null;
 
 	public static Pair< QuadraticFunction, ArrayList<PointFunctionMatch> > quadraticFit(
 			final List<Point> points,

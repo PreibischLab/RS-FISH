@@ -262,10 +262,18 @@ public class ZCorrection implements Callable<Void>
 			System.out.println( "gauss max gradient at: " + distGauss.getMean() );
 			*/
 
+			// https://en.wikipedia.org/wiki/Gamma_distribution
 			final GammaDist dist = GammaDist.getInstanceFromMLE(data, data.length);
 			final double maxGradient = maxGradient( dist, (minI + maxI) / 2 );
 			System.out.println( "gamma mode@I=" + maxGradient );
-	
+			System.out.println( "gamma stdev=" + dist.getStandardDeviation() );
+			System.out.println( "gamma variance=" + dist.getVariance() );
+			System.out.println( "gamma alpha=" + dist.getAlpha() );
+			System.out.println( "gamma lambda=" + dist.getLambda() );
+			System.out.println( "gamma mean=" + dist.getMean() );
+			System.out.println( "gamma Xinf=" + dist.getXinf() );
+			System.out.println( "gamma Xsup=" + dist.getXsup() );
+
 			for ( final InputSpot spot : spots )
 			{
 				//System.out.println( spot.z +"," + spot.intensity + "," + spot.adjustedIntensity + "," + spot.adjustedIntensity / maxGradient);

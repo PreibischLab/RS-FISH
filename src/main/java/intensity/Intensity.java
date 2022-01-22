@@ -84,8 +84,14 @@ public class Intensity {
 		}
 	}
 
-	public static void calulateIntesitiesGF(RandomAccessible<FloatType> xyz, final int numDimensions,
-			final double anisotropy, final double sigma, final ArrayList<Spot> filteredSpots, final int spotRadius ) {
+	public static void calulateIntesitiesGF(
+			final RandomAccessible<FloatType> xyz,
+			final int numDimensions,
+			final double anisotropy,
+			final double sigma,
+			final ArrayList<Spot> filteredSpots,
+			final int spotRadius )
+	{
 		double[] typicalSigmas = new double[numDimensions];
 		for (int d = 0; d < numDimensions; d++)
 			typicalSigmas[d] = sigma;
@@ -107,7 +113,7 @@ public class Intensity {
 		final HashMap<WrappedSpot, Spot> lookup = new HashMap<>();
 
 		// compute min & max for background subtraction
-		for ( int i = 0; i < 10 /*filteredSpots.size()*/; ++i )
+		for ( int i = 0; i < filteredSpots.size(); ++i )
 		{
 			final Spot spot = filteredSpots.get( i );
 			final WrappedSpot wSpot = new WrappedSpot( spot );
@@ -158,21 +164,23 @@ public class Intensity {
 
 			//System.out.println( spot.getSpot().getIntensity() + " >>> " + (fits.get(spot)[numDimensions] + rra.get().get()) );
 			spot.getSpot().setIntensity(fits.get(spot)[numDimensions] + rra.get().get() );
+			//if ( location )
+			//	spot.getSpot().localize(position);
 			//System.out.println( Util.printCoordinates( loc ) );
 		}
 	}
 
 	public static void calculateIntensitiesLinear(
-			RandomAccessible<FloatType> xyz,
-			ArrayList<Spot> filteredSpots) {
+			final RandomAccessible<FloatType> xyz,
+			final ArrayList<Spot> filteredSpots) {
 		// iterate over all points and perform the linear interpolation for each
 		// of the spots
 		// FIXME: the factory should depend on the imp > floatType, ByteType,
 		// etc.
-		NLinearInterpolatorFactory<FloatType> factory = new NLinearInterpolatorFactory<>();
-		RealRandomAccessible<FloatType> interpolant = Views.interpolate(xyz, factory);
-		RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
-		for (Spot fSpot : filteredSpots) {
+		final NLinearInterpolatorFactory<FloatType> factory = new NLinearInterpolatorFactory<>();
+		final RealRandomAccessible<FloatType> interpolant = Views.interpolate(xyz, factory);
+		final RealRandomAccess<FloatType> rra = interpolant.realRandomAccess();
+		for (final Spot fSpot : filteredSpots) {
 			rra.setPosition(fSpot);
 			fSpot.setIntensity(rra.get().get());
 		}

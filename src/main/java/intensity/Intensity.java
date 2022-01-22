@@ -2,23 +2,34 @@ package intensity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 import fitting.Spot;
+import gui.interactive.HelperFunctions;
 import milkyklim.algorithm.localization.EllipticGaussianOrtho;
 import milkyklim.algorithm.localization.GenericPeakFitter;
 import milkyklim.algorithm.localization.LevenbergMarquardtSolver;
 import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
 import milkyklim.algorithm.localization.SparseObservationGatherer;
+import net.imglib2.FinalDimensions;
+import net.imglib2.FinalInterval;
+import net.imglib2.Interval;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
+import net.imglib2.algorithm.gauss3.Gauss3;
+import net.imglib2.converter.Converters;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Intervals;
+import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
 public class Intensity {
@@ -49,12 +60,32 @@ public class Intensity {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + Arrays.hashCode(loc);
+			result = prime * result + ((spot == null) ? 0 : spot.hashCode());
 			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			WrappedSpot other = (WrappedSpot) obj;
+			if (!Arrays.equals(loc, other.loc))
+				return false;
+			if (spot == null) {
+				if (other.spot != null)
+					return false;
+			} else if (!spot.equals(other.spot))
+				return false;
+			return true;
 		}
 	}
 
-	public static void calulateIntesitiesGF(RandomAccessible<FloatType> xyz, int numDimensions,
-			double anisotropy, double sigma, ArrayList<Spot> filteredSpots) {
+	public static void calulateIntesitiesGF(RandomAccessible<FloatType> xyz, final int numDimensions,
+			final double anisotropy, final double sigma, final ArrayList<Spot> filteredSpots, final int spotRadius ) {
 		double[] typicalSigmas = new double[numDimensions];
 		for (int d = 0; d < numDimensions; d++)
 			typicalSigmas[d] = sigma;
@@ -62,13 +93,50 @@ public class Intensity {
 		if (numDimensions == 3)
 			typicalSigmas[numDimensions - 1] *= anisotropy;
 
-		SparseObservationGatherer<FloatType> sparseObservationGatherer = new SparseObservationGatherer<>(xyz);
-		// use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy &
-		// sigma_z)
-		final ArrayList< WrappedSpot > wrapped = new ArrayList<>();
-		filteredSpots.forEach( spot -> wrapped.add( new WrappedSpot( spot ) ) );
+		final long[] min = new long[ numDimensions ];
+		final long[] max = new long[ numDimensions ];
 
-		GenericPeakFitter< FloatType, WrappedSpot > pf =
+		for ( int d = 0; d < numDimensions; ++d )
+		{
+			min[ d ] = Long.MAX_VALUE;
+			max[ d ] = Long.MIN_VALUE;
+		}
+
+		// use a non-symmetric gauss (sigma_x, sigma_y, sigma_z or sigma_xy & sigma_z)
+		final ArrayList< WrappedSpot > wrapped = new ArrayList<>();
+		final HashMap<WrappedSpot, Spot> lookup = new HashMap<>();
+
+		// compute min & max for background subtraction
+		for ( int i = 0; i < 10 /*filteredSpots.size()*/; ++i )
+		{
+			final Spot spot = filteredSpots.get( i );
+			final WrappedSpot wSpot = new WrappedSpot( spot );
+			wrapped.add( wSpot );
+			lookup.put( wSpot, spot );
+
+			for ( int d = 0; d < numDimensions; ++d )
+			{
+				min[d] = Math.min( min[d], wSpot.loc[ d ] );
+				max[d] = Math.max( max[d], wSpot.loc[ d ] );
+			}
+		}
+
+		final Interval interval = Intervals.expand( new FinalInterval(min, max), spotRadius + 1 );
+
+		HelperFunctions.log( "Removing background (gauss fit required empty bg)..." );
+		RandomAccessibleInterval< FloatType > tmp = Views.translate( ArrayImgs.floats( new FinalDimensions( interval ).dimensionsAsLongArray() ), interval.minAsLongArray() );
+		Gauss3.gauss( 10, xyz, tmp );
+
+		final RandomAccessible< FloatType > bg =
+				Converters.convert( xyz, Views.extendZero( tmp ), (i1,i2,o) -> { o.set( Math.max( 0, i1.get() - i2.get() ) ); }, new FloatType() );
+
+		//ImageJFunctions.show( Views.interval( xyz, interval)).setTitle("xyz");;
+		//ImageJFunctions.show( tmp).setTitle("tmp");;
+		//ImageJFunctions.show( Views.interval( tmp, interval)).setTitle("tmp2");;
+		//ImageJFunctions.show( Views.interval( bg, interval)).setTitle("bg");;
+		final SparseObservationGatherer<FloatType> sparseObservationGatherer = new SparseObservationGatherer<>(bg);
+
+		final GenericPeakFitter< FloatType, WrappedSpot > pf =
 				new GenericPeakFitter< FloatType, WrappedSpot >(
 						sparseObservationGatherer,
 						wrapped,
@@ -79,10 +147,20 @@ public class Intensity {
 		pf.process();
 
 		final Map<WrappedSpot, double[]> fits = pf.getResult();
+		final RealRandomAccess<FloatType> rra = Views.interpolate( tmp, new NLinearInterpolatorFactory<>() ).realRandomAccess();
 
-		// FIXME: is the order consistent
 		for (final WrappedSpot spot : wrapped)
-			spot.getSpot().setIntensity(fits.get(spot)[numDimensions]);
+		{
+			final double[] loc = fits.get( spot );
+
+			rra.setPosition( loc[ 0 ], 0 );
+			rra.setPosition( loc[ 1 ], 1 );
+			rra.setPosition( loc[ 2 ], 2 );
+
+			//System.out.println( spot.getSpot().getIntensity() + " >>> " + (fits.get(spot)[numDimensions] + rra.get().get()) );
+			spot.getSpot().setIntensity(fits.get(spot)[numDimensions] + rra.get().get() );
+			//System.out.println( Util.printCoordinates( loc ) );
+		}
 	}
 
 	public static void calculateIntensitiesLinear(

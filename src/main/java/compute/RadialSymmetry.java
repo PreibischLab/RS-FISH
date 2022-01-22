@@ -370,14 +370,14 @@ public class RadialSymmetry {
 				timePoint.add(new Long(filteredSpots.size()));
 
 				if (rsm.getGaussFit()) {
-					// FIXME: fix the problem with the computations of this one
-					// WARNING: This does a full gaussian fit, let's just not do this!
+					// WARNING: This does a full gaussian fit
 					Intensity.calulateIntesitiesGF(
 							timeFrame,
 							timeFrame.numDimensions(),
 							rsm.getAnisotropyCoefficient(),
 							rsm.getSigmaDoG(),
-							filteredSpots);
+							filteredSpots,
+							rsm.supportRadius );
 				} else {// iterate over all points and perform the linear
 						// interpolation for each of the spots
 					Intensity.calculateIntensitiesLinear(timeFrame, filteredSpots);

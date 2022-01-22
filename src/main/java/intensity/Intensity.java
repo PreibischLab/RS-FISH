@@ -153,9 +153,8 @@ public class Intensity {
 		{
 			final double[] loc = fits.get( spot );
 
-			rra.setPosition( loc[ 0 ], 0 );
-			rra.setPosition( loc[ 1 ], 1 );
-			rra.setPosition( loc[ 2 ], 2 );
+			for ( int d = 0; d < numDimensions; ++d )
+				rra.setPosition( loc[ d ], d );
 
 			//System.out.println( spot.getSpot().getIntensity() + " >>> " + (fits.get(spot)[numDimensions] + rra.get().get()) );
 			spot.getSpot().setIntensity(fits.get(spot)[numDimensions] + rra.get().get() );

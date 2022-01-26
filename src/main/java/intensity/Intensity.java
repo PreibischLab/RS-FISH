@@ -90,7 +90,8 @@ public class Intensity {
 			final double anisotropy,
 			final double sigma,
 			final ArrayList<Spot> filteredSpots,
-			final int spotRadius )
+			final int spotRadius,
+			final int ransacSelection )
 	{
 		double[] typicalSigmas = new double[numDimensions];
 		for (int d = 0; d < numDimensions; d++)
@@ -140,7 +141,7 @@ public class Intensity {
 		//ImageJFunctions.show( tmp).setTitle("tmp");;
 		//ImageJFunctions.show( Views.interval( tmp, interval)).setTitle("tmp2");;
 		//ImageJFunctions.show( Views.interval( bg, interval)).setTitle("bg");;
-		final SparseObservationGatherer<FloatType> sparseObservationGatherer = new SparseObservationGatherer<>(bg);
+		final SparseObservationGatherer<FloatType> sparseObservationGatherer = new SparseObservationGatherer<>(bg, ransacSelection);
 
 		final GenericPeakFitter< FloatType, WrappedSpot > pf =
 				new GenericPeakFitter< FloatType, WrappedSpot >(
@@ -150,6 +151,7 @@ public class Intensity {
 						new EllipticGaussianOrtho(),
 						new MLEllipticGaussianEstimator(typicalSigmas) );
 
+		pf.setNumThreads( 1 );
 		pf.process();
 
 		final Map<WrappedSpot, double[]> fits = pf.getResult();

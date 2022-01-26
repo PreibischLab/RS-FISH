@@ -373,7 +373,8 @@ public class RadialSymmetry {
 							rsm.getAnisotropyCoefficient(),
 							rsm.getSigmaDoG(),
 							filteredSpots,
-							rsm.supportRadius );
+							rsm.supportRadius,
+							rsm.ransacSelection );
 				}
 
 				if ( !rsm.getGaussFitIntensity() )

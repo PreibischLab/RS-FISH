@@ -268,6 +268,11 @@ public class ZCorrection implements Callable<Void>
 			System.out.println( "gamma mean=" + dist.getMean() );
 			System.out.println( "gamma Xinf=" + dist.getXinf() );
 			System.out.println( "gamma Xsup=" + dist.getXsup() );
+			
+			for (double x =minI; x<maxI; x+=100)
+			{
+				System.out.println( x + "\t" + dist.density(x));
+			}
 
 			for ( final InputSpot spot : spots )
 			{

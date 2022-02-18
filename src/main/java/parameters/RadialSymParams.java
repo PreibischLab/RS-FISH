@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 import compute.RadialSymmetry.Ransac;
 import gui.interactive.HelperFunctions;
-import ij.IJ;
 
 public class RadialSymParams implements Serializable {
 
@@ -38,7 +37,8 @@ public class RadialSymParams implements Serializable {
 	public static double defaultAnisotropy = 1.0f;
 	public static boolean defaultUseAnisotropyForDoG = true;
 
-	public static boolean defaultGaussFit = false;
+	public static boolean defaultGaussFitIntensity = false;
+	//public static boolean defaultGaussFitLocation = false;
 	public static int defaultMode = 0;
 	public static int defaultImg = 0;
 
@@ -86,7 +86,8 @@ public class RadialSymParams implements Serializable {
 	public boolean useAnisotropyForDoG = defaultUseAnisotropyForDoG;
 
 	// use gauss fit
-	boolean gaussFit = defaultGaussFit;
+	public boolean gaussFitIntensity = defaultGaussFitIntensity;
+	//public boolean gaussFitLocation = defaultGaussFitLocation;
 
 	// multiconsensus options
 	public int minNumInliers = defaultMinNumInliers;
@@ -108,7 +109,8 @@ public class RadialSymParams implements Serializable {
 		HelperFunctions.log("MaxError               : " + maxError);
 		HelperFunctions.log("InlierRatio            : " + inlierRatio);
 		HelperFunctions.log("supportRadius          : " + supportRadius);
-		HelperFunctions.log("GaussFit               : " + gaussFit);
+		HelperFunctions.log("GaussFitIntensity      : " + gaussFitIntensity);
+		//HelperFunctions.log("GaussFitLocation       : " + gaussFitLocation);
 		if ( printIntensityThreshold )
 			HelperFunctions.log("intensityThreshold     : " + intensityThreshold);
 		HelperFunctions.log("min intensity          : " + min);
@@ -164,9 +166,13 @@ public class RadialSymParams implements Serializable {
 		return anisotropyCoefficient;
 	}
 	
-	public boolean getGaussFit() {
-		return gaussFit;
+	public boolean getGaussFitIntensity() {
+		return gaussFitIntensity;
 	}
+
+//	public boolean getGaussFitLocation() {
+//		return gaussFitLocation;
+//	}
 
 	// background subtraction
 	// "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC
@@ -229,10 +235,6 @@ public class RadialSymParams implements Serializable {
 
 	public void setAnisotropyCoefficient(double anisotropyCoefficient) {
 		this.anisotropyCoefficient = anisotropyCoefficient;
-	}
-	
-	public void setGaussFit(boolean gaussFit) {
-		this.gaussFit = gaussFit;
 	}
 
 	// background subtraction

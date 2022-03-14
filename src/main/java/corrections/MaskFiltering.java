@@ -25,6 +25,13 @@ import java.util.stream.Collectors;
 public class MaskFiltering extends ZCorrection implements Callable<Void>
 {
 
+    public MaskFiltering(List<String> csvIn, List<String> csvOut, List<String> mask) {
+        super(csvIn, csvOut, mask);
+    }
+
+    public MaskFiltering() {
+    }
+
     @Override
     public Void call() throws Exception {
 

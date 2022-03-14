@@ -37,6 +37,19 @@ public class ZCorrection implements Callable<Void>
 	@Option(names = {"-m"}, required = false, description = "mask image (background = 0, foreground > 0), e.g. -m mask.tif")
 	protected List< String > mask = null;
 
+	public ZCorrection(List<String> csvIn, List<String> csvOut, List<String> mask) {
+		this.csvIn = csvIn;
+		this.csvOut = csvOut;
+		this.mask = mask;
+	}
+
+	public ZCorrection() {
+	}
+
+	public ZCorrection(List<String> csvIn) {
+		this.csvIn = csvIn;
+	}
+
 	public static Pair< QuadraticFunction, ArrayList<PointFunctionMatch> > quadraticFit(
 			final List<Point> points,
 			final double epsilon,

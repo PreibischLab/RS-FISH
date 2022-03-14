@@ -46,10 +46,6 @@ public class ZCorrection implements Callable<Void>
 	public ZCorrection() {
 	}
 
-	public ZCorrection(List<String> csvIn) {
-		this.csvIn = csvIn;
-	}
-
 	public static Pair< QuadraticFunction, ArrayList<PointFunctionMatch> > quadraticFit(
 			final List<Point> points,
 			final double epsilon,

@@ -92,7 +92,7 @@ public class MultiWildcardFileListChooser {
         if (new File(fileInput).isDirectory())
             fileInput = String.join(File.separator, fileInput, "*");
 
-        List<File> files = PluginHelper.getFilesFromPattern(fileInput, (long) gdp.getNextNumber() * KB_FACTOR);
+        List<File> files = PluginHelper.getFilesFromPattern(fileInput, numa * KB_FACTOR);
 
         files.forEach(f -> System.out.println("Including file " + f + " in dataset."));
         return true;

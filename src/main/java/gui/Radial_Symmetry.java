@@ -1,7 +1,6 @@
 package gui;
 
 import java.awt.Font;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -84,6 +83,8 @@ public class Radial_Symmetry implements PlugIn
 		gd1.addChoice( "Robust_fitting", RadialSymParams.ransacChoice, RadialSymParams.ransacChoice[ RadialSymParams.defaultRANSACChoice ] );
 		gd1.addCheckbox( "Compute_min/max intensity from image", RadialSymParams.defaultAutoMinMax );
 		gd1.addCheckbox( "Use_anisotropy coefficient for DoG", RadialSymParams.defaultUseAnisotropyForDoG );
+		gd1.addCheckbox( "Refine_spot_intensity with Gaussian fit on inliers", RadialSymParams.defaultGaussFitIntensity );
+		//gd1.addCheckbox( "Refine_spot_location with Gaussian fit on inliers", RadialSymParams.defaultGaussFitLocation );
 
 		gd1.addMessage( "Visualization:", new Font( "Default", Font.BOLD, 13 ) );
 		gd1.addCheckbox( "Add detections to ROI-Manager", RadialSymParams.defaultAddToROIManager );
@@ -104,6 +105,8 @@ public class Radial_Symmetry implements PlugIn
 
 		params.autoMinMax = RadialSymParams.defaultAutoMinMax = gd1.getNextBoolean();
 		params.useAnisotropyForDoG = RadialSymParams.defaultUseAnisotropyForDoG = gd1.getNextBoolean();
+		params.gaussFitIntensity = RadialSymParams.defaultGaussFitIntensity = gd1.getNextBoolean();
+		//params.gaussFitLocation = RadialSymParams.defaultGaussFitLocation = gd2.getNextBoolean();
 
 		params.addToROIManager = RadialSymParams.defaultAddToROIManager = gd1.getNextBoolean();
 		//boolean visInliers = RadialSymParams.defaultVisualizeInliers = gd1.getNextBoolean();
@@ -207,6 +210,7 @@ public class Radial_Symmetry implements PlugIn
 			params.inlierRatio = RadialSymParams.defaultInlierRatio = (float)gd2.getNextNumber();
 			params.maxError = RadialSymParams.defaultMaxError = (float)gd2.getNextNumber();
 			params.intensityThreshold = RadialSymParams.defaultIntensityThreshold = gd2.getNextNumber();
+
 			params.bsMethod = RadialSymParams.defaultBsMethodChoice = gd2.getNextChoiceIndex();
 			params.bsMaxError = RadialSymParams.defaultBsMaxError = (float)gd2.getNextNumber();
 			params.bsInlierRatio = RadialSymParams.defaultBsInlierRatio = (float)gd2.getNextNumber();
@@ -492,7 +496,8 @@ public class Radial_Symmetry implements PlugIn
 
 		new ImageJ();
 		//ImagePlus imp = new ImagePlus("/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.tif" );
-		ImagePlus imp = new ImagePlus( "/Users/spreibi/Downloads/C0-N2_352_cropped_1240.tif" );
+		//ImagePlus imp = new ImagePlus( "/Users/spreibi/Downloads/C0-N2_352_cropped_1240.tif" );
+		ImagePlus imp = new ImagePlus( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/N2_702_cropped_1620 (high SNR)_ch0.tif");
 
 		imp.show();
 		imp.setSlice( imp.getStackSize() / 2 );

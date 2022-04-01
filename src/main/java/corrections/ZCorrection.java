@@ -37,6 +37,15 @@ public class ZCorrection implements Callable<Void>
 	@Option(names = {"-m"}, required = false, description = "mask image (background = 0, foreground > 0), e.g. -m mask.tif")
 	protected List< String > mask = null;
 
+	public ZCorrection(List<String> csvIn, List<String> csvOut, List<String> mask) {
+		this.csvIn = csvIn;
+		this.csvOut = csvOut;
+		this.mask = mask;
+	}
+
+	public ZCorrection() {
+	}
+
 	public static Pair< QuadraticFunction, ArrayList<PointFunctionMatch> > quadraticFit(
 			final List<Point> points,
 			final double epsilon,
@@ -140,7 +149,7 @@ public class ZCorrection implements Callable<Void>
 				s.z = Double.parseDouble( nextLine[ 2 ] );
 				s.t = Integer.parseInt( nextLine[ 3 ] );
 				s.c = Integer.parseInt( nextLine[ 4 ] );
-				s.intensity = Double.parseDouble( nextLine[ 5 ] ) - 32768; // was unsigned short
+				s.intensity = Double.parseDouble( nextLine[ 5 ] ) ; // was unsigned short - 32768
 				spots.add( s );
 			}
 
@@ -268,6 +277,11 @@ public class ZCorrection implements Callable<Void>
 			System.out.println( "gamma mean=" + dist.getMean() );
 			System.out.println( "gamma Xinf=" + dist.getXinf() );
 			System.out.println( "gamma Xsup=" + dist.getXsup() );
+			
+			for (double x =minI; x<maxI; x+=100)
+			{
+				System.out.println( x + "\t" + dist.density(x));
+			}
 
 			for ( final InputSpot spot : spots )
 			{

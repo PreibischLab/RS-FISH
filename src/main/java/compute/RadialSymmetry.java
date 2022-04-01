@@ -1,6 +1,5 @@
 package compute;
 
-import java.awt.Rectangle;
 import java.util.ArrayList;
 
 import background.NormalizedGradient;
@@ -9,18 +8,14 @@ import background.NormalizedGradientMedian;
 import background.NormalizedGradientRANSAC;
 import fitting.Center.CenterMethod;
 import fitting.Spot;
-import fitting.SymmetryCenter3d;
 import gradient.Gradient;
 import gradient.GradientOnDemand;
-import gradient.GradientPreCompute;
 import gui.interactive.HelperFunctions;
-import ij.IJ;
 import intensity.Intensity;
 import net.imglib2.Interval;
 import net.imglib2.KDTree;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessible;
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.neighborsearch.RadiusNeighborSearch;
 import net.imglib2.neighborsearch.RadiusNeighborSearchOnKDTree;
@@ -369,17 +364,23 @@ public class RadialSymmetry {
 				allSpots.addAll(filteredSpots);
 				timePoint.add(new Long(filteredSpots.size()));
 
-				if (rsm.getGaussFit()) {
-					// FIXME: fix the problem with the computations of this one
-					// WARNING: This does a full gaussian fit, let's just not do this!
+				if (rsm.getGaussFitIntensity() /* || rsm.getGaussFitLocation() */ )
+				{
+					// WARNING: This does a full gaussian fit
 					Intensity.calulateIntesitiesGF(
 							timeFrame,
 							timeFrame.numDimensions(),
 							rsm.getAnisotropyCoefficient(),
 							rsm.getSigmaDoG(),
-							filteredSpots);
-				} else {// iterate over all points and perform the linear
-						// interpolation for each of the spots
+							filteredSpots,
+							rsm.supportRadius,
+							rsm.ransacSelection );
+				}
+
+				if ( !rsm.getGaussFitIntensity() )
+				{
+					// iterate over all points and perform the linear
+					// interpolation for each of the spots
 					Intensity.calculateIntensitiesLinear(timeFrame, filteredSpots);
 				}
 

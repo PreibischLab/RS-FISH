@@ -1,5 +1,7 @@
 package milkyklim.algorithm.localization;
 
+import java.util.List;
+
 import fit.PointFunctionMatch;
 import intensity.Intensity.WrappedSpot;
 import net.imglib2.RandomAccessible;
@@ -12,10 +14,11 @@ import net.imglib2.view.Views;
 
 public class SparseObservationGatherer < T extends RealType< T > > implements ObservationGatherer< WrappedSpot > 
 {
-	RandomAccessible <T> img; // initial image
-	RealRandomAccessible<T> interpolant; // interpolated image for non-integer intensities
-	
-	public SparseObservationGatherer(RandomAccessible< T > img)
+	final RandomAccessible <T> img; // initial image
+	final RealRandomAccessible<T> interpolant; // interpolated image for non-integer intensities
+	final int ransacSelection;
+
+	public SparseObservationGatherer( final RandomAccessible< T > img, final int ransacSelection )
 	{
 		// set the lookup image; necessary to get the intensities
 		// TODO: we need a lookup from peak >> which pixels to use (inliers)
@@ -23,23 +26,25 @@ public class SparseObservationGatherer < T extends RealType< T > > implements Ob
 		
 		this.img = img;
 		NLinearInterpolatorFactory<T> factory = new NLinearInterpolatorFactory<>();
-		interpolant = Views.interpolate(img, factory);
+		this.interpolant = Views.interpolate(img, factory);
+		this.ransacSelection = ransacSelection;
 	}
 
 	@Override
 	public Observation gatherObservationData( final WrappedSpot peak )
 	{
-		int n_pixels = peak.getSpot().getInliers().size();
-		int numDimensions = peak.numDimensions();
+		final List< PointFunctionMatch > pms = ransacSelection == 0 ? peak.getSpot().getCandidates() : peak.getSpot().getInliers();
+
+		final int n_pixels = pms.size();
+		final int numDimensions = peak.numDimensions();
 		
-		double [] I = new double[n_pixels];
-		double [][] x = new double[n_pixels][numDimensions];
+		final double [] I = new double[n_pixels];
+		final double [][] x = new double[n_pixels][numDimensions];
 
 		int idx = 0;
-		RealRandomAccess<T> rra = interpolant.realRandomAccess();
-		
-		// FIXME: Is there a better way to prevent this dirty cast ?
-		for (PointFunctionMatch pm : peak.getSpot().getInliers()){
+		final RealRandomAccess<T> rra = interpolant.realRandomAccess();
+
+		for (PointFunctionMatch pm : pms){
 			double [] pos = pm.getP1().getL(); 
 			for (int d = 0; d < numDimensions; d++)
 				x[idx][d] = pos[d];
@@ -47,8 +52,8 @@ public class SparseObservationGatherer < T extends RealType< T > > implements Ob
 			I[idx] = rra.get().getRealDouble();
 			idx++;
 		}
-		
-		Observation obs = new Observation();
+
+		final Observation obs = new Observation();
 		obs.I = I;
 		obs.X = x;
 		return obs;

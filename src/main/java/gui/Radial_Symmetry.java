@@ -110,7 +110,7 @@ public class Radial_Symmetry implements PlugIn
 
 		if (imp.getNChannels() > 1)
 		{
-			HelperFunctions.log( "Multichannel image detected. Please split by channel and select parameters for each channel separately.");
+			HelperFunctions.log( "Multichannel image detected. Please select 'Image > Color > Split Channels' and run RS-FISH on each channel separately (they very likely need different parameters).");
 			return;
 		}
 

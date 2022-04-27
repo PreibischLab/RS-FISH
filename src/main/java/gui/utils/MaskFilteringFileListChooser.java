@@ -1,6 +1,7 @@
 package gui.utils;
 
 import fiji.util.gui.GenericDialogPlus;
+
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
@@ -10,7 +11,7 @@ import java.util.stream.Collectors;
 import javax.swing.*;
 
 
-public class MultiWildcardFileListChooser {
+public class MaskFilteringFileListChooser {
     public static boolean windowsHack = true;
 
 
@@ -21,6 +22,7 @@ public class MultiWildcardFileListChooser {
             + "Wildcard (*) expressions are allowed. <br />"
             + "e.g. '/Users/spim/data/img_TL*_param*.csv' <br /><br />"
             + "</html>";
+
     private List<String> inputFilesFiltered;
     private List<String> maskFilesFiltered;
     private List<String> outputFilesFiltered;
@@ -163,7 +165,7 @@ public class MultiWildcardFileListChooser {
 
 
     public static void main(String[] args) {
-        new MultiWildcardFileListChooser().getFileList();
+        new MaskFilteringFileListChooser().getFileList();
     }
 
 }

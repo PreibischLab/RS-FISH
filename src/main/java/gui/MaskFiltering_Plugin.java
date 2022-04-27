@@ -1,29 +1,70 @@
 package gui;
 
 import corrections.MaskFiltering;
-import gui.utils.MultiWildcardFileListChooser;
+import corrections.ZCorrection;
+import gui.utils.MaskFilteringFileListChooser;
+import gui.utils.MaskFilteringOptionChooserGui;
+import gui.utils.ZCorrectionFileChooser;
 import ij.ImageJ;
 import ij.plugin.PlugIn;
+
 import java.util.List;
 
 public class MaskFiltering_Plugin implements PlugIn {
     @Override
     public void run(String s) {
 
-        MultiWildcardFileListChooser chooser = new MultiWildcardFileListChooser();
+        MaskFilteringOptionChooserGui optionChooserGui = new MaskFilteringOptionChooserGui();
 
-        if (!chooser.getFileList())
+        if (!optionChooserGui.getOptions())
             return;
 
-        List<String> csvIn = chooser.getInputFilesFiltered();
-        List<String> csvOut = chooser.getOutputFilesFiltered();
-        List<String> mask = chooser.getMaskFilesFiltered();
+        boolean zCorrection = optionChooserGui.iszCorrection();
+        boolean maskFiltering = optionChooserGui.isMaskFiltering();
+        boolean intensityCorrection = optionChooserGui.isIntensityCorrection();
 
-        try {
-            new MaskFiltering(csvIn, csvOut, mask).call();
-        } catch (Exception e) {
-            e.printStackTrace();
+        // TODO intensity correction
+        if (maskFiltering) {
+            MaskFilteringFileListChooser chooser = new MaskFilteringFileListChooser();
+
+            if (!chooser.getFileList())
+                return;
+
+            List<String> csvIn = chooser.getInputFilesFiltered();
+            List<String> csvOut = chooser.getOutputFilesFiltered();
+            List<String> mask = chooser.getMaskFilesFiltered();
+
+            try {
+                // ZCorrelation with MaskFiltering
+                if (zCorrection) {
+                    new MaskFiltering(csvIn, csvOut, mask).call();
+                } else {
+                    // just MaskFiltering
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            if (zCorrection) {
+                ZCorrectionFileChooser chooser = new ZCorrectionFileChooser();
+                if (!chooser.getFileList())
+                    return;
+
+                List<String> csvIn = chooser.getInputFiles();
+                List<String> csvOut = chooser.getOutputFiles();
+
+                try {
+                    // just ZCorrelation
+                    if (zCorrection) {
+//                    TODO apply z correction with condition
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
+
+
     }
 
     public static void main(String[] args) {

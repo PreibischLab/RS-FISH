@@ -3,8 +3,16 @@ package corrections;
 import cmd.VisualizePointsBDV;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
+import static corrections.QuadraticFunctionAxisDifference.polyFunc;
+import static corrections.QuadraticFunctionAxisDifference.quadraticFit;
 import fit.PointFunctionMatch;
 import fit.polynomial.QuadraticFunction;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import mpicbg.models.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
@@ -12,18 +20,10 @@ import net.imglib2.interpolation.randomaccess.NearestNeighborInterpolatorFactory
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
-import net.imglib2.util.ValuePair;
 import net.imglib2.view.Views;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import umontreal.ssj.probdist.GammaDist;
-
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 public class ZCorrection implements Callable<Void>
 {
@@ -46,76 +46,7 @@ public class ZCorrection implements Callable<Void>
 	public ZCorrection() {
 	}
 
-	public static Pair< QuadraticFunction, ArrayList<PointFunctionMatch> > quadraticFit(
-			final List<Point> points,
-			final double epsilon,
-			final double minInlierRatio,
-			final int nIterations )
-	{
-		//int nIterations = 1000;
-		//double epsilon = 0.1;
-		//double minInlierRatio = 0.5;
-		QuadraticFunction qf = new QuadraticFunctionAxisDifference();
 
-		if ( points.size() < qf.getMinNumMatches() )
-			throw new RuntimeException( "Not enough points for fitting a quadratic function. Candidates=" + points.size() );
-
-		final ArrayList<PointFunctionMatch> candidates = new ArrayList<>();
-		final ArrayList<PointFunctionMatch> inliers = new ArrayList<>();
-
-		for (final Point p : points)
-			candidates.add(new PointFunctionMatch(p));
-
-		try {
-			System.out.println( "nIterations=" + nIterations + ", epsilon=" + epsilon + ", minInlierRatio=" + minInlierRatio );
-			
-			qf.filterRansac(candidates, inliers, nIterations, epsilon, minInlierRatio, qf.getMinNumMatches() );
-
-			if ( inliers.size() < qf.getMinNumMatches() )
-				throw new RuntimeException( "Couldn't fix quadratic function. Candidates=" + candidates.size() + ", inliers=" +inliers.size() );
-
-			//qf.fit(inliers);
-		}
-		catch (Exception exc) {
-			exc.printStackTrace();
-		}
-
-		double zMin = Double.MAX_VALUE;
-		double zMax = -Double.MAX_VALUE;
-
-		double avgError = 0;
-		double maxError = 0;
-
-		for ( final PointFunctionMatch p : inliers )
-		{
-			p.apply( qf );
-			final double distance = p.getDistance();
-
-			// x is z, y is intensity
-			zMin = Math.min( zMin, p.getP1().getL()[ 0 ] );
-			zMax = Math.max( zMax, p.getP1().getL()[ 0 ] );
-
-			avgError += distance;
-			maxError = Math.max( maxError, distance );
-
-			//System.out.println( p.getP1().getL()[ 0 ] + ", " +  p.getP1().getL()[ 1 ] + ", " + polyFunc(p.getP1().getL()[ 0 ], qf) );
-		}
-
-		System.out.println( "candidates=" + candidates.size() + ", inliers=" + inliers.size() + ", avg err=" + (avgError/inliers.size()) + ", max error=" + maxError + ", zMin=" + zMin + ", zMax=" + zMax + ", " + qf );
-
-		return new ValuePair<>( qf, inliers );
-	}
-
-	// return y for y = a*x*x + b*x + c
-	public static double polyFunc(final double x, final QuadraticFunction f ) {
-		return f.getC() + x*f.getB() + x*x*f.getA();
-	}
-	
-	public static class InputSpot
-	{
-		double x,y,z,intensity,adjustedIntensity;
-		int t,c;
-	}
 
 	@Override
 	public Void call() throws Exception {

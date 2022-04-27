@@ -3,6 +3,8 @@ package corrections;
 import cmd.VisualizePointsBDV;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
+import static corrections.QuadraticFunctionAxisDifference.polyFunc;
+import static corrections.QuadraticFunctionAxisDifference.quadraticFit;
 import fit.PointFunctionMatch;
 import fit.polynomial.QuadraticFunction;
 import mpicbg.models.Point;
@@ -74,6 +76,7 @@ public class MaskFiltering extends ZCorrection implements Callable<Void>
             //
             // optionally filter the spots with the mask
             //
+//            TODO mask filtering
             if ( mask != null && mask.size() > 0 )
             {
                 System.out.println( "Filtering locations using mask image: " + mask.get( i ) );

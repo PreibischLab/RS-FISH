@@ -1,6 +1,6 @@
 package gui;
 
-import corrections.MaskFiltering;
+import corrections.MaskFilter;
 import gui.utils.MultiWildcardFileListChooser;
 import ij.ImageJ;
 import ij.plugin.PlugIn;
@@ -20,7 +20,7 @@ public class MaskFiltering_Plugin implements PlugIn {
         List<String> mask = chooser.getMaskFilesFiltered();
 
         try {
-            new MaskFiltering(csvIn, csvOut, mask).call();
+            MaskFilter.run(csvIn, csvOut, mask);
         } catch (Exception e) {
             e.printStackTrace();
         }

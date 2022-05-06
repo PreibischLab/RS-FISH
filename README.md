@@ -6,7 +6,7 @@
 
 _**RS-FISH: Precise, interactive, fast, and scalable FISH spot detection**_
 
-Ella Bahry\*, Laura Breimann\*, Marwan Zouhinkhi\*, Leo Epstein, Klim Kolyvanov, Xi Long, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch  
+Ella Bahry\*, Laura Breimann\*, Marwan Zouinkhi\*, Leo Epstein, Klim Kolyvanov, Xi Long, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch  
 *[bioRxiv](https://www.biorxiv.org/content/10.1101/2021.03.09.434205v1)* 2021, doi: https://doi.org/10.1101/2021.03.09.434205  
 
 \* equal contribution  

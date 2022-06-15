@@ -8,6 +8,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.opencsv.exceptions.CsvValidationException;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.interpolation.randomaccess.NearestNeighborInterpolatorFactory;
@@ -71,7 +73,7 @@ public class MaskFilter {
         return true;
     }
 
-    private static List<InputSpot> readSpot(String csv) throws IOException {
+    private static List<InputSpot> readSpot(String csv) throws IOException, CsvValidationException {
 
         System.out.println("Reading " + csv);
 
@@ -102,7 +104,7 @@ public class MaskFilter {
     private static void writeSpots(List<InputSpot> spots, String csv) throws IOException {
         System.out.println("Writing " + csv);
 
-        final CSVWriter writer = new CSVWriter(new FileWriter(csv), ',', CSVWriter.NO_QUOTE_CHARACTER);
+        final CSVWriter writer = new CSVWriter(new FileWriter(csv));
         String[] nextLine = new String[6];
         nextLine[0] = "x";
         nextLine[1] = "y";

@@ -223,7 +223,7 @@ public class ZCorrection implements Callable<Void>
 			// correct and write new CSV
 			System.out.println( "Writing " + csvOut.get( i ) );
 
-			final CSVWriter writer = new CSVWriter(new FileWriter(csvOut.get( i )), ',', CSVWriter.NO_QUOTE_CHARACTER);
+			final CSVWriter writer = new CSVWriter(new FileWriter(csvOut.get( i )));
 
 			nextLine = new String[ 6 ];
 			nextLine[ 0 ] = "x";

@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>30.0.0</version>
+		<version>31.1.0</version>
 		<relativePath />
 	</parent>
 
@@ -90,9 +90,9 @@
 		<scijava.jvm.version>1.8</scijava.jvm.version>
 		<license.licenseName>gpl_v2</license.licenseName>
 		<license.copyrightOwners>Developers.</license.copyrightOwners>
-<!--  	    <maven.compiler.release>8</maven.compiler.release> -->
 	    <maven.compiler.source>8</maven.compiler.source>
 	    <maven.compiler.target>8</maven.compiler.target>
+
 	</properties>
 	<repositories>
 		<!-- NB: for project parent -->

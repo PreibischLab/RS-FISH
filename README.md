@@ -6,7 +6,7 @@
 
 _**RS-FISH: Precise, interactive, fast, and scalable FISH spot detection**_
 
-Ella Bahry\*, Laura Breimann\*, Marwan Zouhinkhi\*, Leo Epstein, Klim Kolyvanov, Xi Long, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch  
+Ella Bahry\*, Laura Breimann\*, Marwan Zouinkhi\*, Leo Epstein, Klim Kolyvanov, Xi Long, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch  
 *[bioRxiv](https://www.biorxiv.org/content/10.1101/2021.03.09.434205v1)* 2021, doi: https://doi.org/10.1101/2021.03.09.434205  
 
 \* equal contribution  
@@ -22,6 +22,7 @@ Ella Bahry\*, Laura Breimann\*, Marwan Zouhinkhi\*, Leo Epstein, Klim Kolyvanov,
 * [_**5.	Show detections**_](#detections)
 * [_**6.	Batch processing using RS-FISH**_](#batch)
 * [_**7. Running RS-FISH on large volumes**_](#spark)
+* [_**8. Filtering detections using a binary mask**_](#mask)
 
 <br />
 <br />
@@ -235,5 +236,23 @@ For batch processing instructions and running on computing cluster please see th
 </a> 
 
 There is a dedicated repository for [Spark](http://spark.apache.org)-based execution of RS-FISH on large (and also smaller) volumes: https://github.com/PreibischLab/RS-FISH-Spark
+  
+  
+  
+  
+### 8.	Filtering detections using a binary mask<a name="mask">
+</a> 
+  
+To filter RS-FISH detections, a binary mask (with values of 0 and 1) can be used to identify parts that are inside a cell or selection and outside the structure.
+  
+ <img src="https://github.com/PreibischLab/RS-FISH/blob/master/documents/Tutorial_screenshots/filter_neurons.png" alt="Image of smFISH spot detection in neuron, filtered with a binary mask" width="700">
+  
+ 
+After creating a binary mask with the same dimensions as the original image using Fiji or a different software, the ```Mask filtering``` tool can be used. The tool is located under ```Plugins > RS-FISH > Tools > Mask filtering```. In the interface, one can specify the input file or folder with csv files and the mask file or folder as well as the output folder. The output is a new csv file with detections only in the specified areas of the image. 
+  
+  
+ <img src="https://github.com/PreibischLab/RS-FISH/blob/master/documents/Tutorial_screenshots/mask_filter.png" alt="Screenshot of the mask filtering tool" width="800">
+  
+
 
 License: GPLv2

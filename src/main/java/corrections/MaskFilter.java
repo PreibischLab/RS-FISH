@@ -35,7 +35,6 @@ public class MaskFilter {
             //
             // optionally filter the spots with the mask
             //
-//            TODO mask filtering
             if (mask != null && mask.size() > 0) {
                 System.out.println("Filtering locations using mask image: " + mask.get(i));
 
@@ -120,7 +119,7 @@ public class MaskFilter {
             nextLine[2] = Double.toString(spot.z);
             nextLine[3] = "1";
             nextLine[4] = "1";
-            nextLine[5] = Double.toString(spot.adjustedIntensity);//x,y,z,t,c,intensity
+            nextLine[5] = Double.toString(spot.intensity);//x,y,z,t,c,intensity
 
             writer.writeNext(nextLine);
         }

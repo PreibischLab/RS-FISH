@@ -155,7 +155,9 @@ public class Intensity {
 		pf.process();
 
 		final Map<WrappedSpot, double[]> fits = pf.getResult();
-		final RealRandomAccess<FloatType> rra = Views.interpolate( tmp, new NLinearInterpolatorFactory<>() ).realRandomAccess();
+
+		// add back the background
+		final RealRandomAccess<FloatType> rra = Views.interpolate( Views.extendMirrorSingle( tmp ), new NLinearInterpolatorFactory<>() ).realRandomAccess();
 
 		for (final WrappedSpot spot : wrapped)
 		{

@@ -117,22 +117,7 @@ public class Radial_Symmetry implements PlugIn
 			return;
 		}
 
-		if ( params.RANSAC().ordinal() == 2 ) // Multiconsensus RANSAC
-		{
-			GenericDialogPlus gd2 = new GenericDialogPlus( "Multiconsensus RANSAC Options" );
-			gd2.addNumericField( "Min_number_of_inliers", RadialSymParams.defaultMinNumInliers, 0 );
-			gd2.addNumericField( "Initial #inlier threshold for new spot (avg - n*stdev) n=", RadialSymParams.defaultNTimesStDev1, 2 );
-			gd2.addNumericField( "Final #inlier threshold for new spot (avg - n*stdev) n=", RadialSymParams.defaultNTimesStDev2, 2 );
-
-			gd2.showDialog();
-			if ( gd2.wasCanceled() )
-				return;
-
-			params.minNumInliers = RadialSymParams.defaultMinNumInliers = (int)Math.round( gd2.getNextNumber() );
-			params.nTimesStDev1 = RadialSymParams.defaultNTimesStDev1 = gd2.getNextNumber();
-			params.nTimesStDev2 = RadialSymParams.defaultNTimesStDev2 = gd2.getNextNumber();
-		}
-		else
+		if ( params.RANSAC().ordinal() != 2 ) // NOT Multiconsensus RANSAC
 		{
 			params.minNumInliers = 0;
 		}
@@ -241,6 +226,22 @@ public class Radial_Symmetry implements PlugIn
 
 			// update defaults with selections from the interactive GUI
 			params.setDefaultValuesFromInteractive();
+		}
+
+		if ( params.RANSAC().ordinal() == 2 ) // Multiconsensus RANSAC
+		{
+			GenericDialogPlus gd2 = new GenericDialogPlus( "Multiconsensus RANSAC Options" );
+			gd2.addNumericField( "Min_number_of_inliers", RadialSymParams.defaultMinNumInliers, 0 );
+			gd2.addNumericField( "Initial #inlier threshold for new spot (avg - n*stdev) n=", RadialSymParams.defaultNTimesStDev1, 2 );
+			gd2.addNumericField( "Final #inlier threshold for new spot (avg - n*stdev) n=", RadialSymParams.defaultNTimesStDev2, 2 );
+
+			gd2.showDialog();
+			if ( gd2.wasCanceled() )
+				return;
+
+			params.minNumInliers = RadialSymParams.defaultMinNumInliers = (int)Math.round( gd2.getNextNumber() );
+			params.nTimesStDev1 = RadialSymParams.defaultNTimesStDev1 = gd2.getNextNumber();
+			params.nTimesStDev2 = RadialSymParams.defaultNTimesStDev2 = gd2.getNextNumber();
 		}
 
 		int[] impDim = imp.getDimensions(); // x y c z t

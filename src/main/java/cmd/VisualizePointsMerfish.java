@@ -77,7 +77,7 @@ public class VisualizePointsMerfish implements Callable<Void> {
 		final AffineTransform2D transform = new AffineTransform2D();
 		if ( transformCsvFile != null )
 		{
-			reader = new CSVReader(new FileReader(transformCsvFile),' '); 
+			reader = new CSVReader(new FileReader(transformCsvFile));
 			for ( int r = 0; r < 2; ++r )
 			{
 				nextLine = reader.readNext();

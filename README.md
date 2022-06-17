@@ -140,6 +140,13 @@ There are various options for **Robust fitting Computation**.
 * **RANSAC** defines if you want to use radial symmetry with robust outlier removal, it will identify all gradients within every local patch that supports the same center point (Fig. 1)  
 * **No RANSAC** for the use of radial symmetry without robust outlier removal, simply all gradients of a local spot will be used to compute the center point (classic RS)  
 * **Multiconsensus RANSAC** will iteratively run robust outlier removal on each local patch until all sets of gradients are identified that support a center point. This allows RS-FISH to potentially find multiple points within each local patch that was identified using DoG detections.  
+  
+The next option you can choose is to **compute the min and max intensity from image**. If you _deselect_ the option, in the next step you can choose range of intensity of the image, which might be a good option if you are processing a set of images with the same accquisition parameters.  
+ 
+<img src="https://github.com/PreibischLab/RadialSymmetryLocalization/blob/master/documents/Tutorial_screenshots/image_min_max.png" alt="RS_FISH image intensity selection window" width="400">  
+  
+There are two options in RS-FISH to calculate the spot intensity value. Each spot’s associated intensity values are by default computed using linear interpolation at the spot’s sub-pixel location. By selecting the option **Refine spot intensity with Gaussian fit on inliers** the spot intensity can be refined by fitting a Gaussian to the subset of pixels that support the spot as identified by RS-RANSAC.
+ 
 
 The last option in the **Visualization** section is whether you want to add the detected spots directly to the ROI Manager at the end of the detection.
 

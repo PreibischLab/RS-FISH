@@ -23,6 +23,7 @@ Ella Bahry\*, Laura Breimann\*, Marwan Zouinkhi\*, Leo Epstein, Klim Kolyvanov, 
 * [_**6.	Batch processing using RS-FISH**_](#batch)
 * [_**7. Running RS-FISH on large volumes**_](#spark)
 * [_**8. Filtering detections using a binary mask**_](#mask)
+* [_**9. Choosing the right parameters for RS-FISH**_](#parameters)
 
 <br />
 <br />
@@ -261,5 +262,27 @@ After creating a binary mask with the same dimensions as the original image usin
  <img src="https://github.com/PreibischLab/RS-FISH/blob/master/documents/Tutorial_screenshots/mask_filter.png" alt="Screenshot of the mask filtering tool" width="800">
   
 
+  
+### 9.	Choosing the right parameters for RS-FISH<a name="parameters">
+</a>   
+
+RS-FISH allows the user to choose between different detection methods to localize spots in the image. The tool offers three localization methods that build on each other: 
+  1. radial symmetry (‘No RANSAC’)
+  2. radial symmetry + RANSAC (the default option)  
+  3. radial symmetry + multi-consensus RANSAC 
+ 
+The default option is radial symmetry detection of spots with additional RANSAC outlier removal. In cases where the noise level is good, and an even higher computation speed is preferred, the RANSAC outlier removal step can be skipped by choosing ```“no RANSAC”```. In cases where many spots potentially overlap, we recommend choosing multi-consensus RANSAC spot detection, which will try to separate close points by detecting gradients in several rounds. 
+
+The next step is to choose the parameters for detection, which is simplified by the plugin’s visual feedback. Using the default spot detection method, there are two windows with parameters to set and two different visual feedback cues (see the Tutorial RS-FISH section). The red circle marks spots detected using the radial symmetry parameters, and the blue cross confirms those spots that pass the RANSAC outlier removal. The detection of the red circle can be adjusted in size (```sigma```) and the threshold of the ```signal intensity``` of the DoG pre-detected spots.
+
+The RANSAC parameters determine which and how the gradients are used to localize each spot. The ```support region radius``` determines the number of gradients computed in a local patch around each DoG pre-detected spot. We propose a default radius of 3 pixels which means a 7x7[x7] pixel patch resulting in 216 gradients for the 3D case. Decreasing this number might allow more spots to be found but will decrease localization precision as fewer gradients are used to define the center. The ```inlier ratio``` describes the number of gradients that support the detection's center point. Increasing the inlier ratio increases the robustness of the detected spot but can decrease the total number of detected spots, especially for lower SNR spots. The ```max error threshold``` defines the maximally allowed error for the intersection point defined by the gradients; i.e., how far away from the intersection point can each gradient be (only in a perfect scenario, all gradients intersect perfectly in the same point, see Supp. Fig 1d). Decreasing the number restricts the error, thus decreasing the number of false detections but potentially also the number of real detections, especially if the noise level is higher. 
+
+For the multi-consensus selection, a window pops up where parameters for additional rounds of spot detection can be defined. It is important to realize that for multi-consensus to work well, the max error in the RANSAC settings should be set relatively low since otherwise, the gradients of multiple points are allowed to intersect in a single spot. A typical setting could be 0.5 - 0.75 pixels. It is important to first run RS-FISH in RANSAC mode before setting the multi-consensus parameters. The log record will output two critical parameters: the ```average #inliers``` and ```stdev #inliers```. The ```average #inliers``` defines how many inliers intersect in each spot on average, while the ```stdev #inliers``` describes its variability. The parameters for multi-consensus RANSAC must be defined relative to those two values. The ```“Initial #inlier threshold for new spot (avg - n*stdev) n=”``` asks the user how many inliers are required for it to be considered a new spot next to an already found one. For example, let us assume a 7x7x7 local neighborhood with 216 total candidate gradients. If ```average #inliers``` was 80 and ```stdev #inliers``` was 6, then defining n=8 would require at least 80-48=32 inliers for a new spot to be defined. Keep in mind that only around 136 gradients (=216-80) are left to be evaluated per local patch. Once a new spot was identified, we re-center the local patch around its location and re-compute it. Thus the second parameter, ```“Final #inlier threshold for new spot (avg - n*stdev) n=”```, is usually chosen higher, e.g., n=6, thus requiring 80-32=48 inliers for a final confirmation of a new spot.
+  
+Additionally, the min number of inliers describes the number of inlier gradients minimally required to localize a point. This value is supposed to prevent the fitting of noise spots that are expected to have a low number of gradients that agree on a specific spot. Typically a value of 30 inliers is a good starting point. Note that if you set ```“Initial #inlier threshold for new spot (avg - n*stdev) n=”``` and ```“Final #inlier threshold for new spot (avg - n*stdev) n=”``` very high, only the ```”min number of inliers”``` will be relevant, which somewhat simplifies the process.
+
+  
+ <img src="https://github.com/PreibischLab/RS-FISH/blob/master/documents/Tutorial_screenshots/workflow.png" alt="Image explaining the workflow of RS-FISH" width="800">  
+  
 
 License: GPLv2

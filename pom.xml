@@ -44,6 +44,18 @@
 			</roles>
 		</developer>
 		<developer>
+			<id>mzouink</id>
+			<name>Marwan Zouinkhi</name>
+			<url>http://imagej.net/User:mzouink</url>
+			<roles>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+		<developer>
 			<id>milkyklim</id>
 			<name>Klim Kolyvanov</name>
 			<url>http://imagej.net/User:MilkyKlim</url>

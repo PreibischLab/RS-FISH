@@ -98,8 +98,7 @@ public class VisualizePointsMerfish implements Callable<Void> {
 
 			if ( id == null )
 			{
-				System.out.println( "gene '" + gene + "' not available in this dataset. stopping.");
-				System.exit( 0 );
+				throw new Exception( "gene '" + gene + "' not available in this dataset. stopping.");
 			}
 
 			peaks.put( id, new ArrayList<>() );

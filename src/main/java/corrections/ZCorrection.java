@@ -9,6 +9,7 @@ import fit.PointFunctionMatch;
 import fit.polynomial.QuadraticFunction;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -100,8 +101,7 @@ public class ZCorrection implements Callable<Void>
 
 				if ( img.numDimensions() != 2 )
 				{
-					System.out.println( "2D image required, but is " + img.numDimensions() );
-					System.exit( 0 );
+					throw new IOException( "2D image required, but is " + img.numDimensions() );
 				}
 				else
 				{

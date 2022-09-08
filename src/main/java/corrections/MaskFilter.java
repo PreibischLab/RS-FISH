@@ -43,8 +43,7 @@ public class MaskFilter {
                 final RandomAccessibleInterval img = VisualizePointsBDV.open(mask.get(i), null);
 
                 if (img.numDimensions() != 2) {
-                    System.out.println("2D image required, but is " + img.numDimensions());
-                    System.exit(0);
+                    throw new IOException("2D image required, but is " + img.numDimensions());
                 } else {
                     System.out.println("Image size=" + Util.printInterval(img));
                 }

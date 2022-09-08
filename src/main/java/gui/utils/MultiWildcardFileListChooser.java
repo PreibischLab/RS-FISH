@@ -17,7 +17,8 @@ public class MultiWildcardFileListChooser {
     private final static long KB_FACTOR = 1024;
 
     private final static String info = "<html> <h1> Select files via wildcard expression </h1> <br /> "
-            + "Use the path field to specify a file or directory to process or click 'Browse...' to select one. <br /> <br />"
+            + "<h3> You can drag-and-drop files or folder </h3> <br /> "
+            + "OR, use the path field to specify a file or directory to process or click 'Browse...' to select one. <br /> <br />"
             + "Wildcard (*) expressions are allowed. <br />"
             + "e.g. '/Users/spim/data/img_TL*_param*.csv' <br /><br />"
             + "</html>";
@@ -32,19 +33,22 @@ public class MultiWildcardFileListChooser {
 
         GuiUtils.addMessageAsJLabel(info, gdp);
 
-        gdp.addDirectoryOrFileField("Inputs path", "/", 65);
-        gdp.addDirectoryOrFileField("Masks Path", "/", 65);
-        gdp.addDirectoryField("Output Path", "/", 65);
+        gdp.addDirectoryOrFileField("Inputs File/Folder", "/", 65);
+        gdp.addDirectoryOrFileField("Masks File/Folder", "/", 65);
+        gdp.addDirectoryField("Output Folder", "/", 65);
         gdp.addNumericField("exclude files smaller than (KB)", 10, 0);
 
         // preview selected files - not possible in headless
         if (!PluginHelper.isHeadless()) {
             // add empty preview
             GuiUtils.addMessageAsJLabel(GuiUtils.previewFiles(new ArrayList<>()), gdp, GuiUtils.smallStatusFont);
+            GuiUtils.addMessageAsJLabel("", gdp, GuiUtils.smallStatusFont,Color.RED);
             JLabel lab = (JLabel) gdp.getComponent(9);
+            JLabel warn = (JLabel) gdp.getComponent(10);
             TextField num = (TextField) gdp.getComponent(8);
             TextField inputField = (TextField) ((Panel) gdp.getComponent(2)).getComponent(0);
             TextField maskField = (TextField) ((Panel) gdp.getComponent(4)).getComponent(0);
+            TextField outputField = (TextField) ((Panel) gdp.getComponent(6)).getComponent(0);
 
             num.addTextListener(e -> {
                 String inputPath = inputField.getText();
@@ -54,8 +58,10 @@ public class MultiWildcardFileListChooser {
 
             final AtomicBoolean autoset = new AtomicBoolean(false);
 
-            inputField.addTextListener(e -> PathUpdated(gdp, lab, num.getText(), inputField.getText(), maskField.getText(), autoset));
-            maskField.addTextListener(e -> PathUpdated(gdp, lab, num.getText(), inputField.getText(), maskField.getText(), autoset));
+            inputField.addTextListener(e -> PathUpdated(gdp, lab,warn, num.getText(), inputField.getText(), maskField.getText(),outputField.getText(), autoset));
+            maskField.addTextListener(e -> PathUpdated(gdp, lab,warn, num.getText(), inputField.getText(), maskField.getText(), outputField.getText(),autoset));
+            outputField.addTextListener(e -> PathUpdated(gdp, lab,warn, num.getText(), inputField.getText(), maskField.getText(), outputField.getText(),autoset));
+
         }
 
         if (windowsHack && ij.plugin.frame.Recorder.record && System.getProperty("os.name").toLowerCase().contains("win")) {
@@ -110,11 +116,16 @@ public class MultiWildcardFileListChooser {
         return outputFilesFiltered;
     }
 
-    private void PathUpdated(GenericDialogPlus gdp, JLabel lab, String numParam, String inputPath, String maskPath, AtomicBoolean autoset) {
+    private void PathUpdated(GenericDialogPlus gdp, JLabel lab,JLabel warn, String numParam, String inputPath, String maskPath, String outputPath, AtomicBoolean autoset) {
         if (autoset.get()) {
             autoset.set(false);
             return;
         }
+        boolean overwrite = checkOutputOverwrite(inputPath,outputPath);
+        if (overwrite)
+            warn.setText("WARNING: same path input/output, CSV will be overwrite !");
+        else
+            warn.setText("");
         // if macro recorder is running and we are on windows
         if (windowsHack && ij.plugin.frame.Recorder.record && System.getProperty("os.name").toLowerCase().contains("win")) {
             while (inputPath.contains("\\"))
@@ -125,6 +136,22 @@ public class MultiWildcardFileListChooser {
         }
         updateGui(inputPath, maskPath, lab, numParam, gdp);
     }
+
+    private boolean checkOutputOverwrite(String inputPath, String outputPath) {
+        if (inputPath.length()< 3 ||  outputPath.length() <3)
+            return false;
+        File input = new File(inputPath);
+        File output = new File(outputPath);
+
+        if (input.isFile()){
+            if(input.getParentFile().equals(output))
+                return true;
+
+        }else if (input.equals(output))
+            return true;
+        return false;
+    }
+
 
     private static void updateGui(String inputPath, String maskPath, JLabel lab, String num, GenericDialogPlus gdp) {
 

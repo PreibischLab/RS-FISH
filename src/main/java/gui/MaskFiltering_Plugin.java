@@ -4,6 +4,8 @@ import corrections.MaskFilter;
 import gui.utils.MultiWildcardFileListChooser;
 import ij.ImageJ;
 import ij.plugin.PlugIn;
+
+import javax.swing.*;
 import java.util.List;
 
 public class MaskFiltering_Plugin implements PlugIn {
@@ -20,7 +22,12 @@ public class MaskFiltering_Plugin implements PlugIn {
         List<String> mask = chooser.getMaskFilesFiltered();
 
         try {
-            MaskFilter.run(csvIn, csvOut, mask);
+            boolean result = MaskFilter.run(csvIn, csvOut, mask);
+            if (result){
+                int n = csvIn.size();
+
+                JOptionPane.showMessageDialog(null, n + " files filtered successfully !","Success", JOptionPane.INFORMATION_MESSAGE);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -27,40 +27,32 @@ public class MaskFilter {
         }
 
         for (int i = 0; i < csvIn.size(); ++i) {
-            //
             // read CSV
-            //
-
             List<InputSpot> currentSpot = readSpot(csvIn.get(i));
-            //
-            // optionally filter the spots with the mask
-            //
             if (mask != null && mask.size() > 0) {
                 System.out.println("Filtering locations using mask image: " + mask.get(i));
 
-                final ArrayList<InputSpot> spotsTmp = new ArrayList<>();
-
                 final RandomAccessibleInterval img = VisualizePointsBDV.open(mask.get(i), null);
+                System.out.println("Image size=" + Util.printInterval(img));
+                if(img.numDimensions() == 2 || img.numDimensions() == 3){
+                    final ArrayList<InputSpot> spotsTmp = new ArrayList<>();
+                    final RealRandomAccess rra = Views.interpolate(Views.extendBorder(img), new NearestNeighborInterpolatorFactory<>()).realRandomAccess();
 
-                if (img.numDimensions() != 2) {
-                    throw new IOException("2D image required, but is " + img.numDimensions());
+                    for (final InputSpot s : currentSpot) {
+                        rra.setPosition(s.x, 0);
+                        rra.setPosition(s.y, 1);
+                        if (img.numDimensions() == 3)
+                            rra.setPosition(s.z, 2);
+
+                        if (((RealType) rra.get()).getRealDouble() > 0)
+                            spotsTmp.add(s);
+                    }
+                    System.out.println("Remaining spots=" + spotsTmp.size() + ", previously=" + currentSpot.size());
+
+                    currentSpot =  spotsTmp;
                 } else {
-                    System.out.println("Image size=" + Util.printInterval(img));
+                    throw new IOException("2D/3D image required, but is " + img.numDimensions());
                 }
-
-                final RealRandomAccess rra = Views.interpolate(Views.extendBorder(img), new NearestNeighborInterpolatorFactory<>()).realRandomAccess();
-
-                for (final InputSpot s : currentSpot) {
-                    rra.setPosition(s.x, 0);
-                    rra.setPosition(s.y, 1);
-
-                    if (((RealType) rra.get()).getRealDouble() > 0)
-                        spotsTmp.add(s);
-                }
-
-                System.out.println("Remaining spots=" + spotsTmp.size() + ", previously=" + currentSpot.size());
-
-                currentSpot = spotsTmp;
             }
 
             // correct and write new CSV

@@ -165,16 +165,5 @@ public class MaskFilter {
         writer.close();
     }
 
-    public static void main(String[] args) throws IOException {
-        String path = "/Users/zouinkhim/Desktop/test_rs_fish/test.tif";
-
-        final RandomAccessibleInterval img = VisualizePointsBDV.open(path, null);
-        ImageJFunctions.show(img);
-        double[] values = checkMaskValues(img);
-        for (double v :
-                values) {
-            System.out.println(v);
-        }
-    }
 }
 

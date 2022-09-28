@@ -23,8 +23,8 @@ public class MultiWildcardFileListChooser {
             + "e.g. '/Users/spim/data/img_TL*_param*.csv' <br /><br />"
             + "</html>";
     private List<String> inputFilesFiltered;
-    private List<String> maskFilesFiltered;
-    private List<String> outputFilesFiltered;
+    private String maskFile;
+    private String outputFolder;
 
 
     public boolean getFileList() {
@@ -34,7 +34,7 @@ public class MultiWildcardFileListChooser {
         GuiUtils.addMessageAsJLabel(info, gdp);
 
         gdp.addDirectoryOrFileField("Inputs File/Folder", "/", 65);
-        gdp.addDirectoryOrFileField("Masks File/Folder", "/", 65);
+        gdp.addDirectoryOrFileField("Mask File", "/", 65);
         gdp.addDirectoryField("Output Folder", "/", 65);
         gdp.addNumericField("exclude files smaller than (KB)", 10, 0);
 
@@ -53,7 +53,7 @@ public class MultiWildcardFileListChooser {
             num.addTextListener(e -> {
                 String inputPath = inputField.getText();
                 String maskPath = maskField.getText();
-                updateGui(inputPath, maskPath, lab, num.getText(), gdp);
+                updateGui(inputPath, lab, num.getText(), gdp);
             });
 
             final AtomicBoolean autoset = new AtomicBoolean(false);
@@ -81,15 +81,11 @@ public class MultiWildcardFileListChooser {
         String outputPath = gdp.getNextString();
         long numa = (long) gdp.getNextNumber();
 
-        List<File> inputFiles = getFiles(fileInput, numa * KB_FACTOR).stream().sorted().collect(Collectors.toList());
-        List<File> maskFiles = getFiles(maskInput, numa * KB_FACTOR).stream().sorted().collect(Collectors.toList());
-        List<String> inputPatterns = inputFiles.stream().map(f -> String.join("_", PluginHelper.getPattern(f))).collect(Collectors.toList());
-        List<String> maskPatterns = maskFiles.stream().map(f -> String.join("_", PluginHelper.getPattern(f))).collect(Collectors.toList());
-        List<String> commonPatterns = inputPatterns.stream().distinct().filter(maskPatterns::contains).collect(Collectors.toList());
+        List<String> inputFiles = getFiles(fileInput, numa * KB_FACTOR).stream().map(p -> p.getAbsolutePath()).collect(Collectors.toList());
 
-        this.inputFilesFiltered = commonPatterns.stream().map(p -> inputFiles.get(inputPatterns.indexOf(p)).getAbsolutePath()).collect(Collectors.toList());
-        this.maskFilesFiltered = commonPatterns.stream().map(p -> maskFiles.get(maskPatterns.indexOf(p)).getAbsolutePath()).collect(Collectors.toList());
-        this.outputFilesFiltered = this.inputFilesFiltered.stream().map(f -> new File(outputPath, new File(f).getName()).getAbsolutePath()).collect(Collectors.toList());
+        this.inputFilesFiltered = inputFiles;
+        this.maskFile = maskInput;
+        this.outputFolder = outputPath;
 
 
         if (fileInput.endsWith(File.separator))
@@ -108,12 +104,12 @@ public class MultiWildcardFileListChooser {
         return inputFilesFiltered;
     }
 
-    public List<String> getMaskFilesFiltered() {
-        return maskFilesFiltered;
+    public String getMaskFile() {
+        return maskFile;
     }
 
-    public List<String> getOutputFilesFiltered() {
-        return outputFilesFiltered;
+    public String getOutputFolder() {
+        return outputFolder;
     }
 
     private void PathUpdated(GenericDialogPlus gdp, JLabel lab,JLabel warn, String numParam, String inputPath, String maskPath, String outputPath, AtomicBoolean autoset) {
@@ -134,7 +130,7 @@ public class MultiWildcardFileListChooser {
                 maskPath = maskPath.replace("\\", "/");
             autoset.set(true);
         }
-        updateGui(inputPath, maskPath, lab, numParam, gdp);
+        updateGui(inputPath, lab, numParam, gdp);
     }
 
     private boolean checkOutputOverwrite(String inputPath, String outputPath) {
@@ -153,25 +149,15 @@ public class MultiWildcardFileListChooser {
     }
 
 
-    private static void updateGui(String inputPath, String maskPath, JLabel lab, String num, GenericDialogPlus gdp) {
+    private static void updateGui(String inputPath, JLabel lab, String num, GenericDialogPlus gdp) {
 
-        List<File> inputFiles = getFiles(inputPath, Long.parseLong(num) * KB_FACTOR).stream().sorted().collect(Collectors.toList());
-        List<File> maskFiles = getFiles(maskPath, Long.parseLong(num) * KB_FACTOR).stream().sorted().collect(Collectors.toList());
-        List<String> inputPatterns = inputFiles.stream().map(f -> String.join("_", PluginHelper.getPattern(f))).collect(Collectors.toList());
-        List<String> maskPatterns = maskFiles.stream().map(f -> String.join("_", PluginHelper.getPattern(f))).collect(Collectors.toList());
-        List<String> commonPatterns = inputPatterns.stream()
-                .distinct()
-                .filter(maskPatterns::contains)
-                .collect(Collectors.toList());
-
-        List<String> files = commonPatterns.stream().map(p ->
-                inputFiles.get(inputPatterns.indexOf(p)).getName() + GuiUtils.colorHTML(" -> ") + maskFiles.get(maskPatterns.indexOf(p)).getName()
-        ).collect(Collectors.toList());
+        List<File> inputFiles = getFiles(inputPath, Long.parseLong(num) * KB_FACTOR);
+        List<String> guiFiles = inputFiles.stream().map(p ->  p.getName()).collect(Collectors.toList());
 
         if (!inputFiles.isEmpty()) {
-            String patternLabel = GuiUtils.getColoredHtmlFromPattern(PluginHelper.getLabelPattern(inputFiles.get(inputFiles.size() - 1)), false);
-            files.add(0, patternLabel);
-            lab.setText(GuiUtils.previewStrings(files));
+//            String patternLabel = GuiUtils.getColoredHtmlFromPattern(PluginHelper.getLabelPattern(inputFiles.get(inputFiles.size() - 1)), false);
+//            guiFiles.add(0, patternLabel);
+            lab.setText(GuiUtils.previewStrings(guiFiles));
             lab.setSize(lab.getPreferredSize());
             gdp.setSize(gdp.getPreferredSize());
             gdp.validate();

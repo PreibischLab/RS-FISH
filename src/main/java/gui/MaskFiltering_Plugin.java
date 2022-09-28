@@ -18,8 +18,8 @@ public class MaskFiltering_Plugin implements PlugIn {
             return;
 
         List<String> csvIn = chooser.getInputFilesFiltered();
-        List<String> csvOut = chooser.getOutputFilesFiltered();
-        List<String> mask = chooser.getMaskFilesFiltered();
+        String csvOut = chooser.getOutputFolder();
+        String mask = chooser.getMaskFile();
 
         try {
             boolean result = MaskFilter.run(csvIn, csvOut, mask);

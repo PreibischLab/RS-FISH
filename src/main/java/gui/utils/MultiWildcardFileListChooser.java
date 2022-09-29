@@ -34,7 +34,7 @@ public class MultiWildcardFileListChooser {
         GuiUtils.addMessageAsJLabel(info, gdp);
 
         gdp.addDirectoryOrFileField("Inputs File/Folder", "/", 65);
-        gdp.addDirectoryOrFileField("Mask File", "/", 65);
+        gdp.addFileField("Mask File", "/", 65);
         gdp.addDirectoryField("Output Folder", "/", 65);
         gdp.addNumericField("exclude files smaller than (KB)", 10, 0);
 
@@ -117,11 +117,11 @@ public class MultiWildcardFileListChooser {
             autoset.set(false);
             return;
         }
-        boolean overwrite = checkOutputOverwrite(inputPath,outputPath);
-        if (overwrite)
-            warn.setText("WARNING: same path input/output, CSV will be overwrite !");
-        else
-            warn.setText("");
+//        boolean overwrite = checkOutputOverwrite(inputPath,outputPath);
+//        if (overwrite)
+//            warn.setText("WARNING: same path input/output, CSV will be overwrite !");
+//        else
+//            warn.setText("");
         // if macro recorder is running and we are on windows
         if (windowsHack && ij.plugin.frame.Recorder.record && System.getProperty("os.name").toLowerCase().contains("win")) {
             while (inputPath.contains("\\"))

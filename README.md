@@ -83,7 +83,15 @@ This currently installs three tools, `rs-fish, rs-fish-anisotropy, csv-overlay`.
 
 #### 2.2. Installation using Docker container
 
-Alternatively to installing RS-FISH as a command line tool on your operating system, you can also use it directly from our Docker container. To pull the docker container from Dockerhub, run the following command:
+Alternatively to installing RS-FISH as a command line tool on your operating system, you can also use it directly from our Docker container. 
+
+To build the docker container, git pull the repository and then execute the following command:
+
+```
+docker build -t rs_fish:2.3.1 .
+```
+
+To pull the docker container directly from Dockerhub, run the following command:
 
 ```
 docker pull wuennemannflorian/rs_fish:2.3.1

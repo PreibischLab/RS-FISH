@@ -81,6 +81,29 @@ This currently installs three tools, `rs-fish, rs-fish-anisotropy, csv-overlay`.
 <br />
 <br />
 
+#### 2.2. Installation using Docker container
+
+Alternatively to installing RS-FISH as a command line tool on your operating system, you can also use it directly from our Docker container. 
+
+To build the docker container, git pull the repository and then execute the following command:
+
+```
+docker build -t rs_fish:2.3.1 .
+```
+
+To pull the docker container directly from Dockerhub, run the following command:
+
+```
+docker pull wuennemannflorian/rs_fish:2.3.1
+```
+
+You can then run RS-FISH from the container using the following command:
+
+```
+docker run -v [your_local_input_folder]:/input -v [your_local_output_folder]:/output rs-fish:2.3.1 /RS-FISH/rs-fish [rs_fish_parameter] --image=/input/[your_file.tif] --output=/output/[your_file.csv]
+```
+
+
 ### 3.	Calculating Anisotropy Coefficient<a name="anisotropy">
 </a> 
 

@@ -60,7 +60,8 @@ public class Histogram extends ApplicationFrame
 		final IntervalXYDataset dataset = createDataset( values, numBins, title );
 		final JFreeChart chart = createChart( dataset, title, units );
 		final ChartPanel chartPanel = new ChartPanel( chart );
-		
+
+		// TODO: use 5th percentile instead
 		double startValue = getMin() + ( getMax() - getMin() ) / 10;
 		this.histThresold = startValue;
 		

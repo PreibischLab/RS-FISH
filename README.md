@@ -6,8 +6,8 @@
 
 _**RS-FISH: Precise, interactive, fast, and scalable FISH spot detection**_
 
-Ella Bahry\*, Laura Breimann\*, Marwan Zouinkhi\*, Leo Epstein, Klim Kolyvanov, Xi Long, Kyle I S Harrington, Timothée Lionnet, Stephan Preibisch  
-*[bioRxiv](https://www.biorxiv.org/content/10.1101/2021.03.09.434205v1)* 2021, doi: https://doi.org/10.1101/2021.03.09.434205  
+Ella Bahry\*, Laura Breimann\*, Marwan Zouinkhi\*, Leo Epstein, Klim Kolyvanov, Nicholas Mamrak, Benjamin King, Xi Long, Kyle I S Harrington, Timothée Lionnet & Stephan Preibisch  
+*[Nature Methods](https://www.nature.com/articles/s41592-022-01669-y)* 2022, doi: https://doi.org/10.1038/s41592-022-01669-y 
 
 \* equal contribution  
 
@@ -33,7 +33,7 @@ Ella Bahry\*, Laura Breimann\*, Marwan Zouinkhi\*, Leo Epstein, Klim Kolyvanov, 
 ### 1.	Abstract & Availability<a name="abstract">
 </a> 
 
-Fluorescent in-situ hybridization (FISH)-based methods are powerful tools to study molecular processes with subcellular resolution, relying on accurate identification and localization of diffraction-limited spots in microscopy images. We developed the Radial Symmetry-FISH (RS-FISH) software that accurately, robustly, and quickly detects single-molecule spots in two and three dimensions, making it applicable to several key assays, including single-molecule FISH (smFISH), spatial transcriptomics, and spatial genomics. RS-FISH allows interactive parameter tuning and scales to large sets of images and tera-byte sized image volumes such as entire brain scans using straight-forward distributed processing on workstations, clusters, and in the cloud.
+Fluorescent in-situ hybridization (FISH)-based methods extract spatially resolved genetic and epigenetic information from biological samples by detecting fluorescent spots in microscopy images, an often challenging task. We present Radial Symmetry-FISH (RS-FISH), an accurate, fast, and user-friendly software for spot detection in two- and three-dimensional images. RS-FISH offers interactive parameter tuning and readily scales to large datasets and image volumes of cleared or expanded samples using distributed processing on workstations, clusters, or the cloud. RS-FISH maintains high detection accuracy and low localization error across a wide range of signal-to-noise ratios, a key feature for single-molecule FISH, spatial transcriptomics, or spatial genomics applications.
   
  <br />
 <br />
@@ -80,6 +80,29 @@ All dependencies will be downloaded and managed by maven automatically.
 This currently installs three tools, `rs-fish, rs-fish-anisotropy, csv-overlay`. Please execute them in order to get detailed execution instructions.
 <br />
 <br />
+
+#### 2.2. Installation using Docker container
+
+Alternatively to installing RS-FISH as a command line tool on your operating system, you can also use it directly from our Docker container. 
+
+To build the docker container, git pull the repository and then execute the following command:
+
+```
+docker build -t rs_fish:2.3.1 .
+```
+
+To pull the docker container directly from Dockerhub, run the following command:
+
+```
+docker pull wuennemannflorian/rs_fish:2.3.1
+```
+
+You can then run RS-FISH from the container using the following command:
+
+```
+docker run -v [your_local_input_folder]:/input -v [your_local_output_folder]:/output rs-fish:2.3.1 /RS-FISH/rs-fish [rs_fish_parameter] --image=/input/[your_file.tif] --output=/output/[your_file.csv]
+```
+
 
 ### 3.	Calculating Anisotropy Coefficient<a name="anisotropy">
 </a> 

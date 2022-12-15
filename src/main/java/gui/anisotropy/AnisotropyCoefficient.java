@@ -23,10 +23,6 @@ import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.io.Opener;
 import ij.process.ImageProcessor;
-import milkyklim.algorithm.localization.EllipticGaussianOrtho;
-import milkyklim.algorithm.localization.GenericPeakFitter;
-import milkyklim.algorithm.localization.LevenbergMarquardtSolver;
-import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.Point;
@@ -45,6 +41,10 @@ import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import parameters.RadialSymParams;
 import radial.symmetry.utils.DoGDetection;
+import util.localization.EllipticGaussianOrtho;
+import util.localization.GenericPeakFitter;
+import util.localization.LevenbergMarquardtSolver;
+import util.localization.MLEllipticGaussianEstimator;
 
 public class AnisotropyCoefficient {
 

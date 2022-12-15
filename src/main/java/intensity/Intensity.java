@@ -9,11 +9,6 @@ import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 import fitting.Spot;
 import gui.interactive.HelperFunctions;
-import milkyklim.algorithm.localization.EllipticGaussianOrtho;
-import milkyklim.algorithm.localization.GenericPeakFitter;
-import milkyklim.algorithm.localization.LevenbergMarquardtSolver;
-import milkyklim.algorithm.localization.MLEllipticGaussianEstimator;
-import milkyklim.algorithm.localization.SparseObservationGatherer;
 import net.imglib2.FinalDimensions;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
@@ -31,6 +26,11 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Intervals;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
+import util.localization.EllipticGaussianOrtho;
+import util.localization.GenericPeakFitter;
+import util.localization.LevenbergMarquardtSolver;
+import util.localization.MLEllipticGaussianEstimator;
+import util.localization.SparseObservationGatherer;
 
 public class Intensity {
 

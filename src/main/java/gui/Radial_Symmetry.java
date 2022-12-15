@@ -499,7 +499,7 @@ public class Radial_Symmetry implements PlugIn
 		new ImageJ();
 		//ImagePlus imp = new ImagePlus("/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/Poiss_30spots_bg_200_1_I_300_0_img0.tif" );
 		//ImagePlus imp = new ImagePlus( "/Users/spreibi/Downloads/C0-N2_352_cropped_1240.tif" );
-		ImagePlus imp = new ImagePlus( "/Users/spreibi/Documents/BIMSB/Publications/radialsymmetry/N2_702_cropped_1620 (high SNR)_ch0.tif");
+		ImagePlus imp = new ImagePlus( "/Users/preibischs/Documents/BIMSB/Publications/radialsymmetry/N2_702_cropped_1620 (high SNR)_ch0.tif");
 
 		imp.show();
 		imp.setSlice( imp.getStackSize() / 2 );

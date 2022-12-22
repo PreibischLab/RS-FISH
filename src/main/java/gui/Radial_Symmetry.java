@@ -83,7 +83,7 @@ public class Radial_Symmetry implements PlugIn
 		gd1.addChoice( "Robust_fitting", RadialSymParams.ransacChoice, RadialSymParams.ransacChoice[ RadialSymParams.defaultRANSACChoice ] );
 		gd1.addCheckbox( "Compute_min/max intensity from image", RadialSymParams.defaultAutoMinMax );
 		gd1.addCheckbox( "Use_anisotropy coefficient for DoG", RadialSymParams.defaultUseAnisotropyForDoG );
-		gd1.addCheckbox( "Refine_spot_intensity with Gaussian fit on inliers", RadialSymParams.defaultGaussFitIntensity );
+		gd1.addChoice( "Spot_intensity", RadialSymParams.intensityMethods, RadialSymParams.intensityMethods[ RadialSymParams.defaultIntensityMethod ] );
 		//gd1.addCheckbox( "Refine_spot_location with Gaussian fit on inliers", RadialSymParams.defaultGaussFitLocation );
 
 		gd1.addMessage( "Visualization:", new Font( "Default", Font.BOLD, 13 ) );
@@ -105,7 +105,7 @@ public class Radial_Symmetry implements PlugIn
 
 		params.autoMinMax = RadialSymParams.defaultAutoMinMax = gd1.getNextBoolean();
 		params.useAnisotropyForDoG = RadialSymParams.defaultUseAnisotropyForDoG = gd1.getNextBoolean();
-		params.gaussFitIntensity = RadialSymParams.defaultGaussFitIntensity = gd1.getNextBoolean();
+		params.intensityMethod = RadialSymParams.defaultIntensityMethod = gd1.getNextChoiceIndex();
 		//params.gaussFitLocation = RadialSymParams.defaultGaussFitLocation = gd2.getNextBoolean();
 
 		params.addToROIManager = RadialSymParams.defaultAddToROIManager = gd1.getNextBoolean();

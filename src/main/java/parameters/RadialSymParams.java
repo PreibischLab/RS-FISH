@@ -16,6 +16,7 @@ public class RadialSymParams implements Serializable {
 	public static String[] ransacChoice = new String[] { "No RANSAC", "RANSAC", "Multiconsensus RANSAC" };
 
 	final public static String[] bsMethods = new String[] { "No background subtraction", "Mean", "Median", "RANSAC on Mean", "RANSAC on Median" };
+	final public static String[] intensityMethods = new String[] { "Linear Interpolation", "Gaussian fit (on inlier pixels)", "Integrate spot intensities (on candidate pixels)" };
 
 	public static boolean defaultAutoMinMax = true;
 	public static double defaultMin = 0;
@@ -37,7 +38,7 @@ public class RadialSymParams implements Serializable {
 	public static double defaultAnisotropy = 1.0f;
 	public static boolean defaultUseAnisotropyForDoG = true;
 
-	public static boolean defaultGaussFitIntensity = false;
+	public static int defaultIntensityMethod = 0;
 	//public static boolean defaultGaussFitLocation = false;
 	public static int defaultMode = 0;
 	public static int defaultImg = 0;
@@ -86,7 +87,7 @@ public class RadialSymParams implements Serializable {
 	public boolean useAnisotropyForDoG = defaultUseAnisotropyForDoG;
 
 	// use gauss fit
-	public boolean gaussFitIntensity = defaultGaussFitIntensity;
+	public int intensityMethod = defaultIntensityMethod;
 	//public boolean gaussFitLocation = defaultGaussFitLocation;
 
 	// multiconsensus options
@@ -109,7 +110,7 @@ public class RadialSymParams implements Serializable {
 		HelperFunctions.log("MaxError               : " + maxError);
 		HelperFunctions.log("InlierRatio            : " + inlierRatio);
 		HelperFunctions.log("supportRadius          : " + supportRadius);
-		HelperFunctions.log("GaussFitIntensity      : " + gaussFitIntensity);
+		HelperFunctions.log("Intensity computation  : " + intensityMethods[ intensityMethod ]);
 		//HelperFunctions.log("GaussFitLocation       : " + gaussFitLocation);
 		if ( printIntensityThreshold )
 			HelperFunctions.log("intensityThreshold     : " + intensityThreshold);
@@ -125,7 +126,7 @@ public class RadialSymParams implements Serializable {
 			HelperFunctions.log("nTimesStDe             : " + nTimesStDev2);
 		}
 
-		HelperFunctions.log("bsMethod               : " + bsMethod);
+		HelperFunctions.log("bsMethod               : " + bsMethods[ bsMethod ]);
 		HelperFunctions.log("bsMaxError             : " + bsMaxError);
 		HelperFunctions.log("bsInlierRatio          : " + bsInlierRatio);
 
@@ -166,8 +167,8 @@ public class RadialSymParams implements Serializable {
 		return anisotropyCoefficient;
 	}
 	
-	public boolean getGaussFitIntensity() {
-		return gaussFitIntensity;
+	public int getIntensityMethod() {
+		return intensityMethod;
 	}
 
 //	public boolean getGaussFitLocation() {

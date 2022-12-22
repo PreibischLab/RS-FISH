@@ -364,7 +364,13 @@ public class RadialSymmetry {
 				allSpots.addAll(filteredSpots);
 				timePoint.add(new Long(filteredSpots.size()));
 
-				if (rsm.getGaussFitIntensity() /* || rsm.getGaussFitLocation() */ )
+				if ( rsm.getIntensityMethod() == 0 )
+				{
+					// iterate over all points and perform the linear
+					// interpolation for each of the spots
+					Intensity.calculateIntensitiesLinear(timeFrame, filteredSpots);
+				}
+				else if ( rsm.getIntensityMethod() == 1 )
 				{
 					// WARNING: This does a full gaussian fit
 					Intensity.calulateIntesitiesGF(
@@ -376,12 +382,14 @@ public class RadialSymmetry {
 							rsm.supportRadius,
 							rsm.ransacSelection );
 				}
-
-				if ( !rsm.getGaussFitIntensity() )
+				else if ( rsm.getIntensityMethod() == 2 )
 				{
-					// iterate over all points and perform the linear
-					// interpolation for each of the spots
-					Intensity.calculateIntensitiesLinear(timeFrame, filteredSpots);
+					// integrate all intensities
+					Intensity.calulateIntesitiesIntegrate(timeFrame, filteredSpots, timeFrame.numDimensions());
+				}
+				else
+				{
+					throw new RuntimeException( "Unknown intensity compute method: " + rsm.getIntensityMethod() );
 				}
 
 				// FIXME: make this a parameter, not doing this by default, will crash on 2d

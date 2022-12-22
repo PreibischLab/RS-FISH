@@ -23,21 +23,17 @@ public class DoGWindow
 		final GridBagLayout layout = new GridBagLayout();
 		final GridBagConstraints c = new GridBagConstraints();
 
-		int scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(parent.params.getSigmaDoG(), parent.sigmaMin, parent.sigmaMax, parent.scrollbarSize);
-		final Scrollbar sigma1Bar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
-				10 + parent.scrollbarSize);
+		int scrollbarInitialPosition = HelperFunctions.computeScrollbarPositionFromValue(parent.params.getSigmaDoG(), InteractiveRadialSymmetry.sigmaMin, InteractiveRadialSymmetry.sigmaMax, parent.scrollbarSize);
+		final Scrollbar sigma1Bar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + parent.scrollbarSize);
 
-		final float log1001 = (float) Math.log10(parent.scrollbarSize + 1);
-		scrollbarInitialPosition = (int) Math
-				.round(1001 - Math.pow(10, (parent.thresholdMax - parent.params.getThresholdDoG()) / (parent.thresholdMax - parent.thresholdMin) * log1001));
-		final Scrollbar thresholdBar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0,
-				10 + parent.scrollbarSize);
+		final float log1001 = (float) Math.log10(parent.scrollbarSize + 1)/(float)Math.log10( 2 );
+		scrollbarInitialPosition = (int) Math.round(1001 - Math.pow(2, (InteractiveRadialSymmetry.thresholdMax - parent.params.getThresholdDoG()) / (InteractiveRadialSymmetry.thresholdMax - InteractiveRadialSymmetry.thresholdMin) * log1001));
+		final Scrollbar thresholdBar = new Scrollbar(Scrollbar.HORIZONTAL, scrollbarInitialPosition, 10, 0, 10 + parent.scrollbarSize);
 
 		final Label sigmaText1 = new Label("Sigma = " + String.format(java.util.Locale.US, "%.2f", parent.params.getSigmaDoG()),
 				Label.CENTER);
 
-		final Label thresholdText = new Label(
-				"Threshold = " + String.format(java.util.Locale.US, "%.4f", parent.params.getThresholdDoG()), Label.CENTER);
+		final Label thresholdText = new Label("Threshold = " + String.format(java.util.Locale.US, "%.5f", parent.params.getThresholdDoG()), Label.CENTER);
 		final Button button = new Button("Done");
 		final Button cancel = new Button("Cancel");
 
@@ -88,7 +84,7 @@ public class DoGWindow
 
 		/* Configuration */
 		sigma1Bar.addAdjustmentListener(new SigmaListener(parent,sigmaText1, InteractiveRadialSymmetry.sigmaMin, InteractiveRadialSymmetry.sigmaMax, parent.scrollbarSize, sigma1Bar));
-		thresholdBar.addAdjustmentListener(new ThresholdListener(parent,thresholdText, InteractiveRadialSymmetry.thresholdMin, InteractiveRadialSymmetry.thresholdMax));
+		thresholdBar.addAdjustmentListener(new ThresholdListener(parent,thresholdText, parent.scrollbarSize, InteractiveRadialSymmetry.thresholdMin, InteractiveRadialSymmetry.thresholdMax));
 		button.addActionListener(new FinishedButtonListener(parent, false));
 		cancel.addActionListener(new FinishedButtonListener(parent, true));
 		doGFrame.addWindowListener(new FrameListener(parent));

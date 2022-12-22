@@ -115,8 +115,8 @@ public class InteractiveRadialSymmetry// extends GUIParams
 	// min/max value
 	public static final float sigmaMin = 0.5f;
 	public static final float sigmaMax = 10f;
-	public static final float thresholdMin = 0.0001f;
-	public static final float thresholdMax = 1f;
+	public static final float thresholdMin = 0.00001f;
+	public static final float thresholdMax = 0.3f;
 	
 	final int scrollbarSize = 1000;
 	// ----------------------------------------

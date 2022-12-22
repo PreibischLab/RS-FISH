@@ -11,23 +11,29 @@ public class ThresholdListener implements AdjustmentListener {
 	final InteractiveRadialSymmetry parent;
 	final Label label;
 	final float min, max;
-	final float log1001 = (float) Math.log10(1001);
+	final int scrollbarSize;
+	final float log1001;
 
 	public ThresholdListener(
 			final InteractiveRadialSymmetry parent,
-			final Label label, final float min, final float max) {
+			final Label label,
+			final int scrollbarSize,
+			final float min,
+			final float max) {
 		this.parent = parent;
 		this.label = label;
+		this.scrollbarSize = scrollbarSize;
 		this.min = min;
 		this.max = max;
+		this.log1001 =  (float) Math.log10(scrollbarSize+1)/(float)Math.log10( 2 );
 	}
 
 	@Override
 	public void adjustmentValueChanged(final AdjustmentEvent event) {
-		float threshold = min + ((log1001 - (float) Math.log10(1001 - event.getValue())) / log1001) * (max - min);
-		parent.params.setThresholdDog(threshold); 
-				
-		label.setText("Threshold = " + String.format(java.util.Locale.US, "%.4f", parent.params.getThresholdDoG()));
+		float threshold = min + ((log1001 - (float) (Math.log10(scrollbarSize + 1 - event.getValue())/Math.log10(2))  ) / log1001) * (max - min);
+		parent.params.setThresholdDog(threshold);
+
+		label.setText("Threshold = " + String.format(java.util.Locale.US, "%.5f", parent.params.getThresholdDoG()));
 
 		if (!parent.isComputing) {
 			parent.updatePreview(ValueChange.THRESHOLD);

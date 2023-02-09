@@ -1,9 +1,15 @@
 package gui;
 
+import java.awt.datatransfer.DataFlavor;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDropEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import bdv.util.BdvFunctions;
 import bdv.util.BdvOptions;
@@ -21,8 +27,10 @@ import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealPoint;
+import net.imglib2.RealRandomAccessible;
 import net.imglib2.img.imageplus.ImagePlusImgs;
 import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Intervals;
 import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
@@ -165,6 +173,32 @@ public class CsvOverlay_Bdv implements PlugIn {
 			bdv.setColor(new ARGBType( ARGBType.rgba(0, 255, 0, 0) ) );
 			bdv.setDisplayRange( 0, 256 );
 		}
+		BdvStackSource<?> finalBdv = bdv;
+		bdv.getBdvHandle().getViewerPanel().setDropTarget(new DropTarget() {
+			public synchronized void drop(DropTargetDropEvent evt) {
+				try {
+					evt.acceptDrop(DnDConstants.ACTION_COPY);
+					List<File> droppedFiles = (List<File>) evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+					for (File file : droppedFiles) {
+						IJ.log("Opening: " + file.getAbsolutePath());
+						try {
+							if (file.getAbsolutePath().endsWith(".csv")) {
+								final ArrayList<RealPoint> peaks = CsvOverlay.readAndSortPositionsFromCsv(file);
+								BdvFunctions.show(VisualizePointsBDV.renderPoints(peaks, sigma), Intervals.createMinMax(0, 0, 0, 1, 1, 1), file.getName(), new BdvOptions().numRenderingThreads(Runtime.getRuntime().availableProcessors()).addTo(finalBdv));
+							} else {
+								ImagePlus imp = IJ.openImage(file.getAbsolutePath());
+								RandomAccessibleInterval img = ImagePlusImgs.from(imp);
+								BdvFunctions.show(img, file.getName(), new BdvOptions().numRenderingThreads(Runtime.getRuntime().availableProcessors()).addTo(finalBdv));
+							}
+						} catch (Exception e) {
+							IJ.log("Failed to open: " + e.getMessage());
+						}
+					}
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+			}
+		});
 	}
 
 	public static ArrayList< RealPoint > getPoints( final ResultsTable rt )

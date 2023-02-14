@@ -91,7 +91,7 @@ public class DoGDetection< T extends RealType< T > & NativeType< T > >
 	}
 
 	/**
-	 * Sets up a {@link DogDetection} with the specified parameters (does not do
+	 * Sets up a {@link DoGDetection} with the specified parameters (does not do
 	 * any computation yet). If the input image is of type {@link DoubleType},
 	 * {@link DoubleType} will be used for computing the Difference-of-Gaussian.
 	 * In all other cases, {@link FloatType} will be used).
@@ -139,7 +139,7 @@ public class DoGDetection< T extends RealType< T > & NativeType< T > >
 	}
 
 	/**
-	 * Sets up a {@link DogDetection} with the specified parameters (does not do
+	 * Sets up a {@link DoGDetection} with the specified parameters (does not do
 	 * any computation yet).
 	 *
 	 * @param input

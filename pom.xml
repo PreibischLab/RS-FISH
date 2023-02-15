@@ -1,8 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>Radial_SymmetryLocalization</artifactId>
-	<version>2.3.3-SNAPSHOT</version>
-	
+
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
@@ -10,19 +9,22 @@
 		<relativePath />
 	</parent>
 
+	<groupId>net.preibisch</groupId>
+	<artifactId>Radial_SymmetryLocalization</artifactId>
+	<version>2.3.3-SNAPSHOT</version>
+
 	<name>Radial Symmetry</name>
 	<description>A plugin for radial symmetry localization on smFISH (and other) images.</description>
-	<url>https://imagej.net/Radial_Symmetry</url>
+	<url>https://imagej.net/plugins/radial-symmetry</url>
 	<inceptionYear>2016</inceptionYear>
 	<organization>
 		<name>Fiji</name>
-		<url>http://fiji.sc/</url>
+		<url>https://fiji.sc/</url>
 	</organization>
-
 	<licenses>
 		<license>
 			<name>GNU General Public License v2+</name>
-			<url>http://www.gnu.org/licenses/gpl.html</url>
+			<url>https://www.gnu.org/licenses/gpl.html</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
@@ -31,7 +33,7 @@
 		<developer>
 			<id>StephanPreibisch</id>
 			<name>Stephan Preibisch</name>
-			<url>http://imagej.net/User:StephanP</url>
+			<url>https://imagej.net/people/StephanPreibisch</url>
 			<roles>
 				<role>founder</role>
 				<role>lead</role>
@@ -45,7 +47,7 @@
 		<developer>
 			<id>mzouink</id>
 			<name>Marwan Zouinkhi</name>
-			<url>http://imagej.net/User:mzouink</url>
+			<url>https://imagej.net/people/mzouink</url>
 			<roles>
 				<role>developer</role>
 				<role>debugger</role>
@@ -57,7 +59,7 @@
 		<developer>
 			<id>milkyklim</id>
 			<name>Klim Kolyvanov</name>
-			<url>http://imagej.net/User:MilkyKlim</url>
+			<url>https://imagej.net/people/milkyklim</url>
 			<roles>
 				<role>developer</role>
 				<role>debugger</role>
@@ -67,118 +69,56 @@
 			</roles>
 		</developer>
 	</developers>
-
 	<contributors>
 		<contributor>
 			<name>Timmothee Lionnet</name>
 			<url>https://med.nyu.edu/faculty/timothee-lionnet</url>
 		</contributor>
+		<contributor>
+			<name>Curtis Rueden</name>
+			<url>https://imagej.net/people/ctrueden</url>
+			<properties><id>ctrueden</id></properties>
+		</contributor>
 	</contributors>
 
 	<mailingLists>
 		<mailingList>
-			<name>ImageJ Forum</name>
+			<name>Image.sc Forum</name>
 			<archive>https://forum.image.sc/</archive>
 		</mailingList>
 	</mailingLists>
 
 	<scm>
-		<connection>scm:git:git://github.com/milkyklim/RadialSymmetryLocalization</connection>
-		<developerConnection>scm:git:git@github.com:milkyklim/RadialSymmetryLocalization</developerConnection>
+		<connection>scm:git:git://github.com/PreibischLab/RS-FISH</connection>
+		<developerConnection>scm:git:git@github.com:PreibischLab/RS-FISH</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/milkyklim/RadialSymmetryLocalization</url>
+		<url>https://github.com/PreibischLab/RS-FISH</url>
 	</scm>
 	<issueManagement>
 		<system>GitHub Issues</system>
-		<url>https://github.com/milkyklim/RadialSymmetryLocalization/issues</url>
+		<url>https://github.com/PreibischLab/RS-FISH/issues</url>
 	</issueManagement>
 	<ciManagement>
-		<system>Travis CI</system>
-		<url>https://travis-ci.org/milkyklim/RadialSymmetryLocalization</url>
+		<system>GitHub Actions</system>
+		<url>https://github.com/PreibischLab/RS-FISH/actions</url>
 	</ciManagement>
 
 	<properties>
-		<scijava.jvm.version>1.8</scijava.jvm.version>
 		<license.licenseName>gpl_v2</license.licenseName>
-		<license.copyrightOwners>Developers.</license.copyrightOwners>
-	    <maven.compiler.source>8</maven.compiler.source>
-	    <maven.compiler.target>8</maven.compiler.target>
+		<license.copyrightOwners>RS-FISH developers.</license.copyrightOwners>
 
+		<!-- NB: Deploy releases to the SciJava Maven repository. -->
+		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
+
+		<FunctionFit.version>157ab01</FunctionFit.version>
+		<ssj.version>3.3.1</ssj.version>
 	</properties>
-	<repositories>
-		<!-- NB: for project parent -->
-		<repository>
-			<id>scijava.public</id>
-			<url>https://maven.scijava.org/content/groups/public</url>
-		</repository>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-	</repositories>
+
 	<dependencies>
-		<dependency>
-			<groupId>mpicbg</groupId>
-			<artifactId>mpicbg</artifactId>
-			<!-- <exclusions> <exclusion> <groupId>net.imagej</groupId> <artifactId>ij</artifactId> 
-				</exclusion> </exclusions> -->
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-math3 -->
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-math3</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>ij</artifactId>
-		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>net.imglib2.simulation</groupId>-->
-<!--			<artifactId>function-fit-mpicbg</artifactId>-->
-<!--			<version>0.0.3</version>-->
-<!--		</dependency>-->
-		<dependency>
-			<groupId>com.github.PreibischLab</groupId>
-			<artifactId>FunctionFit</artifactId>
-			<version>157ab01</version>
-		</dependency>
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>legacy-imglib1</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.opencsv</groupId>
-			<artifactId>opencsv</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>fiji-lib</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2-algorithm</artifactId>
-			<version>0.13.0</version>
-		</dependency>
-		<dependency>
-			<groupId>info.picocli</groupId>
-			<artifactId>picocli</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.janelia.saalfeldlab</groupId>
-			<artifactId>n5-imglib2</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>bigdataviewer-vistools</artifactId>
-		</dependency>
 		<dependency>
 			<groupId>ca.umontreal.iro.simul</groupId>
 			<artifactId>ssj</artifactId>
-			<version>3.3.1</version>
+			<version>${ssj.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>jfree</groupId>
@@ -186,6 +126,61 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<dependency>
+			<groupId>com.github.PreibischLab</groupId>
+			<artifactId>FunctionFit</artifactId>
+			<version>${FunctionFit.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>info.picocli</groupId>
+			<artifactId>picocli</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>mpicbg</groupId>
+			<artifactId>mpicbg</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-algorithm</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-math3</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.janelia.saalfeldlab</groupId>
+			<artifactId>n5-imglib2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>legacy-imglib1</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>fiji-lib</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bigdataviewer-vistools</artifactId>
+		</dependency>
 	</dependencies>
-	<groupId>net.preibisch</groupId>
+
+	<repositories>
+		<repository>
+			<id>scijava.public</id>
+			<url>https://maven.scijava.org/content/groups/public</url>
+		</repository>
+	</repositories>
 </project>

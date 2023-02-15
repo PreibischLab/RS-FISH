@@ -1,3 +1,5 @@
+[![Build Status](https://github.com/PreibischLab/RS-FISH/actions/workflows/build.yml/badge.svg)](https://github.com/PreibischLab/RS-FISH/actions/workflows/build.yml)
+
 <div align="center">
   
 # RS-FISH documentation

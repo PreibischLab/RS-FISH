@@ -134,6 +134,8 @@ public class Radial_Symmetry implements PlugIn
 
 		if (imp.getNChannels() > 1)
 		{
+			// TODO: show a Choice with all channels, make the user choose one and replace the imp with a single channel
+			// TOOD: overlay, BDV, might not work downstream
 			HelperFunctions.log( "Multichannel image detected. Please select 'Image > Color > Split Channels' and run RS-FISH on each channel separately (they very likely need different parameters).");
 			return;
 		}

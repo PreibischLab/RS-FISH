@@ -4,7 +4,7 @@ package gui.utils;
  * #%L
  * A plugin for radial symmetry localization on smFISH (and other) images.
  * %%
- * Copyright (C) 2016 - 2023 Developers.
+ * Copyright (C) 2016 - 2023 RS-FISH developers.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as

@@ -84,7 +84,7 @@ public class TypeTransformingRandomAccess< S, T extends Type< T > > implements R
 	public void setPosition( final long position, final int d ) { sourceRandomAccess.setPosition( position, d ); }
 
 	@Override
-	public Sampler<T> copy() { return copyRandomAccess(); }
+	public RandomAccess<T> copy() {return copyRandomAccess(); }
 
 	@Override
 	public RandomAccess<T> copyRandomAccess() { return new TypeTransformingRandomAccess<>( sourceRandomAccess.copyRandomAccess(), transform, value ); }

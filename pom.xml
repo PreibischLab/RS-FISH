@@ -127,8 +127,8 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>com.github.PreibischLab</groupId>
-			<artifactId>FunctionFit</artifactId>
+			<groupId>net.imglib2.simulation</groupId>
+			<artifactId>function-fit-mpicbg</artifactId>
 			<version>${FunctionFit.version}</version>
 		</dependency>
 		<dependency>

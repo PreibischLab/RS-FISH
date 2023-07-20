@@ -110,7 +110,7 @@
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
 
-		<FunctionFit.version>157ab01</FunctionFit.version>
+		<FunctionFit.version>0.0.5</FunctionFit.version>
 		<ssj.version>3.3.1</ssj.version>
 	</properties>
 

@@ -163,6 +163,10 @@ function processImage(dirPath, imName) {
 	while (nImages>0) { 
 		selectImage(nImages); 
 		close(); 
-    } 
-	run("Close");
+    	} 
+	tableTitle = "smFISH localizations";
+	if (isOpen(tableTitle)) {
+		selectWindow(tableTitle);
+		run("Close");
+	}
 } 

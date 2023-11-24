@@ -164,4 +164,5 @@ function processImage(dirPath, imName) {
 		selectImage(nImages); 
 		close(); 
     } 
+	run("Close");
 } 

@@ -294,7 +294,21 @@ public class Radial_Symmetry implements PlugIn
 			if ( img.numDimensions() == 3 )
 				blockSize = blockSize3d;
 			else
-				blockSize = new int[] { blockSize3d[ 0 ], blockSize3d[ 2 ] };
+				blockSize = new int[] { blockSize3d[ 0 ], blockSize3d[ 1 ] };
+
+			for ( int d = 0; d < blockSize.length; ++d )
+			{
+				if ( blockSize[ d ] < 3 )
+				{
+					HelperFunctions.log( "ERROR: Blocksize is too small, needs to be at least 3 -- even though this would be very inefficient.");
+					return;
+				}
+
+				if ( blockSize[ d ] < 16 )
+				{
+					HelperFunctions.log( "WARNING: You chose a small blockSize[" + d +"]=" + blockSize[ d ]);
+				}
+			}
 
 			// only 2 pixel overlap necessary to find local max/min to start - we then anyways load the full underlying image for each block
 			final ArrayList< Block > blocks = Block.splitIntoBlocks( new FinalInterval( img ), blockSize );

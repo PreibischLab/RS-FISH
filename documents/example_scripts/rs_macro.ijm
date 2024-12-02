@@ -68,20 +68,20 @@ function processImage(dirPath, imName) {
 	
 	open("" + dirPath + imName);
 
-	results_csv_path = "" + dirPath + "RadialSymmetry_results_" + imName + 
-	"_aniso" + anisotropyCoefficient + 
-	"ransac" + ransac_sub + 
-	"imMin" + imMin +
-	"imMax" + imMax +
-	"sig" + sigmaDoG +
-	"thr" + thresholdDoG + 
-	"suppReg" + supportRadius + 
-	"inRat" + inlierRatio +
-	"maxErr" + maxError + 
-	"intensThr" + intensityThreshold + 
-	"bsMethod" + bsMethod_sub + 
-	"bsMaxErr" + bsMaxError + 
-	"bsInRat" + bsInlierRatio +
+	results_csv_path = "" + dirPath + "RSresults_" + imName + 
+	"_an" + anisotropyCoefficient + 
+	"ran" + ransac_sub + 
+	"mn" + imMin +
+	"mx" + imMax +
+	"s" + sigmaDoG +
+	"t" + thresholdDoG + 
+	"sR" + supportRadius + 
+	"iR" + inlierRatio +
+	"mE" + maxError + 
+	"iT" + intensityThreshold + 
+	"bsM" + bsMethod_sub + 
+	"bsMxE" + bsMaxError + 
+	"bsIR" + bsInlierRatio +
 	".csv";
 
 

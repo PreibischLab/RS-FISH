@@ -129,7 +129,7 @@ public class ZCorrection implements Callable<Void>
 					System.out.println( "Image size=" + Util.printInterval( img ) );
 				}
 
-				final RealRandomAccess rra = Views.interpolate( Views.extendBorder( img ) , new NearestNeighborInterpolatorFactory<>() ).realRandomAccess();
+				final RealRandomAccess rra = Views.interpolate( Views.extendBorder( img ) , new NearestNeighborInterpolatorFactory() ).realRandomAccess();
 
 				for ( final InputSpot s : spots )
 				{

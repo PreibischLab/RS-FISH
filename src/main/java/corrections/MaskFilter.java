@@ -69,7 +69,7 @@ public class MaskFilter {
                 System.out.println("Image size=" + Util.printInterval(img));
                 if (img.numDimensions() == 2 || img.numDimensions() == 3) {
                     final ArrayList<InputSpot> spotsTmp = new ArrayList<>();
-                    final RealRandomAccess rra = Views.interpolate(Views.extendBorder(img), new NearestNeighborInterpolatorFactory<>()).realRandomAccess();
+                    final RealRandomAccess rra = Views.interpolate(Views.extendBorder(img), new NearestNeighborInterpolatorFactory()).realRandomAccess();
 
                     for (final InputSpot s : currentSpot) {
                         rra.setPosition(s.x, 0);

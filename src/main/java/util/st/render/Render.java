@@ -57,15 +57,15 @@ public class Render
 		return Views.interpolate(
 				new NearestNeighborMaxDistanceSearchOnKDTree< T >(
 						new KDTree< T > ( data ),
-						outofbounds,
-						maxRadius ),
+						() -> outofbounds,
+						new MaxDistanceParam( maxRadius ) ),
 				new NearestNeighborSearchInterpolatorFactory< T >() );
 	}
 
 	public static < S, T > RealRandomAccessible< T > render( final IterableRealInterval< S > data, final RadiusSearchFilterFactory< S, T > filterFactory )
 	{
 		return Views.interpolate(
-				new FilteredMaxDistanceSearchOnKDTree< S, T >(
+				new FilteringRadiusSearchOnKDTree< S, T >(
 						new KDTree<> ( data ),
 						filterFactory ),
 				new IntegratingNeighborSearchInterpolatorFactory< T >() );

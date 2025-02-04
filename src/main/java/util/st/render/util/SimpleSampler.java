@@ -21,15 +21,19 @@
  */
 package util.st.render.util;
 
+import java.util.function.Supplier;
+
 import net.imglib2.Sampler;
 
 public class SimpleSampler< T > implements Sampler< T >
 {
+	final Supplier< T > supplier;
 	final T type;
 
-	public SimpleSampler( final T type )
+	public SimpleSampler( final Supplier< T > supplier )
  	{
-		this.type = type;
+		this.supplier = supplier;
+		this.type = supplier.get();
 	}
 
 	@Override
@@ -41,6 +45,6 @@ public class SimpleSampler< T > implements Sampler< T >
 	@Override
 	public Sampler< T > copy()
 	{
-		return new SimpleSampler< T >( type );
+		return new SimpleSampler<>(supplier);
 	}
 }
